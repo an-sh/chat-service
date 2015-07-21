@@ -5,7 +5,8 @@
   "description": "Server side chat based on top of socket.io",
   "main": "index.js",
   "scripts": {
-    "test": "mocha && istanbul report text-summary lcov"
+    "test": "mocha && istanbul report text-summary lcov",
+    "pipe-coverage": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js --verbose"
   },
   "author": {
     "name": "Andrey Sharapov",
@@ -19,6 +20,9 @@
     "chat",
     "service"
   ],
+  "engines": {
+    "node": ">=0.10.0"
+  },
   "license": "MIT",
   "dependencies": {
     "async": "^1.3.0",
@@ -29,6 +33,7 @@
   "devDependencies": {
     "chai": "^3.0.0",
     "coffee-coverage": "^0.6.2",
+    "coveralls": "^2.11.3",
     "istanbul": "^0.3.17",
     "mocha": "^2.2.5",
     "server-destroy": "^1.0.1",
