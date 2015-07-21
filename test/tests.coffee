@@ -64,10 +64,10 @@ describe 'Chat service', ->
 
   it 'should integrate with an existing io', (done) ->
     io = socketIO port
-    chatServer = new ChatService { io : io }
+    chatServer1 = new ChatService { io : io }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', (u) ->
-      chatServer.close()
+      chatServer1.close()
       io.close()
       done()
 
@@ -79,12 +79,12 @@ describe 'Chat service', ->
       done()
 
   it 'should disconnect on server shutdown', (done) ->
-    chatServer = new ChatService { port : port }
+    chatServer1 = new ChatService { port : port }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
       socket1.on 'disconnect', () ->
         done()
-      chatServer.close()
+      chatServer1.close()
       chatServer = null
 
   it 'should reject empty user query', (done) ->
@@ -121,7 +121,7 @@ describe 'Chat service', ->
     r = chatServer.roomManager.getRoom 'roomName'
     expect(r).eql(room)
     expect(r.whitelist.get user1).ok
-    chatServer.close done
+    done()
 
   it 'should support multiple sockets per user', (done) ->
     chatServer = new ChatService { port : port }
