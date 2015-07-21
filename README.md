@@ -1,6 +1,8 @@
 
 # Chat service
 
+[![Build Status](https://travis-ci.org/an-sh/chat-service.svg?branch=master)](https://travis-ci.org/an-sh/chat-service)
+
 Server side chat based on top of socket.io
 
 
