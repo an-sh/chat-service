@@ -56,20 +56,31 @@ describe 'Chat service', ->
     enableDestroy httpInst
     chatServer1 = new ChatService { http : httpInst }
     httpInst.listen port
+    cleanup = (err) ->
+      chatServer1.close ->
+        httpInst.destroy done, err
+    process.once 'uncaughtException', cleanup
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', (u) ->
-      chatServer1.close ->
-        httpInst.destroy done
       expect(u).equal(user1)
+      process.removeListener 'uncaughtException', cleanup
+      cleanup()
 
   it 'should integrate with an existing io', (done) ->
     io = socketIO port
     chatServer1 = new ChatService { io : io }
+    cleanup =  (err) ->
+      chatServer1.close ->
+        chatServer1.close()
+        io.close()
+        done err
+    process.once 'uncaughtException', cleanup
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', (u) ->
-      chatServer1.close()
-      io.close()
-      done()
+      expect(u).equal(user1)
+      process.removeListener 'uncaughtException', cleanup
+      cleanup()
+
 
   it 'should spawn a new io server', (done) ->
     chatServer = new ChatService { port : port }
@@ -79,12 +90,12 @@ describe 'Chat service', ->
       done()
 
   it 'should disconnect on server shutdown', (done) ->
-    chatServer1 = new ChatService { port : port }
+    chatServer = new ChatService { port : port }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
       socket1.on 'disconnect', () ->
         done()
-      chatServer1.close()
+      chatServer.close()
       chatServer = null
 
   it 'should reject empty user query', (done) ->
