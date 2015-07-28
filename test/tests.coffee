@@ -98,17 +98,19 @@ describe 'Chat service', ->
     userState = { whitelist : ['user2'] , blacklist : ['user0'] }
     onConnect = (server, socket, cb) ->
       user = new User server, 'user1'
-      user.setState userState
-      cb null, user
+      user.initState userState, ->
+        cb null, user
     chatServer = new ChatService { port : port }, { onConnect : onConnect }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', (u) ->
       expect(u).equal('user1')
       usr = chatServer.userManager.getUser 'user1'
-      expect(usr).eql(user)
-      expect(usr.whitelist.has 'user2').be.true
-      expect(usr.blacklist.has 'user0').be.true
-      done()
+      expect(usr.username).eql(user.username)
+      async.parallel [ (cb) ->
+        usr.directMessagingState.blacklistHas 'user0', cb
+      , (cb) ->
+        usr.directMessagingState.whitelistHas 'user2', cb
+      ] , done
 
   it 'should restore room state from onStart hook', (done) ->
     room = null
@@ -522,11 +524,11 @@ describe 'Chat service', ->
       socket2 = ioClient.connect url1, makeParams(user2)
       socket2.on 'loginConfirmed', ->
         user = chatServer.userManager.getUser(user2)
-        user.blacklist.add user1
-        socket1.emit 'directMessage', id, user2, message
-        socket1.on 'fail', (idcmd, err) ->
-          expect(err).ok
-          done()
+        user.directMessagingState.blacklistAdd [user1], ->
+          socket1.emit 'directMessage', id, user2, message
+          socket1.on 'fail', (idcmd, err) ->
+            expect(err).ok
+            done()
 
   it 'should check user permission in whitelist mode', (done) ->
     txt = 'Test message.'
@@ -537,11 +539,11 @@ describe 'Chat service', ->
       socket2 = ioClient.connect url1, makeParams(user2)
       socket2.on 'loginConfirmed', ->
         user = chatServer.userManager.getUser(user2)
-        user.blacklist.add user1
-        socket1.emit 'directMessage', id, user2, message
-        socket1.on 'fail', (idcmd, err) ->
-          expect(err).ok
-          done()
+        user.directMessagingState.whitelistOnlySet true, ->
+          user.directMessagingState.whitelistAdd [user1], ->
+            socket1.emit 'directMessage', id, user2, message
+            socket1.on 'success', (idcmd) ->
+              done()
 
   it 'should allow user to modify own lists', (done) ->
     chatServer = new ChatService { port : port, allowDirectMessages : true }

@@ -4,6 +4,7 @@ util = require 'util'
 socketIO = require 'socket.io'
 FastSet = require 'collections/fast-set'
 Deque = require 'collections/deque'
+async = require 'async'
 
 
 userCommands =
@@ -44,6 +45,7 @@ serverMessages =
 Object.freeze userCommands
 Object.freeze serverMessages
 
+asyncLimit = 16
 
 class ErrorBuilder
   constructor : (@useRawErrorObjects) ->
@@ -73,6 +75,9 @@ class ErrorBuilder
       return { name : error, args : args }
     return util.format @getErrorString(error), args...
 
+
+makeServerError = (errorBuilder, err) ->
+  errorBuilder.makeError 'serverError', err.toString()
 
 sendResult = (socket, idcmd, cb, error = null, data = null) ->
   # dispatch results to socket and callback
@@ -124,7 +129,7 @@ processMessage = (msg) ->
   msg.timestamp = new Date().getTime()
 
 initState = (state, values) ->
-  if values
+  if values and state
     state.clear()
     state.addEach values
 
@@ -327,33 +332,78 @@ class Room
     return { data : data }
 
 
-class UserDirectMessaging
-
-  ###
-  # interface
-  ###
-
-  constructor : (@errorBuilder, @username, @whitelistOnly) ->
-    # STATE
+class DirectMessagingState
+  constructor : (@username) ->
+    @whitelistOnly
     @whitelist = new FastSet
     @blacklist = new FastSet
-    # END OF STATE
 
-  setState : ( { whitelist, blacklist } = {} ) ->
+  initState : ({ whitelist, blacklist, whitelistOnly } = {}, cb) ->
     initState @whitelist, whitelist
     initState @blacklist, blacklist
+    @whitelistOnly = if whitelistOnly then true else false
+    process.nextTick -> cb()
+
+  hasList : (listName) ->
+    return listName in [ 'whitelist', 'blacklist' ]
+
+  whitelistGet : (cb) ->
+    data = @whitelist.toArray()
+    process.nextTick -> cb null, data
+
+  blacklistGet : (cb) ->
+    data = @blacklist.toArray()
+    process.nextTick -> cb null, data
+
+  whitelistHas : (elem, cb) ->
+    data = @whitelist.has elem
+    process.nextTick -> cb null, data
+
+  blacklistHas : (elem, cb) ->
+    data = @blacklist.has elem
+    process.nextTick -> cb null, data
+
+  whitelistAdd : (elems, cb) ->
+    @whitelist.addEach elems
+    process.nextTick -> cb()
+
+  blacklistAdd : (elems, cb) ->
+    @blacklist.addEach elems
+    process.nextTick -> cb()
+
+  whitelistRemove : (elems, cb) ->
+    @whitelist.deleteEach elems
+    process.nextTick -> cb()
+
+  blacklistRemove : (elems, cb) ->
+    @blacklist.deleteEach elems
+    process.nextTick -> cb()
+
+  whitelistOnlySet : (mode, cb) ->
+    @whitelistOnly = if mode then true else false
+    process.nextTick -> cb()
+
+  whitelistOnlyGet : (cb) ->
+    m = @whitelistOnly
+    process.nextTick -> cb null, m
+
+
+class UserDirectMessaging
+
+  constructor : (@errorBuilder, @username, state = DirectMessagingState) ->
+    @directMessagingState = new state @username
+
+  initState : (state, cb) ->
+    @directMessagingState.initState state, cb
 
   ###
   # helpers
   ###
 
-  hasList : (listName) ->
-    return listName in [ 'whitelist', 'blacklist' ]
-
   checkList : (author, listName) ->
     if author != @username
       return @errorBuilder.makeError 'notAllowed'
-    unless @hasList listName
+    unless @directMessagingState.hasList listName
       return @errorBuilder.makeError 'noList', listName
     return null
 
@@ -364,83 +414,105 @@ class UserDirectMessaging
       return @errorBuilder.makeError 'noValuesSupplied'
     return null
 
-  checkListAdd : (author, listName, name) ->
+  checkListChange : (author, listName, name, cb) ->
     if name == @username
-      return @errorBuilder.makeError 'notAllowed'
-    if @[listName].has name
-      return @errorBuilder.makeError 'nameInList', name, listName
-    return null
+      return cb @errorBuilder.makeError 'notAllowed'
+    op = listName + 'Has'
+    @directMessagingState[op] name, (error, hasName) =>
+      if error
+        return cb makeServerError @errorBuilder, error
+      cb null, hasName
 
-  checkListRemove : (author, listName, name) ->
-    if name == @username
-      return @errorBuilder.makeError 'notAllowed'
-    unless @[listName].has name
-      return @errorBuilder.makeError 'noNameInList', name, listName
-    return null
+  checkListAdd : (author, listName, name, cb) ->
+    @checkListChange author, listName, name, (error, hasName) =>
+      if error then return cb error
+      if hasName
+        return cb @errorBuilder.makeError 'nameInList', name, listName
+      cb()
 
-  checkAcess : (userName) ->
-    if userName == @username then return null
-    if @blacklist.has userName
-      return @errorBuilder.makeError 'noUserOnline'
-    if @whitelistOnly and not @whitelist.has userName
-      return @errorBuilder.makeError 'notAllowed'
-    return null
+  checkListRemove : (author, listName, name, cb) ->
+    @checkListChange author, listName, name, (error, hasName) =>
+      if error then return cb error
+      unless hasName
+        return cb @errorBuilder.makeError 'noNameInList', name, listName
+      cb()
+
+  checkAcess : (userName, cb) ->
+    if userName == @username then return cb()
+    @directMessagingState.blacklistHas userName, (error, blacklisted) =>
+      if error
+        return cb makeServerError @errorBuilder, error
+      if blacklisted
+        return cb @errorBuilder.makeError 'noUserOnline'
+      @directMessagingState.whitelistOnlyGet (error, whitelistOnly) =>
+        if error
+          return cb makeServerError @errorBuilder, error
+        @directMessagingState.whitelistHas userName, (error, hasWhitelist) =>
+          if error
+            return cb makeServerError @errorBuilder, error
+          if whitelistOnly and not hasWhitelist
+            return cb @errorBuilder.makeError 'notAllowed'
+          cb()
+
+  changeList : (author, listName, values, check, method, cb) ->
+    error = @checkListOp author, listName, values
+    if error then return cb error
+    async.eachLimit values, asyncLimit
+    , (val, fn) =>
+      @[check] author, listName, val, fn
+    , (error) =>
+      if error then return cb error
+      op = listName + method
+      @directMessagingState[op] values, (error) ->
+        if error then return cb error
+        cb()
 
   ###
-  # actions
+  # direct messaging actions
   ###
 
-  message : (author, msg) ->
-    error = @checkAcess author
-    if error then return error
-    return null
+  message : (author, msg, cb) ->
+    @checkAcess author, (error) ->
+      if error then return cb error
+      cb()
 
-  getList : (author, listName) ->
+  getList : (author, listName, cb) ->
     error = @checkList author, listName
-    if error then return { error : error }
-    data = @[listName].toArray()
-    return { data : data }
+    if error then return cb error
+    op = listName + 'Get'
+    @directMessagingState[op] (error, list) =>
+      if error
+        return cb makeServerError @errorBuilder, error
+      cb null, list
 
-  addToList : (author, listName, values) ->
-    error = @checkListOp author, listName, values
-    if error then return error
-    for val in values
-      error = @checkListAdd author, listName, val
-      if error then return error
-    @[listName].addEach values
-    return null
+  addToList : (author, listName, values, cb) ->
+    @changeList author, listName, values, 'checkListAdd', 'Add', cb
 
-  removeFromList : (author, listName, values) ->
-    error = @checkListOp author, listName, values
-    if error then return error
-    for val in values
-      error = @checkListRemove author, listName, val
-      if error then return error
-    @[listName].deleteEach values
-    return null
+  removeFromList : (author, listName, values, cb) ->
+    @changeList author, listName, values, 'checkListRemove', 'Remove', cb
 
-  getMode : (author) ->
+  getMode : (author, cb) ->
     if author != @username
-      error = @errorBuilder.makeError 'notAllowed'
-      return { error : error }
-    data =  @whitelistOnly
-    return { data : data }
+      return cb @errorBuilder.makeError 'notAllowed'
+    @directMessagingState.whitelistOnlyGet (error, whitelistOnly) ->
+      if error
+        return cb makeServerError @errorBuilder, error
+      cb null, whitelistOnly
 
-  changeMode : (author, mode) ->
+  changeMode : (author, mode, cb) ->
     if author != @username
-      return @errorBuilder.makeError 'notAllowed'
-    @whitelistOnly = if mode then true else false
-    return null
+      return cb @errorBuilder.makeError 'notAllowed'
+    m = if mode then true else false
+    @directMessagingState.whitelistOnlySet m, (error) ->
+      if error
+        return cb makeServerError @errorBuilder, error
+      cb()
 
 
 class User extends UserDirectMessaging
 
-  ###
-  # interface
-  ###
-
-  constructor : (@server, @username, whitelistOnly = false) ->
-    super(@server.errorBuilder, @username, whitelistOnly)
+  constructor : (@server, @username) ->
+    super(@server.errorBuilder, @username)
     @userManager = @server.userManager
     @roomManager = @server.roomManager
     @enableUserlistUpdates = @server.enableUserlistUpdates
@@ -450,9 +522,6 @@ class User extends UserDirectMessaging
     @roomslist = new FastSet
     @sockets = {}
     # END OF STATE
-
-  setState : () ->
-    super
 
   ###
   # helpers
@@ -504,17 +573,17 @@ class User extends UserDirectMessaging
 
   directAddToList : (socket, idcmd, cb
   , listName, values) ->
-    error = @addToList @username, listName, values
-    sendResult socket, idcmd, cb, error
+    @addToList @username, listName, values, (error) ->
+      sendResult socket, idcmd, cb, error
 
   directGetAccessList : (socket, idcmd, cb
   , listName) ->
-    { error, data } = @getList @username, listName
-    sendResult socket, idcmd, cb, error, data
+    @getList @username, listName, (error, data) ->
+      sendResult socket, idcmd, cb, error, data
 
   directGetWhitelistMode: (socket, idcmd, cb) ->
-    { error, data } = @getMode @username
-    sendResult socket, idcmd, cb, error, data
+    @getMode @username, (error, data) ->
+      sendResult socket, idcmd, cb, error, data
 
   directMessage : (socket, idcmd, cb
   , toUserName, msg) ->
@@ -529,26 +598,26 @@ class User extends UserDirectMessaging
     unless fromUser
       error = @errorBuilder.makeError 'noUserOnline', @username
       return sendResult socket, idcmd, cb, error
-    error = toUser.message @username, msg
-    if error
-      return sendResult socket, idcmd, cb, error
-    processMessage msg
-    for own id, fromSocket of fromUser.sockets
-      if id != socket.id
-        fromSocket.emit 'directMessageEcho', toUserName, msg
-    for own id, toSocket of toUser.sockets
-      toSocket.emit 'directMessage', @username, msg
-    sendResult socket, idcmd, cb
+    toUser.message @username, msg, (error) =>
+      if error
+        return sendResult socket, idcmd, cb, error
+      processMessage msg
+      for own id, fromSocket of fromUser.sockets
+        if id != socket.id
+          fromSocket.emit 'directMessageEcho', toUserName, msg
+      for own id, toSocket of toUser.sockets
+        toSocket.emit 'directMessage', @username, msg
+      sendResult socket, idcmd, cb
 
   directRemoveFromList : (socket, idcmd, cb
   , listName, values) ->
-    error = @removeFromList @username, listName, values
-    return sendResult socket, idcmd, cb, error
+    @removeFromList @username, listName, values, (error) ->
+      sendResult socket, idcmd, cb, error
 
   directSetWhitelistMode : (socket, idcmd, cb
   , mode) ->
-    error = @changeMode @username, mode
-    return sendResult socket, idcmd, cb, error
+    @changeMode @username, mode, (error) ->
+      sendResult socket, idcmd, cb, error
 
   disconnect : (socket) ->
     @removeSocket socket.id
