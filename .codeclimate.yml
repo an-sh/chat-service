@@ -1,0 +1,9 @@
+engines:
+  coffeelint:
+    enabled: true
+ratings:
+   paths:
+   - lib/**
+exclude_paths:
+- "test/*"
+- "coverage/*"
