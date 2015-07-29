@@ -143,8 +143,9 @@ describe 'Chat service', ->
       socket2 = ioClient.connect url1, makeParams(user1)
       socket2.on 'loginConfirmed', (u) ->
         user = chatServer.userManager.getUser(user1)
-        expect(user.hasSockets()).equal(2)
-        done()
+        user.userState.socketsCount (err, nsockets) ->
+          expect(nsockets).equal(2)
+          done()
 
   it 'should create and delete rooms', (done) ->
     chatServer = new ChatService { port : port, allowRoomsManagement : true }
@@ -191,7 +192,6 @@ describe 'Chat service', ->
       socket2 = ioClient.connect url1, makeParams(user1)
       socket2.on 'loginConfirmed', ->
         user = chatServer.userManager.getUser(user1)
-        expect(user.hasSockets()).equal(2)
         socket2.emit 'roomJoin', id, roomName1
         async.parallel [ (cb) ->
           socket2.on 'roomJoined', (room) ->
