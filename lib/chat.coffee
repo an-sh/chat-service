@@ -512,27 +512,22 @@ class UserDirectMessaging
 class UserState
   constructor : (@username) ->
     @roomslist = new FastSet
-    @sockets = {}
+    @sockets = new FastSet
 
-  socketAdd : (socket, cb) ->
-    @sockets[socket.id] = socket
+  socketAdd : (id, cb) ->
+    @sockets.add id
     process.nextTick -> cb null
 
   socketRemove : (id, cb) ->
-    @sockets[id]?.disconnect()
-    delete @sockets[id]
+    @sockets.remove id
     process.nextTick -> cb null
 
-  socketGet : (id, cb) ->
-    s = @sockets[id]
-    process.nextTick -> cb null, s
-
   socketsCount : (cb) ->
-    nsockets = Object.keys(@sockets).length
+    nsockets = @sockets.length
     process.nextTick -> cb null, nsockets
 
   socketsGetAll : (cb) ->
-    sockets = @sockets
+    sockets = @sockets.toArray()
     process.nextTick -> cb null, sockets
 
   roomAdd : (roomName, cb) ->
@@ -564,7 +559,7 @@ class User extends UserDirectMessaging
   ###
 
   registerSocket : (socket, cb) ->
-    @userState.socketAdd socket, (error) =>
+    @userState.socketAdd socket.id, (error) =>
       if error
         return cb makeServerError @errorBuilder, error
       for own cmd of userCommands
@@ -581,6 +576,9 @@ class User extends UserDirectMessaging
     socket.on name, (idcmd, args...) ->
       cmd socket, idcmd, null, args...
 
+  send : (id, args...) ->
+    @server.nsp.in(id).emit args...
+
   sendAccessRemoved : (userNames, roomName, cb) ->
     async.eachLimit userNames, asyncLimit
     , (userName, fn) =>
@@ -592,13 +590,10 @@ class User extends UserDirectMessaging
         user.userState.socketsGetAll (error, sockets) =>
           if error
             return fn makeServerError @errorBuilder, error
-          for own id, toSocket of sockets
-            toSocket.emit 'roomAccessRemoved', roomName
+          for id in sockets
+            @send id, 'roomAccessRemoved', roomName
           fn()
     , cb
-
-  broadcast : (socket, roomName, args...) ->
-    socket.broadcast.to(roomName).emit args...
 
   ###
   # commands
@@ -632,23 +627,23 @@ class User extends UserDirectMessaging
     unless fromUser
       error = @errorBuilder.makeError 'noUserOnline', @username
       return sendResult socket, idcmd, cb, error
+    processMessage msg
     toUser.message @username, msg, (error) =>
       if error
         return sendResult socket, idcmd, cb, error
-      processMessage msg
       fromUser.userState.socketsGetAll (error, sockets) =>
         if error
           wrappedError = makeServerError @errorBuilder, error
           return sendResult socket, idcmd, cb, wrappedError
-        for own id, fromSocket of sockets
+        for id in sockets
           if id != socket.id
-            fromSocket.emit 'directMessageEcho', toUserName, msg
+            @send id, 'directMessageEcho', toUserName, msg
         toUser.userState.socketsGetAll (error, sockets) =>
           if error
             wrappedError = makeServerError @errorBuilder, error
             return sendResult socket, idcmd, cb, wrappedError
-          for own id, toSocket of sockets
-            toSocket.emit 'directMessage', @username, msg
+          for id in sockets
+            @send id, 'directMessage', @username, msg
           sendResult socket, idcmd, cb
 
   directRemoveFromList : (socket, idcmd, cb
@@ -669,7 +664,7 @@ class User extends UserDirectMessaging
       @userState.socketsCount (error, nsockets) =>
         if error
           return makeServerError @errorBuilder, error
-        if nsockets > 0 then return cb()
+        if nsockets > 0 then return
         @userState.roomsGetAll (error, rooms) =>
           if error
             return makeServerError @errorBuilder, error
@@ -751,21 +746,20 @@ class User extends UserDirectMessaging
           wrappedError = makeServerError @errorBuilder, error
           return sendResult socket, idcmd, cb, wrappedError
         if @enableUserlistUpdates
-          @broadcast socket, roomName, 'roomUserJoin', roomName, @username
-        makeClosure = (toSocket, id) ->
-          thisID = socket.id
-          return (error) ->
+          @send roomName, 'roomUserJoin', roomName, @username
+        makeClosure = (id) =>
+          return (error) =>
             # TODO other sockets errors handling
-            if thisID == id
+            if socket.id == id
               sendResult socket, idcmd, cb, error
-            toSocket.emit 'roomJoined', roomName
+            @send id, 'roomJoined', roomName
         # TODO lock user state
         @userState.socketsGetAll (error, sockets) =>
           if error
             wrappedError = makeServerError @errorBuilder, error
             return sendResult socket, idcmd, cb, wrappedError
-          for own id, toSocket of sockets
-            toSocket.join roomName, makeClosure toSocket, id
+          for id in sockets
+            @server.nsp.adapter.add id, roomName, makeClosure id
 
   roomLeave : (socket, idcmd, cb
   , roomName) ->
@@ -775,22 +769,24 @@ class User extends UserDirectMessaging
         wrappedError = makeServerError @errorBuilder, error
         return sendResult socket, idcmd, cb, wrappedError
       @userState.roomRemove roomName, (error) =>
+        if error
+          wrappedError = makeServerError @errorBuilder, error
+          return sendResult socket, idcmd, cb, wrappedError
         if @enableUserlistUpdates
-          @broadcast socket, roomName, 'roomUserLeave', roomName, @username
-        makeClosure = (toSocket, id) ->
-          thisID = socket.id
-          return (error) ->
+          @send roomName, 'roomUserLeave', roomName, @username
+        makeClosure = (id) =>
+          return (error) =>
             # TODO other sockets errors handling
-            if thisID == id
+            if socket.id == id
               sendResult socket, idcmd, cb, error
-            toSocket.emit 'roomLeft', roomName
+             @send id, 'roomLeft', roomName
         # TODO lock user state
         @userState.socketsGetAll (error, sockets) =>
           if error
             wrappedError = makeServerError @errorBuilder, error
             return sendResult socket, idcmd, cb, wrappedError
-          for own id, toSocket of sockets
-            toSocket.leave roomName, makeClosure toSocket, id
+          for id in sockets
+            @server.nsp.adapter.del id, roomName, makeClosure id
 
   roomMessage : (socket, idcmd, cb
   , roomName, msg) ->
@@ -798,8 +794,7 @@ class User extends UserDirectMessaging
       error = room.message @username, msg unless error
       unless error
         processMessage msg
-        @broadcast socket, roomName, 'roomMessage', roomName, @username, msg
-        socket.emit 'roomMessage', roomName, @username, msg
+        @send roomName, 'roomMessage', roomName, @username, msg
       return sendResult socket, idcmd, cb, error
 
   roomRemoveFromList : (socket, idcmd, cb
