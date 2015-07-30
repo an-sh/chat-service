@@ -32,7 +32,7 @@ serverMessages =
   directMessage : ''
   directMessageEcho : ''
   fail : ''
-  loginAccepted : ''
+  loginConfirmed: ''
   loginRejected : ''
   roomAccessRemoved : ''
   roomJoined : ''
