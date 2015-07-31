@@ -148,7 +148,7 @@ describe 'Chat service', ->
           done()
 
   it 'should create and delete rooms', (done) ->
-    chatServer = new ChatService { port : port, allowRoomsManagement : true }
+    chatServer = new ChatService { port : port, enableRoomsManagement : true }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', (u) ->
       socket1.once 'success', (idcmd, data) ->
@@ -168,7 +168,7 @@ describe 'Chat service', ->
         socket1.emit 'roomDelete', id, roomName1
       socket1.emit 'roomCreate', id, roomName1, false
 
-  it 'should reject room management without allowRoomsManagement option'
+  it 'should reject room management without enableRoomsManagement option'
   , (done) ->
     chatServer = new ChatService { port : port }
     room = new Room chatServer, roomName2, user1
@@ -464,7 +464,7 @@ describe 'Chat service', ->
               done()
 
   it 'should send access remove on room delete', (done) ->
-    chatServer = new ChatService { port : port, allowRoomsManagement : true }
+    chatServer = new ChatService { port : port, enableRoomsManagement : true }
     room = new Room chatServer, roomName1, user1
     chatServer.roomManager.addRoom room
     socket1 = ioClient.connect url1, makeParams(user1)
@@ -498,7 +498,7 @@ describe 'Chat service', ->
   it 'should send direct messages', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatServer = new ChatService { port : port, allowDirectMessages : true }
+    chatServer = new ChatService { port : port, enableDirectMessages : true }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
       socket2 = ioClient.connect url1, makeParams(user2)
@@ -513,7 +513,7 @@ describe 'Chat service', ->
   it 'should echo direct messges to user sockets', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatServer = new ChatService { port : port, allowDirectMessages : true }
+    chatServer = new ChatService { port : port, enableDirectMessages : true }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
       socket3 = ioClient.connect url1, makeParams(user1)
@@ -529,7 +529,7 @@ describe 'Chat service', ->
   it 'should check user permission', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatServer = new ChatService { port : port, allowDirectMessages : true }
+    chatServer = new ChatService { port : port, enableDirectMessages : true }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
       socket2 = ioClient.connect url1, makeParams(user2)
@@ -544,7 +544,7 @@ describe 'Chat service', ->
   it 'should check user permission in whitelist mode', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatServer = new ChatService { port : port, allowDirectMessages : true }
+    chatServer = new ChatService { port : port, enableDirectMessages : true }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
       socket2 = ioClient.connect url1, makeParams(user2)
@@ -557,7 +557,7 @@ describe 'Chat service', ->
               done()
 
   it 'should allow user to modify own lists', (done) ->
-    chatServer = new ChatService { port : port, allowDirectMessages : true }
+    chatServer = new ChatService { port : port, enableDirectMessages : true }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
       socket1.emit 'directAddToList', id , 'blacklist', [user2]
@@ -573,7 +573,7 @@ describe 'Chat service', ->
               done()
 
   it 'should allow user to modify own mode', (done) ->
-    chatServer = new ChatService { port : port, allowDirectMessages : true }
+    chatServer = new ChatService { port : port, enableDirectMessages : true }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
       socket1.emit 'directSetWhitelistMode', id , true

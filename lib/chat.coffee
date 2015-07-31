@@ -143,7 +143,7 @@ class Room
   constructor : (@server, @name, @owner, @whitelistOnly) ->
     # STATE
     @errorBuilder = @server.errorBuilder
-    @histSize = @server.histSize
+    @historyMaxMessages = @server.historyMaxMessages
     @whitelist = new FastSet
     @blacklist = new FastSet
     @adminlist = new FastSet
@@ -276,8 +276,8 @@ class Room
   message : (author, msg) ->
     unless @userlist.has author
       return @errorBuilder.makeError 'notJoined', @name
-    unless @histSize then return null
-    if @lastMessages.length >= @histSize
+    unless @historyMaxMessages then return null
+    if @lastMessages.length >= @historyMaxMessages
       @lastMessages.pop()
     @lastMessages.unshift { author : author, message : msg }
     return null
@@ -550,8 +550,8 @@ class User extends UserDirectMessaging
     @userManager = @server.userManager
     @roomManager = @server.roomManager
     @enableUserlistUpdates = @server.enableUserlistUpdates
-    @allowRoomsManagement = @server.allowRoomsManagement
-    @allowDirectMessages = @server.allowDirectMessages
+    @enableRoomsManagement = @server.enableRoomsManagement
+    @enableDirectMessages = @server.enableDirectMessages
     @userState = new state @username
 
   ###
@@ -616,7 +616,7 @@ class User extends UserDirectMessaging
   directMessage : (socket, idcmd, cb
   , toUserName, msg) ->
     # TODO refactor checking logic
-    unless @allowDirectMessages
+    unless @enableDirectMessages
       error = @errorBuilder.makeError 'notAllowed'
       return sendResult socket, idcmd, cb, error
     toUser = @userManager.getUser toUserName
@@ -691,7 +691,7 @@ class User extends UserDirectMessaging
 
   roomCreate : (socket, idcmd, cb
   , roomName, whitelistOnly) ->
-    unless @allowRoomsManagement
+    unless @enableRoomsManagement
       err = @errorBuilder.makeError 'notAllowed'
       return sendResult socket, idcmd, cb, err
     roomName = roomName?.toString()
@@ -708,7 +708,7 @@ class User extends UserDirectMessaging
 
   roomDelete : (socket, idcmd, cb
   , roomName) ->
-    unless @allowRoomsManagement
+    unless @enableRoomsManagement
       err = @errorBuilder.makeError 'notAllowed'
       return sendResult socket, idcmd, cb, err
     @withRoom roomName, (error, room) =>
@@ -873,11 +873,11 @@ class ChatService
 
     # options, constant for a server instance
     @namespace = @options.namespace || '/chat-service'
-    @histSize = @options.histSize || 100
+    @historyMaxMessages = @options.historyMaxMessages || 100
     @useRawErrorObjects = @options.useRawErrorObjects || false
     @enableUserlistUpdates = @options.enableUserlistUpdates || false
-    @allowRoomsManagement = @options.allowRoomsManagement || false
-    @allowDirectMessages = @options.allowDirectMessages || false
+    @enableRoomsManagement = @options.enableRoomsManagement || false
+    @enableDirectMessages = @options.enableDirectMessages || false
     @serverOptions = @options.serverOptions
 
     # public objects
