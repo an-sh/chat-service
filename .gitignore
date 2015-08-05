@@ -3,3 +3,4 @@
 logs
 coverage
 node_modules
+lib/chat.js

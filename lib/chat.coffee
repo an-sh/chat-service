@@ -5,6 +5,8 @@ socketIO = require 'socket.io'
 FastSet = require 'collections/fast-set'
 Deque = require 'collections/deque'
 async = require 'async'
+# TODO messages arguments checking
+check = require 'check-types'
 
 
 userCommands =
@@ -47,6 +49,7 @@ Object.freeze serverMessages
 
 asyncLimit = 16
 
+# TODO log server errors function
 class ErrorBuilder
   constructor : (@useRawErrorObjects) ->
 
@@ -75,7 +78,10 @@ class ErrorBuilder
       return { name : error, args : args }
     return util.format @getErrorString(error), args...
 
+  makeServerError : (err) ->
+    return @makeError 'serverError', err.toString()
 
+# TODO
 makeServerError = (errorBuilder, err) ->
   errorBuilder.makeError 'serverError', err.toString()
 
@@ -124,212 +130,329 @@ wrapCommand = (obj, name, fn) ->
         beforeHook server, socket, idcmd, execCommand, oargs...
   return cmd
 
-processMessage = (msg) ->
-  msg.textMessage = msg?.textMessage?.toString() || ''
-  msg.timestamp = new Date().getTime()
+processMessage = (author, msg) ->
+  r = {}
+  r.textMessage = msg?.textMessage?.toString() || ''
+  r.timestamp = new Date().getTime()
+  r.author = author
+  return r
 
 initState = (state, values) ->
-  if values and state
+  if state
     state.clear()
-    state.addEach values
+    if values
+      state.addEach values
+
+
+class RoomState
+  constructor : (@name, @historyMaxMessages = 0) ->
+    @whitelist = new FastSet
+    @blacklist = new FastSet
+    @adminlist = new FastSet
+    @userlist = new FastSet
+    @lastMessages = new Deque
+    @whitelistOnly = false
+    @owner = null
+
+  initState : ( state = {}, cb ) ->
+    { whitelist, blacklist, adminlist, userlist
+    , lastMessages, whitelistOnly, owner } = state
+    initState @whitelist, whitelist
+    initState @blacklist, blacklist
+    initState @adminlist, adminlist
+    initState @userlist, userlist
+    initState @lastMessages, lastMessages
+    @whitelistOnly = if whitelistOnly then true else false
+    @owner = if owner then owner else null
+    if cb then process.nextTick -> cb()
+
+  hasList : (listName) ->
+    return listName in [ 'adminlist', 'whitelist', 'blacklist', 'userlist' ]
+
+  checkList : (listName) ->
+    unless @hasList listName then return "No list named #{listName}"
+    return false
+
+  addToList : (listName, elems, cb) ->
+    error = @checkList listName
+    if error then return process.nextTick -> cb error
+    @[listName].addEach elems
+    process.nextTick -> cb()
+
+  removeFromList : (listName, elems, cb) ->
+    error = @checkList listName
+    if error then return process.nextTick -> cb error
+    @[listName].deleteEach elems
+    process.nextTick -> cb()
+
+  getList : (listName, cb) ->
+    error = @checkList listName
+    if error then return process.nextTick -> cb error
+    data = @[listName].toArray()
+    process.nextTick -> cb null, data
+
+  hasInList : (listName, elem, cb) ->
+    error = @checkList listName
+    if error then return process.nextTick -> cb error
+    data = @[listName].has elem
+    process.nextTick -> cb null, data
+
+  whitelistOnlySet : (mode, cb) ->
+    @whitelistOnly = if mode then true else false
+    process.nextTick -> cb()
+
+  whitelistOnlyGet : (cb) ->
+    m = @whitelistOnly
+    process.nextTick -> cb null, m
+
+  ownerGet : (cb) ->
+    owner = @owner
+    process.nextTick -> cb null, owner
+
+  ownerSet : (owner, cb) ->
+    @owner = owner
+    process.nextTick -> cb()
+
+  messageAdd : (msg, cb) ->
+    if @historyMaxMessages <= 0 then return process.nextTick -> cb()
+    if @lastMessages.length >= @historyMaxMessages
+      @lastMessages.pop()
+    @lastMessages.unshift msg
+    process.nextTick -> cb()
+
+  messagesGet : (cb) ->
+    data = @lastMessages.toArray()
+    process.nextTick -> cb null, data
+
+  getCommonUsers : (cb) ->
+    diff = (@userlist.difference @whitelist).difference @adminlist
+    data = diff.toArray()
+    process.nextTick -> cb null, data
 
 
 class Room
 
-  ###
-  # interface
-  ###
-
-  constructor : (@server, @name, @owner, @whitelistOnly) ->
-    # STATE
+  constructor : (@server, @name, state = RoomState) ->
     @errorBuilder = @server.errorBuilder
-    @historyMaxMessages = @server.historyMaxMessages
-    @whitelist = new FastSet
-    @blacklist = new FastSet
-    @adminlist = new FastSet
-    @adminlist.add @owner
-    @userlist = new FastSet
-    @lastMessages = new Deque
-    # END OF STATE
+    @roomState = new state @name, @server.historyMaxMessages
 
-  setState : ( { whitelist, blacklist, adminlist, lastMessages } = {} ) ->
-    initState @whitelist, whitelist
-    initState @blacklist, blacklist
-    initState @adminlist, adminlist
-    @adminlist.add @owner
-    initState @lastMessages, lastMessages
+  initState : (state, cb) ->
+    @roomState.initState state, cb
 
   ###
   # helpers
   ###
 
-  hasList : (name) ->
-    return name in [ 'adminlist', 'whitelist', 'blacklist', 'userlist' ]
+  isAdmin : (userName, cb) ->
+    @roomState.ownerGet (error, owner) =>
+      if error then return cb @errorBuilder.makeServerError error
+      @roomState.hasInList 'adminlist', userName, (error, hasName) =>
+        if error then return cb @errorBuilder.makeServerError error
+        admin = owner == userName or hasName
+        admin = if admin then true else false
+        cb null, admin
 
-  hasUser : (userName) ->
-    return @userlist.get userName
+  hasRemoveChangedCurrentAccess : (userName, listName, cb) ->
+    @roomState.hasInList 'userlist', userName, (error, hasUser) =>
+      if error then return cb @errorBuilder.makeServerError error
+      unless hasUser then return cb null, false
+      @isAdmin userName, (error, admin) =>
+        if error then return cb error
+        if admin then return cb null, false
+        if listName == 'whitelist'
+          @roomState.whitelistOnlyGet (error, whitelistOnly) =>
+            if error then return cb @errorBuilder.makeServerError error
+            cb null, true
+        else
+          cb null, false
 
-  removeUser : (userName) ->
-    @userlist.remove userName
+  hasAddChangedCurrentAccess : (userName, listName, cb) ->
+    @roomState.hasInList 'userlist', userName, (error, hasUser) =>
+      if error then return cb @errorBuilder.makeServerError error
+      unless hasUser then return cb null, false
+      if listName == 'blacklist' then return cb null, true
+      cb null, false
 
-  isOwner : (userName) ->
-    return userName == @owner
-
-  isAdmin : (userName) ->
-    if @isOwner userName then return true
-    return @adminlist.has userName and not @blacklist.has userName
-
-  hasRemoveChangedCurrentAccess : (userName, listName) ->
-    unless @hasUser userName then return false
-    if listName == 'whitelist' and @whitelistOnly
-      unless @isAdmin userName then return true
-    return false
-
-  hasAddChangedCurrentAccess : (userName, listName) ->
-    unless @hasUser userName then return false
-    if listName == 'blacklist' then return true
-    return false
-
-  getModeChangedCurrentAccess : (value) ->
-    unless value then return []
-    diff = (@userlist.difference @whitelist).difference @adminlist
-    return diff.toArray()
+  getModeChangedCurrentAccess : (value, cb) ->
+    unless value
+      process.nextTick -> cb null, false
+    else
+      @roomState.getCommonUsers (error, users) =>
+        if error then return cb @errorBuilder.makeServerError error
+        cb null, users
 
   ###
   # access checking
   ###
 
-  checkList : (author, listName) ->
-    unless @hasUser author
-      return @errorBuilder.makeError 'notJoined', @name
-    unless @hasList listName
-      return @errorBuilder.makeError 'noList', listName
-    return null
+  checkList : (author, listName, cb) ->
+    @roomState.hasInList 'userlist', author, (error, hasAuthor) =>
+      if error then return cb @errorBuilder.makeServerError error
+      unless hasAuthor
+        return cb @errorBuilder.makeError 'notJoined', @name
+      unless @roomState.hasList listName
+        return cb @errorBuilder.makeError 'noList', listName
+      cb()
 
-  checkListOp : (author, listName, values) ->
-    error = @checkList author, listName
-    if error then return error
-    unless values?.length and values instanceof Array
-      return @errorBuilder.makeError 'noValuesSupplied'
-    return null
+  checkListChange : (author, listName, name, cb) ->
+    @checkList author, listName, (error) =>
+      if error then return cb error
+      @roomState.ownerGet (error, owner) =>
+        if error then return cb @errorBuilder.makeServerError error
+        if listName == 'userlist'
+          return cb @errorBuilder.makeError 'notAllowed'
+        if author == owner
+          return cb()
+        if name == owner
+          return cb @errorBuilder.makeError 'notAllowed'
+        @roomState.hasInList 'adminlist', name, (error, hasName) =>
+          if error then return cb @errorBuilder.makeServerError error
+          if hasName
+            return cb @errorBuilder.makeError 'notAllowed'
+          @roomState.hasInList 'adminlist', author, (error, hasAuthor) =>
+            if error then return cb @errorBuilder.makeServerError error
+            unless hasAuthor
+              return cb @errorBuilder.makeError 'notAllowed'
+            cb()
 
-  checkListChange : (author, listName, name) ->
-    if name == @owner
-      return @errorBuilder.makeError 'notAllowed'
-    if listName == 'userlist'
-      return @errorBuilder.makeError 'notAllowed'
-    if author == @owner then return null
-    if @adminlist.has name
-      return @errorBuilder.makeError 'notAllowed'
-    unless @adminlist.has author
-      return @errorBuilder.makeError 'notAllowed'
-    return null
+  checkListAdd : (author, listName, name, cb) ->
+    @checkListChange author, listName, name, (error) =>
+      if error then return cb error
+      @roomState.hasInList listName, name, (error, hasName) =>
+        if error then return cb @errorBuilder.makeServerError error
+        if hasName
+          return cb @errorBuilder.makeError 'nameInList', name, listName
+        cb()
 
-  checkListAdd : (author, listName, name) ->
-    error = @checkListChange author, listName, name
-    if error then return error
-    if @[listName].has name
-      return @errorBuilder.makeError 'nameInList', name, listName
-    return null
+  checkListRemove : (author, listName, name, cb) ->
+    @checkListChange author, listName, name, (error) =>
+      if error then return cb error
+      @roomState.hasInList listName, name, (error, hasName) =>
+        unless hasName
+          return cb @errorBuilder.makeError 'noNameInList', name, listName
+        cb()
 
-  checkListRemove : (author, listName, name) ->
-    error = @checkListChange author, listName, name
-    if error then return error
-    unless @[listName].has name
-      return @errorBuilder.makeError 'noNameInList', name, listName
-    return null
+  checkModeChange : (author, value, cb) ->
+    @isAdmin author, (error, admin) =>
+      if error then return cb error
+      unless admin
+        return cb @errorBuilder.makeError 'notAllowed'
+      cb()
 
-  checkModeChange : (author, value) ->
-    if @isAdmin author then return null
-    return @errorBuilder.makeError 'notAllowed'
+  checkAcess : (userName, cb) ->
+    @isAdmin userName, (error, admin) =>
+      if error then return cb error
+      if admin then return cb()
+      @roomState.hasInList 'blacklist', userName, (error, inBlacklist) =>
+        if error then return cb @errorBuilder.makeServerError error
+        if inBlacklist
+          return cb @errorBuilder.makeError 'notAllowed'
+        @roomState.whitelistOnlyGet (error, whitelistOnly) =>
+          if error then return cb @errorBuilder.makeServerError error
+          @roomState.hasInList 'whitelist', userName, (error, inWhitelist) =>
+            if error then return cb @errorBuilder.makeServerError error
+            if whitelistOnly and not inWhitelist
+              return cb @errorBuilder.makeError 'notAllowed'
+            cb()
 
-  checkAcess : (userName) ->
-    if @isOwner userName then return null
-    if @blacklist.has userName
-      return @errorBuilder.makeError 'notAllowed'
-    if @whitelistOnly and not
-    (@whitelist.has userName or @adminlist.has userName)
-      return @errorBuilder.makeError 'notAllowed'
-    return null
-
-  checkIsOwner : (author) ->
-    if @isOwner author then return null
-    return @errorBuilder.makeError 'notAllowed'
-
-  forEach : (fn) ->
-    @userlist.forEach fn
+  checkIsOwner : (author, cb) ->
+    @roomState.ownerGet (error, owner) =>
+      unless owner == author
+        return cb @errorBuilder.makeError 'notAllowed'
+      cb()
 
   ###
   # actions execution
   ###
 
-  leave : (userName) ->
-    @userlist.remove userName
-    return null
+  leave : (userName, cb) ->
+    @roomState.removeFromList 'userlist', [userName]
+    , (error) =>
+      if error then return cb @errorBuilder.makeServerError error
+      cb()
 
-  join : (userName) ->
-    error = @checkAcess userName
-    if error then return error
-    @userlist.add userName
-    return null
+  join : (userName, cb) ->
+    @checkAcess userName, (error) =>
+      if error then return cb error
+      @roomState.addToList 'userlist', [userName]
+      , (error) =>
+        if error then return cb @errorBuilder.makeServerError error
+        cb()
 
-  message : (author, msg) ->
-    unless @userlist.has author
-      return @errorBuilder.makeError 'notJoined', @name
-    unless @historyMaxMessages then return null
-    if @lastMessages.length >= @historyMaxMessages
-      @lastMessages.pop()
-    @lastMessages.unshift { author : author, message : msg }
-    return null
+  message : (author, msg, cb) ->
+    @roomState.hasInList 'userlist', author, (error, hasAuthor) =>
+      if error then return cb @errorBuilder.makeServerError error
+      unless hasAuthor
+        return @errorBuilder.makeError 'notJoined', @name
+      @roomState.messageAdd msg, (error) =>
+        if error then return cb @errorBuilder.makeServerError error
+        cb()
 
-  getList : (author, listName) ->
-    error = @checkList author, listName
-    if error then return { error : error }
-    data = @[listName].toArray()
-    return { data : data }
+  getList : (author, listName, cb) ->
+    @checkList author, listName, (error) =>
+      if error then return cb error
+      @roomState.getList listName, (error, list) =>
+        if error then return cb @errorBuilder.makeServerError error
+        cb null, list
 
-  getLastMessages : (author) ->
-    unless @hasUser author
-      error =  @errorBuilder.makeError 'notJoined', @name
-      return { error : error }
-    data = @lastMessages.toArray()
-    return { data : data }
+  getLastMessages : (author, cb) ->
+    @roomState.hasInList 'userlist', author, (error, hasAuthor) =>
+      if error then return cb @errorBuilder.makeServerError error
+      unless hasAuthor
+        return cb @errorBuilder.makeError 'notJoined', @name
+      @roomState.messagesGet (error, data) =>
+        if error then return cb @errorBuilder.makeServerError error
+        cb null, data
 
-  addToList : (author, listName, values) ->
-    error = @checkListOp author, listName, values
-    if error then return { error :  error }
-    for val in values
-      error = @checkListAdd author, listName, val
-      if error then return { error :  error }
-    data = []
-    for val in values
-      if @hasAddChangedCurrentAccess val, listName
-        data.push val
-    @[listName].addEach values
-    return { data : data }
+  addToList : (author, listName, values, cb) ->
+    async.eachLimit values, asyncLimit, (val, fn) =>
+      @checkListAdd author, listName, val, fn
+    , (error) =>
+      if error then return cb error
+      data = []
+      async.eachLimit values, asyncLimit
+      , (val, fn) =>
+        @hasAddChangedCurrentAccess val, listName, (error, changed) ->
+          if error then return fn error
+          if changed then data.push val
+          fn()
+      , (error) =>
+        if error then return cb error
+        @roomState.addToList listName, values, (error) =>
+          if error then return cb @errorBuilder.makeServerError error
+          cb null, data
 
-  removeFromList : (author, listName, values) ->
-    error = @checkListOp author, listName, values
-    if error then return { error :  error }
-    for val in values
-      error = @checkListRemove author, listName, val
-      if error then return { error :  error }
-    data = []
-    for val in values
-      if @hasRemoveChangedCurrentAccess val, listName
-        data.push val
-    @[listName].deleteEach values
-    return { data : data }
+  removeFromList : (author, listName, values, cb) ->
+    async.eachLimit values, asyncLimit, (val, fn) =>
+      @checkListRemove author, listName, val, fn
+    , (error) =>
+      if error then return cb error
+      data = []
+      async.eachLimit values, asyncLimit
+      , (val, fn) =>
+        @hasRemoveChangedCurrentAccess val, listName, (error, changed) ->
+          if error then return fn error
+          if changed then data.push val
+          fn()
+      , (error) =>
+        if error then return cb error
+        @roomState.removeFromList listName, values, (error) =>
+          if error then return cb @errorBuilder.makeServerError error
+          cb null, data
 
-  getMode : (author) ->
-    return { data : @whitelistOnly }
+  getMode : (author, cb) ->
+    @roomState.whitelistOnlyGet (error, data) =>
+      if error then return cb @errorBuilder.makeServerError error
+      cb null, data
 
-  changeMode : (author, mode) ->
-    error = @checkModeChange author, mode
-    if error then return error
-    @whitelistOnly = if mode then true else false
-    data = @getModeChangedCurrentAccess @whitelistOnly
-    return { data : data }
+  changeMode : (author, mode, cb) ->
+    @checkModeChange author, mode, (error) =>
+      if error then return cb error
+      whitelistOnly = if mode then true else false
+      @roomState.whitelistOnlySet whitelistOnly, (error) =>
+        if error then return cb @errorBuilder.makeServerError error
+        @getModeChangedCurrentAccess whitelistOnly, (error, data) ->
+          cb error, data
 
 
 class DirectMessagingState
@@ -627,7 +750,7 @@ class User extends UserDirectMessaging
     unless fromUser
       error = @errorBuilder.makeError 'noUserOnline', @username
       return sendResult socket, idcmd, cb, error
-    processMessage msg
+    msg = processMessage @username, msg
     toUser.message @username, msg, (error) =>
       if error
         return sendResult socket, idcmd, cb, error
@@ -668,23 +791,26 @@ class User extends UserDirectMessaging
         @userState.roomsGetAll (error, rooms) =>
           if error
             return makeServerError @errorBuilder, error
-          for roomName in rooms
+          async.eachLimit rooms, asyncLimit
+          , (roomName, fn) =>
             room = @roomManager.getRoom roomName
-            room.removeUser @username
-            if @enableUserlistUpdates
-              @server.nsp.in(roomName).emit 'roomUserLeave'
-              , roomName, @username
-          @userManager.removeUser @username
+            room.leave @username, () =>
+              if @enableUserlistUpdates
+                @server.nsp.in(roomName).emit 'roomUserLeave'
+                , roomName, @username
+              fn()
+           , () =>
+            @userManager.removeUser @username
 
   listRooms : (socket, idcmd, cb) ->
-    data = @roomManager.listRooms()
-    return sendResult socket, idcmd, cb, null, data
+    @roomManager.listRooms @username, (error, data) ->
+      return sendResult socket, idcmd, cb, error, data
 
   roomAddToList : (socket, idcmd, cb
   , roomName, listName, values) ->
     @withRoom roomName, (error, room) =>
-      unless error
-        { error, data } = room.addToList @username, listName, values
+      if error then sendResult socket, idcmd, cb, error
+      room.addToList @username, listName, values, (error, data) =>
         if error then return sendResult socket, idcmd, cb, error
         @sendAccessRemoved data, roomName, (error) ->
           sendResult socket, idcmd, cb, error
@@ -702,9 +828,12 @@ class User extends UserDirectMessaging
     if room
       error = @errorBuilder.makeError 'roomExists', roomName
       return sendResult socket, idcmd, cb, error
-    room = new Room @server, roomName, @username, whitelistOnly
-    @roomManager.addRoom room
-    return sendResult socket, idcmd, cb
+    room = new Room @server, roomName
+    room.initState { owner : @username, whitelistOnly : whitelistOnly }
+    , (error) =>
+      unless error
+        @roomManager.addRoom room
+      return sendResult socket, idcmd, cb, error
 
   roomDelete : (socket, idcmd, cb
   , roomName) ->
@@ -712,108 +841,119 @@ class User extends UserDirectMessaging
       err = @errorBuilder.makeError 'notAllowed'
       return sendResult socket, idcmd, cb, err
     @withRoom roomName, (error, room) =>
-      error = room.checkIsOwner @username unless error
-      if error then return sendResult socket, idcmd, cb, error
-      @roomManager.removeRoom room.name
-      @sendAccessRemoved room, roomName, (error) ->
-        sendResult socket, idcmd, cb, error
+      if error then sendResult socket, idcmd, cb, error
+      room.checkIsOwner @username, (error) =>
+        if error then return sendResult socket, idcmd, cb, error
+        @roomManager.removeRoom room.name
+        room.roomState.getList 'userlist', (error, list) =>
+          if error
+            wrappedError = makeServerError @errorBuilder, error
+            return sendResult socket, idcmd, cb, wrappedError
+          @sendAccessRemoved list, roomName, (error) ->
+            sendResult socket, idcmd, cb, error
 
   roomGetAccessList : (socket, idcmd, cb
   , roomName, listName) ->
     @withRoom roomName, (error, room) =>
-      { error, data } = room.getList @username, listName unless error
-      sendResult socket, idcmd, cb, error, data
+      if error then return sendResult socket, idcmd, cb, error
+      room.getList @username, listName, (error, data) ->
+        sendResult socket, idcmd, cb, error, data
 
   roomGetWhitelistMode : (socket, idcmd, cb
   , roomName) ->
     @withRoom roomName, (error, room) =>
-      { error, data } = room.getMode @username unless error
-      sendResult socket, idcmd, cb, error, data
+      if error then return sendResult socket, idcmd, cb, error
+      room.getMode @username, (error, data) ->
+        sendResult socket, idcmd, cb, error, data
 
   roomHistory : (socket, idcmd, cb
   , roomName) ->
     @withRoom roomName, (error, room) =>
-      { error, data } = room.getLastMessages @username unless error
-      sendResult socket, idcmd, cb, error, data
+      if error then return sendResult socket, idcmd, cb, error
+      room.getLastMessages @username, (error, data) ->
+        sendResult socket, idcmd, cb, error, data
 
   roomJoin : (socket, idcmd, cb
   , roomName) ->
     @withRoom roomName, (error, room) =>
-      error = room.join @username unless error
       if error then return sendResult socket, idcmd, cb, error
-      @userState.roomAdd roomName, (error) =>
-        if error
-          wrappedError = makeServerError @errorBuilder, error
-          return sendResult socket, idcmd, cb, wrappedError
-        if @enableUserlistUpdates
-          @send roomName, 'roomUserJoin', roomName, @username
-        makeClosure = (id) =>
-          return (error) =>
-            # TODO other sockets errors handling
-            if socket.id == id
-              sendResult socket, idcmd, cb, error
-            @send id, 'roomJoined', roomName
-        # TODO lock user state
-        @userState.socketsGetAll (error, sockets) =>
+      room.join @username, (error) =>
+        if error then return sendResult socket, idcmd, cb, error
+        @userState.roomAdd roomName, (error) =>
           if error
             wrappedError = makeServerError @errorBuilder, error
             return sendResult socket, idcmd, cb, wrappedError
-          for id in sockets
-            @server.nsp.adapter.add id, roomName, makeClosure id
+          if @enableUserlistUpdates
+            @send roomName, 'roomUserJoin', roomName, @username
+          makeClosure = (id) =>
+            return (error) =>
+              # TODO other sockets errors handling
+              if socket.id == id
+                sendResult socket, idcmd, cb, error
+              @send id, 'roomJoined', roomName
+          # TODO lock user state
+          @userState.socketsGetAll (error, sockets) =>
+            if error
+              wrappedError = makeServerError @errorBuilder, error
+              return sendResult socket, idcmd, cb, wrappedError
+            for id in sockets
+              @server.nsp.adapter.add id, roomName, makeClosure id
 
   roomLeave : (socket, idcmd, cb
   , roomName) ->
     @withRoom roomName, (error, room) =>
-      error = room.leave @username unless error
-      if error
-        wrappedError = makeServerError @errorBuilder, error
-        return sendResult socket, idcmd, cb, wrappedError
-      @userState.roomRemove roomName, (error) =>
+      if error then return sendResult socket, idcmd, cb, error
+      room.leave @username, (error) =>
         if error
           wrappedError = makeServerError @errorBuilder, error
           return sendResult socket, idcmd, cb, wrappedError
-        if @enableUserlistUpdates
-          @send roomName, 'roomUserLeave', roomName, @username
-        makeClosure = (id) =>
-          return (error) =>
-            # TODO other sockets errors handling
-            if socket.id == id
-              sendResult socket, idcmd, cb, error
-             @send id, 'roomLeft', roomName
-        # TODO lock user state
-        @userState.socketsGetAll (error, sockets) =>
+        @userState.roomRemove roomName, (error) =>
           if error
             wrappedError = makeServerError @errorBuilder, error
             return sendResult socket, idcmd, cb, wrappedError
-          for id in sockets
-            @server.nsp.adapter.del id, roomName, makeClosure id
+          if @enableUserlistUpdates
+            @send roomName, 'roomUserLeave', roomName, @username
+          makeClosure = (id) =>
+            return (error) =>
+              # TODO other sockets errors handling
+              if socket.id == id
+                sendResult socket, idcmd, cb, error
+               @send id, 'roomLeft', roomName
+          # TODO lock user state
+          @userState.socketsGetAll (error, sockets) =>
+            if error
+              wrappedError = makeServerError @errorBuilder, error
+              return sendResult socket, idcmd, cb, wrappedError
+            for id in sockets
+              @server.nsp.adapter.del id, roomName, makeClosure id
 
   roomMessage : (socket, idcmd, cb
   , roomName, msg) ->
     @withRoom roomName, (error, room) =>
-      error = room.message @username, msg unless error
-      unless error
-        processMessage msg
-        @send roomName, 'roomMessage', roomName, @username, msg
-      return sendResult socket, idcmd, cb, error
+      if error then return sendResult socket, idcmd, cb, error
+      room.message @username, msg, (error) =>
+        unless error
+          msg = processMessage @username, msg
+          @send roomName, 'roomMessage', roomName, @username, msg
+        return sendResult socket, idcmd, cb, error
 
   roomRemoveFromList : (socket, idcmd, cb
   , roomName, listName, values) ->
     @withRoom roomName, (error, room) =>
       if error then return sendResult socket, idcmd, cb, error
-      { error, data } = room.removeFromList @username, listName, values
-      if error then return sendResult socket, idcmd, cb, error
-      @sendAccessRemoved data, roomName, (error) ->
-        sendResult socket, idcmd, cb, error
+      room.removeFromList @username, listName, values, (error, data) =>
+        if error then return sendResult socket, idcmd, cb, error
+        @sendAccessRemoved data, roomName, (error) ->
+          sendResult socket, idcmd, cb, error
 
   roomSetWhitelistMode : (socket, idcmd, cb
   , roomName, mode) ->
     @withRoom roomName, (error, room) =>
       if error then return sendResult socket, idcmd, cb, error
-      { error, data } = room.changeMode @username, mode unless error
-      if error then return sendResult socket, idcmd, cb, error
-      @sendAccessRemoved data, roomName, (error) ->
-        sendResult socket, idcmd, cb, error
+      room.changeMode @username, mode, (error, data) =>
+        if error then return sendResult socket, idcmd, cb, error
+        @sendAccessRemoved data, roomName, (error) ->
+          sendResult socket, idcmd, cb, error
 
 
 class UserManager
@@ -856,13 +996,17 @@ class RoomManager
     unless @rooms[name]
       @rooms[name] = room
 
-  listRooms : ->
+  listRooms : (author, cb) ->
     list = []
-    for own name, room of @rooms
-      unless room.whitelistOnly
-        list.push name
-    list.sort()
-    return list
+    async.forEachOfLimit @rooms, asyncLimit
+    , (room, name, fn) ->
+      # TODO error handling
+      room.getMode author, (error, isPrivate) ->
+        unless isPrivate then list.push name
+        fn()
+    , ->
+      list.sort()
+      cb null, list
 
 
 class ChatService
