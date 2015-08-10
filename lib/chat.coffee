@@ -78,8 +78,8 @@ class ErrorBuilder
       return { name : error, args : args }
     return util.format @getErrorString(error), args...
 
-  makeServerError : (err) ->
-    return @makeError 'serverError', err.toString()
+  makeServerError : (error) ->
+    return @makeError 'serverError', error.toString()
 
 
 processMessage = (author, msg) ->
@@ -792,9 +792,7 @@ class User extends UserDirectMessaging
     room = new Room @server, roomName
     room.initState { owner : @username, whitelistOnly : whitelistOnly }
     , (error) =>
-      if error
-        wrappedError = @errorBuilder.makeServerError error
-        return cb wrappedError
+      if error then return cb @errorBuilder.makeServerError error
       @roomManager.addRoom room
       return cb error
 
@@ -808,9 +806,7 @@ class User extends UserDirectMessaging
         if error then return cb error
         @roomManager.removeRoom room.name
         room.roomState.getList 'userlist', (error, list) =>
-          if error
-            wrappedError = @errorBuilder.makeServerError error
-            return cb wrappedError
+          if error then return cb @errorBuilder.makeServerError error
           @sendAccessRemoved list, roomName, (error) ->
             cb error
 
@@ -835,16 +831,12 @@ class User extends UserDirectMessaging
       room.join @username, (error) =>
         if error then return cb error
         @userState.roomAdd roomName, (error) =>
-          if error
-            wrappedError = @errorBuilder.makeServerError error
-            return cb wrappedError
+          if error then return cb @errorBuilder.makeServerError error
           if @enableUserlistUpdates
             @send roomName, 'roomUserJoin', roomName, @username
           # TODO lock user sockets
           @userState.socketsGetAll (error, sockets) =>
-            if error
-              wrappedError = @errorBuilder.makeServerError error
-              return cb wrappedError
+            if error then return cb @errorBuilder.makeServerError error
             async.eachLimit sockets, asyncLimit, (sid, fn) =>
               @server.nsp.adapter.add sid, roomName
               , (error) =>
@@ -858,16 +850,12 @@ class User extends UserDirectMessaging
       room.leave @username, (error) =>
         if error then return cb error
         @userState.roomRemove roomName, (error) =>
-          if error
-            wrappedError = makeServerError @errorBuilder, error
-            return cb wrappedError
+          if error then return cb @errorBuilder.makeServerError error
           if @enableUserlistUpdates
             @send roomName, 'roomUserLeave', roomName, @username
           # TODO lock user sockets
           @userState.socketsGetAll (error, sockets) =>
-            if error
-              wrappedError = makeServerError @errorBuilder, error
-              return cb wrappedError
+            if error then return cb @errorBuilder.makeServerError error
             async.eachLimit sockets, asyncLimit, (sid, fn) =>
               @server.nsp.adapter.del sid, roomName
               , (error) =>
@@ -982,8 +970,8 @@ class ChatService
 
     @nsp = @io.of @namespace
     if @hooks.onStart
-      @hooks.onStart @, (err) =>
-        if err then return @close null, err
+      @hooks.onStart @, (error) =>
+        if error then return @close null, error
         @setEvents()
     else
       @setEvents()
@@ -993,14 +981,14 @@ class ChatService
       @nsp.use @hooks.auth
     if @hooks.onConnect
       @nsp.on 'connection', (socket) =>
-        @hooks.onConnect @, socket, (err, data) =>
-          @addClient err, data, socket
+        @hooks.onConnect @, socket, (error, data) =>
+          @addClient error, data, socket
     else
       @nsp.on 'connection', (socket) =>
         @addClient null, null, socket
 
-  addClient : (err, user, socket) ->
-    if err then return socket.emit 'loginRejected', err
+  addClient : (error, user, socket) ->
+    if error then return socket.emit 'loginRejected', error
     unless user
       userName = socket.handshake.query?.user
       unless userName
@@ -1014,9 +1002,9 @@ class ChatService
       socket.emit 'loginConfirmed', userName
 
   close : (done, error) ->
-    cb = (err) =>
+    cb = (error) =>
       unless @sharedIO or @http then @io.close()
-      if done then process.nextTick -> done err
+      if done then process.nextTick -> done error
     if @hooks.onClose
       @hooks.onClose @, error, cb
     else

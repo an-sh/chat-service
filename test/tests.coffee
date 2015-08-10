@@ -34,7 +34,6 @@ describe 'Chat service', ->
   url1 = "http://#{host}:#{port}#{namespace}"
 
   afterEach (done) ->
-    id = 100
     if socket1
       socket1.disconnect()
       socket1 = null
@@ -55,9 +54,9 @@ describe 'Chat service', ->
     enableDestroy httpInst
     chatServer1 = new ChatService { http : httpInst }
     httpInst.listen port
-    cleanup = (err) ->
+    cleanup = (error) ->
       chatServer1.close ->
-        httpInst.destroy done, err
+        httpInst.destroy done, error
     process.once 'uncaughtException', cleanup
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', (u) ->
@@ -68,11 +67,11 @@ describe 'Chat service', ->
   it 'should integrate with an existing io', (done) ->
     io = socketIO port
     chatServer1 = new ChatService { io : io }
-    cleanup =  (err) ->
+    cleanup =  (error) ->
       chatServer1.close ->
         chatServer1.close()
         io.close()
-        done err
+        done error
     process.once 'uncaughtException', cleanup
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', (u) ->
@@ -145,7 +144,7 @@ describe 'Chat service', ->
       socket2 = ioClient.connect url1, makeParams(user1)
       socket2.on 'loginConfirmed', (u) ->
         user = chatServer.userManager.getUser(user1)
-        user.userState.socketsCount (err, nsockets) ->
+        user.userState.socketsCount (error, nsockets) ->
           expect(nsockets).equal(2)
           done()
 
