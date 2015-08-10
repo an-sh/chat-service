@@ -33,7 +33,6 @@ userCommands =
 serverMessages =
   directMessage : ''
   directMessageEcho : ''
-  fail : ''
   loginConfirmed: ''
   loginRejected : ''
   roomAccessRemoved : ''
@@ -42,12 +41,12 @@ serverMessages =
   roomMessage : ''
   roomUserJoin : ''
   roomUserLeave : ''
-  success : ''
 
 Object.freeze userCommands
 Object.freeze serverMessages
 
 asyncLimit = 16
+defaultPort = 8000
 
 # TODO log server errors function
 class ErrorBuilder
@@ -186,8 +185,9 @@ class RoomState extends ListsStateHelper
 
 class Room
 
-  constructor : (@server, @name, state = RoomState) ->
+  constructor : (@server, @name) ->
     @errorBuilder = @server.errorBuilder
+    state = @server.chatState.roomState
     @roomState = new state @name, @server.historyMaxMessages
 
   initState : (state, cb) ->
@@ -431,7 +431,9 @@ class DirectMessagingState extends ListsStateHelper
 
 class UserDirectMessaging
 
-  constructor : (@errorBuilder, @username, state = DirectMessagingState) ->
+  constructor : (@server, @username) ->
+    @errorBuilder = @server.errorBuilder
+    state = @server.chatState.directMessagingState
     @directMessagingState = new state @username
 
   initState : (state, cb) ->
@@ -573,13 +575,13 @@ class UserState
 
 class User extends UserDirectMessaging
 
-  constructor : (@server, @username, state = UserState) ->
-    super @server.errorBuilder, @username
-    @userManager = @server.userManager
-    @roomManager = @server.roomManager
+  constructor : (@server, @username) ->
+    super @server, @username
+    @chatState = @server.chatState
     @enableUserlistUpdates = @server.enableUserlistUpdates
     @enableRoomsManagement = @server.enableRoomsManagement
     @enableDirectMessages = @server.enableDirectMessages
+    state = @server.chatState.userState
     @userState = new state @username
 
   ###
@@ -639,9 +641,7 @@ class User extends UserDirectMessaging
       cmd args..., ack, socket.id
 
   withRoom : (roomName, fn) ->
-    room = @roomManager.getRoom roomName
-    error = @errorBuilder.makeError 'noRoom', roomName unless room
-    fn error, room
+    @chatState.getRoom roomName, fn
 
   send : (id, args...) ->
     @server.nsp.in(id).emit args...
@@ -649,15 +649,15 @@ class User extends UserDirectMessaging
   sendAccessRemoved : (userNames, roomName, cb) ->
     async.eachLimit userNames, asyncLimit
     , (userName, fn) =>
-      user = @userManager.getUser userName
-      unless user then return fn()
-      user.userState.roomRemove roomName, (error) =>
-        if error then return fn @errorBuilder.makeServerError error
-        user.userState.socketsGetAll (error, sockets) =>
+      @chatState.getUser userName, (error, user) =>
+        if error then return fn()
+        user.userState.roomRemove roomName, (error) =>
           if error then return fn @errorBuilder.makeServerError error
-          for id in sockets
-            @send id, 'roomAccessRemoved', roomName
-          fn()
+          user.userState.socketsGetAll (error, sockets) =>
+            if error then return fn @errorBuilder.makeServerError error
+            for id in sockets
+              @send id, 'roomAccessRemoved', roomName
+            fn()
     , cb
 
   reportRoomConnections : (error, id, sid, roomName, msgName, cb) ->
@@ -666,6 +666,9 @@ class User extends UserDirectMessaging
       else cb @errorBuilder.makeServerError error
     else unless error
       @send sid, msgName, roomName
+
+  removeUser : (cb) ->
+    # TODO remove user sockets, send loginRejected
 
   ###
   # commands
@@ -684,27 +687,23 @@ class User extends UserDirectMessaging
     unless @enableDirectMessages
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
-    toUser = @userManager.getUser toUserName
-    unless toUser
-      error = @errorBuilder.makeError 'noUserOnline', toUserName
-      return cb error
-    fromUser = @userManager.getUser @username
-    unless fromUser
-      error = @errorBuilder.makeError 'noUserOnline', @username
-      return cb error
-    msg = processMessage @username, msg
-    toUser.message @username, msg, (error) =>
+    @chatState.getUser toUserName, (error, toUser) =>
       if error then return cb error
-      fromUser.userState.socketsGetAll (error, sockets) =>
-        if error then return cb @errorBuilder.makeServerError error
-        for sid in sockets
-          if sid != id
-            @send sid, 'directMessageEcho', toUserName, msg
-        toUser.userState.socketsGetAll (error, sockets) =>
-          if error then return cb @errorBuilder.makeServerError error
-          for sid in sockets
-            @send sid, 'directMessage', @username, msg
-          cb()
+      @chatState.getUser @username , (error, fromUser) =>
+        if error then return cb error
+        msg = processMessage @username, msg
+        toUser.message @username, msg, (error) =>
+          if error then return cb error
+          fromUser.userState.socketsGetAll (error, sockets) =>
+            if error then return cb @errorBuilder.makeServerError error
+            for sid in sockets
+              if sid != id
+                @send sid, 'directMessageEcho', toUserName, msg
+            toUser.userState.socketsGetAll (error, sockets) =>
+              if error then return cb @errorBuilder.makeServerError error
+              for sid in sockets
+                @send sid, 'directMessage', @username, msg
+              cb()
 
   directRemoveFromList : (listName, values, cb) ->
     @removeFromList @username, listName, values, cb
@@ -723,16 +722,17 @@ class User extends UserDirectMessaging
           if error then return cb errorBuilder.makeServerError error
           async.eachLimit rooms, asyncLimit
           , (roomName, fn) =>
-            room = @roomManager.getRoom roomName
-            room.leave @username, =>
-              if @enableUserlistUpdates
-                @send roomName, 'roomUserLeave', roomName, @username
-              fn()
+            @chatState.getRoom roomName, (error, room) =>
+              if error then return fn()
+              room.leave @username, =>
+                if @enableUserlistUpdates
+                  @send roomName, 'roomUserLeave', roomName, @username
+                fn()
            , =>
-            @userManager.removeUser @username
+            @chatState.setUserOffline @username, cb
 
   listRooms : (cb) ->
-    @roomManager.listRooms @username, cb
+    @chatState.listRooms @username, cb
 
   roomAddToList : (roomName, listName, values, cb) ->
     @withRoom roomName, (error, room) =>
@@ -745,16 +745,15 @@ class User extends UserDirectMessaging
     unless @enableRoomsManagement
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
-    room = @roomManager.getRoom roomName
-    if room
-      error = @errorBuilder.makeError 'roomExists', roomName
-      return cb error
-    room = new Room @server, roomName
-    room.initState { owner : @username, whitelistOnly : whitelistOnly }
-    , (error) =>
-      if error then return cb @errorBuilder.makeServerError error
-      @roomManager.addRoom room
-      return cb error
+    @chatState.getRoom roomName, (error, room) =>
+      if room
+        error = @errorBuilder.makeError 'roomExists', roomName
+        return cb error
+      room = new Room @server, roomName
+      room.initState { owner : @username, whitelistOnly : whitelistOnly }
+      , (error) =>
+        if error then return cb @errorBuilder.makeServerError error
+        @chatState.addRoom room, cb
 
   roomDelete : (roomName, cb) ->
     unless @enableRoomsManagement
@@ -764,11 +763,12 @@ class User extends UserDirectMessaging
       if error then return cb error
       room.checkIsOwner @username, (error) =>
         if error then return cb error
-        @roomManager.removeRoom room.name
-        room.roomState.getList 'userlist', (error, list) =>
-          if error then return cb @errorBuilder.makeServerError error
-          @sendAccessRemoved list, roomName, (error) ->
-            cb error
+        @chatState.removeRoom room.name, (error) =>
+          if error then return cb error
+          room.roomState.getList 'userlist', (error, list) =>
+            if error then return cb @errorBuilder.makeServerError error
+            @sendAccessRemoved list, roomName, (error) ->
+              cb error
 
   roomGetAccessList : (roomName, listName, cb) ->
     @withRoom roomName, (error, room) =>
@@ -847,51 +847,80 @@ class User extends UserDirectMessaging
         @sendAccessRemoved data, roomName, cb
 
 
-class UserManager
-  constructor : () ->
-    # STATE
-    @users = {}
-    # END OF STATE
-
-  getUser : (name) ->
-    return @users[name]
-
-  removeUser : (name) ->
-    delete @users[name]
-
-  # TODO async errors handling
-  addUser : (user, socket, cb) ->
-    name = user?.username
-    currentUser = @users[name]
-    if currentUser
-      currentUser.registerSocket socket, cb
-    else
-      @users[name] = user
-      user.registerSocket socket, cb
-
-
-class RoomManager
-  constructor : () ->
-    # STATE
+class ChatState
+  constructor : (@server) ->
+    @errorBuilder = @server.errorBuilder
+    @usersOnline = {}
+    @usersOffline = {}
     @rooms = {}
-    # END OF STATE
+    @roomState = RoomState
+    @userState = UserState
+    @directMessagingState = DirectMessagingState
 
-  getRoom : (name) ->
-    return @rooms[name]
+  getUser : (name, cb) ->
+    u = @usersOnline[name]
+    unless u
+      error = @errorBuilder.makeError 'noUserOnline', name
+    process.nextTick -> cb error, u
 
-  removeRoom : (name) ->
-    delete @rooms[name]
+  getRoom : (name, cb) ->
+    r = @rooms[name]
+    unless r
+      error = @errorBuilder.makeError 'noRoom', name
+    process.nextTick -> cb error, r
 
-  addRoom : (room) ->
+  addRoom : (room, cb) ->
     name = room.name
     unless @rooms[name]
       @rooms[name] = room
+    else
+      error = @errorBuilder.makeError 'roomExists', name
+    process.nextTick -> cb error
+
+  addUser : (server, name, socket, cb) ->
+    currentUser = @usersOnline[name]
+    returnedUser = @usersOffline[name] unless currentUser
+    if currentUser
+      currentUser.registerSocket socket, cb
+    else if returnedUser
+      @usersOnline[name] = returnedUser
+      returnedUser.registerSocket socket, cb
+    else
+      newUser = new User @server, name
+      @usersOnline[name] = newUser
+      newUser.registerSocket socket, cb
+
+  removeRoom : (name, cb) ->
+    if @rooms[name]
+      delete @rooms[name]
+    else
+      error = @errorBuilder.makeError 'noRoom', name
+    process.nextTick -> cb error
+
+  setUserOffline : (name, cb) ->
+    unless @usersOnline[name]
+      error = @errorBuilder.makeError 'noUserOnline', name
+    else
+      @usersOffline[name] = @usersOnline[name]
+      delete @usersOnline[name]
+    process.nextTick -> cb error
+
+  removeUser : (name, cb) ->
+    u1 = @usersOnline[name]
+    fn = ->
+      u2 = @usersOffline[name]
+      delete @usersOnline[name]
+      delete @usersOffline[name]
+      unless u1 or u2
+        error = @errorBuilder.makeError 'noUser', name
+      process.nextTick -> cb error
+    if u1 then u1.removeUser fn
+    else fn()
 
   listRooms : (author, cb) ->
     list = []
     async.forEachOfLimit @rooms, asyncLimit
     , (room, name, fn) ->
-      # TODO error handling
       room.getMode author, (error, isPrivate) ->
         unless isPrivate then list.push name
         fn()
@@ -901,7 +930,7 @@ class RoomManager
 
 
 class ChatService
-  constructor : (@options = {}, @hooks = {}) ->
+  constructor : (@options = {}, @hooks = {}, state = ChatState) ->
     @io = @options.io
     @sharedIO = true if @io
     @http = @options.http unless @io
@@ -915,17 +944,14 @@ class ChatService
     @enableDirectMessages = @options.enableDirectMessages || false
     @serverOptions = @options.serverOptions
 
-    # public objects
-    # TODO API
-    @userManager = new UserManager
-    @roomManager = new RoomManager
-
     @errorBuilder = new ErrorBuilder @useRawErrorObjects
+    @chatState = new state @
+
     unless @io
       if @http
         @io = socketIO @http, @serverOptions
       else
-        port = @options?.port || 8080
+        port = @serverOptions?.port || defaultPort
         @io = socketIO port, @serverOptions
 
     @nsp = @io.of @namespace
@@ -941,24 +967,21 @@ class ChatService
       @nsp.use @hooks.auth
     if @hooks.onConnect
       @nsp.on 'connection', (socket) =>
-        @hooks.onConnect @, socket, (error, data) =>
-          @addClient error, data, socket
+        @hooks.onConnect @, socket, (error, userName) =>
+          @addClient error, userName, socket
     else
       @nsp.on 'connection', (socket) =>
         @addClient null, null, socket
 
-  addClient : (error, user, socket) ->
+  addClient : (error, userName, socket) ->
     if error then return socket.emit 'loginRejected', error
-    unless user
+    unless userName
       userName = socket.handshake.query?.user
       unless userName
         error = @errorBuilder.makeError 'noLogin'
         return socket.emit 'loginRejected', error
-      user = new User @, userName
-    else
-      userName = user.username
-    # TODO error handling
-    @userManager.addUser user, socket, ->
+    @chatState.addUser @, userName, socket, (error) ->
+      if error then return socket.emit 'loginRejected', error
       socket.emit 'loginConfirmed', userName
 
   close : (done, error) ->
@@ -974,6 +997,4 @@ module.exports = {
   ChatService
   User
   Room
-  userCommands
-  serverMessages
 }
