@@ -23,7 +23,6 @@ describe 'Chat service', ->
   roomName1 = 'room1'
   roomName2 = 'room2'
 
-  id = 100
   chatServer = null
   socket1 = null
   socket2 = null
@@ -154,24 +153,17 @@ describe 'Chat service', ->
     chatServer = new ChatService { port : port, enableRoomsManagement : true }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', (u) ->
-      socket1.once 'success', (idcmd, data) ->
-        expect(idcmd).equal(id)
+      socket1.emit 'roomCreate', roomName1, false, (error, data) ->
         expect(chatServer.roomManager.getRoom roomName1).ok
         chatServer.roomManager.listRooms user1, (error, data) ->
           expect(data).length(1)
-          id++
-          socket1.emit 'roomCreate', id, roomName1, false
-      socket1.once 'fail', (idcmd, err) ->
-        expect(idcmd).equal(id)
-        expect(err).ok
-        socket1.once 'success', (idcmd) ->
-          expect(idcmd).equal(id)
-          chatServer.roomManager.listRooms user1, (error, data) ->
-            expect(data).empty
-            done()
-        id++
-        socket1.emit 'roomDelete', id, roomName1
-      socket1.emit 'roomCreate', id, roomName1, false
+          expect(data[0]).equal(roomName1)
+          socket1.emit 'roomCreate', roomName1, false, (error, data) ->
+            expect(error).ok
+            socket1.emit 'roomDelete', roomName1, (error, data) ->
+              chatServer.roomManager.listRooms user1, (error, data) ->
+                expect(data).empty
+                done()
 
   it 'should reject room management without enableRoomsManagement option'
   , (done) ->
@@ -180,15 +172,13 @@ describe 'Chat service', ->
     chatServer.roomManager.addRoom room
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', (u) ->
-      socket1.emit 'roomCreate', id, roomName1, false
-      socket1.once 'fail', (idcmd, err) ->
-        expect(err).ok
-        socket1.emit 'roomDelete', id, roomName2
-        socket1.once 'fail', (idcmd, err) ->
-          expect(err).ok
+      socket1.emit 'roomCreate', roomName1, false, (error, data) ->
+        expect(error).ok
+        socket1.emit 'roomDelete', roomName2, (error, data) ->
+          expect(error).ok
           done()
 
-  it 'should join and leave room for all user sockets', (done) ->
+  it 'should emit join and leave for user\'s sockets', (done) ->
     chatServer = new ChatService { port : port }
     room = new Room chatServer, roomName1
     chatServer.roomManager.addRoom room
@@ -197,37 +187,12 @@ describe 'Chat service', ->
       socket2 = ioClient.connect url1, makeParams(user1)
       socket2.on 'loginConfirmed', ->
         user = chatServer.userManager.getUser(user1)
-        socket2.emit 'roomJoin', id, roomName1
-        async.parallel [ (cb) ->
-          socket2.on 'roomJoined', (room) ->
+        socket2.emit 'roomJoin', roomName1
+        socket1.on 'roomJoined', (room) ->
+          expect(room).equal(roomName1)
+          socket1.emit 'roomLeave', roomName1
+          socket2.on 'roomLeft', (room) ->
             expect(room).equal(roomName1)
-            cb()
-        , (cb) ->
-          socket1.on 'roomJoined', (room) ->
-            expect(room).equal(roomName1)
-            cb()
-        , (cb) ->
-          socket2.once 'success', (idcmd) ->
-            expect(idcmd).equal(id)
-            cb()
-        ]
-        , ->
-          room = chatServer.roomManager.getRoom roomName1
-          socket1.emit 'roomLeave', id, roomName1
-          async.parallel [ (cb) ->
-            socket2.on 'roomLeft', (room) ->
-              expect(room).equal(roomName1)
-              cb()
-            , (cb) ->
-              socket1.on 'roomLeft', (room) ->
-              expect(room).equal(roomName1)
-              cb()
-            , (cb) ->
-              socket1.once 'success', (idcmd) ->
-              expect(idcmd).equal(id)
-              cb()
-          ]
-          , ->
             done()
 
   it 'should broadcast join and leave room messages', (done) ->
@@ -236,16 +201,14 @@ describe 'Chat service', ->
     chatServer.roomManager.addRoom room
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
-      socket1.emit 'roomJoin', id, roomName1
-      socket1.once 'success', (idcmd) ->
-        expect(idcmd).equal(id)
+      socket1.emit 'roomJoin', roomName1, (error, data) ->
         socket2 = ioClient.connect url1, makeParams(user2)
         socket2.on 'loginConfirmed', ->
-          socket2.emit 'roomJoin', id, roomName1
+          socket2.emit 'roomJoin', roomName1
           socket1.on 'roomUserJoin', (room, user) ->
             expect(room).equal(roomName1)
             expect(user).equal(user2)
-            socket2.emit 'roomLeave', id, roomName1
+            socket2.emit 'roomLeave', roomName1
             socket1.on 'roomUserLeave', (room, user) ->
               expect(room).equal(roomName1)
               expect(user).equal(user2)
@@ -259,12 +222,9 @@ describe 'Chat service', ->
     chatServer.roomManager.addRoom room
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
-      socket1.emit 'roomJoin', id, roomName1
-      socket1.once 'success', (idcmd) ->
-        socket1.emit 'roomMessage', id, roomName1, message
-        socket1.once 'success', ->
-          socket1.emit 'roomHistory', id, roomName1
-          socket1.once 'success', (idcmd, data) ->
+      socket1.emit 'roomJoin', roomName1, (error, data) ->
+        socket1.emit 'roomMessage', roomName1, message, (error, data) ->
+          socket1.emit 'roomHistory', roomName1, (error, data) ->
             expect(data[0].textMessage).eql(txt)
             done()
 
@@ -276,13 +236,11 @@ describe 'Chat service', ->
     chatServer.roomManager.addRoom room
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
-      socket1.emit 'roomJoin', id, roomName1
-      socket1.once 'success', (idcmd) ->
+      socket1.emit 'roomJoin', roomName1, (error, data) ->
         socket2 = ioClient.connect url1, makeParams(user2)
         socket2.on 'loginConfirmed', ->
-          socket2.emit 'roomJoin', id, roomName1
-          socket2.once 'success', (idcmd) ->
-            socket1.emit 'roomMessage', id, roomName1, message
+          socket2.emit 'roomJoin', roomName1, (error, data) ->
+            socket1.emit 'roomMessage', roomName1, message
             async.parallel [ (cb) ->
               socket1.on 'roomMessage', (room, user, msg) ->
                 expect(room).equal(roomName1)
@@ -297,9 +255,6 @@ describe 'Chat service', ->
                 expect(msg.textMessage).equal(txt)
                 expect(msg).ownProperty('timestamp')
                 cb()
-            , (cb) ->
-              socket1.once 'success', (idcmd) ->
-                cb()
             ]
             , -> done()
 
@@ -312,9 +267,7 @@ describe 'Chat service', ->
       chatServer.roomManager.addRoom room2
       socket1 = ioClient.connect url1, makeParams(user1)
       socket1.on 'loginConfirmed', ->
-        socket1.emit 'listRooms', id
-        socket1.once 'success', (idcmd, data) ->
-          expect(idcmd).equal(id)
+        socket1.emit 'listRooms', (error, data) ->
           expect(data).an('array')
           expect(data).include(roomName2)
           expect(data).not.include(roomName1)
@@ -327,8 +280,7 @@ describe 'Chat service', ->
       chatServer.roomManager.addRoom room1
       socket1 = ioClient.connect url1, makeParams(user1)
       socket1.on 'loginConfirmed', ->
-        socket1.emit 'roomGetWhitelistMode', id, roomName1
-        socket1.once 'success', (idcmd, data) ->
+        socket1.emit 'roomGetWhitelistMode', roomName1, (error, data) ->
           expect(data).ok
           done()
 
@@ -338,10 +290,9 @@ describe 'Chat service', ->
     chatServer.roomManager.addRoom room
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
-      socket1.emit 'roomJoin', id, roomName1
-      socket1.once 'success', (idcmd) ->
-        socket1.emit 'roomGetAccessList', id, roomName1, 'userlist'
-        socket1.once 'success', (idcmd, data) ->
+      socket1.emit 'roomJoin', roomName1, (error, data) ->
+        socket1.emit 'roomGetAccessList', roomName1, 'userlist'
+        , (error, data) ->
           expect(data).an('array')
           expect(data).include(user1)
           done()
@@ -352,8 +303,7 @@ describe 'Chat service', ->
     chatServer.roomManager.addRoom room
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
-      socket1.emit 'roomGetAccessList', id, roomName1, 'userlist'
-      socket1.once 'fail', (idcmd, error) ->
+      socket1.emit 'roomGetAccessList', roomName1, 'userlist', (error, data) ->
         expect(error).ok
         done()
 
@@ -364,15 +314,13 @@ describe 'Chat service', ->
       chatServer.roomManager.addRoom room
       socket1 = ioClient.connect url1, makeParams(user1)
       socket1.on 'loginConfirmed', ->
-        socket1.emit 'roomJoin', id, roomName1
-        socket1.once 'success', (idcmd) ->
-          socket1.emit 'roomAddToList', id, roomName1, 'whitelist', [user2]
-          socket1.once 'success', (idcmd) ->
+        socket1.emit 'roomJoin',  roomName1, (error, data) ->
+          socket1.emit 'roomAddToList', roomName1, 'whitelist', [user2]
+          , (error, data) ->
             room.roomState.getList 'whitelist', (error, data) ->
               expect(data).include(user2)
-              socket1.emit 'roomRemoveFromList', id, roomName1, 'whitelist'
-              , [user2]
-              socket1.once 'success', (idcmd) ->
+              socket1.emit 'roomRemoveFromList', roomName1, 'whitelist'
+              , [user2], (error, data) ->
                 room.roomState.getList 'whitelist', (error, data) ->
                   expect(data).not.include(user2)
                   done()
@@ -383,10 +331,9 @@ describe 'Chat service', ->
     chatServer.roomManager.addRoom room
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
-      socket1.emit 'roomJoin', id, roomName1
-      socket1.once 'success', (idcmd) ->
-        socket1.emit 'roomAddToList', id, roomName1, 'adminlist', [user2]
-        socket1.once 'fail', (idcmd, error) ->
+      socket1.emit 'roomJoin', roomName1, (error, data) ->
+        socket1.emit 'roomAddToList', roomName1, 'adminlist', [user2]
+        , (error, data) ->
           expect(error).ok
           done()
 
@@ -397,8 +344,7 @@ describe 'Chat service', ->
       chatServer.roomManager.addRoom room
       socket1 = ioClient.connect url1, makeParams(user1)
       socket1.on 'loginConfirmed', ->
-        socket1.emit 'roomJoin', id, roomName1
-        socket1.once 'fail', (idcmd, error) ->
+        socket1.emit 'roomJoin', roomName1, (error, data) ->
           expect(error).ok
           done()
 
@@ -410,13 +356,11 @@ describe 'Chat service', ->
         chatServer.roomManager.addRoom room
         socket1 = ioClient.connect url1, makeParams(user1)
         socket1.on 'loginConfirmed', ->
-          socket1.emit 'roomJoin', id, roomName1
-          socket1.once 'fail', (idcmd, error) ->
+          socket1.emit 'roomJoin', roomName1, (error, data) ->
             expect(error).ok
             socket2 = ioClient.connect url1, makeParams(user2)
             socket2.on 'loginConfirmed', ->
-              socket2.emit 'roomJoin', id, roomName1
-              socket2.once 'success', (idcmd) ->
+              socket2.emit 'roomJoin', roomName1, (error, data) ->
                 done()
 
   it 'should remove users on permission changes', (done) ->
@@ -426,13 +370,11 @@ describe 'Chat service', ->
       chatServer.roomManager.addRoom room
       socket1 = ioClient.connect url1, makeParams(user1)
       socket1.on 'loginConfirmed', ->
-        socket1.emit 'roomJoin', id, roomName1
-        socket1.once 'success', (idcmd) ->
+        socket1.emit 'roomJoin', roomName1, (error, data) ->
           socket2 = ioClient.connect url1, makeParams(user2)
           socket2.on 'loginConfirmed', ->
-            socket2.emit 'roomJoin', id, roomName1
-            socket2.once 'success', (idcmd) ->
-              socket1.emit 'roomAddToList', id, roomName1, 'blacklist', [user2]
+            socket2.emit 'roomJoin', roomName1, (error, data) ->
+              socket1.emit 'roomAddToList', roomName1, 'blacklist', [user2]
               socket2.on 'roomAccessRemoved', (r) ->
                 expect(r).equal(roomName1)
                 done()
@@ -444,13 +386,11 @@ describe 'Chat service', ->
       chatServer.roomManager.addRoom room
       socket1 = ioClient.connect url1, makeParams(user1)
       socket1.on 'loginConfirmed', ->
-        socket1.emit 'roomJoin', id, roomName1
-        socket1.once 'success', (idcmd) ->
+        socket1.emit 'roomJoin', roomName1, (error, data) ->
           socket2 = ioClient.connect url1, makeParams(user2)
           socket2.on 'loginConfirmed', ->
-            socket2.emit 'roomJoin', id, roomName1
-            socket2.once 'success', (idcmd) ->
-              socket1.emit 'roomSetWhitelistMode', id, roomName1, true
+            socket2.emit 'roomJoin', roomName1, (error, data) ->
+              socket1.emit 'roomSetWhitelistMode', roomName1, true
               socket2.on 'roomAccessRemoved', (r) ->
                 expect(r).equal(roomName1)
                 done()
@@ -463,13 +403,11 @@ describe 'Chat service', ->
         chatServer.roomManager.addRoom room
         socket1 = ioClient.connect url1, makeParams(user1)
         socket1.on 'loginConfirmed', ->
-          socket1.emit 'roomJoin', id, roomName1
-          socket1.once 'success', (idcmd) ->
+          socket1.emit 'roomJoin', roomName1, (error, data) ->
             socket2 = ioClient.connect url1, makeParams(user2)
             socket2.on 'loginConfirmed', ->
-              socket2.emit 'roomJoin', id, roomName1
-              socket2.once 'success', (idcmd) ->
-                socket1.emit 'roomRemoveFromList', id, roomName1
+              socket2.emit 'roomJoin', roomName1, (error, data) ->
+                socket1.emit 'roomRemoveFromList', roomName1
                 , 'whitelist', [user2]
                 socket2.on 'roomAccessRemoved', (r) ->
                   expect(r).equal(roomName1)
@@ -482,9 +420,8 @@ describe 'Chat service', ->
       chatServer.roomManager.addRoom room
       socket1 = ioClient.connect url1, makeParams(user1)
       socket1.on 'loginConfirmed', ->
-        socket1.emit 'roomJoin', id, roomName1
-        socket1.once 'success', (idcmd) ->
-          socket1.emit 'roomDelete', id, roomName1
+        socket1.emit 'roomJoin', roomName1, (error, data) ->
+          socket1.emit 'roomDelete', roomName1
           socket1.once 'roomAccessRemoved', (r) ->
             expect(r).equal(roomName1)
             done()
@@ -495,14 +432,12 @@ describe 'Chat service', ->
     chatServer.roomManager.addRoom room
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
-      socket1.emit 'roomJoin', id, roomName1
-      socket1.once 'success', (idcmd) ->
+      socket1.emit 'roomJoin', roomName1, (error, data) ->
         socket2 = ioClient.connect url1, makeParams(user2)
         socket2.on 'loginConfirmed', ->
-          socket2.emit 'roomJoin', id, roomName1
-          socket2.once 'success', (idcmd) ->
+          socket2.emit 'roomJoin', roomName1, (error, data) ->
             socket2.disconnect()
-            socket1.once 'roomUserLeave', (r,u) ->
+            socket1.on 'roomUserLeave', (r,u) ->
               expect(r).equal(roomName1)
               expect(u).equal(user2)
               done()
@@ -515,14 +450,14 @@ describe 'Chat service', ->
     socket1.on 'loginConfirmed', ->
       socket2 = ioClient.connect url1, makeParams(user2)
       socket2.on 'loginConfirmed', ->
-        socket1.emit 'directMessage', id, user2, message
+        socket1.emit 'directMessage', user2, message
         socket2.on 'directMessage', (u, msg) ->
           expect(u).equal(user1)
           expect(msg?.textMessage).equal(txt)
           expect(msg).ownProperty('timestamp')
           done()
 
-  it 'should echo direct messges to user sockets', (done) ->
+  it 'should echo direct messges to user\'s sockets', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
     chatServer = new ChatService { port : port, enableDirectMessages : true }
@@ -532,7 +467,7 @@ describe 'Chat service', ->
       socket3.on 'loginConfirmed', ->
         socket2 = ioClient.connect url1, makeParams(user2)
         socket2.on 'loginConfirmed', ->
-          socket1.emit 'directMessage', id, user2, message
+          socket1.emit 'directMessage', user2, message
           socket3.on 'directMessageEcho', (u, msg) ->
             expect(u).equal(user2)
             expect(msg?.textMessage).equal(txt)
@@ -548,9 +483,9 @@ describe 'Chat service', ->
       socket2.on 'loginConfirmed', ->
         user = chatServer.userManager.getUser(user2)
         user.directMessagingState.blacklistAdd [user1], ->
-          socket1.emit 'directMessage', id, user2, message
-          socket1.on 'fail', (idcmd, err) ->
-            expect(err).ok
+          socket1.emit 'directMessage', user2, message
+          , (error, data) ->
+            expect(error).ok
             done()
 
   it 'should check user permission in whitelist mode', (done) ->
@@ -564,23 +499,26 @@ describe 'Chat service', ->
         user = chatServer.userManager.getUser(user2)
         user.directMessagingState.whitelistOnlySet true, ->
           user.directMessagingState.whitelistAdd [user1], ->
-            socket1.emit 'directMessage', id, user2, message
-            socket1.on 'success', (idcmd) ->
+            socket1.emit 'directMessage', user2, message
+            , (error, data) ->
+              expect(error).not.ok
               done()
 
   it 'should allow user to modify own lists', (done) ->
     chatServer = new ChatService { port : port, enableDirectMessages : true }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
-      socket1.emit 'directAddToList', id , 'blacklist', [user2]
-      socket1.once 'success', ->
-        socket1.emit 'directGetAccessList', id , 'blacklist'
-        socket1.once 'success', (idcmd, data) ->
+      socket1.emit 'directAddToList', 'blacklist', [user2]
+      , (error, data) ->
+        expect(error).not.ok
+        socket1.emit 'directGetAccessList', 'blacklist'
+        , (error, data) ->
           expect(data).include(user2)
-          socket1.emit 'directRemoveFromList', id , 'blacklist', [user2]
-          socket1.once 'success', (idcmd, data) ->
-            socket1.emit 'directGetAccessList', id , 'blacklist'
-            socket1.once 'success', (idcmd, data) ->
+          socket1.emit 'directRemoveFromList', 'blacklist', [user2]
+          , (error, data) ->
+            expect(error).not.ok
+            socket1.emit 'directGetAccessList', 'blacklist'
+            , (error, data) ->
               expect(data).not.include(user2)
               done()
 
@@ -588,58 +526,53 @@ describe 'Chat service', ->
     chatServer = new ChatService { port : port, enableDirectMessages : true }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
-      socket1.emit 'directSetWhitelistMode', id , true
-      socket1.once 'success', ->
-        socket1.emit 'directGetWhitelistMode', id
-        socket1.once 'success', (idcmd, data) ->
+      socket1.emit 'directSetWhitelistMode', true, (error, data) ->
+        expect(error).not.ok
+        socket1.emit 'directGetWhitelistMode', (error, data) ->
           expect(data).true
           done()
 
   it 'should execute before and after messages hooks', (done) ->
     before = null
     after = null
-    beforeHook = (server, socket, idcmd, cb) ->
+    beforeHook = (user, cb) ->
       before = true
       cb()
-    afterHook = (server, socket, idcmd, cb) ->
+    afterHook = (user, cb) ->
       after = true
       cb()
     chatServer = new ChatService { port : port }
     , { 'listRoomsBefore' : beforeHook, 'listRoomsAfter' : afterHook }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
-      socket1.emit 'listRooms', id
-      socket1.once 'success', (idcmd, data) ->
+      socket1.emit 'listRooms', (idcmd, data) ->
         process.nextTick ->
           expect(before).true
           expect(after).true
           done()
 
   it 'should stop commands on before hook error or data', (done) ->
-    error = 'error'
-    beforeHook = (server, socket, idcmd, cb) ->
-      cb error
+    err = 'error'
+    beforeHook = (user, cb) ->
+      cb err
     chatServer = new ChatService { port : port }
     , { 'listRoomsBefore' : beforeHook }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
-      socket1.emit 'listRooms', id
-      socket1.once 'fail', (idcmd, err) ->
-        expect(err).eql(error)
+      socket1.emit 'listRooms', (error, data) ->
+        expect(error).eql(err)
         done()
 
   it 'should allow new arguments from before hook', (done) ->
     data = 'data'
-    beforeHook = (server, socket, idcmd, cb) ->
+    beforeHook = (user, cb) ->
       cb null, null, data
-    afterHook = (server, socket, idcmd, cb, d) ->
+    afterHook = (user, d, cb) ->
       expect(d).eql(data)
       cb()
     chatServer = new ChatService { port : port }
     , { 'listRoomsBefore' : beforeHook, 'listRoomsAfter' : afterHook }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', ->
-      socket1.emit 'listRooms', id
-      socket1.once 'success', ->
-        process.nextTick ->
-          done()
+      socket1.emit 'listRooms', (error, data) ->
+        done()
