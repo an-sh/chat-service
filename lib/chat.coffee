@@ -96,35 +96,7 @@ initState = (state, values) ->
       state.addEach values
 
 
-class RoomState
-  constructor : (@name, @historyMaxMessages = 0) ->
-    @whitelist = new FastSet
-    @blacklist = new FastSet
-    @adminlist = new FastSet
-    @userlist = new FastSet
-    @lastMessages = new Deque
-    @whitelistOnly = false
-    @owner = null
-
-  initState : ( state = {}, cb ) ->
-    { whitelist, blacklist, adminlist, userlist
-    , lastMessages, whitelistOnly, owner } = state
-    initState @whitelist, whitelist
-    initState @blacklist, blacklist
-    initState @adminlist, adminlist
-    initState @userlist, userlist
-    initState @lastMessages, lastMessages
-    @whitelistOnly = if whitelistOnly then true else false
-    @owner = if owner then owner else null
-    if cb then process.nextTick -> cb()
-
-  hasList : (listName) ->
-    return listName in [ 'adminlist', 'whitelist', 'blacklist', 'userlist' ]
-
-  checkList : (listName) ->
-    unless @hasList listName then return "No list named #{listName}"
-    return false
-
+class ListsStateHelper
   addToList : (listName, elems, cb) ->
     error = @checkList listName
     if error then return process.nextTick -> cb error
@@ -156,6 +128,36 @@ class RoomState
   whitelistOnlyGet : (cb) ->
     m = @whitelistOnly
     process.nextTick -> cb null, m
+
+
+class RoomState extends ListsStateHelper
+  constructor : (@name, @historyMaxMessages = 0) ->
+    @whitelist = new FastSet
+    @blacklist = new FastSet
+    @adminlist = new FastSet
+    @userlist = new FastSet
+    @lastMessages = new Deque
+    @whitelistOnly = false
+    @owner = null
+
+  initState : ( state = {}, cb ) ->
+    { whitelist, blacklist, adminlist, userlist
+    , lastMessages, whitelistOnly, owner } = state
+    initState @whitelist, whitelist
+    initState @blacklist, blacklist
+    initState @adminlist, adminlist
+    initState @userlist, userlist
+    initState @lastMessages, lastMessages
+    @whitelistOnly = if whitelistOnly then true else false
+    @owner = if owner then owner else null
+    if cb then process.nextTick -> cb()
+
+  hasList : (listName) ->
+    return listName in [ 'adminlist', 'whitelist', 'blacklist', 'userlist' ]
+
+  checkList : (listName) ->
+    unless @hasList listName then return "No list named #{listName}"
+    return false
 
   ownerGet : (cb) ->
     owner = @owner
@@ -407,7 +409,7 @@ class Room
           cb error, data
 
 
-class DirectMessagingState
+class DirectMessagingState extends ListsStateHelper
   constructor : (@username) ->
     @whitelistOnly
     @whitelist = new FastSet
@@ -422,45 +424,9 @@ class DirectMessagingState
   hasList : (listName) ->
     return listName in [ 'whitelist', 'blacklist' ]
 
-  whitelistGet : (cb) ->
-    data = @whitelist.toArray()
-    process.nextTick -> cb null, data
-
-  blacklistGet : (cb) ->
-    data = @blacklist.toArray()
-    process.nextTick -> cb null, data
-
-  whitelistHas : (elem, cb) ->
-    data = @whitelist.has elem
-    process.nextTick -> cb null, data
-
-  blacklistHas : (elem, cb) ->
-    data = @blacklist.has elem
-    process.nextTick -> cb null, data
-
-  whitelistAdd : (elems, cb) ->
-    @whitelist.addEach elems
-    process.nextTick -> cb()
-
-  blacklistAdd : (elems, cb) ->
-    @blacklist.addEach elems
-    process.nextTick -> cb()
-
-  whitelistRemove : (elems, cb) ->
-    @whitelist.deleteEach elems
-    process.nextTick -> cb()
-
-  blacklistRemove : (elems, cb) ->
-    @blacklist.deleteEach elems
-    process.nextTick -> cb()
-
-  whitelistOnlySet : (mode, cb) ->
-    @whitelistOnly = if mode then true else false
-    process.nextTick -> cb()
-
-  whitelistOnlyGet : (cb) ->
-    m = @whitelistOnly
-    process.nextTick -> cb null, m
+  checkList : (listName) ->
+    unless @hasList listName then return "No list named #{listName}"
+    return false
 
 
 class UserDirectMessaging
@@ -482,18 +448,10 @@ class UserDirectMessaging
       return @errorBuilder.makeError 'noList', listName
     return null
 
-  checkListOp : (author, listName, values) ->
-    error = @checkList author, listName
-    if error then return error
-    unless values?.length and values instanceof Array
-      return @errorBuilder.makeError 'noValuesSupplied'
-    return null
-
   checkListChange : (author, listName, name, cb) ->
     if name == @username
       return cb @errorBuilder.makeError 'notAllowed'
-    op = listName + 'Has'
-    @directMessagingState[op] name, (error, hasName) =>
+    @directMessagingState.hasInList listName, name, (error, hasName) =>
       if error then return cb @errorBuilder.makeServerError error
       cb null, hasName
 
@@ -513,28 +471,29 @@ class UserDirectMessaging
 
   checkAcess : (userName, cb) ->
     if userName == @username then return cb()
-    @directMessagingState.blacklistHas userName, (error, blacklisted) =>
+    @directMessagingState.hasInList 'blacklist', userName
+    , (error, blacklisted) =>
       if error then return cb @errorBuilder.makeServerError error
       if blacklisted
         return cb @errorBuilder.makeError 'noUserOnline'
       @directMessagingState.whitelistOnlyGet (error, whitelistOnly) =>
         if error then return cb @errorBuilder.makeServerError error
-        @directMessagingState.whitelistHas userName, (error, hasWhitelist) =>
+        @directMessagingState.hasInList 'whitelist', userName
+        , (error, hasWhitelist) =>
           if error then return cb @errorBuilder.makeServerError error
           if whitelistOnly and not hasWhitelist
             return cb @errorBuilder.makeError 'notAllowed'
           cb()
 
   changeList : (author, listName, values, check, method, cb) ->
-    error = @checkListOp author, listName, values
+    error = @checkList author, listName
     if error then return cb error
     async.eachLimit values, asyncLimit
     , (val, fn) =>
       @[check] author, listName, val, fn
     , (error) =>
       if error then return cb error
-      op = listName + method
-      @directMessagingState[op] values, (error) ->
+      @directMessagingState[method] listName, values, (error) ->
         if error then return cb error
         cb()
 
@@ -550,16 +509,17 @@ class UserDirectMessaging
   getList : (author, listName, cb) ->
     error = @checkList author, listName
     if error then return cb error
-    op = listName + 'Get'
-    @directMessagingState[op] (error, list) =>
+    @directMessagingState.getList listName, (error, list) =>
       if error then return cb @errorBuilder.makeServerError error
       cb null, list
 
   addToList : (author, listName, values, cb) ->
-    @changeList author, listName, values, 'checkListAdd', 'Add', cb
+    @changeList author, listName, values, 'checkListAdd'
+    , 'addToList', cb
 
   removeFromList : (author, listName, values, cb) ->
-    @changeList author, listName, values, 'checkListRemove', 'Remove', cb
+    @changeList author, listName, values, 'checkListRemove'
+    , 'removeFromList', cb
 
   getMode : (author, cb) ->
     if author != @username

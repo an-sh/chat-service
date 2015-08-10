@@ -116,9 +116,9 @@ describe 'Chat service', ->
       usr = chatServer.userManager.getUser 'user1'
       expect(usr.username).eql(user.username)
       async.parallel [ (cb) ->
-        usr.directMessagingState.blacklistHas 'user0', cb
+        usr.directMessagingState.hasInList 'blacklist', 'user0', cb
       , (cb) ->
-        usr.directMessagingState.whitelistHas 'user2', cb
+        usr.directMessagingState.hasInList 'whitelist', 'user2', cb
       ] , done
 
   it 'should restore room state from onStart hook', (done) ->
@@ -481,7 +481,7 @@ describe 'Chat service', ->
       socket2 = ioClient.connect url1, makeParams(user2)
       socket2.on 'loginConfirmed', ->
         user = chatServer.userManager.getUser(user2)
-        user.directMessagingState.blacklistAdd [user1], ->
+        user.directMessagingState.addToList 'blacklist', [user1], ->
           socket1.emit 'directMessage', user2, message
           , (error, data) ->
             expect(error).ok
@@ -497,7 +497,7 @@ describe 'Chat service', ->
       socket2.on 'loginConfirmed', ->
         user = chatServer.userManager.getUser(user2)
         user.directMessagingState.whitelistOnlySet true, ->
-          user.directMessagingState.whitelistAdd [user1], ->
+          user.directMessagingState.addToList 'whitelist', [user1], ->
             socket1.emit 'directMessage', user2, message
             , (error, data) ->
               expect(error).not.ok
