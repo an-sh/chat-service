@@ -48,7 +48,6 @@ Object.freeze serverMessages
 asyncLimit = 16
 defaultPort = 8000
 
-# TODO log server errors function
 class ErrorBuilder
   constructor : (@useRawErrorObjects) ->
 
@@ -877,18 +876,21 @@ class ChatState
       error = @errorBuilder.makeError 'roomExists', name
     process.nextTick -> cb error
 
-  addUser : (server, name, socket, cb) ->
+  loginUser : (server, name, socket, cb) ->
     currentUser = @usersOnline[name]
     returnedUser = @usersOffline[name] unless currentUser
     if currentUser
-      currentUser.registerSocket socket, cb
+      currentUser.registerSocket socket, (error) ->
+        cb error, currentUser
     else if returnedUser
       @usersOnline[name] = returnedUser
-      returnedUser.registerSocket socket, cb
+      returnedUser.registerSocket socket, (error) ->
+        cb error, returnedUser
     else
       newUser = new User @server, name
       @usersOnline[name] = newUser
-      newUser.registerSocket socket, cb
+      newUser.registerSocket socket, (error) ->
+        cb error, newUser
 
   removeRoom : (name, cb) ->
     if @rooms[name]
@@ -904,6 +906,9 @@ class ChatState
       @usersOffline[name] = @usersOnline[name]
       delete @usersOnline[name]
     process.nextTick -> cb error
+
+  # TODO
+  addUser : ->
 
   removeUser : (name, cb) ->
     u1 = @usersOnline[name]
@@ -967,22 +972,24 @@ class ChatService
       @nsp.use @hooks.auth
     if @hooks.onConnect
       @nsp.on 'connection', (socket) =>
-        @hooks.onConnect @, socket, (error, userName) =>
-          @addClient error, userName, socket
+        @hooks.onConnect @, socket, (error, userName, userState) =>
+          @addClient error, socket, userName, userState
     else
       @nsp.on 'connection', (socket) =>
-        @addClient null, null, socket
+        @addClient null, socket
 
-  addClient : (error, userName, socket) ->
+  addClient : (error, socket, userName, userState) ->
     if error then return socket.emit 'loginRejected', error
     unless userName
       userName = socket.handshake.query?.user
       unless userName
         error = @errorBuilder.makeError 'noLogin'
         return socket.emit 'loginRejected', error
-    @chatState.addUser @, userName, socket, (error) ->
+    @chatState.loginUser @, userName, socket, (error, user) ->
       if error then return socket.emit 'loginRejected', error
-      socket.emit 'loginConfirmed', userName
+      fn = -> socket.emit 'loginConfirmed', userName
+      if userState then user.initState userState, fn
+      else fn()
 
   close : (done, error) ->
     cb = (error) =>

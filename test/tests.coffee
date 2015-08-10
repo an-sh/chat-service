@@ -102,17 +102,19 @@ describe 'Chat service', ->
     socket1.on 'loginRejected', ->
       done()
 
-  it 'should use an username from onConnect hook', (done) ->
+  it 'should restore user state from onConnect hook', (done) ->
     userName = 'user'
     onConnect = (server, socket, cb) ->
-      cb null, userName
+      cb null, userName, { whitelistOnly : true }
     chatServer = new ChatService { port : port }, { onConnect : onConnect }
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', (u) ->
       expect(u).equal(userName)
       chatServer.chatState.getUser userName, (error, u) ->
         expect(u.username).eql(userName)
-        done()
+        u.directMessagingState.whitelistOnlyGet (error, data) ->
+          expect(data).ok
+          done()
 
   it 'should restore room state from onStart hook', (done) ->
     room = null
