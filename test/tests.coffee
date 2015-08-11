@@ -15,6 +15,7 @@ describe 'Chat service', ->
   makeParams = (userName) ->
     return query : "user=#{userName}"
     , 'multiplex' : false
+    , 'reconnection' : false
     , 'transports' : [ 'websocket' ]
 
   user1 = 'userName1'
@@ -131,6 +132,40 @@ describe 'Chat service', ->
           cb null, room
           fn()
     chatServer = new ChatService { port : port }, { onStart : onStart }
+
+  it 'should support server side user disconnection', (done) ->
+    chatServer = new ChatService { port : port }
+    socket1 = ioClient.connect url1, makeParams(user1)
+    socket1.on 'loginConfirmed', (u) ->
+      expect(u).equal(user1)
+      socket2 = ioClient.connect url1, makeParams(user1)
+      socket2.on 'loginConfirmed', (u) ->
+        expect(u).equal(user1)
+        chatServer.chatState.removeUser user1
+        async.parallel [ (cb) ->
+          socket1.on 'disconnect', ->
+            expect(socket1.connected).not.ok
+            cb()
+        , (cb) ->
+          socket2.on 'disconnect', ->
+            expect(socket2.connected).not.ok
+            cb()
+        ], done
+
+  it 'should support adding user with a state', (done) ->
+    state = { whitelistOnly : true }
+    chatServer = new ChatService { port : port }
+    socket1 = ioClient.connect url1, makeParams(user1)
+    chatServer.chatState.addUser user1
+    , ->
+      socket1 = ioClient.connect url1, makeParams(user1)
+      socket1.on 'loginConfirmed', (u) ->
+        expect(u).equal(user1)
+        chatServer.chatState.getUser user1, (error, user) ->
+          user.directMessagingState.whitelistOnlyGet (error, wl) ->
+            expect(wl).equal(true)
+            done()
+    , state
 
   it 'should support multiple sockets per user', (done) ->
     chatServer = new ChatService { port : port }

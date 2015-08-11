@@ -659,6 +659,20 @@ class User extends UserDirectMessaging
             fn()
     , cb
 
+  sendAllRoomsLeave : (cb) ->
+    @userState.roomsGetAll (error, rooms) =>
+      if error then return cb @errorBuilder.makeServerError error
+      async.eachLimit rooms, asyncLimit
+      , (roomName, fn) =>
+        @chatState.getRoom roomName, (error, room) =>
+          if error then return fn()
+          room.leave @username, =>
+            if @enableUserlistUpdates
+              @send roomName, 'roomUserLeave', roomName, @username
+            fn()
+       , =>
+        @chatState.setUserOffline @username, cb
+
   reportRoomConnections : (error, id, sid, roomName, msgName, cb) ->
     if sid == id
       unless error then cb()
@@ -667,7 +681,17 @@ class User extends UserDirectMessaging
       @send sid, msgName, roomName
 
   removeUser : (cb) ->
-    # TODO remove user sockets, send loginRejected
+    @userState.socketsGetAll (error, sockets) =>
+      if error then return cb @errorBuilder.makeServerError error
+      async.eachLimit sockets, asyncLimit
+      , (sid, fn) =>
+        if @server.io.sockets.connected[sid]
+          @server.io.sockets.connected[sid].disconnect(true)
+        else
+          # TODO all sockets proper disconnection
+          @send sid, 'disconnect'
+        @server.nsp.adapter.delAll sid, => @sendAllRoomsLeave fn
+      , cb
 
   ###
   # commands
@@ -713,22 +737,11 @@ class User extends UserDirectMessaging
   disconnect : (reason, cb, id) ->
     # TODO lock user state
     @userState.socketRemove id, (error) =>
-      if error then return cb errorBuilder.makeServerError error
+      if error then return cb @errorBuilder.makeServerError error
       @userState.socketsCount (error, nsockets) =>
-        if error then return cb errorBuilder.makeServerError error
-        if nsockets > 0 then return
-        @userState.roomsGetAll (error, rooms) =>
-          if error then return cb errorBuilder.makeServerError error
-          async.eachLimit rooms, asyncLimit
-          , (roomName, fn) =>
-            @chatState.getRoom roomName, (error, room) =>
-              if error then return fn()
-              room.leave @username, =>
-                if @enableUserlistUpdates
-                  @send roomName, 'roomUserLeave', roomName, @username
-                fn()
-           , =>
-            @chatState.setUserOffline @username, cb
+        if error then return cb @errorBuilder.makeServerError error
+        if nsockets > 0 then return cb()
+        @sendAllRoomsLeave cb
 
   listRooms : (cb) ->
     @chatState.listRooms @username, cb
@@ -876,7 +889,14 @@ class ChatState
       error = @errorBuilder.makeError 'roomExists', name
     process.nextTick -> cb error
 
-  loginUser : (server, name, socket, cb) ->
+  removeRoom : (name, cb) ->
+    if @rooms[name]
+      delete @rooms[name]
+    else
+      error = @errorBuilder.makeError 'noRoom', name
+    process.nextTick -> cb error
+
+  loginUser : (name, socket, cb) ->
     currentUser = @usersOnline[name]
     returnedUser = @usersOffline[name] unless currentUser
     if currentUser
@@ -892,13 +912,6 @@ class ChatState
       newUser.registerSocket socket, (error) ->
         cb error, newUser
 
-  removeRoom : (name, cb) ->
-    if @rooms[name]
-      delete @rooms[name]
-    else
-      error = @errorBuilder.makeError 'noRoom', name
-    process.nextTick -> cb error
-
   setUserOffline : (name, cb) ->
     unless @usersOnline[name]
       error = @errorBuilder.makeError 'noUserOnline', name
@@ -906,21 +919,6 @@ class ChatState
       @usersOffline[name] = @usersOnline[name]
       delete @usersOnline[name]
     process.nextTick -> cb error
-
-  # TODO
-  addUser : ->
-
-  removeUser : (name, cb) ->
-    u1 = @usersOnline[name]
-    fn = ->
-      u2 = @usersOffline[name]
-      delete @usersOnline[name]
-      delete @usersOffline[name]
-      unless u1 or u2
-        error = @errorBuilder.makeError 'noUser', name
-      process.nextTick -> cb error
-    if u1 then u1.removeUser fn
-    else fn()
 
   listRooms : (author, cb) ->
     list = []
@@ -932,6 +930,31 @@ class ChatState
     , ->
       list.sort()
       cb null, list
+
+  addUser : (name, cb, state = null) ->
+    u1 = @usersOnline[name]
+    u2 = @usersOffline[name]
+    if u1 or u2
+      error = @errorBuilder.makeError 'userExists', name
+      return process.nextTick -> cb error
+    user = new User @server, name
+    @usersOffline[name] = user
+    if state
+      user.initState state, cb
+    else if cb then cb()
+
+  removeUser : (name, cb) ->
+    u1 = @usersOnline[name]
+    fn = =>
+      u2 = @usersOffline[name]
+      delete @usersOnline[name]
+      delete @usersOffline[name]
+      unless u1 or u2
+        error = @errorBuilder.makeError 'noUser', name
+      if cb
+        process.nextTick -> cb error
+    if u1 then u1.removeUser fn
+    else fn()
 
 
 class ChatService
@@ -985,7 +1008,7 @@ class ChatService
       unless userName
         error = @errorBuilder.makeError 'noLogin'
         return socket.emit 'loginRejected', error
-    @chatState.loginUser @, userName, socket, (error, user) ->
+    @chatState.loginUser userName, socket, (error, user) ->
       if error then return socket.emit 'loginRejected', error
       fn = -> socket.emit 'loginConfirmed', userName
       if userState then user.initState userState, fn
