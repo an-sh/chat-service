@@ -1,13 +1,13 @@
 
-path = require 'path'
-util = require 'util'
 socketIO = require 'socket.io'
-FastSet = require 'collections/fast-set'
-Deque = require 'collections/deque'
+_ = require 'lodash'
 async = require 'async'
 # TODO messages arguments checking
 check = require 'check-types'
-_ = require 'lodash'
+
+ErrorBuilder = require('./errors.coffee').ErrorBuilder
+MemoryState = require('./state-memory.coffee').MemoryState
+
 
 userCommands =
   directAddToList : ''
@@ -46,39 +46,6 @@ Object.freeze userCommands
 Object.freeze serverMessages
 
 asyncLimit = 16
-defaultPort = 8000
-
-class ErrorBuilder
-  constructor : (@useRawErrorObjects) ->
-
-  errorStrings :
-    badArgument : 'Bad argument, named %s value %s'
-    nameInList : 'Name %s is already in list %s'
-    noList : 'No such list %s'
-    noLogin : 'No login provided'
-    noNameInList : 'No such name %s in list %s'
-    noRoom : 'No such room %s'
-    noStateStore : 'No such state stored %s'
-    noUser : 'No such user %s'
-    noUserOnline : 'No such user online %s'
-    noValuesSupplied : 'No values supplied'
-    notAllowed : 'Action is not allowed'
-    notJoined : 'Not joined to room %s'
-    roomExists : 'Room %s already exists'
-    serverError : 'Server error %s'
-    userExists : 'User %s already exists'
-
-  getErrorString : (code) ->
-    return @errorStrings[code] || "Unknown error: #{code}"
-
-  makeError : (error, args...) ->
-    if @useRawErrorObjects
-      return { name : error, args : args }
-    return util.format @getErrorString(error), args...
-
-  makeServerError : (error) ->
-    return @makeError 'serverError', error.toString()
-
 
 processMessage = (author, msg) ->
   r = {}
@@ -87,107 +54,13 @@ processMessage = (author, msg) ->
   r.author = author
   return r
 
-initState = (state, values) ->
-  if state
-    state.clear()
-    if values
-      state.addEach values
-
-
-class ListsStateHelper
-  addToList : (listName, elems, cb) ->
-    error = @checkList listName
-    if error then return process.nextTick -> cb error
-    @[listName].addEach elems
-    process.nextTick -> cb()
-
-  removeFromList : (listName, elems, cb) ->
-    error = @checkList listName
-    if error then return process.nextTick -> cb error
-    @[listName].deleteEach elems
-    process.nextTick -> cb()
-
-  getList : (listName, cb) ->
-    error = @checkList listName
-    if error then return process.nextTick -> cb error
-    data = @[listName].toArray()
-    process.nextTick -> cb null, data
-
-  hasInList : (listName, elem, cb) ->
-    error = @checkList listName
-    if error then return process.nextTick -> cb error
-    data = @[listName].has elem
-    process.nextTick -> cb null, data
-
-  whitelistOnlySet : (mode, cb) ->
-    @whitelistOnly = if mode then true else false
-    process.nextTick -> cb()
-
-  whitelistOnlyGet : (cb) ->
-    m = @whitelistOnly
-    process.nextTick -> cb null, m
-
-
-class RoomState extends ListsStateHelper
-  constructor : (@name, @historyMaxMessages = 0) ->
-    @whitelist = new FastSet
-    @blacklist = new FastSet
-    @adminlist = new FastSet
-    @userlist = new FastSet
-    @lastMessages = new Deque
-    @whitelistOnly = false
-    @owner = null
-
-  initState : ( state = {}, cb ) ->
-    { whitelist, blacklist, adminlist, userlist
-    , lastMessages, whitelistOnly, owner } = state
-    initState @whitelist, whitelist
-    initState @blacklist, blacklist
-    initState @adminlist, adminlist
-    initState @userlist, userlist
-    initState @lastMessages, lastMessages
-    @whitelistOnly = if whitelistOnly then true else false
-    @owner = if owner then owner else null
-    if cb then process.nextTick -> cb()
-
-  hasList : (listName) ->
-    return listName in [ 'adminlist', 'whitelist', 'blacklist', 'userlist' ]
-
-  checkList : (listName) ->
-    unless @hasList listName then return "No list named #{listName}"
-    return false
-
-  ownerGet : (cb) ->
-    owner = @owner
-    process.nextTick -> cb null, owner
-
-  ownerSet : (owner, cb) ->
-    @owner = owner
-    process.nextTick -> cb()
-
-  messageAdd : (msg, cb) ->
-    if @historyMaxMessages <= 0 then return process.nextTick -> cb()
-    if @lastMessages.length >= @historyMaxMessages
-      @lastMessages.pop()
-    @lastMessages.unshift msg
-    process.nextTick -> cb()
-
-  messagesGet : (cb) ->
-    data = @lastMessages.toArray()
-    process.nextTick -> cb null, data
-
-  getCommonUsers : (cb) ->
-    diff = (@userlist.difference @whitelist).difference @adminlist
-    data = diff.toArray()
-    process.nextTick -> cb null, data
-
 
 class Room
 
   constructor : (@server, @name) ->
     @errorBuilder = @server.errorBuilder
     state = @server.chatState.roomState
-    @roomState = new state @name, @server.historyMaxMessages
+    @roomState = new state @server, @name, @server.historyMaxMessages
 
   initState : (state, cb) ->
     @roomState.initState state, cb
@@ -408,32 +281,12 @@ class Room
           cb error, data
 
 
-class DirectMessagingState extends ListsStateHelper
-  constructor : (@username) ->
-    @whitelistOnly
-    @whitelist = new FastSet
-    @blacklist = new FastSet
-
-  initState : ({ whitelist, blacklist, whitelistOnly } = {}, cb) ->
-    initState @whitelist, whitelist
-    initState @blacklist, blacklist
-    @whitelistOnly = if whitelistOnly then true else false
-    process.nextTick -> cb()
-
-  hasList : (listName) ->
-    return listName in [ 'whitelist', 'blacklist' ]
-
-  checkList : (listName) ->
-    unless @hasList listName then return "No list named #{listName}"
-    return false
-
-
 class UserDirectMessaging
 
   constructor : (@server, @username) ->
     @errorBuilder = @server.errorBuilder
     state = @server.chatState.directMessagingState
-    @directMessagingState = new state @username
+    @directMessagingState = new state @server, @username
 
   initState : (state, cb) ->
     @directMessagingState.initState state, cb
@@ -538,40 +391,6 @@ class UserDirectMessaging
       cb()
 
 
-class UserState
-  constructor : (@username) ->
-    @roomslist = new FastSet
-    @sockets = new FastSet
-
-  socketAdd : (id, cb) ->
-    @sockets.add id
-    process.nextTick -> cb null
-
-  socketRemove : (id, cb) ->
-    @sockets.remove id
-    process.nextTick -> cb null
-
-  socketsCount : (cb) ->
-    nsockets = @sockets.length
-    process.nextTick -> cb null, nsockets
-
-  socketsGetAll : (cb) ->
-    sockets = @sockets.toArray()
-    process.nextTick -> cb null, sockets
-
-  roomAdd : (roomName, cb) ->
-    @roomslist.add roomName
-    process.nextTick -> cb null
-
-  roomRemove : (roomName, cb) ->
-    @roomslist.remove roomName
-    process.nextTick -> cb null
-
-  roomsGetAll : (cb) ->
-    rooms = @roomslist.toArray()
-    process.nextTick -> cb null, rooms
-
-
 class User extends UserDirectMessaging
 
   constructor : (@server, @username) ->
@@ -581,7 +400,7 @@ class User extends UserDirectMessaging
     @enableRoomsManagement = @server.enableRoomsManagement
     @enableDirectMessages = @server.enableDirectMessages
     state = @server.chatState.userState
-    @userState = new state @username
+    @userState = new state @server, @username
 
   ###
   # helpers
@@ -859,109 +678,17 @@ class User extends UserDirectMessaging
         @sendAccessRemoved data, roomName, cb
 
 
-class ChatState
-  constructor : (@server) ->
-    @errorBuilder = @server.errorBuilder
-    @usersOnline = {}
-    @usersOffline = {}
-    @rooms = {}
-    @roomState = RoomState
-    @userState = UserState
-    @directMessagingState = DirectMessagingState
-
-  getUser : (name, cb) ->
-    u = @usersOnline[name]
-    unless u
-      error = @errorBuilder.makeError 'noUserOnline', name
-    process.nextTick -> cb error, u
-
-  getRoom : (name, cb) ->
-    r = @rooms[name]
-    unless r
-      error = @errorBuilder.makeError 'noRoom', name
-    process.nextTick -> cb error, r
-
-  addRoom : (room, cb) ->
-    name = room.name
-    unless @rooms[name]
-      @rooms[name] = room
-    else
-      error = @errorBuilder.makeError 'roomExists', name
-    process.nextTick -> cb error
-
-  removeRoom : (name, cb) ->
-    if @rooms[name]
-      delete @rooms[name]
-    else
-      error = @errorBuilder.makeError 'noRoom', name
-    process.nextTick -> cb error
-
-  loginUser : (name, socket, cb) ->
-    currentUser = @usersOnline[name]
-    returnedUser = @usersOffline[name] unless currentUser
-    if currentUser
-      currentUser.registerSocket socket, (error) ->
-        cb error, currentUser
-    else if returnedUser
-      @usersOnline[name] = returnedUser
-      returnedUser.registerSocket socket, (error) ->
-        cb error, returnedUser
-    else
-      newUser = new User @server, name
-      @usersOnline[name] = newUser
-      newUser.registerSocket socket, (error) ->
-        cb error, newUser
-
-  setUserOffline : (name, cb) ->
-    unless @usersOnline[name]
-      error = @errorBuilder.makeError 'noUserOnline', name
-    else
-      @usersOffline[name] = @usersOnline[name]
-      delete @usersOnline[name]
-    process.nextTick -> cb error
-
-  listRooms : (author, cb) ->
-    list = []
-    async.forEachOfLimit @rooms, asyncLimit
-    , (room, name, fn) ->
-      room.getMode author, (error, isPrivate) ->
-        unless isPrivate then list.push name
-        fn()
-    , ->
-      list.sort()
-      cb null, list
-
-  addUser : (name, cb, state = null) ->
-    u1 = @usersOnline[name]
-    u2 = @usersOffline[name]
-    if u1 or u2
-      error = @errorBuilder.makeError 'userExists', name
-      return process.nextTick -> cb error
-    user = new User @server, name
-    @usersOffline[name] = user
-    if state
-      user.initState state, cb
-    else if cb then cb()
-
-  removeUser : (name, cb) ->
-    u1 = @usersOnline[name]
-    fn = =>
-      u2 = @usersOffline[name]
-      delete @usersOnline[name]
-      delete @usersOffline[name]
-      unless u1 or u2
-        error = @errorBuilder.makeError 'noUser', name
-      if cb
-        process.nextTick -> cb error
-    if u1 then u1.removeUser fn
-    else fn()
 
 
 class ChatService
-  constructor : (@options = {}, @hooks = {}, state = ChatState) ->
+  constructor : (@options = {}, @hooks = {}, state = 'memory') ->
     @io = @options.io
     @sharedIO = true if @io
     @http = @options.http unless @io
+    state = switch state
+      when 'memory' then MemoryState
+      when typeof state == 'function' then state
+      else throw new Error "Invalid state: #{state}"
 
     # options, constant for a server instance
     @namespace = @options.namespace || '/chat-service'
@@ -973,13 +700,15 @@ class ChatService
     @serverOptions = @options.serverOptions
 
     @errorBuilder = new ErrorBuilder @useRawErrorObjects
+    @User = User
+    @Room = Room
     @chatState = new state @
 
     unless @io
       if @http
         @io = socketIO @http, @serverOptions
       else
-        port = @serverOptions?.port || defaultPort
+        port = @serverOptions?.port || 8000
         @io = socketIO port, @serverOptions
 
     @nsp = @io.of @namespace
