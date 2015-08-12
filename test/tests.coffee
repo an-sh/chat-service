@@ -111,7 +111,7 @@ describe 'Chat service', ->
     socket1 = ioClient.connect url1, makeParams(user1)
     socket1.on 'loginConfirmed', (u) ->
       expect(u).equal(userName)
-      chatServer.chatState.getUser userName, (error, u) ->
+      chatServer.chatState.getOnlineUser userName, (error, u) ->
         expect(u.username).eql(userName)
         u.directMessagingState.whitelistOnlyGet (error, data) ->
           expect(data).ok
@@ -152,19 +152,21 @@ describe 'Chat service', ->
             cb()
         ], done
 
-  it 'should support adding user with a state', (done) ->
+  it 'should support adding and removing users', (done) ->
     state = { whitelistOnly : true }
     chatServer = new ChatService { port : port }
-    socket1 = ioClient.connect url1, makeParams(user1)
-    chatServer.chatState.addUser user1
-    , ->
+    chatServer.chatState.addUser user1, ->
       socket1 = ioClient.connect url1, makeParams(user1)
       socket1.on 'loginConfirmed', (u) ->
         expect(u).equal(user1)
-        chatServer.chatState.getUser user1, (error, user) ->
+        chatServer.chatState.getOnlineUser user1, (error, user) ->
           user.directMessagingState.whitelistOnlyGet (error, wl) ->
             expect(wl).equal(true)
-            done()
+            chatServer.chatState.removeUser user1, ->
+              chatServer.chatState.getUser user1, (error, user, isOnline) ->
+                expect(user).not.ok
+                expect(isOnline).not.ok
+                done()
     , state
 
   it 'should support multiple sockets per user', (done) ->
@@ -173,7 +175,7 @@ describe 'Chat service', ->
     socket1.on 'loginConfirmed', (u) ->
       socket2 = ioClient.connect url1, makeParams(user1)
       socket2.on 'loginConfirmed', (u) ->
-        chatServer.chatState.getUser user1, (error, user) ->
+        chatServer.chatState.getOnlineUser user1, (error, user) ->
           user.userState.socketsGetAll (error, sockets) ->
             expect(sockets).length(2)
             done()
@@ -510,7 +512,7 @@ describe 'Chat service', ->
     socket1.on 'loginConfirmed', ->
       socket2 = ioClient.connect url1, makeParams(user2)
       socket2.on 'loginConfirmed', ->
-        chatServer.chatState.getUser user2, (error, user) ->
+        chatServer.chatState.getOnlineUser user2, (error, user) ->
           user.directMessagingState.addToList 'blacklist', [user1], ->
             socket1.emit 'directMessage', user2, message
             , (error, data) ->
@@ -525,7 +527,7 @@ describe 'Chat service', ->
     socket1.on 'loginConfirmed', ->
       socket2 = ioClient.connect url1, makeParams(user2)
       socket2.on 'loginConfirmed', ->
-        chatServer.chatState.getUser user2,  (error, user) ->
+        chatServer.chatState.getOnlineUser user2,  (error, user) ->
           user.directMessagingState.whitelistOnlySet true, ->
             user.directMessagingState.addToList 'whitelist', [user1], ->
               socket1.emit 'directMessage', user2, message

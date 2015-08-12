@@ -197,11 +197,19 @@ class MemoryState
       list.sort()
       cb null, list
 
-  getUser : (name, cb) ->
+  getOnlineUser : (name, cb) ->
     u = @usersOnline[name]
     unless u
       error = @errorBuilder.makeError 'noUserOnline', name
     process.nextTick -> cb error, u
+
+  getUser : (name, cb) ->
+    isOnline = true
+    u = @usersOnline[name]
+    unless u
+      u = @usersOffline[name]
+      isOnline = false
+    process.nextTick -> cb null, u, isOnline
 
   loginUser : (name, socket, cb) ->
     currentUser = @usersOnline[name]
@@ -211,6 +219,7 @@ class MemoryState
         cb error, currentUser
     else if returnedUser
       @usersOnline[name] = returnedUser
+      delete @usersOffline[name]
       returnedUser.registerSocket socket, (error) ->
         cb error, returnedUser
     else
@@ -247,10 +256,9 @@ class MemoryState
       delete @usersOffline[name]
       unless u1 or u2
         error = @errorBuilder.makeError 'noUser', name
-      if cb
-        process.nextTick -> cb error
+      cb error if cb
     if u1 then u1.removeUser fn
-    else fn()
+    else process.nextTick -> fn()
 
 
 module.exports = {

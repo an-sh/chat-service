@@ -418,7 +418,7 @@ class User extends UserDirectMessaging
   sendAccessRemoved : (userNames, roomName, cb) ->
     async.eachLimit userNames, asyncLimit
     , (userName, fn) =>
-      @chatState.getUser userName, withEH fn, (user) =>
+      @chatState.getOnlineUser userName, withEH fn, (user) =>
         user.userState.roomRemove roomName, withEH fn, =>
           user.userState.socketsGetAll withEH fn, (sockets) =>
             for id in sockets
@@ -451,10 +451,11 @@ class User extends UserDirectMessaging
       , (sid, fn) =>
         if @server.io.sockets.connected[sid]
           @server.io.sockets.connected[sid].disconnect(true)
+          @sendAllRoomsLeave fn
         else
-          # TODO all sockets proper disconnection
+          # TODO all adapter sockets proper disconnection
           @send sid, 'disconnect'
-        @server.nsp.adapter.delAll sid, => @sendAllRoomsLeave fn
+          @server.nsp.adapter.delAll sid, => @sendAllRoomsLeave fn
       , cb
 
   ###
@@ -474,8 +475,8 @@ class User extends UserDirectMessaging
     unless @enableDirectMessages
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
-    @chatState.getUser toUserName, withEH cb, (toUser) =>
-      @chatState.getUser @username, withEH cb, (fromUser) =>
+    @chatState.getOnlineUser toUserName, withEH cb, (toUser) =>
+      @chatState.getOnlineUser @username, withEH cb, (fromUser) =>
         msg = processMessage @username, msg
         toUser.message @username, msg, withEH cb, =>
           fromUser.userState.socketsGetAll withEH cb, (sockets) =>
