@@ -45,7 +45,9 @@ serverMessages =
 Object.freeze userCommands
 Object.freeze serverMessages
 
+
 asyncLimit = 16
+
 
 processMessage = (author, msg) ->
   r = {}
@@ -53,6 +55,18 @@ processMessage = (author, msg) ->
   r.timestamp = new Date().getTime()
   r.author = author
   return r
+
+
+withEH = (errorCallback, normallCallback) ->
+  (error, args...) ->
+    if error then return errorCallback error
+    normallCallback args...
+
+withErrorLog = (errorBuilder ,normallCallback) ->
+  (error, args...) ->
+    if error
+      errorBuilder.makeServerError error
+    normallCallback args...
 
 
 class Room
@@ -70,119 +84,102 @@ class Room
   ###
 
   isAdmin : (userName, cb) ->
-    @roomState.ownerGet (error, owner) =>
-      if error then return cb @errorBuilder.makeServerError error
-      @roomState.hasInList 'adminlist', userName, (error, hasName) =>
-        if error then return cb @errorBuilder.makeServerError error
-        admin = owner == userName or hasName
-        admin = if admin then true else false
-        cb null, admin
+    @roomState.ownerGet withEH cb, (owner) =>
+      @roomState.hasInList 'adminlist', userName, withEH cb, (hasName) ->
+        if owner == userName or hasName
+          return cb null, true
+        cb null, false
 
   hasRemoveChangedCurrentAccess : (userName, listName, cb) ->
-    @roomState.hasInList 'userlist', userName, (error, hasUser) =>
-      if error then return cb @errorBuilder.makeServerError error
-      unless hasUser then return cb null, false
-      @isAdmin userName, (error, admin) =>
-        if error then return cb error
-        if admin then return cb null, false
+    @roomState.hasInList 'userlist', userName, withEH cb, (hasUser) =>
+      unless hasUser
+        return cb null, false
+      @isAdmin userName, withEH cb, (admin) =>
+        if admin
+          return cb null, false
         if listName == 'whitelist'
-          @roomState.whitelistOnlyGet (error, whitelistOnly) =>
-            if error then return cb @errorBuilder.makeServerError error
-            cb null, true
+          @roomState.whitelistOnlyGet withEH cb, (whitelistOnly) ->
+            cb null, whitelistOnly
         else
           cb null, false
 
   hasAddChangedCurrentAccess : (userName, listName, cb) ->
-    @roomState.hasInList 'userlist', userName, (error, hasUser) =>
-      if error then return cb @errorBuilder.makeServerError error
-      unless hasUser then return cb null, false
-      if listName == 'blacklist' then return cb null, true
+    @roomState.hasInList 'userlist', userName, withEH cb, (hasUser) ->
+      unless hasUser
+        return cb null, false
+      if listName == 'blacklist'
+        return cb null, true
       cb null, false
 
   getModeChangedCurrentAccess : (value, cb) ->
     unless value
       process.nextTick -> cb null, false
     else
-      @roomState.getCommonUsers (error, users) =>
-        if error then return cb @errorBuilder.makeServerError error
-        cb null, users
+      @roomState.getCommonUsers cb
 
   ###
   # access checking
   ###
 
   checkList : (author, listName, cb) ->
-    @roomState.hasInList 'userlist', author, (error, hasAuthor) =>
-      if error then return cb @errorBuilder.makeServerError error
+    @roomState.hasInList 'userlist', author, withEH cb, (hasAuthor) =>
       unless hasAuthor
         return cb @errorBuilder.makeError 'notJoined', @name
-      unless @roomState.hasList listName
-        return cb @errorBuilder.makeError 'noList', listName
       cb()
 
   checkListChange : (author, listName, name, cb) ->
-    @checkList author, listName, (error) =>
-      if error then return cb error
-      @roomState.ownerGet (error, owner) =>
-        if error then return cb @errorBuilder.makeServerError error
+    @checkList author, listName, withEH cb, =>
+      @roomState.ownerGet withEH cb, (owner) =>
         if listName == 'userlist'
           return cb @errorBuilder.makeError 'notAllowed'
         if author == owner
           return cb()
         if name == owner
           return cb @errorBuilder.makeError 'notAllowed'
-        @roomState.hasInList 'adminlist', name, (error, hasName) =>
-          if error then return cb @errorBuilder.makeServerError error
+        @roomState.hasInList 'adminlist', name, withEH cb, (hasName) =>
           if hasName
             return cb @errorBuilder.makeError 'notAllowed'
-          @roomState.hasInList 'adminlist', author, (error, hasAuthor) =>
-            if error then return cb @errorBuilder.makeServerError error
+          @roomState.hasInList 'adminlist', author, withEH cb, (hasAuthor) =>
             unless hasAuthor
               return cb @errorBuilder.makeError 'notAllowed'
             cb()
 
   checkListAdd : (author, listName, name, cb) ->
-    @checkListChange author, listName, name, (error) =>
-      if error then return cb error
-      @roomState.hasInList listName, name, (error, hasName) =>
-        if error then return cb @errorBuilder.makeServerError error
+    @checkListChange author, listName, name, withEH cb, =>
+      @roomState.hasInList listName, name, withEH cb, (hasName) =>
         if hasName
           return cb @errorBuilder.makeError 'nameInList', name, listName
         cb()
 
   checkListRemove : (author, listName, name, cb) ->
-    @checkListChange author, listName, name, (error) =>
-      if error then return cb error
-      @roomState.hasInList listName, name, (error, hasName) =>
+    @checkListChange author, listName, name, withEH cb, =>
+      @roomState.hasInList listName, name, withEH cb, (hasName) =>
         unless hasName
           return cb @errorBuilder.makeError 'noNameInList', name, listName
         cb()
 
   checkModeChange : (author, value, cb) ->
-    @isAdmin author, (error, admin) =>
-      if error then return cb error
+    @isAdmin author, withEH cb, (admin) =>
       unless admin
         return cb @errorBuilder.makeError 'notAllowed'
       cb()
 
   checkAcess : (userName, cb) ->
-    @isAdmin userName, (error, admin) =>
-      if error then return cb error
-      if admin then return cb()
-      @roomState.hasInList 'blacklist', userName, (error, inBlacklist) =>
-        if error then return cb @errorBuilder.makeServerError error
+    @isAdmin userName, withEH cb, (admin) =>
+      if admin
+        return cb()
+      @roomState.hasInList 'blacklist', userName, withEH cb, (inBlacklist) =>
         if inBlacklist
           return cb @errorBuilder.makeError 'notAllowed'
-        @roomState.whitelistOnlyGet (error, whitelistOnly) =>
-          if error then return cb @errorBuilder.makeServerError error
-          @roomState.hasInList 'whitelist', userName, (error, inWhitelist) =>
-            if error then return cb @errorBuilder.makeServerError error
+        @roomState.whitelistOnlyGet withEH cb, (whitelistOnly) =>
+          @roomState.hasInList 'whitelist', userName
+          , withEH cb, (inWhitelist) =>
             if whitelistOnly and not inWhitelist
               return cb @errorBuilder.makeError 'notAllowed'
             cb()
 
   checkIsOwner : (author, cb) ->
-    @roomState.ownerGet (error, owner) =>
+    @roomState.ownerGet withEH cb, (owner) =>
       unless owner == author
         return cb @errorBuilder.makeError 'notAllowed'
       cb()
@@ -192,93 +189,64 @@ class Room
   ###
 
   leave : (userName, cb) ->
-    @roomState.removeFromList 'userlist', [userName]
-    , (error) =>
-      if error then return cb @errorBuilder.makeServerError error
-      cb()
+    @roomState.removeFromList 'userlist', [userName], cb
 
   join : (userName, cb) ->
-    @checkAcess userName, (error) =>
-      if error then return cb error
-      @roomState.addToList 'userlist', [userName]
-      , (error) =>
-        if error then return cb @errorBuilder.makeServerError error
-        cb()
+    @checkAcess userName, withEH cb, =>
+      @roomState.addToList 'userlist', [userName], cb
 
   message : (author, msg, cb) ->
-    @roomState.hasInList 'userlist', author, (error, hasAuthor) =>
-      if error then return cb @errorBuilder.makeServerError error
-      unless hasAuthor
-        return @errorBuilder.makeError 'notJoined', @name
-      @roomState.messageAdd msg, (error) =>
-        if error then return cb @errorBuilder.makeServerError error
-        cb()
-
-  getList : (author, listName, cb) ->
-    @checkList author, listName, (error) =>
-      if error then return cb error
-      @roomState.getList listName, (error, list) =>
-        if error then return cb @errorBuilder.makeServerError error
-        cb null, list
-
-  getLastMessages : (author, cb) ->
-    @roomState.hasInList 'userlist', author, (error, hasAuthor) =>
-      if error then return cb @errorBuilder.makeServerError error
+    @roomState.hasInList 'userlist', author, withEH cb, (hasAuthor) =>
       unless hasAuthor
         return cb @errorBuilder.makeError 'notJoined', @name
-      @roomState.messagesGet (error, data) =>
-        if error then return cb @errorBuilder.makeServerError error
-        cb null, data
+      @roomState.messageAdd msg, cb
+
+  getList : (author, listName, cb) ->
+    @checkList author, listName, withEH cb, =>
+      @roomState.getList listName, cb
+
+  getLastMessages : (author, cb) ->
+    @roomState.hasInList 'userlist', author, withEH cb, (hasAuthor) =>
+      unless hasAuthor
+        return cb @errorBuilder.makeError 'notJoined', @name
+      @roomState.messagesGet cb
 
   addToList : (author, listName, values, cb) ->
     async.eachLimit values, asyncLimit, (val, fn) =>
       @checkListAdd author, listName, val, fn
-    , (error) =>
-      if error then return cb error
+    , withEH cb, =>
       data = []
       async.eachLimit values, asyncLimit
       , (val, fn) =>
-        @hasAddChangedCurrentAccess val, listName, (error, changed) ->
-          if error then return fn error
+        @hasAddChangedCurrentAccess val, listName, withEH fn, (changed) ->
           if changed then data.push val
           fn()
-      , (error) =>
-        if error then return cb error
-        @roomState.addToList listName, values, (error) =>
-          if error then return cb @errorBuilder.makeServerError error
-          cb null, data
+      , withEH cb, =>
+        @roomState.addToList listName, values, (error) ->
+          cb error, data
 
   removeFromList : (author, listName, values, cb) ->
     async.eachLimit values, asyncLimit, (val, fn) =>
       @checkListRemove author, listName, val, fn
-    , (error) =>
-      if error then return cb error
+    , withEH cb, =>
       data = []
       async.eachLimit values, asyncLimit
       , (val, fn) =>
-        @hasRemoveChangedCurrentAccess val, listName, (error, changed) ->
-          if error then return fn error
+        @hasRemoveChangedCurrentAccess val, listName, withEH fn, (changed) ->
           if changed then data.push val
           fn()
-      , (error) =>
-        if error then return cb error
-        @roomState.removeFromList listName, values, (error) =>
-          if error then return cb @errorBuilder.makeServerError error
-          cb null, data
+      , withEH cb, =>
+        @roomState.removeFromList listName, values, (error) ->
+          cb error, data
 
   getMode : (author, cb) ->
-    @roomState.whitelistOnlyGet (error, data) =>
-      if error then return cb @errorBuilder.makeServerError error
-      cb null, data
+    @roomState.whitelistOnlyGet cb
 
   changeMode : (author, mode, cb) ->
-    @checkModeChange author, mode, (error) =>
-      if error then return cb error
+    @checkModeChange author, mode, withEH cb, =>
       whitelistOnly = if mode then true else false
-      @roomState.whitelistOnlySet whitelistOnly, (error) =>
-        if error then return cb @errorBuilder.makeServerError error
-        @getModeChangedCurrentAccess whitelistOnly, (error, data) ->
-          cb error, data
+      @roomState.whitelistOnlySet whitelistOnly, withEH cb, =>
+        @getModeChangedCurrentAccess whitelistOnly, cb
 
 
 class UserDirectMessaging
@@ -295,100 +263,84 @@ class UserDirectMessaging
   # helpers
   ###
 
-  checkList : (author, listName) ->
+  checkUser : (author, cb) ->
     if author != @username
-      return @errorBuilder.makeError 'notAllowed'
-    unless @directMessagingState.hasList listName
-      return @errorBuilder.makeError 'noList', listName
-    return null
+      error = @errorBuilder.makeError 'notAllowed'
+    process.nextTick -> cb error
 
-  checkListChange : (author, listName, name, cb) ->
-    if name == @username
-      return cb @errorBuilder.makeError 'notAllowed'
-    @directMessagingState.hasInList listName, name, (error, hasName) =>
-      if error then return cb @errorBuilder.makeServerError error
-      cb null, hasName
+  checkList : (author, listName, cb) ->
+    @checkUser author, withEH cb, =>
+      unless @directMessagingState.hasList listName
+        error = @errorBuilder.makeError 'noList', listName
+      cb error
+
+  hasListValue : (author, listName, name, cb) ->
+    @checkList author, listName, withEH cb, =>
+      if name == @username
+        return cb @errorBuilder.makeError 'notAllowed'
+      @directMessagingState.hasInList listName, name, cb
 
   checkListAdd : (author, listName, name, cb) ->
-    @checkListChange author, listName, name, (error, hasName) =>
-      if error then return cb error
+    @hasListValue author, listName, name, withEH cb, (hasName) =>
       if hasName
         return cb @errorBuilder.makeError 'nameInList', name, listName
       cb()
 
   checkListRemove : (author, listName, name, cb) ->
-    @checkListChange author, listName, name, (error, hasName) =>
-      if error then return cb error
+    @hasListValue author, listName, name, withEH cb, (hasName) =>
       unless hasName
         return cb @errorBuilder.makeError 'noNameInList', name, listName
       cb()
 
   checkAcess : (userName, cb) ->
-    if userName == @username then return cb()
+    if userName == @username
+      return process.nextTick -> cb @errorBuilder.makeError 'notAllowed'
     @directMessagingState.hasInList 'blacklist', userName
-    , (error, blacklisted) =>
-      if error then return cb @errorBuilder.makeServerError error
+    , withEH cb, (blacklisted) =>
       if blacklisted
         return cb @errorBuilder.makeError 'noUserOnline'
-      @directMessagingState.whitelistOnlyGet (error, whitelistOnly) =>
-        if error then return cb @errorBuilder.makeServerError error
+      @directMessagingState.whitelistOnlyGet withEH cb, (whitelistOnly) =>
         @directMessagingState.hasInList 'whitelist', userName
-        , (error, hasWhitelist) =>
-          if error then return cb @errorBuilder.makeServerError error
+        , withEH cb, (hasWhitelist) =>
           if whitelistOnly and not hasWhitelist
             return cb @errorBuilder.makeError 'notAllowed'
           cb()
-
-  changeList : (author, listName, values, check, method, cb) ->
-    error = @checkList author, listName
-    if error then return cb error
-    async.eachLimit values, asyncLimit
-    , (val, fn) =>
-      @[check] author, listName, val, fn
-    , (error) =>
-      if error then return cb error
-      @directMessagingState[method] listName, values, (error) ->
-        if error then return cb error
-        cb()
 
   ###
   # direct messaging actions
   ###
 
   message : (author, msg, cb) ->
-    @checkAcess author, (error) ->
-      if error then return cb error
-      cb()
+    @checkAcess author, cb
 
   getList : (author, listName, cb) ->
-    error = @checkList author, listName
-    if error then return cb error
-    @directMessagingState.getList listName, (error, list) =>
-      if error then return cb @errorBuilder.makeServerError error
-      cb null, list
+    @checkList author, listName, withEH cb, =>
+      @directMessagingState.getList listName, cb
 
   addToList : (author, listName, values, cb) ->
-    @changeList author, listName, values, 'checkListAdd'
-    , 'addToList', cb
+    @checkList author, listName, withEH cb, =>
+      async.eachLimit values, asyncLimit
+      , (val, fn) =>
+        @checkListAdd author, listName, val, fn
+      , withEH cb, =>
+        @directMessagingState.addToList listName, values, cb
 
   removeFromList : (author, listName, values, cb) ->
-    @changeList author, listName, values, 'checkListRemove'
-    , 'removeFromList', cb
+    @checkList author, listName, withEH cb, =>
+      async.eachLimit values, asyncLimit
+      , (val, fn) =>
+        @checkListRemove author, listName, val, fn
+      , withEH cb, =>
+        @directMessagingState.removeFromList listName, values, cb
 
   getMode : (author, cb) ->
-    if author != @username
-      return cb @errorBuilder.makeError 'notAllowed'
-    @directMessagingState.whitelistOnlyGet (error, whitelistOnly) ->
-      if error then return cb @errorBuilder.makeServerError error
-      cb null, whitelistOnly
+    @checkUser author, withEH cb, =>
+      @directMessagingState.whitelistOnlyGet cb
 
   changeMode : (author, mode, cb) ->
-    if author != @username
-      return cb @errorBuilder.makeError 'notAllowed'
-    m = if mode then true else false
-    @directMessagingState.whitelistOnlySet m, (error) ->
-      if error then return cb @errorBuilder.makeServerError error
-      cb()
+    @checkUser author, withEH cb, =>
+      m = if mode then true else false
+      @directMessagingState.whitelistOnlySet m, cb
 
 
 class User extends UserDirectMessaging
@@ -407,8 +359,7 @@ class User extends UserDirectMessaging
   ###
 
   registerSocket : (socket, cb) ->
-    @userState.socketAdd socket.id, (error) =>
-      if error then return cb @errorBuilder.makeServerError error
+    @userState.socketAdd socket.id, withEH cb, =>
       for own cmd of userCommands
         @bindCommand socket, cmd, @[cmd]
       cb()
@@ -467,41 +418,35 @@ class User extends UserDirectMessaging
   sendAccessRemoved : (userNames, roomName, cb) ->
     async.eachLimit userNames, asyncLimit
     , (userName, fn) =>
-      @chatState.getUser userName, (error, user) =>
-        if error then return fn()
-        user.userState.roomRemove roomName, (error) =>
-          if error then return fn @errorBuilder.makeServerError error
-          user.userState.socketsGetAll (error, sockets) =>
-            if error then return fn @errorBuilder.makeServerError error
+      @chatState.getUser userName, withEH fn, (user) =>
+        user.userState.roomRemove roomName, withEH fn, =>
+          user.userState.socketsGetAll withEH fn, (sockets) =>
             for id in sockets
               @send id, 'roomAccessRemoved', roomName
             fn()
     , cb
 
   sendAllRoomsLeave : (cb) ->
-    @userState.roomsGetAll (error, rooms) =>
-      if error then return cb @errorBuilder.makeServerError error
+    @userState.roomsGetAll withEH cb, (rooms) =>
       async.eachLimit rooms, asyncLimit
       , (roomName, fn) =>
-        @chatState.getRoom roomName, (error, room) =>
-          if error then return fn()
-          room.leave @username, =>
+        @chatState.getRoom roomName, withErrorLog @errorBuilder, (room) =>
+          room.leave @username, withErrorLog @errorBuilder, =>
             if @enableUserlistUpdates
               @send roomName, 'roomUserLeave', roomName, @username
             fn()
        , =>
-        @chatState.setUserOffline @username, cb
+        @chatState.logoutUser @username, cb
 
   reportRoomConnections : (error, id, sid, roomName, msgName, cb) ->
     if sid == id
-      unless error then cb()
-      else cb @errorBuilder.makeServerError error
-    else unless error
-      @send sid, msgName, roomName
+      cb error
+    else
+      if error then @errorBuilder.makeServerError error
+      else @send sid, msgName, roomName
 
   removeUser : (cb) ->
-    @userState.socketsGetAll (error, sockets) =>
-      if error then return cb @errorBuilder.makeServerError error
+    @userState.socketsGetAll withEH cb, (sockets) =>
       async.eachLimit sockets, asyncLimit
       , (sid, fn) =>
         if @server.io.sockets.connected[sid]
@@ -529,20 +474,15 @@ class User extends UserDirectMessaging
     unless @enableDirectMessages
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
-    @chatState.getUser toUserName, (error, toUser) =>
-      if error then return cb error
-      @chatState.getUser @username , (error, fromUser) =>
-        if error then return cb error
+    @chatState.getUser toUserName, withEH cb, (toUser) =>
+      @chatState.getUser @username, withEH cb, (fromUser) =>
         msg = processMessage @username, msg
-        toUser.message @username, msg, (error) =>
-          if error then return cb error
-          fromUser.userState.socketsGetAll (error, sockets) =>
-            if error then return cb @errorBuilder.makeServerError error
+        toUser.message @username, msg, withEH cb, =>
+          fromUser.userState.socketsGetAll withEH cb, (sockets) =>
             for sid in sockets
               if sid != id
                 @send sid, 'directMessageEcho', toUserName, msg
-            toUser.userState.socketsGetAll (error, sockets) =>
-              if error then return cb @errorBuilder.makeServerError error
+            toUser.userState.socketsGetAll withEH cb, (sockets) =>
               for sid in sockets
                 @send sid, 'directMessage', @username, msg
               cb()
@@ -555,21 +495,18 @@ class User extends UserDirectMessaging
 
   disconnect : (reason, cb, id) ->
     # TODO lock user state
-    @userState.socketRemove id, (error) =>
-      if error then return cb @errorBuilder.makeServerError error
-      @userState.socketsCount (error, nsockets) =>
-        if error then return cb @errorBuilder.makeServerError error
+    @userState.socketRemove id, withEH cb, =>
+      @userState.socketsGetAll withEH cb, (sockets) =>
+        nsockets = sockets.lenght
         if nsockets > 0 then return cb()
         @sendAllRoomsLeave cb
 
   listRooms : (cb) ->
-    @chatState.listRooms @username, cb
+    @chatState.listRooms cb
 
   roomAddToList : (roomName, listName, values, cb) ->
-    @withRoom roomName, (error, room) =>
-      if error then return cb error
-      room.addToList @username, listName, values, (error, data) =>
-        if error then return cb error
+    @withRoom roomName, withEH cb, (room) =>
+      room.addToList @username, listName, values, withEH cb, (data) =>
         @sendAccessRemoved data, roomName, cb
 
   roomCreate : (roomName, whitelistOnly, cb) ->
@@ -582,52 +519,38 @@ class User extends UserDirectMessaging
         return cb error
       room = new Room @server, roomName
       room.initState { owner : @username, whitelistOnly : whitelistOnly }
-      , (error) =>
-        if error then return cb @errorBuilder.makeServerError error
-        @chatState.addRoom room, cb
+      , withEH cb, => @chatState.addRoom room, cb
 
   roomDelete : (roomName, cb) ->
     unless @enableRoomsManagement
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
-    @withRoom roomName, (error, room) =>
-      if error then return cb error
-      room.checkIsOwner @username, (error) =>
-        if error then return cb error
-        @chatState.removeRoom room.name, (error) =>
-          if error then return cb error
-          room.roomState.getList 'userlist', (error, list) =>
-            if error then return cb @errorBuilder.makeServerError error
-            @sendAccessRemoved list, roomName, (error) ->
-              cb error
+    @withRoom roomName, withEH cb, (room) =>
+      room.checkIsOwner @username, withEH cb, =>
+        @chatState.removeRoom room.name, withEH cb, =>
+          room.roomState.getList 'userlist', withEH cb, (list) =>
+            @sendAccessRemoved list, roomName, cb
 
   roomGetAccessList : (roomName, listName, cb) ->
-    @withRoom roomName, (error, room) =>
-      if error then return cb error
+    @withRoom roomName, withEH cb, (room) =>
       room.getList @username, listName, cb
 
   roomGetWhitelistMode : (roomName, cb) ->
-    @withRoom roomName, (error, room) =>
-      if error then return cb error
+    @withRoom roomName, withEH cb, (room) =>
       room.getMode @username, cb
 
   roomHistory : (roomName, cb) ->
-    @withRoom roomName, (error, room) =>
-      if error then return cb error
+    @withRoom roomName, withEH cb, (room) =>
       room.getLastMessages @username, cb
 
   roomJoin : (roomName, cb, id = null) ->
-    @withRoom roomName, (error, room) =>
-      if error then return cb error
-      room.join @username, (error) =>
-        if error then return cb error
-        @userState.roomAdd roomName, (error) =>
-          if error then return cb @errorBuilder.makeServerError error
+    @withRoom roomName, withEH cb, (room) =>
+      room.join @username, withEH cb, =>
+        @userState.roomAdd roomName, withEH cb, =>
           if @enableUserlistUpdates
             @send roomName, 'roomUserJoin', roomName, @username
           # TODO lock user sockets
-          @userState.socketsGetAll (error, sockets) =>
-            if error then return cb @errorBuilder.makeServerError error
+          @userState.socketsGetAll withEH cb, (sockets) =>
             async.eachLimit sockets, asyncLimit, (sid, fn) =>
               @server.nsp.adapter.add sid, roomName
               , (error) =>
@@ -636,17 +559,13 @@ class User extends UserDirectMessaging
                 fn()
 
   roomLeave : (roomName, cb, id = null) ->
-    @withRoom roomName, (error, room) =>
-      if error then return cb error
-      room.leave @username, (error) =>
-        if error then return cb error
-        @userState.roomRemove roomName, (error) =>
-          if error then return cb @errorBuilder.makeServerError error
+    @withRoom roomName, withEH cb, (room) =>
+      room.leave @username, withEH cb, =>
+        @userState.roomRemove roomName, withEH cb, =>
           if @enableUserlistUpdates
             @send roomName, 'roomUserLeave', roomName, @username
           # TODO lock user sockets
-          @userState.socketsGetAll (error, sockets) =>
-            if error then return cb @errorBuilder.makeServerError error
+          @userState.socketsGetAll withEH cb, (sockets) =>
             async.eachLimit sockets, asyncLimit, (sid, fn) =>
               @server.nsp.adapter.del sid, roomName
               , (error) =>
@@ -655,32 +574,25 @@ class User extends UserDirectMessaging
                 fn()
 
   roomMessage : (roomName, msg, cb) ->
-    @withRoom roomName, (error, room) =>
-      if error then return cb error
-      room.message @username, msg, (error) =>
-        unless error
-          msg = processMessage @username, msg
-          @send roomName, 'roomMessage', roomName, @username, msg
-        return cb error
+    @withRoom roomName, withEH cb, (room) =>
+      room.message @username, msg, withEH cb, =>
+        msg = processMessage @username, msg
+        @send roomName, 'roomMessage', roomName, @username, msg
+        cb()
 
   roomRemoveFromList : (roomName, listName, values, cb) ->
-    @withRoom roomName, (error, room) =>
-      if error then return cb error
-      room.removeFromList @username, listName, values, (error, data) =>
-        if error then return cb error
+    @withRoom roomName, withEH cb, (room) =>
+      room.removeFromList @username, listName, values, withEH cb, (data) =>
         @sendAccessRemoved data, roomName, cb
 
   roomSetWhitelistMode : (roomName, mode, cb) ->
-    @withRoom roomName, (error, room) =>
-      if error then return cb error
-      room.changeMode @username, mode, (error, data) =>
-        if error then return cb error
+    @withRoom roomName, withEH cb, (room) =>
+      room.changeMode @username, mode, withEH cb, (data) =>
         @sendAccessRemoved data, roomName, cb
 
 
-
-
 class ChatService
+
   constructor : (@options = {}, @hooks = {}, state = 'memory') ->
     @io = @options.io
     @sharedIO = true if @io

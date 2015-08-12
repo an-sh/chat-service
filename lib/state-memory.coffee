@@ -11,9 +11,16 @@ initState = (state, values) ->
     if values
       state.addEach values
 
+
 asyncLimit = 16
 
+
 class ListsStateHelper
+
+  checkList : (listName) ->
+    unless @hasList listName
+      return @errorBuilder.makeError 'noList', listName
+
   addToList : (listName, elems, cb) ->
     error = @checkList listName
     if error then return process.nextTick -> cb error
@@ -48,7 +55,9 @@ class ListsStateHelper
 
 
 class RoomState extends ListsStateHelper
+
   constructor : (@server, @name, @historyMaxMessages = 0) ->
+    @errorBuilder = @server.errorBuilder
     @whitelist = new FastSet
     @blacklist = new FastSet
     @adminlist = new FastSet
@@ -71,10 +80,6 @@ class RoomState extends ListsStateHelper
 
   hasList : (listName) ->
     return listName in [ 'adminlist', 'whitelist', 'blacklist', 'userlist' ]
-
-  checkList : (listName) ->
-    unless @hasList listName then return "No list named #{listName}"
-    return false
 
   ownerGet : (cb) ->
     owner = @owner
@@ -102,6 +107,7 @@ class RoomState extends ListsStateHelper
 
 
 class DirectMessagingState extends ListsStateHelper
+
   constructor : (@server, @username) ->
     @whitelistOnly
     @whitelist = new FastSet
@@ -116,12 +122,9 @@ class DirectMessagingState extends ListsStateHelper
   hasList : (listName) ->
     return listName in [ 'whitelist', 'blacklist' ]
 
-  checkList : (listName) ->
-    unless @hasList listName then return "No list named #{listName}"
-    return false
-
 
 class UserState
+
   constructor : (@server, @username) ->
     @roomslist = new FastSet
     @sockets = new FastSet
@@ -133,10 +136,6 @@ class UserState
   socketRemove : (id, cb) ->
     @sockets.remove id
     process.nextTick -> cb null
-
-  socketsCount : (cb) ->
-    nsockets = @sockets.length
-    process.nextTick -> cb null, nsockets
 
   socketsGetAll : (cb) ->
     sockets = @sockets.toArray()
@@ -156,6 +155,7 @@ class UserState
 
 
 class MemoryState
+
   constructor : (@server) ->
     @errorBuilder = @server.errorBuilder
     @usersOnline = {}
@@ -164,12 +164,6 @@ class MemoryState
     @roomState = RoomState
     @userState = UserState
     @directMessagingState = DirectMessagingState
-
-  getUser : (name, cb) ->
-    u = @usersOnline[name]
-    unless u
-      error = @errorBuilder.makeError 'noUserOnline', name
-    process.nextTick -> cb error, u
 
   getRoom : (name, cb) ->
     r = @rooms[name]
@@ -192,6 +186,23 @@ class MemoryState
       error = @errorBuilder.makeError 'noRoom', name
     process.nextTick -> cb error
 
+  listRooms : (cb) ->
+    list = []
+    async.forEachOfLimit @rooms, asyncLimit
+    , (room, name, fn) ->
+      room.roomState.whitelistOnlyGet (error, isPrivate) ->
+        unless error or isPrivate then list.push name
+        fn()
+    , ->
+      list.sort()
+      cb null, list
+
+  getUser : (name, cb) ->
+    u = @usersOnline[name]
+    unless u
+      error = @errorBuilder.makeError 'noUserOnline', name
+    process.nextTick -> cb error, u
+
   loginUser : (name, socket, cb) ->
     currentUser = @usersOnline[name]
     returnedUser = @usersOffline[name] unless currentUser
@@ -208,24 +219,13 @@ class MemoryState
       newUser.registerSocket socket, (error) ->
         cb error, newUser
 
-  setUserOffline : (name, cb) ->
+  logoutUser : (name, cb) ->
     unless @usersOnline[name]
       error = @errorBuilder.makeError 'noUserOnline', name
     else
       @usersOffline[name] = @usersOnline[name]
       delete @usersOnline[name]
     process.nextTick -> cb error
-
-  listRooms : (author, cb) ->
-    list = []
-    async.forEachOfLimit @rooms, asyncLimit
-    , (room, name, fn) ->
-      room.getMode author, (error, isPrivate) ->
-        unless isPrivate then list.push name
-        fn()
-    , ->
-      list.sort()
-      cb null, list
 
   addUser : (name, cb, state = null) ->
     u1 = @usersOnline[name]
@@ -251,6 +251,7 @@ class MemoryState
         process.nextTick -> cb error
     if u1 then u1.removeUser fn
     else fn()
+
 
 module.exports = {
   MemoryState

@@ -1,8 +1,10 @@
 
 util = require 'util'
 
+
 class ErrorBuilder
-  constructor : (@useRawErrorObjects) ->
+
+  constructor : (@useRawErrorObjects, @serverErrorHook) ->
 
   errorStrings :
     badArgument : 'Bad argument, named %s value %s'
@@ -30,6 +32,8 @@ class ErrorBuilder
     return util.format @getErrorString(error), args...
 
   makeServerError : (error) ->
+    if @serverErrorHook
+      @serverErrorHook error
     return @makeError 'serverError', error.toString()
 
 
