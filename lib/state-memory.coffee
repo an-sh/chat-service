@@ -1,8 +1,11 @@
 
 async = require 'async'
-ErrorBuilder = require('./errors.coffee').ErrorBuilder
 FastSet = require 'collections/fast-set'
 Deque = require 'collections/deque'
+
+
+ErrorBuilder = require('./errors.coffee').ErrorBuilder
+withEH = require('./errors.coffee').withEH
 
 
 initState = (state, values) ->
@@ -17,33 +20,31 @@ asyncLimit = 16
 
 class ListsStateHelper
 
-  checkList : (listName) ->
+  checkList : (listName, cb) ->
     unless @hasList listName
-      return @errorBuilder.makeError 'noList', listName
+      error = @errorBuilder.makeError 'noList', listName
+    process.nextTick -> cb error
 
   addToList : (listName, elems, cb) ->
-    error = @checkList listName
-    if error then return process.nextTick -> cb error
-    @[listName].addEach elems
-    process.nextTick -> cb()
+    @checkList listName, withEH cb, =>
+      @[listName].addEach elems
+      cb()
 
   removeFromList : (listName, elems, cb) ->
-    error = @checkList listName
-    if error then return process.nextTick -> cb error
-    @[listName].deleteEach elems
-    process.nextTick -> cb()
+    @checkList listName, withEH cb, =>
+      @[listName].deleteEach elems
+      cb()
 
   getList : (listName, cb) ->
-    error = @checkList listName
-    if error then return process.nextTick -> cb error
-    data = @[listName].toArray()
-    process.nextTick -> cb null, data
+    @checkList listName, withEH cb, =>
+      data = @[listName].toArray()
+      cb null, data
 
   hasInList : (listName, elem, cb) ->
-    error = @checkList listName
-    if error then return process.nextTick -> cb error
-    data = @[listName].has elem
-    process.nextTick -> cb null, data
+    @checkList listName, withEH cb, =>
+      data = @[listName].has elem
+      data = if data then true else false
+      cb null, data
 
   whitelistOnlySet : (mode, cb) ->
     @whitelistOnly = if mode then true else false

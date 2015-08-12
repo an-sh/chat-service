@@ -607,3 +607,21 @@ describe 'Chat service', ->
     socket1.on 'loginConfirmed', ->
       socket1.emit 'listRooms', (error, data) ->
         done()
+
+  it 'should execute server errors hook', (done) ->
+    error = 'errror'
+    fn = (e) ->
+      expect(e).equal(error)
+      process.nextTick -> done()
+    chatServer = new ChatService { port : port } , { serverErrorHook : fn }
+    chatServer.errorBuilder.makeServerError error
+
+  it 'should return raw error objects', (done) ->
+    chatServer = new ChatService { port : port, useRawErrorObjects : true }
+    socket1 = ioClient.connect url1, makeParams(user1)
+    socket1.on 'loginConfirmed', ->
+      socket1.emit 'roomGetAccessList', roomName1, 'nolist', (error) ->
+        expect(error.name).equal('noRoom')
+        expect(error.args).length.above(0)
+        expect(error.args[0]).equal('room1')
+        done()

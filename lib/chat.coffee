@@ -5,8 +5,11 @@ async = require 'async'
 # TODO messages arguments checking
 check = require 'check-types'
 
-ErrorBuilder = require('./errors.coffee').ErrorBuilder
+
 MemoryState = require('./state-memory.coffee').MemoryState
+ErrorBuilder = require('./errors.coffee').ErrorBuilder
+withEH = require('./errors.coffee').withEH
+withErrorLog = require('./errors.coffee').withErrorLog
 
 
 userCommands =
@@ -55,18 +58,6 @@ processMessage = (author, msg) ->
   r.timestamp = new Date().getTime()
   r.author = author
   return r
-
-
-withEH = (errorCallback, normallCallback) ->
-  (error, args...) ->
-    if error then return errorCallback error
-    normallCallback args...
-
-withErrorLog = (errorBuilder ,normallCallback) ->
-  (error, args...) ->
-    if error
-      errorBuilder.makeServerError error
-    normallCallback args...
 
 
 class Room
@@ -612,7 +603,7 @@ class ChatService
     @enableDirectMessages = @options.enableDirectMessages || false
     @serverOptions = @options.serverOptions
 
-    @errorBuilder = new ErrorBuilder @useRawErrorObjects
+    @errorBuilder = new ErrorBuilder @useRawErrorObjects, @hooks.serverErrorHook
     @User = User
     @Room = Room
     @chatState = new state @

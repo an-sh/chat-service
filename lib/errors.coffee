@@ -37,6 +37,21 @@ class ErrorBuilder
     return @makeError 'serverError', error.toString()
 
 
+withEH = (errorCallback, normallCallback) ->
+  (error, args...) ->
+    if error then return errorCallback error
+    normallCallback args...
+
+
+withErrorLog = (errorBuilder ,normallCallback) ->
+  (error, args...) ->
+    if error
+      errorBuilder.makeServerError error
+    normallCallback args...
+
+
 module.exports = {
   ErrorBuilder
+  withEH
+  withErrorLog
 }
