@@ -625,3 +625,11 @@ describe 'Chat service', ->
         expect(error.args).length.above(0)
         expect(error.args[0]).equal('room1')
         done()
+
+  it 'should validate message arguments', (done) ->
+    chatServer = new ChatService { port : port, enableRoomsManagement : true }
+    socket1 = ioClient.connect url1, makeParams(user1)
+    socket1.on 'loginConfirmed', (u) ->
+      socket1.emit 'roomCreate', null, false, (error, data) ->
+        expect(error).ok
+        done()
