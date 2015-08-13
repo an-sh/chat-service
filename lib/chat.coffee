@@ -430,11 +430,13 @@ class User extends UserDirectMessaging
         @chatState.logoutUser @username, cb
 
   reportRoomConnections : (error, id, sid, roomName, msgName, cb) ->
+    if error
+      @errorBuilder.handleServerError error
+      error = @errorBuilder.makeError serverError, '500'
     if sid == id
       cb error
-    else
-      if error then @errorBuilder.makeServerError error
-      else @send sid, msgName, roomName
+    else unless error
+      @send sid, msgName, roomName
 
   removeUser : (cb) ->
     @userState.socketsGetAll withEH cb, (sockets) =>

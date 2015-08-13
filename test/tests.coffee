@@ -614,7 +614,7 @@ describe 'Chat service', ->
       expect(e).equal(error)
       process.nextTick -> done()
     chatServer = new ChatService { port : port } , { serverErrorHook : fn }
-    chatServer.errorBuilder.makeServerError error
+    chatServer.errorBuilder.handleServerError error
 
   it 'should return raw error objects', (done) ->
     chatServer = new ChatService { port : port, useRawErrorObjects : true }

@@ -31,10 +31,9 @@ class ErrorBuilder
       return { name : error, args : args }
     return util.format @getErrorString(error), args...
 
-  makeServerError : (error) ->
+  handleServerError : (error) ->
     if @serverErrorHook
       @serverErrorHook error
-    return @makeError 'serverError', error.toString()
 
 
 withEH = (errorCallback, normallCallback) ->
@@ -46,7 +45,7 @@ withEH = (errorCallback, normallCallback) ->
 withErrorLog = (errorBuilder ,normallCallback) ->
   (error, args...) ->
     if error
-      errorBuilder.makeServerError error
+      errorBuilder.handleServerError error
     normallCallback args...
 
 
