@@ -7,11 +7,13 @@
 
 Server side chat based on top of socket.io
 
+### Documentation
+
+Look in the test directory, for socket.io-client messages and server
+setup examples.
 
 ### TODO
 
 - Documentation.
-- Pure stateless service (via external storage adapters).
-- Room access removed reasons.
-- Temporary access removed.
-- API for adding custom messages.
+- Redis state adapter.
+- API for extensions.
