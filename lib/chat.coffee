@@ -676,16 +676,19 @@ class User extends UserDirectMessaging
 
 class ChatService
 
-  constructor : (@options = {}, @hooks = {}, state = 'memory') ->
-    @io = @options.io
-    @sharedIO = true if @io
-    @http = @options.http unless @io
-    state = switch state
-      when 'memory' then MemoryState
-      when typeof state == 'function' then state
-      else throw new Error "Invalid state: #{state}"
+  constructor : (@options = {}, @hooks = {}, @state = 'memory') ->
+    @setOptions()
 
-    # options, constant for a server instance
+    @setServer()
+
+    if @hooks.onStart
+      @hooks.onStart @, (error) =>
+        if error then return @close null, error
+        @setEvents()
+    else
+      @setEvents()
+
+  setOptions : ->
     @namespace = @options.namespace || '/chat-service'
     @historyMaxMessages = @options.historyMaxMessages || 100
     @useRawErrorObjects = @options.useRawErrorObjects || false
@@ -694,26 +697,26 @@ class ChatService
     @enableDirectMessages = @options.enableDirectMessages || false
     @serverOptions = @options.serverOptions
 
-    @errorBuilder = new ErrorBuilder @useRawErrorObjects, @hooks.serverErrorHook
-    @userCommands = userCommands
-    @User = User
-    @Room = Room
-    @chatState = new state @
-
+  setServer : ->
+    @io = @options.io
+    @sharedIO = true if @io
+    @http = @options.http unless @io
+    state = switch @state
+      when 'memory' then MemoryState
+      when typeof @state == 'function' then @state
+      else throw new Error "Invalid state: #{@state}"
     unless @io
       if @http
         @io = socketIO @http, @serverOptions
       else
         port = @serverOptions?.port || 8000
         @io = socketIO port, @serverOptions
-
     @nsp = @io.of @namespace
-    if @hooks.onStart
-      @hooks.onStart @, (error) =>
-        if error then return @close null, error
-        @setEvents()
-    else
-      @setEvents()
+    @userCommands = userCommands
+    @User = User
+    @Room = Room
+    @errorBuilder = new ErrorBuilder @useRawErrorObjects, @hooks.serverErrorHook
+    @chatState = new state @
 
   setEvents : ->
     if @hooks.auth
