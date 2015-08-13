@@ -7,7 +7,8 @@ class ErrorBuilder
   constructor : (@useRawErrorObjects, @serverErrorHook) ->
 
   errorStrings :
-    badArgument : 'Bad argument, named %s value %s'
+    badArgument : 'Bad argument %s value %s'
+    wrongArgumentsCount : 'Expected %s arguments, got %s'
     nameInList : 'Name %s is already in list %s'
     noList : 'No such list %s'
     noLogin : 'No login provided'

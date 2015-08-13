@@ -2,7 +2,6 @@
 socketIO = require 'socket.io'
 _ = require 'lodash'
 async = require 'async'
-# TODO messages arguments checking
 check = require 'check-types'
 
 
@@ -11,27 +10,6 @@ ErrorBuilder = require('./errors.coffee').ErrorBuilder
 withEH = require('./errors.coffee').withEH
 withErrorLog = require('./errors.coffee').withErrorLog
 
-
-userCommands =
-  directAddToList : ''
-  directGetAccessList : ''
-  directGetWhitelistMode : ''
-  directMessage : ''
-  directRemoveFromList : ''
-  directSetWhitelistMode : ''
-  disconnect : ''
-  listRooms : ''
-  roomAddToList : ''
-  roomCreate : ''
-  roomDelete : ''
-  roomGetAccessList : ''
-  roomGetWhitelistMode : ''
-  roomHistory : ''
-  roomJoin : ''
-  roomLeave : ''
-  roomMessage : ''
-  roomRemoveFromList : ''
-  roomSetWhitelistMode : ''
 
 serverMessages =
   directMessage : ''
@@ -44,6 +22,95 @@ serverMessages =
   roomMessage : ''
   roomUserJoin : ''
   roomUserLeave : ''
+
+
+userCommands =
+  directAddToList : ->
+    dataChecker arguments, [
+      check.string
+      check.array.of.string
+    ]
+  directGetAccessList : ->
+    dataChecker arguments, [
+      check.string
+    ]
+  directGetWhitelistMode : ->
+    dataChecker arguments, [
+    ]
+  directMessage : ->
+    dataChecker arguments, [
+      check.string
+      checkMessage
+    ]
+  directRemoveFromList : ->
+    dataChecker arguments, [
+      check.string
+      check.array.of.string
+    ]
+  directSetWhitelistMode : ->
+    dataChecker arguments, [
+      check.boolean
+    ]
+  disconnect : ->
+    dataChecker arguments, [
+      check.string
+    ]
+  listRooms : ->
+    dataChecker arguments, [
+    ]
+  roomAddToList : ->
+    dataChecker arguments, [
+      check.string
+      check.string
+      check.array.of.string
+    ]
+  roomCreate : ->
+    dataChecker arguments, [
+      check.string
+      check.boolean
+    ]
+  roomDelete : ->
+    dataChecker arguments, [
+      check.string
+    ]
+  roomGetAccessList : ->
+    dataChecker arguments, [
+      check.string
+      check.string
+    ]
+  roomGetWhitelistMode : ->
+    dataChecker arguments, [
+      check.string
+    ]
+  roomHistory : ->
+    dataChecker arguments, [
+      check.string
+    ]
+  roomJoin : ->
+    dataChecker arguments, [
+      check.string
+    ]
+  roomLeave : ->
+    dataChecker arguments, [
+      check.string
+    ]
+  roomMessage : ->
+    dataChecker arguments, [
+      check.string
+      checkMessage
+    ]
+  roomRemoveFromList : ->
+    dataChecker arguments, [
+      check.string
+      check.string
+      check.array.of.string
+    ]
+  roomSetWhitelistMode : ->
+    dataChecker arguments, [
+      check.string
+      check.boolean
+    ]
+
 
 Object.freeze userCommands
 Object.freeze serverMessages
@@ -58,6 +125,18 @@ processMessage = (author, msg) ->
   r.timestamp = new Date().getTime()
   r.author = author
   return r
+
+checkMessage = (msg) ->
+  r = check.map msg, { textMessage : check.string }
+  if r then return Object.keys(msg).length == 1
+
+dataChecker = (args, checkers) ->
+  if args.length != checkers.length
+    return [ 'wrongArgumentsCount', checkers.length, args.length ]
+  for checker, idx in checkers
+    unless checker args[idx]
+      return [ 'badArgument', idx, args[idx] ]
+  return null
 
 
 class Room
@@ -360,6 +439,7 @@ class User extends UserDirectMessaging
     aname = name + 'After'
     cmd = (oargs..., cb, id) =>
       hooks = @server.hooks
+      validator = @server.userCommands[name]
       beforeHook = hooks?[bname]
       afterHook = hooks?[aname]
       execCommand = (error, data, nargs...) =>
@@ -379,6 +459,10 @@ class User extends UserDirectMessaging
           , afterCommand
           , id ]
       process.nextTick =>
+        checkerError = validator oargs...
+        if checkerError
+          error = @server.errorBuilder.makeError checkerError...
+          return cb error
         unless beforeHook
           execCommand()
         else
@@ -402,6 +486,11 @@ class User extends UserDirectMessaging
 
   withRoom : (roomName, fn) ->
     @chatState.getRoom roomName, fn
+
+  ###
+  # message sending helpers
+  ###
+
 
   send : (id, args...) ->
     @server.nsp.in(id).emit args...
@@ -606,6 +695,7 @@ class ChatService
     @serverOptions = @options.serverOptions
 
     @errorBuilder = new ErrorBuilder @useRawErrorObjects, @hooks.serverErrorHook
+    @userCommands = userCommands
     @User = User
     @Room = Room
     @chatState = new state @
