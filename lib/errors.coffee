@@ -5,7 +5,7 @@ util = require 'util'
 # Implements error formatting.
 class ErrorBuilder
 
-  # @nodoc
+  # @private
   constructor : (@useRawErrorObjects, @serverErrorHook) ->
 
   # server errors
@@ -27,7 +27,7 @@ class ErrorBuilder
     serverError : 'Server error %s'
     userExists : 'User %s already exists'
 
-  # @nodoc
+  # @private
   getErrorString : (code) ->
     return @errorStrings[code] || "Unknown error: #{code}"
 
@@ -46,14 +46,14 @@ class ErrorBuilder
       @serverErrorHook error
 
 
-# @nodoc
+# @private
 withEH = (errorCallback, normallCallback) ->
   (error, args...) ->
     if error then return errorCallback error
     normallCallback args...
 
 
-# @nodoc
+# @private
 withErrorLog = (errorBuilder ,normallCallback) ->
   (error, args...) ->
     if error

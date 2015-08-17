@@ -18,6 +18,8 @@ initState = (state, values) ->
 asyncLimit = 16
 
 
+# State API.
+# @private
 class ListsState
 
   checkList : (listName, cb) ->
@@ -55,6 +57,8 @@ class ListsState
     process.nextTick -> cb null, m
 
 
+# State API.
+# @private
 class RoomState extends ListsState
 
   constructor : (@server, @name, @historyMaxMessages = 0) ->
@@ -107,6 +111,8 @@ class RoomState extends ListsState
     process.nextTick -> cb null, data
 
 
+# State API.
+# @private
 class DirectMessagingState extends ListsState
 
   constructor : (@server, @username) ->
@@ -124,6 +130,8 @@ class DirectMessagingState extends ListsState
     return listName in [ 'whitelist', 'blacklist' ]
 
 
+# State API.
+# @private
 class UserState
 
   constructor : (@server, @username) ->
@@ -155,6 +163,8 @@ class UserState
     process.nextTick -> cb null, rooms
 
 
+# State API.
+# @private
 class MemoryState
 
   constructor : (@server) ->
