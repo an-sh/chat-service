@@ -2,10 +2,13 @@
 util = require 'util'
 
 
+# Implements error formatting.
 class ErrorBuilder
 
+  # @nodoc
   constructor : (@useRawErrorObjects, @serverErrorHook) ->
 
+  # server errors
   errorStrings :
     badArgument : 'Bad argument %s value %s'
     wrongArgumentsCount : 'Expected %s arguments, got %s'
@@ -24,25 +27,33 @@ class ErrorBuilder
     serverError : 'Server error %s'
     userExists : 'User %s already exists'
 
+  # @nodoc
   getErrorString : (code) ->
     return @errorStrings[code] || "Unknown error: #{code}"
 
+  # Error formating.
+  # @param error [string] Error id in errorStrings
+  # @param args [array of objects] Error data arguments
   makeError : (error, args...) ->
     if @useRawErrorObjects
       return { name : error, args : args }
     return util.format @getErrorString(error), args...
 
+  # Server internal errors handling.
+  # @param error [object]
   handleServerError : (error) ->
     if @serverErrorHook
       @serverErrorHook error
 
 
+# @nodoc
 withEH = (errorCallback, normallCallback) ->
   (error, args...) ->
     if error then return errorCallback error
     normallCallback args...
 
 
+# @nodoc
 withErrorLog = (errorBuilder ,normallCallback) ->
   (error, args...) ->
     if error

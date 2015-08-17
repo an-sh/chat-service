@@ -1,6 +1,7 @@
 
 *.log
 logs
+doc
 coverage
 node_modules
-lib/chat.js
+lib/*.js

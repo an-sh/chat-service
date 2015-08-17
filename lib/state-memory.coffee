@@ -18,7 +18,7 @@ initState = (state, values) ->
 asyncLimit = 16
 
 
-class ListsStateHelper
+class ListsState
 
   checkList : (listName, cb) ->
     unless @hasList listName
@@ -55,7 +55,7 @@ class ListsStateHelper
     process.nextTick -> cb null, m
 
 
-class RoomState extends ListsStateHelper
+class RoomState extends ListsState
 
   constructor : (@server, @name, @historyMaxMessages = 0) ->
     @errorBuilder = @server.errorBuilder
@@ -107,7 +107,7 @@ class RoomState extends ListsStateHelper
     process.nextTick -> cb null, data
 
 
-class DirectMessagingState extends ListsStateHelper
+class DirectMessagingState extends ListsState
 
   constructor : (@server, @username) ->
     @whitelistOnly
