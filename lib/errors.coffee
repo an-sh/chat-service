@@ -32,15 +32,15 @@ class ErrorBuilder
     return @errorStrings[code] || "Unknown error: #{code}"
 
   # Error formating.
-  # @param error [string] Error id in errorStrings
-  # @param args [array of objects] Error data arguments
+  # @param error [String] Error id in errorStrings
+  # @param args [Array<Object>] Error data arguments
   makeError : (error, args...) ->
     if @useRawErrorObjects
       return { name : error, args : args }
     return util.format @getErrorString(error), args...
 
   # Server internal errors handling.
-  # @param error [object]
+  # @param error [Object]
   handleServerError : (error) ->
     if @serverErrorHook
       @serverErrorHook error
