@@ -217,10 +217,10 @@ describe 'Chat service', ->
         socket2 = ioClient.connect url1, makeParams(user1)
         socket2.on 'loginConfirmed', ->
           socket2.emit 'roomJoin', roomName1
-          socket1.on 'roomJoined', (room) ->
+          socket1.on 'roomJoinedEcho', (room) ->
             expect(room).equal(roomName1)
             socket1.emit 'roomLeave', roomName1
-            socket2.on 'roomLeft', (room) ->
+            socket2.on 'roomLeftEcho', (room) ->
               expect(room).equal(roomName1)
               done()
 
@@ -234,11 +234,11 @@ describe 'Chat service', ->
           socket2 = ioClient.connect url1, makeParams(user2)
           socket2.on 'loginConfirmed', ->
             socket2.emit 'roomJoin', roomName1
-            socket1.on 'roomUserJoin', (room, user) ->
+            socket1.on 'roomUserJoined', (room, user) ->
               expect(room).equal(roomName1)
               expect(user).equal(user2)
               socket2.emit 'roomLeave', roomName1
-              socket1.on 'roomUserLeave', (room, user) ->
+              socket1.on 'roomUserLeft', (room, user) ->
                 expect(room).equal(roomName1)
                 expect(user).equal(user2)
                 done()
@@ -468,7 +468,7 @@ describe 'Chat service', ->
           socket2.on 'loginConfirmed', ->
             socket2.emit 'roomJoin', roomName1, (error, data) ->
               socket2.disconnect()
-              socket1.on 'roomUserLeave', (r,u) ->
+              socket1.on 'roomUserLeft', (r,u) ->
                 expect(r).equal(roomName1)
                 expect(u).equal(user2)
                 done()

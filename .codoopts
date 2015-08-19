@@ -1,0 +1,8 @@
+--name "Chat service"
+--readme README.md
+--title "Chat service Documentation"
+--output ./doc
+./lib
+-
+LICENSE
+CHANGELOG.md

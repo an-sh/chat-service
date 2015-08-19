@@ -11,18 +11,66 @@ withEH = require('./errors.coffee').withEH
 withErrorLog = require('./errors.coffee').withErrorLog
 
 
+# @note This class describes socket.io outgoing messages, not methods.
+#
 # List of server messages that are sent to a client.
+#
+# @example Socket.io client example
+#   socket = ioClient.connect url, params
+#   socket.on 'loginConfirmed', (username) ->
+#     socket.on 'directMessage', (fromUser, msg) ->
+#       # just the same as any event. no reply required.
+#
 class ServerMessages
-  directMessage : ->
-  directMessageEcho : ->
-  loginConfirmed : ->
-  loginRejected : ->
-  roomAccessRemoved : ->
-  roomJoined : ->
-  roomLeft : ->
-  roomMessage : ->
-  roomUserJoin : ->
-  roomUserLeave : ->
+  # Direct message.
+  # @param fromUser [String] Message sender.
+  # @param msg [Object<textMessage:String, timestamp:Number, author:String>]
+  #   Message.
+  # @see UserCommands#directMessage
+  directMessage : (fromUser, msg) ->
+  # Direct message echo. If an user have several connections from
+  # different clients, and if one client sends
+  # {UserCommands#directMessage}, others will receive a message
+  # echo.
+  # @param toUser [String] Message receiver
+  # @param msg [Object<textMessage:String, timestamp:Number, author:String>]
+  #   Message.
+  # @see UserCommands#directMessage
+  directMessageEcho : (toUser, msg) ->
+  # Disconnected from a server.
+  disconnect : () ->
+  # Indicates a successful login.
+  # @param username [String]
+  loginConfirmed : (username) ->
+  # Indicates a login error.
+  # @param error [Object] Error.
+  loginRejected : (error) ->
+  # Indicates that the user has lost an access permission.
+  # @param roomName [String] Room name.
+  roomAccessRemoved : (roomName) ->
+  # Echoes room join from other user's connections.
+  # @see UserCommands#roomJoin
+  roomJoinedEcho : (roomName) ->
+  # Echoes room leave from other user's connections.
+  # @see UserCommands#roomLeave
+  roomLeftEcho : (roomName) ->
+  # Room message.
+  # @param roomName [String] Rooms name.
+  # @param userName [String] Message author.
+  # @param msg Object<textMessage:String, timestamp:Number, author:String>]
+  #   Message
+  # @see UserCommands#roomMessage
+  roomMessage : (roomName, userName, msg) ->
+  # Indicates that an another user has joined a room.
+  # @param roomName [String] Rooms name.
+  # @param userName [String] Username.
+  # @see UserCommands#roomJoin
+  roomUserJoined : (roomName, userName) ->
+  # Indicates that an another user has left a room.
+  # @param roomName [String] Rooms name.
+  # @param userName [String] Username.
+  # @see UserCommands#roomLeave
+  roomUserLeft : (roomName, userName) ->
 
 # @private
 checkMessage = (msg) ->
@@ -38,16 +86,30 @@ dataChecker = (args, checkers) ->
       return [ 'badArgument', idx, args[idx] ]
   return null
 
+# @note This class describes socket.io incoming messages, not methods.
+#
 # List of server messages that are sent from a client. Result is sent
-# back as a socket.io ack with in the standard (error, data) callbacks
-# format. Some messages will echo ServerMessages to other user's
-# sockets or trigger sending ServerMessages to other users.
+# back as a socket.io ack with in the standard (error, data) callback
+# parameters format. Error is ether a string or an object, depending
+# on {ChatService} `useRawErrorObjects` option. See {ErrorBuilder} for
+# an error object format description. Some messages will echo
+# {ServerMessages} to other user's sockets or trigger sending
+# {ServerMessages} to other users.
+#
+# @example Socket.io client example
+#   socket = ioClient.connect url, params
+#   socket.on 'loginConfirmed', (username) ->
+#     socket.emit 'roomJoin', roomName, (error, data) ->
+#       # this is a socket.io ack waiting callback.
+#       # socket is joined the room, or an error occurred. we get here
+#       # only when the server has finished message processing.
+#
 class UserCommands
-  # Adds elements to user direct messaging blacklist or whitelist.
+  # Adds usernames to user's direct messaging blacklist or whitelist.
   # @param listName [String] 'blacklist' or 'whitelist'.
-  # @param data [Array<String>] User names to add to the list.
+  # @param usernames [Array<String>] Usernames to add to the list.
   # @return [error, null] Sends ack: error, null.
-  directAddToList : (listName, data) ->
+  directAddToList : (listName, usernames) ->
     dataChecker arguments, [
       check.string
       check.array.of.string
@@ -60,15 +122,18 @@ class UserCommands
       check.string
     ]
   # Gets direct messaging whitelist only mode. If it is true then
-  # derect messages are allowed only from clients that are it the
+  # direct messages are allowed only for users that are it the
   # whitelist. Otherwise direct messages are accepted from all
-  # clients, that are not in the blacklist.
+  # users, that are not in the blacklist.
   # @return [error, Boolean] Sends ack: error, whitelist only mode.
   directGetWhitelistMode : () ->
     dataChecker arguments, [
     ]
-  # Sends a direct message to an another user, if enableDirectMessages is true.
-  # @see ChatService
+  # Sends {ServerMessages#directMessage} to an another user, if
+  # {ChatService} `enableDirectMessages` option is true. Also sends
+  # {ServerMessages#directMessageEcho} to other user's sockets.
+  # @see ServerMessages#directMessage
+  # @see ServerMessages#directMessageEcho
   # @param toUser [String] Message receiver.
   # @param msg [Object<textMessage : String>] Message.
   # @return
@@ -79,11 +144,11 @@ class UserCommands
       check.string
       checkMessage
     ]
-  # Removes elements to user direct messaging blacklist or whitelist.
+  # Removes usernames from user's direct messaging blacklist or whitelist.
   # @param listName [String] 'blacklist' or 'whitelist'.
-  # @param data [Array<String>] User names to add to the list.
+  # @param usernames [Array<String>] User names to add to the list.
   # @return [error, null] Sends ack: error, null.
-  directRemoveFromList : (listName, data) ->
+  directRemoveFromList : (listName, usernames) ->
     dataChecker arguments, [
       check.string
       check.array.of.string
@@ -102,25 +167,26 @@ class UserCommands
     dataChecker arguments, [
       check.string
     ]
-  # Gets the list of public rooms on a server.
+  # Gets a list of public rooms on a server.
   # @return [error, Array<String>] Sends ack: error, public rooms.
   listRooms : () ->
     dataChecker arguments, [
     ]
-  # Adds elements to room's blacklist, adminlist and whitelist. Also
-  # removes clients that lost permission in the result of an operation.
+  # Adds usernames to room's blacklist, adminlist and whitelist. Also
+  # removes users that have lost an access permission in the result of an
+  # operation, sending {ServerMessages#roomAccessRemoved}.
   # @param roomName [String] Room name.
   # @param listName [String] 'blacklist', 'adminlist' or 'whitelist'.
-  # @param data [Array<String>] User names to add to the list.
+  # @param usernames [Array<String>] User names to add to the list.
   # @return [error, null] Sends ack: error, null.
-  roomAddToList : (roomName, listName, data) ->
+  # @see ServerMessages#roomAccessRemoved
+  roomAddToList : (roomName, listName, usernames) ->
     dataChecker arguments, [
       check.string
       check.string
       check.array.of.string
     ]
-  # Creates a room if enableRoomsManagement is true.
-  # @see ChatService
+  # Creates a room if {ChatService} `enableRoomsManagement` option is true.
   # @param roomName [String] Rooms name.
   # @param mode [bool] Room mode.
   # @return [error, null] Sends ack: error, null.
@@ -129,18 +195,18 @@ class UserCommands
       check.string
       check.boolean
     ]
-  # Deletes a room if enableRoomsManagement is true and the user has
-  # an owner status.
-  # @see ChatService
+  # Deletes a room if {ChatService} `enableRoomsManagement` is true
+  # and the user has an owner status. Sends
+  # {ServerMessages#roomAccessRemoved} to all room users.
   # @param roomName [String] Rooms name.
   # @return [error, null] Sends ack: error, null.
   roomDelete : (roomName) ->
     dataChecker arguments, [
       check.string
     ]
-  # Gets room messaging blacklist, adminlist and whitelist.
+  # Gets room messaging userlist, blacklist, adminlist and whitelist.
   # @param roomName [String] Room name.
-  # @param listName [String] 'blacklist', 'adminlist' or 'whitelist'.
+  # @param listName [String] 'userlist', 'blacklist', 'adminlist', 'whitelist'.
   # @return [error, Array<String>] Sends ack: error, requested list.
   roomGetAccessList : (roomName, listName) ->
     dataChecker arguments, [
@@ -148,8 +214,8 @@ class UserCommands
       check.string
     ]
   # Gets a room messaging whitelist only mode. If it is true, then
-  # join is allowed only from clients that are in the
-  # whitelist. Otherwise all clients that are not in the blacklist can
+  # join is allowed only for users that are in the
+  # whitelist. Otherwise all users that are not in the blacklist can
   # join.
   # @return [error, Boolean] Sends ack: error, whitelist only mode.
   roomGetWhitelistMode : () ->
@@ -164,22 +230,32 @@ class UserCommands
     dataChecker arguments, [
       check.string
     ]
-  # Joins room, a client must join the room to recieve messages or
-  # execute room commands.
+  # Joins room, an user must join the room to receive messages or
+  # execute room commands. Sends {ServerMessages#roomJoinedEcho} to other
+  # user's sockets. Also sends {ServerMessages#roomUserJoined} to other
+  # room users if {ChatService} `enableUserlistUpdates` option is
+  # true.
+  # @see ServerMessages#roomJoinedEcho
+  # @see ServerMessages#roomUserJoined
   # @param roomName [String] Room name.
   # @return [error, null] Sends ack: error, null.
   roomJoin : (roomName) ->
     dataChecker arguments, [
       check.string
     ]
-  # Leaves room.
+  # Leaves room. Sends {ServerMessages#roomLeftEcho} to other user's
+  # sockets. Also sends {ServerMessages#roomUserLeft} to other room
+  # users if {ChatService} `enableUserlistUpdates` option is true.
+  # @see ServerMessages#roomLeftEcho
+  # @see ServerMessages#roomUserLeft
   # @param roomName [String] Room name.
   # @return [error, null] Sends ack: error, null.
   roomLeave : (roomName) ->
     dataChecker arguments, [
       check.string
     ]
-  # Sends a room messages.
+  # Sends {ServerMessages#roomMessage} to a room.
+  # @see ServerMessages#roomMessage
   # @param roomName [String] Room name.
   # @param msg [Object<textMessage : String>] Message.
   # @return
@@ -190,20 +266,26 @@ class UserCommands
       check.string
       checkMessage
     ]
-  # Removes elements from room's blacklist, adminlist and whitelist. Also
-  # removes clients that lost permission in the result of an operation.
+  # Removes usernames from room's blacklist, adminlist and
+  # whitelist. Also removes users that have lost an access permission in
+  # the result of an operation, sending
+  # {ServerMessages#roomAccessRemoved}.
   # @param roomName [String] Room name.
   # @param listName [String] 'blacklist', 'adminlist' or 'whitelist'.
-  # @param data [Array<String>] User names to romeve from the list.
+  # @param usernames [Array<String>] Usernames to remove from the list.
   # @return [error, null] Sends ack: error, null.
-  roomRemoveFromList : (roomName, listName, data) ->
+  # @see ServerMessages#roomAccessRemoved
+  roomRemoveFromList : (roomName, listName, usernames) ->
     dataChecker arguments, [
       check.string
       check.string
       check.array.of.string
     ]
-  # Sets room messaging whitelist only mode.
+  # Sets room messaging whitelist only mode. Also removes users that
+  # have lost an access permission in the result of an operation, sending
+  # {ServerMessages#roomAccessRemoved}.
   # @see UserCommands#roomGetWhitelistMode
+  # @see ServerMessages#roomAccessRemoved
   # @param roomName [String] Room name.
   # @param mode [Boolean]
   # @return [error, null] Sends ack: error, null.
@@ -635,7 +717,7 @@ class User extends DirectMessaging
         @chatState.getRoom roomName, withErrorLog @errorBuilder, (room) =>
           room.leave @username, withErrorLog @errorBuilder, =>
             if @enableUserlistUpdates
-              @send roomName, 'roomUserLeave', roomName, @username
+              @send roomName, 'roomUserLeft', roomName, @username
             fn()
        , =>
         @chatState.logoutUser @username, cb
@@ -766,14 +848,14 @@ class User extends DirectMessaging
       room.join @username, withEH cb, =>
         @userState.roomAdd roomName, withEH cb, =>
           if @enableUserlistUpdates
-            @send roomName, 'roomUserJoin', roomName, @username
+            @send roomName, 'roomUserJoined', roomName, @username
           # TODO lock user sockets
           @userState.socketsGetAll withEH cb, (sockets) =>
             async.eachLimit sockets, asyncLimit, (sid, fn) =>
               @server.nsp.adapter.add sid, roomName
               , (error) =>
                 @reportRoomConnections error, id, sid, roomName
-                , 'roomJoined', cb
+                , 'roomJoinedEcho', cb
                 fn()
 
   # @private
@@ -782,14 +864,14 @@ class User extends DirectMessaging
       room.leave @username, withEH cb, =>
         @userState.roomRemove roomName, withEH cb, =>
           if @enableUserlistUpdates
-            @send roomName, 'roomUserLeave', roomName, @username
+            @send roomName, 'roomUserLeft', roomName, @username
           # TODO lock user sockets
           @userState.socketsGetAll withEH cb, (sockets) =>
             async.eachLimit sockets, asyncLimit, (sid, fn) =>
               @server.nsp.adapter.del sid, roomName
               , (error) =>
                 @reportRoomConnections error, id, sid, roomName
-                , 'roomLeft', cb
+                , 'roomLeftEcho', cb
                 fn()
 
   # @private
@@ -813,7 +895,7 @@ class User extends DirectMessaging
         @sendAccessRemoved data, roomName, cb
 
 
-# Main object.
+# An instance creates a new chat service.
 class ChatService
   # Server creation/integration.
   # @option options [String] namespace
@@ -823,18 +905,30 @@ class ChatService
   # @option options [Boolean] useRawErrorObjects
   #   Send error objects instead of strings, default is false.
   # @option options [Boolean] enableUserlistUpdates
-  #   Enables roomUserJoin and roomUserLeave messages, default is false.
+  #   Enables {ServerMessages#roomUserJoined} and
+  #   {ServerMessages#roomUserLeft} messages, default is false.
   # @option options [Boolean] enableDirectMessages
-  #   Enables user to user communication, default is false.
+  #   Enables user to user {UserCommands#directMessage}, default is false.
   # @option options [Boolean] serverOptions
   #   Options that are passes to socket.io if server creation is required.
   # @option options [Object] io
   #   Socket.io instance that should be user by ChatService.
   # @option options [Object] http
   #   Use socket.io http server integration.
-  # @param hooks [Object] Optional.
-  # @param state [String or Constructor]
-  #   Optional chat state selection.
+  # @option hooks [Function] auth Socket.io auth hook. Look in the
+  #   socket.io documentation.
+  # @option hooks
+  #   [Function(<ChatService>, <Socket>, <Function(<Error>, <User>, <Object>)>)]
+  #   onConnect Client connection hook. Must call a callback with
+  #   either Error or an optional User and an optional 3rd argument,
+  #   user state object.
+  # @option hooks [Function(<ChatService, <Error>, <Function(<Error>)>)] onClose
+  #   Executes when server is closed. Must call a callback.
+  # @option hooks [Function(<ChatService, <Function(<Error>)>)] onStart
+  #   Executes when server is started. Must call a callback.
+  # @param options [Object] Options.
+  # @param hooks [Object] Hooks.
+  # @param state [String or Constructor] Chat state.
   constructor : (@options = {}, @hooks = {}, @state = 'memory') ->
     @setOptions()
     @setServer()

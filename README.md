@@ -14,6 +14,10 @@ setup examples.
 
 ### TODO
 
-- Documentation.
+- More documentation.
 - Redis state adapter.
 - API for extensions.
+
+### License
+
+MIT
