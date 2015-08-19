@@ -1,6 +1,6 @@
 {
   "name": "chat-service",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": false,
   "description": "Server side chat based on top of socket.io",
   "main": "index.js",

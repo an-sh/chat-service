@@ -9,6 +9,8 @@ Server side chat based on top of socket.io
 
 ### Documentation
 
+Run `npm run-script codo` to generate documentation.
+
 Look in the test directory, for socket.io-client messages and server
 setup examples.
 
