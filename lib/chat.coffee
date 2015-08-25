@@ -6,6 +6,8 @@ check = require 'check-types'
 
 
 MemoryState = require('./state-memory.coffee').MemoryState
+RedisState = require('./state-redis.coffee').RedisState
+
 ErrorBuilder = require('./errors.coffee').ErrorBuilder
 withEH = require('./errors.coffee').withEH
 withErrorLog = require('./errors.coffee').withErrorLog
@@ -715,6 +717,7 @@ class User extends DirectMessaging
       async.eachLimit rooms, asyncLimit
       , (roomName, fn) =>
         @chatState.getRoom roomName, withErrorLog @errorBuilder, (room) =>
+          unless room then return fn()
           room.leave @username, withErrorLog @errorBuilder, =>
             if @enableUserlistUpdates
               @send roomName, 'roomUserLeft', roomName, @username
@@ -956,6 +959,7 @@ class ChatService
     @http = @options.http unless @io
     state = switch @state
       when 'memory' then MemoryState
+      when 'redis' then RedisState
       when typeof @state == 'function' then @state
       else throw new Error "Invalid state: #{@state}"
     unless @io
@@ -1001,6 +1005,7 @@ class ChatService
   # @param done [callback] Optional callback
   # @param error [object] Optional error vallue for done callback
   close : (done, error) ->
+    # TODO unbind and disconnect sockets.
     cb = (error) =>
       unless @sharedIO or @http then @io.close()
       if done then process.nextTick -> done error

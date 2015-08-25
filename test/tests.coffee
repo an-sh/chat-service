@@ -8,6 +8,7 @@ socketIO = require 'socket.io'
 http = require 'http'
 enableDestroy = require 'server-destroy'
 async = require 'async'
+# Redis = require 'ioredis'
 
 
 describe 'Chat service', ->
@@ -33,8 +34,11 @@ describe 'Chat service', ->
   host = 'localhost'
   namespace = '/chat-service'
   url1 = "http://#{host}:#{port}#{namespace}"
+  # redis = new Redis
 
   afterEach (done) ->
+    endcb = done
+    # endcb = -> redis.flushall done
     if socket1
       socket1.disconnect()
       socket1 = null
@@ -45,10 +49,10 @@ describe 'Chat service', ->
       socket3.disconnect()
       socket3 = null
     if chatServer
-      chatServer.close done
+      chatServer.close endcb
       chatServer = null
     else
-      done()
+      endcb()
 
   it 'should integrate with a http server', (done) ->
     httpInst = http.createServer (req, res) -> res.end()
@@ -609,7 +613,7 @@ describe 'Chat service', ->
         done()
 
   it 'should execute server errors hook', (done) ->
-    error = 'errror'
+    error = 'some error'
     fn = (e) ->
       expect(e).equal(error)
       process.nextTick -> done()

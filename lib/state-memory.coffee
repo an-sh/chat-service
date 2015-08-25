@@ -3,9 +3,8 @@ async = require 'async'
 FastSet = require 'collections/fast-set'
 Deque = require 'collections/deque'
 
-
-ErrorBuilder = require('./errors.coffee').ErrorBuilder
 withEH = require('./errors.coffee').withEH
+
 
 # @private
 initState = (state, values) ->
@@ -20,7 +19,7 @@ asyncLimit = 16
 
 # Implements state API lists management.
 # @private
-class ListsState
+class ListsStateMemory
 
   # @private
   checkList : (listName, cb) ->
@@ -66,7 +65,7 @@ class ListsState
 
 # Implements room state API.
 # @private
-class RoomState extends ListsState
+class RoomStateMemory extends ListsStateMemory
 
   # @private
   constructor : (@server, @name, @historyMaxMessages = 0) ->
@@ -128,7 +127,7 @@ class RoomState extends ListsState
 
 # Implements direct messaging state API.
 # @private
-class DirectMessagingState extends ListsState
+class DirectMessagingStateMemory extends ListsStateMemory
 
   # @private
   constructor : (@server, @username) ->
@@ -150,7 +149,7 @@ class DirectMessagingState extends ListsState
 
 # Implements user state API.
 # @private
-class UserState
+class UserStateMemory
 
   # @private
   constructor : (@server, @username) ->
@@ -193,14 +192,14 @@ class UserState
 class MemoryState
 
   # @private
-  constructor : (@server) ->
+  constructor : (@server, @options = {}) ->
     @errorBuilder = @server.errorBuilder
     @usersOnline = {}
-    @usersOffline = {}
+    @users = {}
     @rooms = {}
-    @roomState = RoomState
-    @userState = UserState
-    @directMessagingState = DirectMessagingState
+    @roomState = RoomStateMemory
+    @userState = UserStateMemory
+    @directMessagingState = DirectMessagingStateMemory
 
   # @private
   getRoom : (name, cb) ->
@@ -247,28 +246,27 @@ class MemoryState
 
   # @private
   getUser : (name, cb) ->
-    isOnline = true
-    u = @usersOnline[name]
-    unless u
-      u = @usersOffline[name]
-      isOnline = false
-    process.nextTick -> cb null, u, isOnline
+    isOnline = if @usersOnline[name] then true else false
+    user = @users[name]
+    unless user
+      error = @errorBuilder.makeError 'noUser', name
+    process.nextTick -> cb error, user, isOnline
 
   # @private
   loginUser : (name, socket, cb) ->
     currentUser = @usersOnline[name]
-    returnedUser = @usersOffline[name] unless currentUser
+    returnedUser = @users[name] unless currentUser
     if currentUser
       currentUser.registerSocket socket, (error) ->
         cb error, currentUser
     else if returnedUser
       @usersOnline[name] = returnedUser
-      delete @usersOffline[name]
       returnedUser.registerSocket socket, (error) ->
         cb error, returnedUser
     else
       newUser = new @server.User @server, name
       @usersOnline[name] = newUser
+      @users[name] = newUser
       newUser.registerSocket socket, (error) ->
         cb error, newUser
 
@@ -277,34 +275,33 @@ class MemoryState
     unless @usersOnline[name]
       error = @errorBuilder.makeError 'noUserOnline', name
     else
-      @usersOffline[name] = @usersOnline[name]
       delete @usersOnline[name]
     process.nextTick -> cb error
 
   # @private
   addUser : (name, cb, state = null) ->
-    u1 = @usersOnline[name]
-    u2 = @usersOffline[name]
-    if u1 or u2
+    user = @users[name]
+    if user
       error = @errorBuilder.makeError 'userExists', name
       return process.nextTick -> cb error
     user = new @server.User @server, name
-    @usersOffline[name] = user
+    @users[name] = user
     if state
       user.initState state, cb
-    else if cb then cb()
+    else if cb
+      process.nextTick -> cb()
 
   # @private
   removeUser : (name, cb) ->
-    u1 = @usersOnline[name]
+    user = @usersOnline[name]
     fn = =>
-      u2 = @usersOffline[name]
+      user = @users[name]
       delete @usersOnline[name]
-      delete @usersOffline[name]
-      unless u1 or u2
+      delete @users[name]
+      unless user
         error = @errorBuilder.makeError 'noUser', name
       cb error if cb
-    if u1 then u1.removeUser fn
+    if user then user.removeUser fn
     else process.nextTick -> fn()
 
 
