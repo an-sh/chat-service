@@ -637,7 +637,7 @@ class User extends DirectMessaging
     @userState.socketAdd socket.id, withEH cb, =>
       for cmd of userCommands
         @bindCommand socket, cmd, @[cmd]
-      cb()
+      cb null, @
 
   # @private
   wrapCommand : (name, fn) ->
@@ -880,8 +880,8 @@ class User extends DirectMessaging
   # @private
   roomMessage : (roomName, msg, cb) ->
     @withRoom roomName, withEH cb, (room) =>
+      msg = processMessage @username, msg
       room.message @username, msg, withEH cb, =>
-        msg = processMessage @username, msg
         @send roomName, 'roomMessage', roomName, @username, msg
         cb null, msg
 
@@ -988,15 +988,20 @@ class ChatService
         @addClient null, socket
 
   # @private
+  rejectLogin : (socket, error) ->
+    socket.emit 'loginRejected', error
+    socket.disconnect(true)
+
+  # @private
   addClient : (error, socket, userName, userState) ->
-    if error then return socket.emit 'loginRejected', error
+    if error then return @rejectLogin socket, error
     unless userName
       userName = socket.handshake.query?.user
       unless userName
         error = @errorBuilder.makeError 'noLogin'
-        return socket.emit 'loginRejected', error
+        return @rejectLogin socket, error
     @chatState.loginUser userName, socket, (error, user) ->
-      if error then return socket.emit 'loginRejected', error
+      if error then return @rejectLogin socket, error
       fn = -> socket.emit 'loginConfirmed', userName
       if userState then user.initState userState, fn
       else fn()

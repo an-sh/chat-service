@@ -61,8 +61,20 @@ withErrorLog = (errorBuilder ,normallCallback) ->
     normallCallback args...
 
 
+# @private
+withTansformedError = (errorBuilder, callback, normallCallback) ->
+  return (error, data) ->
+    if error
+      callback errorBuilder.makeError 'serverError', error
+    else if normallCallback
+      normallCallback data
+    else
+      callback error, data
+
+
 module.exports = {
   ErrorBuilder
   withEH
   withErrorLog
+  withTansformedError
 }

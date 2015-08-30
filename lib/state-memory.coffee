@@ -80,12 +80,11 @@ class RoomStateMemory extends ListsStateMemory
 
   # @private
   initState : ( state = {}, cb ) ->
-    { whitelist, blacklist, adminlist, userlist
+    { whitelist, blacklist, adminlist
     , lastMessages, whitelistOnly, owner } = state
     initState @whitelist, whitelist
     initState @blacklist, blacklist
     initState @adminlist, adminlist
-    initState @userlist, userlist
     initState @lastMessages, lastMessages
     @whitelistOnly = if whitelistOnly then true else false
     @owner = if owner then owner else null
@@ -108,9 +107,9 @@ class RoomStateMemory extends ListsStateMemory
   # @private
   messageAdd : (msg, cb) ->
     if @historyMaxMessages <= 0 then return process.nextTick -> cb()
-    if @lastMessages.length >= @historyMaxMessages
-      @lastMessages.pop()
     @lastMessages.unshift msg
+    if @lastMessages.length > @historyMaxMessages
+      @lastMessages.pop()
     process.nextTick -> cb()
 
   # @private
@@ -227,15 +226,7 @@ class MemoryState
 
   # @private
   listRooms : (cb) ->
-    list = []
-    async.forEachOfLimit @rooms, asyncLimit
-    , (room, name, fn) ->
-      room.roomState.whitelistOnlyGet (error, isPrivate) ->
-        unless error or isPrivate then list.push name
-        fn()
-    , ->
-      list.sort()
-      cb null, list
+    process.nextTick => cb null, Object.keys @rooms
 
   # @private
   getOnlineUser : (name, cb) ->
