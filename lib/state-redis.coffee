@@ -94,8 +94,9 @@ class RoomStateRedis extends ListsStateRedis
         initState @redis, @makeDBListName('adminlist'), adminlist, fn
       , (fn) =>
         unless lastMessages then return fn()
-        @redis.ltrim @makeDBListName('lastMessages'), 0, 0, withEH fn, =>
-          @redis.lpush @makeDBListName('lastMessages'), lastMessages, fn
+        @redis.ltrim @makeDBListName('history'), 0, 0, withEH fn, =>
+          msgs = _.map lastMessages, JSON.stringify
+          @redis.lpush @makeDBListName('history'), msgs, fn
       , (fn) =>
         unless whitelistOnly then return fn()
         @redis.hset "#{@prefix}_whitelistmodes", @name, whitelistOnly, fn

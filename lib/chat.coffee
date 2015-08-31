@@ -299,6 +299,9 @@ class UserCommands
 userCommands = new UserCommands
 
 # @private
+serverMessages = new ServerMessages
+
+# @private
 asyncLimit = 16
 
 # @private
@@ -971,6 +974,7 @@ class ChatService
         @io = socketIO port, @serverOptions
     @nsp = @io.of @namespace
     @userCommands = userCommands
+    @serverMessages = serverMessages
     @User = (args...) =>
       new User @, args...
     @Room = (args...) =>
