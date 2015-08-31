@@ -642,6 +642,7 @@ class User extends DirectMessaging
     aname = name + 'After'
     cmd = (oargs..., cb, id) =>
       hooks = @server.hooks
+      errorBuilder = @server.errorBuilder
       validator = @server.userCommands[name]
       beforeHook = hooks?[bname]
       afterHook = hooks?[aname]
@@ -653,10 +654,12 @@ class User extends DirectMessaging
           argsAfter = args.slice()
           args.length = oargs.length
         afterCommand = (error, data) =>
+          reportResults = (nerror = error, ndata = data) ->
+            cb nerror, ndata
           if afterHook
-            afterHook @, argsAfter..., cb or (->), id
-          else if cb
-            cb error, data
+            afterHook @, error, data, argsAfter, reportResults, id
+          else
+            reportResults()
         fn.apply @
         , [ args...
           , afterCommand
@@ -664,7 +667,7 @@ class User extends DirectMessaging
       process.nextTick =>
         checkerError = validator oargs...
         if checkerError
-          error = @server.errorBuilder.makeError checkerError...
+          error = errorBuilder.makeError checkerError...
           return cb error
         unless beforeHook
           execCommand()

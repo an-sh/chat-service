@@ -2,6 +2,7 @@
 ### 0.4.0
 
 - Room listing changed.
+- Before and After hooks changed.
 
 ### 0.3.0 (2015/08/19)
 

@@ -592,24 +592,33 @@ describe 'Chat service', ->
             done()
 
     it 'should execute before and after messages hooks', (done) ->
+      someData = 'data'
       before = null
       after = null
-      beforeHook = (user, cb) ->
+      beforeHook = (user, name, mode, cb) ->
+        expect(user).instanceof(User)
+        expect(name).a('string')
+        expect(mode).a('boolean')
+        expect(cb).instanceof(Function)
         before = true
         cb()
-      afterHook = (user, cb) ->
+      afterHook = (user, error, data, args, cb) ->
+        expect(user).instanceof(User)
+        expect(args).instanceof(Array)
+        expect(cb).instanceof(Function)
         after = true
-        cb()
-      chatServer = new ChatService { port : port }
-      , { 'listRoomsBefore' : beforeHook, 'listRoomsAfter' : afterHook }
+        cb null, someData
+      chatServer = new ChatService { port : port, enableRoomsManagement : true}
+      , { 'roomCreateBefore' : beforeHook, 'roomCreateAfter' : afterHook }
       , state
       socket1 = ioClient.connect url1, makeParams(user1)
       socket1.on 'loginConfirmed', ->
-        socket1.emit 'listRooms', (idcmd, data) ->
-          process.nextTick ->
-            expect(before).true
-            expect(after).true
-            done()
+        socket1.emit 'roomCreate', roomName1, true, (error, data) ->
+          expect(before).true
+          expect(after).true
+          expect(error).not.ok
+          expect(data).equal(someData)
+          done()
 
     it 'should stop commands on before hook error or data', (done) ->
       err = 'error'
