@@ -2,7 +2,6 @@
 async = require 'async'
 FastSet = require 'collections/fast-set'
 Deque = require 'collections/deque'
-
 withEH = require('./errors.coffee').withEH
 
 
@@ -14,6 +13,7 @@ initState = (state, values) ->
       state.addEach values
 
 
+# @private
 asyncLimit = 16
 
 
@@ -255,7 +255,7 @@ class MemoryState
       returnedUser.registerSocket socket, (error) ->
         cb error, returnedUser
     else
-      newUser = new @server.User @server, name
+      newUser = new @server.User name
       @usersOnline[name] = newUser
       @users[name] = newUser
       newUser.registerSocket socket, (error) ->
@@ -275,7 +275,7 @@ class MemoryState
     if user
       error = @errorBuilder.makeError 'userExists', name
       return process.nextTick -> cb error
-    user = new @server.User @server, name
+    user = new @server.User name
     @users[name] = user
     if state
       user.initState state, cb

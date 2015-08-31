@@ -12,6 +12,7 @@ Redis = require 'ioredis'
 
 
 describe 'Chat service', ->
+
   states  = [ 'memory' , 'redis' ]
 
   makeParams = (userName) ->
@@ -25,11 +26,9 @@ describe 'Chat service', ->
   user3 = 'userName3'
   roomName1 = 'room1'
   roomName2 = 'room2'
-
   port = 8000
-  host = 'localhost'
-  namespace = '/chat-service'
-  url1 = "http://#{host}:#{port}#{namespace}"
+  url1 = "http://localhost:#{port}/chat-service"
+
   redis = new Redis
 
   chatServer = null
@@ -39,7 +38,13 @@ describe 'Chat service', ->
 
   states.forEach (state) ->
 
-    afterEach (done) ->
+    beforeFn = (done) ->
+      redis.dbsize (error, data) ->
+        if error then return done error
+        if data then return done new Error 'Unclean Redis DB'
+        done()
+
+    afterEachFn = (done) ->
       endcb = -> redis.flushall done
       if socket1
         socket1.disconnect()
@@ -55,6 +60,9 @@ describe 'Chat service', ->
         chatServer = null
       else
         endcb()
+
+    before beforeFn
+    afterEach afterEachFn
 
     it 'should integrate with a http server', (done) ->
       httpInst = http.createServer (req, res) -> res.end()
@@ -107,6 +115,7 @@ describe 'Chat service', ->
       chatServer = new ChatService { port : port }, null, state
       socket1 = ioClient.connect url1
       , { query : 'multiplex' : false
+        , 'reconnection' : false
         , 'transports' : [ 'websocket' ] }
       socket1.on 'loginRejected', ->
         done()
@@ -123,7 +132,7 @@ describe 'Chat service', ->
         chatServer.chatState.getOnlineUser userName, (error, u) ->
           expect(u.username).equal(userName)
           u.directMessagingState.whitelistOnlyGet (error, data) ->
-            expect(data).ok
+            expect(data).true
             done()
 
     it 'should restore room state from onStart hook', (done) ->
@@ -169,7 +178,7 @@ describe 'Chat service', ->
           expect(u).equal(user1)
           chatServer.chatState.getOnlineUser user1, (error, user) ->
             user.directMessagingState.whitelistOnlyGet (error, wl) ->
-              expect(wl).equal(true)
+              expect(wl).true
               chatServer.chatState.removeUser user1, ->
                 chatServer.chatState.getUser user1, (error, user, isOnline) ->
                   expect(user).not.ok
@@ -321,7 +330,7 @@ describe 'Chat service', ->
           socket1 = ioClient.connect url1, makeParams(user1)
           socket1.on 'loginConfirmed', ->
             socket1.emit 'roomGetWhitelistMode', roomName1, (error, data) ->
-              expect(data).ok
+              expect(data).true
               done()
 
     it 'should send lists to room users', (done) ->

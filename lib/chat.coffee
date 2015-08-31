@@ -3,11 +3,8 @@ socketIO = require 'socket.io'
 _ = require 'lodash'
 async = require 'async'
 check = require 'check-types'
-
-
 MemoryState = require('./state-memory.coffee').MemoryState
 RedisState = require('./state-redis.coffee').RedisState
-
 ErrorBuilder = require('./errors.coffee').ErrorBuilder
 withEH = require('./errors.coffee').withEH
 withErrorLog = require('./errors.coffee').withErrorLog
@@ -970,8 +967,10 @@ class ChatService
         @io = socketIO port, @serverOptions
     @nsp = @io.of @namespace
     @userCommands = userCommands
-    @User = User
-    @Room = Room
+    @User = (args...) =>
+      new User @, args...
+    @Room = (args...) =>
+      new Room @, args...
     @errorBuilder = new ErrorBuilder @useRawErrorObjects, @hooks.serverErrorHook
     @chatState = new state @
 
@@ -1018,6 +1017,7 @@ class ChatService
       @hooks.onClose @, error, cb
     else
       cb()
+
 
 module.exports = {
   ChatService

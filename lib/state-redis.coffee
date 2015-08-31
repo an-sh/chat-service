@@ -1,12 +1,10 @@
 
 async = require 'async'
 Redis = require 'ioredis'
-Redlock = require 'redlock'
 _ = require 'lodash'
-ms = require './state-memory.coffee'
-
 withEH = require('./errors.coffee').withEH
 withTansformedError = require('./errors.coffee').withTansformedError
+
 
 # @private
 asyncLimit = 16
@@ -20,14 +18,8 @@ initState = (redis, state, values, cb) ->
     redis.sadd state, values, cb
 
 
-# @TODO
-mix = (obj, mixin, args) ->
-  for name, method of mixin.prototype
-    unless obj[name]
-      obj[name] = method
-  mixin.apply obj, args
-
-
+# Implements state API lists management.
+# @private
 class ListsStateRedis
 
   # @private
@@ -66,12 +58,12 @@ class ListsStateRedis
   # @private
   whitelistOnlySet : (mode, cb) ->
     whitelistOnly = if mode then true else false
-    @redis.hset "#{@prefix}_whitelistmodes", @name, whitelistOnly, cb
+    @redis.hset "#{@prefix}_whitelistmodes", @name, whitelistOnly, @withTE cb
 
   # @private
   whitelistOnlyGet : (cb) ->
-    @redis.hget "#{@prefix}_whitelistmodes", @name, cb
-
+    @redis.hget "#{@prefix}_whitelistmodes", @name, @withTE cb, (data) ->
+      cb null, JSON.parse data
 
 
 # Implements room state API.
@@ -141,17 +133,74 @@ class RoomStateRedis extends ListsStateRedis
     , @makeDBListName('adminlist'), @withTE cb
 
 
-
 # Implements direct messaging state API.
 # @private
 class DirectMessagingStateRedis extends ListsStateRedis
-  constructor : ->
+
+  # @private
+  constructor : (@server, @username) ->
+    @name = @username
+    @prefix = 'direct'
+    @redis = @server.chatState.redis
+    @errorBuilder = @server.errorBuilder
+    @withTE = (args...) => withTansformedError @errorBuilder, args...
+
+  # @private
+  hasList : (listName) ->
+    return listName in [ 'whitelist', 'blacklist' ]
+
+  # @private
+  initState : ( state = {}, cb ) ->
+    { whitelist, blacklist, whitelistOnly } = state
+    async.parallel [
+      (fn) =>
+        initState @redis, @makeDBListName('whitelist'), whitelist, fn
+      , (fn) =>
+        initState @redis, @makeDBListName('blacklist'), blacklist, fn
+      , (fn) =>
+        unless whitelistOnly then return fn()
+        @redis.hset "#{@prefix}_whitelistmodes", @name, whitelistOnly, fn
+    ] , @withTE cb
 
 
 # Implements user state API.
 # @private
 class UserStateRedis
-  constructor : ->
+
+  # @private
+  constructor : (@server, @username) ->
+    @prefix = 'user'
+    @redis = @server.chatState.redis
+    @errorBuilder = @server.errorBuilder
+    @withTE = (args...) => withTansformedError @errorBuilder, args...
+
+  # @private
+  makeDBListName : (listName) ->
+    "#{@prefix}_#{listName}_#{@username}"
+
+  # @private
+  socketAdd : (id, cb) ->
+    @redis.sadd @makeDBListName('sockets'), id, @withTE cb
+
+  # @private
+  socketRemove : (id, cb) ->
+    @redis.srem @makeDBListName('sockets'), id, @withTE cb
+
+  # @private
+  socketsGetAll : (cb) ->
+    @redis.smembers @makeDBListName('sockets'), @withTE cb
+
+  # @private
+  roomAdd : (roomName, cb) ->
+    @redis.sadd @makeDBListName('rooms') ,roomName, @withTE cb
+
+  # @private
+  roomRemove : (roomName, cb) ->
+    @redis.srem @makeDBListName('rooms'), roomName, @withTE cb
+
+  # @private
+  roomsGetAll : (cb) ->
+    @redis.smembers @makeDBListName('rooms'), @withTE cb
 
 
 # Implements global state API.
@@ -163,8 +212,9 @@ class RedisState
     @errorBuilder = @server.errorBuilder
     @redis = new Redis @options
     @withTE = (args...) => withTansformedError @errorBuilder, args...
-    mix @, ms.MemoryState, arguments
     @roomState = RoomStateRedis
+    @userState = UserStateRedis
+    @directMessagingState = DirectMessagingStateRedis
 
   # @private
   getRoom : (name, cb) ->
@@ -172,7 +222,7 @@ class RedisState
       unless data
         error = @errorBuilder.makeError 'noRoom', name
         return cb error
-      room = new @server.Room @server, name
+      room = new @server.Room name
       cb null, room
 
   # @private
@@ -199,12 +249,11 @@ class RedisState
     @redis.sismember 'users_online', name, @withTE cb, (data) =>
       unless data
         return cb @errorBuilder.makeError 'noUserOnline', name
-      user = @users[name]
+      user = new @server.User name
       cb null, user
 
   # @private
   getUser : (name, cb) ->
-    user = @users[name]
     @redis.sismember 'users_online', name, @withTE cb, (data) =>
       if data then return cb null, user, true
       @redis.sismember 'users', name, @withTE cb, (data) =>
@@ -214,23 +263,19 @@ class RedisState
 
   # @private
   loginUser : (name, socket, cb) ->
-    user = @users[name]
     @redis.sismember 'users_online', name, @withTE cb, (data) =>
       if data
+        user = new @server.User name
         user.registerSocket socket, (error) -> cb error, user
       else
         @redis.sismember 'users', name, @withTE cb, (data) =>
-          if data
-            user = @users[name]
-          else
-            user = new @server.User @server, name
-            @users[name] = user
+          user = new @server.User name
           async.parallel [
             (fn) =>
-              @redis.sadd 'users', name, @withTE fn
+              @redis.sadd 'users', name, fn
             (fn) =>
-              @redis.sadd 'users_online', name, @withTE fn
-          ], withEH cb, ->
+              @redis.sadd 'users_online', name, fn
+          ], @withTE cb, ->
             user.registerSocket socket, cb
 
   # @private
@@ -245,8 +290,7 @@ class RedisState
     @redis.sismember 'users', name, @withTE cb, (data) =>
       if data
         return cb @errorBuilder.makeError 'userExists', name
-      user = new @server.User @server, name
-      @users[name] = user
+      user = new @server.User name
       @redis.sadd 'users', name, @withTE cb, ->
         if state
           user.initState state, cb
@@ -255,7 +299,6 @@ class RedisState
 
   # @private
   removeUser : (name, cb = ->) ->
-    user = @users[name]
     @redis.sismember 'users_online', name, @withTE cb, (data) =>
       fn = =>
         @redis.sismember 'users', name, @withTE cb, (data) =>
@@ -263,13 +306,13 @@ class RedisState
             return cb @errorBuilder.makeError 'noUser', name
           async.parallel [
               (fn) =>
-                @redis.srem 'users', name, @withTE fn
+                @redis.srem 'users', name, fn
               (fn) =>
-                @redis.srem 'users_online', name, @withTE fn
-          ], withEH cb, =>
-            delete @users[name]
-            cb()
-      if data then user.removeUser fn
+                @redis.srem 'users_online', name, fn
+          ], @withTE cb
+      if data
+        user = new @server.User name
+        user.removeUser fn
       else fn()
 
 
