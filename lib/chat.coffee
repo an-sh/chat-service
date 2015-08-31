@@ -40,7 +40,8 @@ class ServerMessages
   disconnect : () ->
   # Indicates a successful login.
   # @param username [String]
-  loginConfirmed : (username) ->
+  # @param data [Object]
+  loginConfirmed : (username, data) ->
   # Indicates a login error.
   # @param error [Object] Error.
   loginRejected : (error) ->
@@ -97,7 +98,7 @@ dataChecker = (args, checkers) ->
 #
 # @example Socket.io client example
 #   socket = ioClient.connect url, params
-#   socket.on 'loginConfirmed', (username) ->
+#   socket.on 'loginConfirmed', (username, authData) ->
 #     socket.emit 'roomJoin', roomName, (error, data) ->
 #       # this is a socket.io ack waiting callback.
 #       # socket is joined the room, or an error occurred. we get here
@@ -1004,7 +1005,7 @@ class ChatService
         return @rejectLogin socket, error
     @chatState.loginUser userName, socket, (error, user) ->
       if error then return @rejectLogin socket, error
-      fn = -> socket.emit 'loginConfirmed', userName
+      fn = -> socket.emit 'loginConfirmed', userName, {}
       if userState then user.initState userState, fn
       else fn()
 
