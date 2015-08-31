@@ -111,10 +111,10 @@ describe 'Chat service', ->
         chatServer.close()
         chatServer = null
 
-    it.skip 'should reject empty user query', (done) ->
+    it 'should reject empty user query', (done) ->
       chatServer = new ChatService { port : port }, null, state
       socket1 = ioClient.connect url1
-      , { query : 'multiplex' : false
+      , { 'multiplex' : false
         , 'reconnection' : false
         , 'transports' : [ 'websocket' ] }
       socket1.on 'loginRejected', ->
