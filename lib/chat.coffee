@@ -9,6 +9,13 @@ ErrorBuilder = require('./errors.coffee').ErrorBuilder
 withEH = require('./errors.coffee').withEH
 withErrorLog = require('./errors.coffee').withErrorLog
 
+# @private
+extend = (c, mixins...) ->
+  for mixin in mixins
+    for name, method of mixin
+      unless c::[name]
+        c::[name] = method
+  return
 
 # @note This class describes socket.io outgoing messages, not methods.
 #
@@ -313,21 +320,9 @@ processMessage = (author, msg) ->
   return r
 
 
-# Implements room messaging with permissions checking.
-class Room
-
-  # @param server [object] ChatService object
-  # @param name [string] Room name
-  constructor : (@server, @name) ->
-    @errorBuilder = @server.errorBuilder
-    state = @server.chatState.roomState
-    @roomState = new state @server, @name, @server.historyMaxMessages
-
-  # Resets room state according to the object.
-  # @param state [object]
-  # @param cb [callback]
-  initState : (state, cb) ->
-    @roomState.initState state, cb
+# @private
+# @mixin
+RoomHelpers =
 
   # @private
   isAdmin : (userName, cb) ->
@@ -437,6 +432,26 @@ class Room
         return cb @errorBuilder.makeError 'notAllowed'
       cb()
 
+
+# Implements room messaging with permissions checking.
+# @extend RoomHelpers
+class Room
+
+  extend @, RoomHelpers
+
+  # @param server [object] ChatService object
+  # @param name [string] Room name
+  constructor : (@server, @name) ->
+    @errorBuilder = @server.errorBuilder
+    state = @server.chatState.roomState
+    @roomState = new state @server, @name, @server.historyMaxMessages
+
+  # Resets room state according to the object.
+  # @param state [object]
+  # @param cb [callback]
+  initState : (state, cb) ->
+    @roomState.initState state, cb
+
   # @private
   leave : (userName, cb) ->
     @roomState.removeFromList 'userlist', [userName], cb
@@ -507,23 +522,9 @@ class Room
         @getModeChangedCurrentAccess whitelistOnly, cb
 
 
-
-# Implements user to user messaging with permissions checking.
 # @private
-class DirectMessaging
-
-  # @param server [object] ChatService object
-  # @param name [string] User name
-  constructor : (@server, @username) ->
-    @errorBuilder = @server.errorBuilder
-    state = @server.chatState.directMessagingState
-    @directMessagingState = new state @server, @username
-
-  # Resets user direct messaging state according to the object.
-  # @param state [object]
-  # @param cb [callback]
-  initState : (state, cb) ->
-    @directMessagingState.initState state, cb
+# @mixin
+DirectMessagingHelpers =
 
   # @private
   checkUser : (author, cb) ->
@@ -574,6 +575,26 @@ class DirectMessaging
             return cb @errorBuilder.makeError 'notAllowed'
           cb()
 
+
+# Implements user to user messaging with permissions checking.
+# @private
+class DirectMessaging
+
+  extend @, DirectMessagingHelpers
+
+  # @param server [object] ChatService object
+  # @param name [string] User name
+  constructor : (@server, @username) ->
+    @errorBuilder = @server.errorBuilder
+    state = @server.chatState.directMessagingState
+    @directMessagingState = new state @server, @username
+
+  # Resets user direct messaging state according to the object.
+  # @param state [object]
+  # @param cb [callback]
+  initState : (state, cb) ->
+    @directMessagingState.initState state, cb
+
   # @private
   message : (author, msg, cb) ->
     @checkAcess author, cb
@@ -613,32 +634,9 @@ class DirectMessaging
       @directMessagingState.whitelistOnlySet m, cb
 
 
-# Implements socket.io messages to function calls association.
-class User extends DirectMessaging
-
-  # @param server [object] ChatService object
-  # @param name [string] User name
-  constructor : (@server, @username) ->
-    super @server, @username
-    @chatState = @server.chatState
-    @enableUserlistUpdates = @server.enableUserlistUpdates
-    @enableRoomsManagement = @server.enableRoomsManagement
-    @enableDirectMessages = @server.enableDirectMessages
-    state = @server.chatState.userState
-    @userState = new state @server, @username
-
-  # Resets user direct messaging state according to the object.
-  # @param state [object]
-  # @param cb [callback]
-  initState : (state, cb) ->
-    super state, cb
-
-  # @private
-  registerSocket : (socket, cb) ->
-    @userState.socketAdd socket.id, withEH cb, =>
-      for cmd of userCommands
-        @bindCommand socket, cmd, @[cmd]
-      cb null, @
+# @private
+# @mixin
+CommandBinders =
 
   # @private
   wrapCommand : (name, fn) ->
@@ -695,6 +693,11 @@ class User extends DirectMessaging
         cb error, data if cb
       cmd args..., ack, socket.id
 
+
+# @private
+# @mixin
+UserHelpers =
+
   # @private
   withRoom : (roomName, fn) ->
     @chatState.getRoom roomName, fn
@@ -738,6 +741,39 @@ class User extends DirectMessaging
       cb error
     else unless error
       @send sid, msgName, roomName
+
+
+# Implements socket.io messages to function calls association.
+# @extend CommandBinders
+# @extend UserHelpers
+class User extends DirectMessaging
+
+  extend @, CommandBinders, UserHelpers
+
+
+  # @param server [object] ChatService object
+  # @param name [string] User name
+  constructor : (@server, @username) ->
+    super @server, @username
+    @chatState = @server.chatState
+    @enableUserlistUpdates = @server.enableUserlistUpdates
+    @enableRoomsManagement = @server.enableRoomsManagement
+    @enableDirectMessages = @server.enableDirectMessages
+    state = @server.chatState.userState
+    @userState = new state @server, @username
+
+  # Resets user direct messaging state according to the object.
+  # @param state [object]
+  # @param cb [callback]
+  initState : (state, cb) ->
+    super state, cb
+
+  # @private
+  registerSocket : (socket, cb) ->
+    @userState.socketAdd socket.id, withEH cb, =>
+      for cmd of userCommands
+        @bindCommand socket, cmd, @[cmd]
+      cb null, @
 
   # @private
   removeUser : (cb) ->
