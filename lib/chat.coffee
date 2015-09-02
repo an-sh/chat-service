@@ -439,16 +439,22 @@ class Room
 
   extend @, RoomHelpers
 
-  # @param server [object] ChatService object
-  # @param name [string] Room name
+  # @param server [Object] ChatService object.
+  # @param name [String] Room name.
   constructor : (@server, @name) ->
     @errorBuilder = @server.errorBuilder
     state = @server.chatState.roomState
     @roomState = new state @server, @name, @server.historyMaxMessages
 
   # Resets room state according to the object.
-  # @param state [object]
-  # @param cb [callback]
+  # @param state [Object]
+  # @param cb [Callback]
+  # @option state [Array] whitelist
+  # @option state [Array] blacklist
+  # @option state [Array] adminlist
+  # @option state [Array] lastMessages
+  # @option state [Boolean] whitelistOnly
+  # @option state [String] owner
   initState : (state, cb) ->
     @roomState.initState state, cb
 
@@ -582,16 +588,16 @@ class DirectMessaging
 
   extend @, DirectMessagingHelpers
 
-  # @param server [object] ChatService object
-  # @param name [string] User name
+  # @param server [Object] ChatService object.
+  # @param name [String] User name.
   constructor : (@server, @username) ->
     @errorBuilder = @server.errorBuilder
     state = @server.chatState.directMessagingState
     @directMessagingState = new state @server, @username
 
   # Resets user direct messaging state according to the object.
-  # @param state [object]
-  # @param cb [callback]
+  # @param state [Object]
+  # @param cb [Callback]
   initState : (state, cb) ->
     @directMessagingState.initState state, cb
 
@@ -765,6 +771,9 @@ class User extends DirectMessaging
   # Resets user direct messaging state according to the object.
   # @param state [object]
   # @param cb [callback]
+  # @option state [Array] whitelist
+  # @option state [Array] blacklist
+  # @option state [Boolean] whitelistOnly
   initState : (state, cb) ->
     super state, cb
 
@@ -829,7 +838,7 @@ class User extends DirectMessaging
 
   # @private
   disconnect : (reason, cb, id) ->
-    # TODO lock user state
+    # TODO lock user sockets
     @userState.socketRemove id, withEH cb, =>
       @userState.socketsGetAll withEH cb, (sockets) =>
         nsockets = sockets.lenght
@@ -970,8 +979,16 @@ class ChatService
   # @option hooks [Function(<ChatService, <Function(<Error>)>)] onStart
   #   Executes when server is started. Must call a callback.
   # @param options [Object] Options.
-  # @param hooks [Object] Hooks.
-  # @param state [String or Constructor] Chat state.
+  # @param hooks [Object] Hooks. Every `UserCommand` is wrapped with
+  #   the corresponding Before and After hooks. So the hook name will
+  #   look like `roomCreateBefore`. Before hook is ran after arguments
+  #   validation, but before actual server command processing. After
+  #   hook is executed after a server had finshed command processing.
+  #   Look in Hooks unit tests section in the `/test` directory for
+  #   more details and examples.
+  # @param state [String or Constructor] Chat state. Can be either
+  #   'memory' or 'redis' for built-in state storage, ot a custom state
+  #   constructor function that implements the same API.
   constructor : (@options = {}, @hooks = {}, @state = 'memory') ->
     @setOptions()
     @setServer()
@@ -1053,7 +1070,6 @@ class ChatService
   # @param done [callback] Optional callback
   # @param error [object] Optional error vallue for done callback
   close : (done, error) ->
-    # TODO unbind and disconnect sockets.
     cb = (error) =>
       unless @sharedIO or @http then @io.close()
       if done then process.nextTick -> done error

@@ -1,13 +1,12 @@
 {
   "name": "chat-service",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": false,
-  "description": "Server side chat based on top of socket.io",
+  "description": "Server side chat based on top of socket.io focused on scalability and extensibility.",
   "main": "index.js",
   "scripts": {
     "test": "mocha && istanbul report text-summary lcov",
-    "pipe-coverage": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js --verbose",
-    "codo": "codo"
+    "pipe-coverage": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js --verbose"
   },
   "author": {
     "name": "Andrey Sharapov",
