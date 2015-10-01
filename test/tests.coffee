@@ -180,6 +180,16 @@ describe 'Chat service.', ->
           socket1.on 'loginRejected', ->
             done()
 
+        it 'should execute auth hook', (done) ->
+          reason = 'some reason'
+          auth = (socket, cb) ->
+            cb( new Error reason )
+          chatServer = new ChatService { port : port }, { auth : auth }, state
+          socket1 = ioClient.connect url1, makeParams()
+          socket1.on 'error', (e) ->
+            expect(e).deep.equal(reason)
+            done()
+
         it 'should support multiple sockets per user', (done) ->
           chatServer = new ChatService { port : port }, null, state
           socket1 = ioClient.connect url1, makeParams(user1)
