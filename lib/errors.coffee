@@ -6,6 +6,7 @@ util = require 'util'
 class ErrorBuilder
 
   # @private
+  # @nodoc
   constructor : (@useRawErrorObjects, @serverErrorHook) ->
 
   # server errors
@@ -28,6 +29,7 @@ class ErrorBuilder
     userExists : 'User %s already exists'
 
   # @private
+  # @nodoc
   getErrorString : (code) ->
     return @errorStrings[code] || "Unknown error: #{code}"
 
@@ -47,6 +49,7 @@ class ErrorBuilder
 
 
 # @private
+# @nodoc
 withEH = (errorCallback, normallCallback) ->
   (error, args...) ->
     if error then return errorCallback error
@@ -54,6 +57,7 @@ withEH = (errorCallback, normallCallback) ->
 
 
 # @private
+# @nodoc
 withErrorLog = (errorBuilder ,normallCallback) ->
   (error, args...) ->
     if error
@@ -62,6 +66,7 @@ withErrorLog = (errorBuilder ,normallCallback) ->
 
 
 # @private
+# @nodoc
 withTansformedError = (errorBuilder, callback, normallCallback) ->
   return (error, data) ->
     if error

@@ -7,12 +7,15 @@ withTansformedError = require('./errors.coffee').withTansformedError
 
 
 # @private
+# @nodoc
 asyncLimit = 16
 
 # @private
+# @nodoc
 namespace = 'chatservice'
 
 # @private
+# @nodoc
 initState = (redis, state, values, cb) ->
   unless values
     return process.nextTick -> cb()
@@ -22,6 +25,7 @@ initState = (redis, state, values, cb) ->
 
 # Implements state API lists management.
 # @private
+# @nodoc
 class ListsStateRedis
 
   # @private
@@ -76,6 +80,7 @@ class ListsStateRedis
 
 # Implements room state API.
 # @private
+# @nodoc
 class RoomStateRedis extends ListsStateRedis
 
   # @private
@@ -144,6 +149,7 @@ class RoomStateRedis extends ListsStateRedis
 
 # Implements direct messaging state API.
 # @private
+# @nodoc
 class DirectMessagingStateRedis extends ListsStateRedis
 
   # @private
@@ -174,6 +180,7 @@ class DirectMessagingStateRedis extends ListsStateRedis
 
 # Implements user state API.
 # @private
+# @nodoc
 class UserStateRedis
 
   # @private
@@ -215,6 +222,7 @@ class UserStateRedis
 
 # Implements global state API.
 # @private
+# @nodoc
 class RedisState
 
   # @private

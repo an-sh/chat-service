@@ -6,6 +6,7 @@ withEH = require('./errors.coffee').withEH
 
 
 # @private
+# @nodoc
 initState = (state, values) ->
   if state
     state.clear()
@@ -14,11 +15,13 @@ initState = (state, values) ->
 
 
 # @private
+# @nodoc
 asyncLimit = 16
 
 
 # Implements state API lists management.
 # @private
+# @nodoc
 class ListsStateMemory
 
   # @private
@@ -65,6 +68,7 @@ class ListsStateMemory
 
 # Implements room state API.
 # @private
+# @nodoc
 class RoomStateMemory extends ListsStateMemory
 
   # @private
@@ -126,6 +130,7 @@ class RoomStateMemory extends ListsStateMemory
 
 # Implements direct messaging state API.
 # @private
+# @nodoc
 class DirectMessagingStateMemory extends ListsStateMemory
 
   # @private
@@ -148,6 +153,7 @@ class DirectMessagingStateMemory extends ListsStateMemory
 
 # Implements user state API.
 # @private
+# @nodoc
 class UserStateMemory
 
   # @private
@@ -188,6 +194,7 @@ class UserStateMemory
 
 # Implements global state API.
 # @private
+# @nodoc
 class MemoryState
 
   # @private

@@ -10,6 +10,7 @@ withEH = require('./errors.coffee').withEH
 withErrorLog = require('./errors.coffee').withErrorLog
 
 # @private
+# @nodoc
 extend = (c, mixins...) ->
   for mixin in mixins
     for name, method of mixin
@@ -64,7 +65,7 @@ class ServerMessages
   # Room message.
   # @param roomName [String] Rooms name.
   # @param userName [String] Message author.
-  # @param msg Object<textMessage:String, timestamp:Number, author:String>]
+  # @param msg [Object<textMessage:String, timestamp:Number, author:String>]
   #   Message
   # @see UserCommands#roomMessage
   roomMessage : (roomName, userName, msg) ->
@@ -80,11 +81,13 @@ class ServerMessages
   roomUserLeft : (roomName, userName) ->
 
 # @private
+# @nodoc
 checkMessage = (msg) ->
   r = check.map msg, { textMessage : check.string }
   if r then return Object.keys(msg).length == 1
 
 # @private
+# @nodoc
 dataChecker = (args, checkers) ->
   if args.length != checkers.length
     return [ 'wrongArgumentsCount', checkers.length, args.length ]
@@ -303,15 +306,19 @@ class UserCommands
     ]
 
 # @private
+# @nodoc
 userCommands = new UserCommands
 
 # @private
+# @nodoc
 serverMessages = new ServerMessages
 
 # @private
+# @nodoc
 asyncLimit = 16
 
 # @private
+# @nodoc
 processMessage = (author, msg) ->
   r = {}
   r.textMessage = msg?.textMessage?.toString() || ''
@@ -322,6 +329,7 @@ processMessage = (author, msg) ->
 
 # @private
 # @mixin
+# @nodoc
 RoomHelpers =
 
   # @private
@@ -449,25 +457,28 @@ class Room
   # Resets room state according to the object.
   # @param state [Object]
   # @param cb [Callback]
-  # @option state [Array] whitelist
-  # @option state [Array] blacklist
-  # @option state [Array] adminlist
-  # @option state [Array] lastMessages
+  # @option state [Array<String>] whitelist
+  # @option state [Array<String>] blacklist
+  # @option state [Array<String>] adminlist
+  # @option state [Array<Object>] lastMessages
   # @option state [Boolean] whitelistOnly
   # @option state [String] owner
   initState : (state, cb) ->
     @roomState.initState state, cb
 
   # @private
+  # @nodoc
   leave : (userName, cb) ->
     @roomState.removeFromList 'userlist', [userName], cb
 
   # @private
+  # @nodoc
   join : (userName, cb) ->
     @checkAcess userName, withEH cb, =>
       @roomState.addToList 'userlist', [userName], cb
 
   # @private
+  # @nodoc
   message : (author, msg, cb) ->
     @roomState.hasInList 'userlist', author, withEH cb, (hasAuthor) =>
       unless hasAuthor
@@ -475,11 +486,13 @@ class Room
       @roomState.messageAdd msg, cb
 
   # @private
+  # @nodoc
   getList : (author, listName, cb) ->
     @checkList author, listName, withEH cb, =>
       @roomState.getList listName, cb
 
   # @private
+  # @nodoc
   getLastMessages : (author, cb) ->
     @roomState.hasInList 'userlist', author, withEH cb, (hasAuthor) =>
       unless hasAuthor
@@ -487,6 +500,7 @@ class Room
       @roomState.messagesGet cb
 
   # @private
+  # @nodoc
   addToList : (author, listName, values, cb) ->
     async.eachLimit values, asyncLimit, (val, fn) =>
       @checkListAdd author, listName, val, fn
@@ -502,6 +516,7 @@ class Room
           cb error, data
 
   # @private
+  # @nodoc
   removeFromList : (author, listName, values, cb) ->
     async.eachLimit values, asyncLimit, (val, fn) =>
       @checkListRemove author, listName, val, fn
@@ -517,10 +532,12 @@ class Room
           cb error, data
 
   # @private
+  # @nodoc
   getMode : (author, cb) ->
     @roomState.whitelistOnlyGet cb
 
   # @private
+  # @nodoc
   changeMode : (author, mode, cb) ->
     @checkModeChange author, mode, withEH cb, =>
       whitelistOnly = if mode then true else false
@@ -530,6 +547,7 @@ class Room
 
 # @private
 # @mixin
+# @nodoc
 DirectMessagingHelpers =
 
   # @private
@@ -584,6 +602,7 @@ DirectMessagingHelpers =
 
 # Implements user to user messaging with permissions checking.
 # @private
+# @nodoc
 class DirectMessaging
 
   extend @, DirectMessagingHelpers
@@ -642,6 +661,7 @@ class DirectMessaging
 
 # @private
 # @mixin
+# @nodoc
 CommandBinders =
 
   # @private
@@ -697,6 +717,7 @@ CommandBinders =
 
 # @private
 # @mixin
+# @nodoc
 UserHelpers =
 
   # @private
@@ -766,13 +787,14 @@ class User extends DirectMessaging
   # Resets user direct messaging state according to the object.
   # @param state [object]
   # @param cb [callback]
-  # @option state [Array] whitelist
-  # @option state [Array] blacklist
+  # @option state [Array<String>] whitelist
+  # @option state [Array<String>] blacklist
   # @option state [Boolean] whitelistOnly
   initState : (state, cb) ->
     super state, cb
 
   # @private
+  # @nodoc
   registerSocket : (socket, cb) ->
     @userState.socketAdd socket.id, withEH cb, =>
       for cmd of userCommands
@@ -780,6 +802,7 @@ class User extends DirectMessaging
       cb null, @
 
   # @private
+  # @nodoc
   removeUser : (cb) ->
     @userState.socketsGetAll withEH cb, (sockets) =>
       async.eachLimit sockets, asyncLimit
@@ -794,18 +817,22 @@ class User extends DirectMessaging
       , cb
 
   # @private
+  # @nodoc
   directAddToList : (listName, values, cb) ->
     @addToList @username, listName, values, cb
 
   # @private
+  # @nodoc
   directGetAccessList : (listName, cb) ->
     @getList @username, listName, cb
 
   # @private
+  # @nodoc
   directGetWhitelistMode: (cb) ->
     @getMode @username, cb
 
   # @private
+  # @nodoc
   directMessage : (toUserName, msg, cb, id = null) ->
     unless @enableDirectMessages
       error = @errorBuilder.makeError 'notAllowed'
@@ -824,14 +851,17 @@ class User extends DirectMessaging
               cb null, msg
 
   # @private
+  # @nodoc
   directRemoveFromList : (listName, values, cb) ->
     @removeFromList @username, listName, values, cb
 
   # @private
+  # @nodoc
   directSetWhitelistMode : (mode, cb) ->
     @changeMode @username, mode, cb
 
   # @private
+  # @nodoc
   disconnect : (reason, cb, id) ->
     # TODO lock user sockets
     @userState.socketRemove id, withEH cb, =>
@@ -841,16 +871,19 @@ class User extends DirectMessaging
         @sendAllRoomsLeave cb
 
   # @private
+  # @nodoc
   listRooms : (cb) ->
     @chatState.listRooms cb
 
   # @private
+  # @nodoc
   roomAddToList : (roomName, listName, values, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       room.addToList @username, listName, values, withEH cb, (data) =>
         @sendAccessRemoved data, roomName, cb
 
   # @private
+  # @nodoc
   roomCreate : (roomName, whitelistOnly, cb) ->
     unless @enableRoomsManagement
       error = @errorBuilder.makeError 'notAllowed'
@@ -864,6 +897,7 @@ class User extends DirectMessaging
       , withEH cb, => @chatState.addRoom room, cb
 
   # @private
+  # @nodoc
   roomDelete : (roomName, cb) ->
     unless @enableRoomsManagement
       error = @errorBuilder.makeError 'notAllowed'
@@ -875,21 +909,25 @@ class User extends DirectMessaging
             @sendAccessRemoved list, roomName, cb
 
   # @private
+  # @nodoc
   roomGetAccessList : (roomName, listName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       room.getList @username, listName, cb
 
   # @private
+  # @nodoc
   roomGetWhitelistMode : (roomName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       room.getMode @username, cb
 
   # @private
+  # @nodoc
   roomHistory : (roomName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       room.getLastMessages @username, cb
 
   # @private
+  # @nodoc
   roomJoin : (roomName, cb, id = null) ->
     @withRoom roomName, withEH cb, (room) =>
       room.join @username, withEH cb, =>
@@ -906,6 +944,7 @@ class User extends DirectMessaging
                 fn()
 
   # @private
+  # @nodoc
   roomLeave : (roomName, cb, id = null) ->
     @withRoom roomName, withEH cb, (room) =>
       room.leave @username, withEH cb, =>
@@ -922,6 +961,7 @@ class User extends DirectMessaging
                 fn()
 
   # @private
+  # @nodoc
   roomMessage : (roomName, msg, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       msg = processMessage @username, msg
@@ -930,12 +970,14 @@ class User extends DirectMessaging
         cb null, msg
 
   # @private
+  # @nodoc
   roomRemoveFromList : (roomName, listName, values, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       room.removeFromList @username, listName, values, withEH cb, (data) =>
         @sendAccessRemoved data, roomName, cb
 
   # @private
+  # @nodoc
   roomSetWhitelistMode : (roomName, mode, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       room.changeMode @username, mode, withEH cb, (data) =>
@@ -977,12 +1019,12 @@ class ChatService
   #   Executes when server is started. Must call a callback.
   # @param options [Object] Options.
   # @param hooks [Object] Hooks. Every `UserCommand` is wrapped with
-  #   the corresponding Before and After hooks. So the hook name will
+  #   the corresponding Before and After hooks. So a hook name will
   #   look like `roomCreateBefore`. Before hook is ran after arguments
-  #   validation, but before actual server command processing. After
-  #   hook is executed after a server had finshed command processing.
-  #   Look in Hooks unit tests section in the `/test` directory for
-  #   more details and examples.
+  #   validation, but before an actual server command processing. After
+  #   hook is executed after a server has finshed command processing.
+  #   Check Hooks unit tests section in the `/test` directory for
+  #   more details and hooks ussage examples.
   # @param state [String or Constructor] Chat state. Can be either
   #   'memory' or 'redis' for built-in state storage, ot a custom state
   #   constructor function that implements the same API.
@@ -997,6 +1039,7 @@ class ChatService
       @setEvents()
 
   # @private
+  # @nodoc
   setOptions : ->
     @namespace = @options.namespace || '/chat-service'
     @historyMaxMessages = @options.historyMaxMessages || 100
@@ -1008,6 +1051,7 @@ class ChatService
     @stateOptions = @options.stateOptions
 
   # @private
+  # @nodoc
   setServer : ->
     @io = @options.io
     @sharedIO = true if @io
@@ -1034,6 +1078,7 @@ class ChatService
     @chatState = new state @, @stateOptions
 
   # @private
+  # @nodoc
   setEvents : ->
     if @hooks.auth
       @nsp.use @hooks.auth
@@ -1046,11 +1091,13 @@ class ChatService
         @addClient null, socket
 
   # @private
+  # @nodoc
   rejectLogin : (socket, error) ->
     socket.emit 'loginRejected', error
     socket.disconnect(true)
 
   # @private
+  # @nodoc
   addClient : (error, socket, userName, userState) ->
     if error then return @rejectLogin socket, error
     unless userName
