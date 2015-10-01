@@ -963,6 +963,8 @@ class ChatService
   #   Enables user to user {UserCommands#directMessage}, default is false.
   # @option options [Boolean] serverOptions
   #   Options that are passes to socket.io if server creation is required.
+  # @option options [Boolean] stateOptions
+  #   Options that are passes to a service state.
   # @option options [Object] io
   #   Socket.io instance that should be user by ChatService.
   # @option options [Object] http
@@ -1008,6 +1010,7 @@ class ChatService
     @enableRoomsManagement = @options.enableRoomsManagement || false
     @enableDirectMessages = @options.enableDirectMessages || false
     @serverOptions = @options.serverOptions
+    @stateOptions = @options.stateOptions
 
   # @private
   setServer : ->
@@ -1033,7 +1036,7 @@ class ChatService
     @Room = (args...) =>
       new Room @, args...
     @errorBuilder = new ErrorBuilder @useRawErrorObjects, @hooks.serverErrorHook
-    @chatState = new state @
+    @chatState = new state @, @stateOptions
 
   # @private
   setEvents : ->
