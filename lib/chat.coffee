@@ -654,22 +654,17 @@ CommandBinders =
       validator = @server.userCommands[name]
       beforeHook = hooks?[bname]
       afterHook = hooks?[aname]
-      execCommand = (error, data, nargs...) =>
+      execCommand = (error, data) =>
         if error or data then return cb error, data
-        args = if nargs?.length then nargs else oargs
-        argsAfter = args
-        if args.length != oargs.length
-          argsAfter = args.slice()
-          args.length = oargs.length
         afterCommand = (error, data) =>
           reportResults = (nerror = error, ndata = data) ->
             cb nerror, ndata
           if afterHook
-            afterHook @, error, data, argsAfter, reportResults, id
+            afterHook @, error, data, oargs, reportResults, id
           else
             reportResults()
         fn.apply @
-        , [ args...
+        , [ oargs...
           , afterCommand
           , id ]
       process.nextTick =>

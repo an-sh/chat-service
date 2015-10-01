@@ -898,20 +898,6 @@ describe 'Chat service.', ->
               expect(error).equal(err)
               done()
 
-        it 'should allow new arguments from before hook', (done) ->
-          data = 'data'
-          beforeHook = (user, cb) ->
-            cb null, null, data
-          afterHook = (user, d, cb) ->
-            expect(d).equal(data)
-            cb()
-          chatServer = new ChatService { port : port }, null, state
-          , { 'listRoomsBefore' : beforeHook, 'listRoomsAfter' : afterHook }
-          socket1 = ioClient.connect url1, makeParams(user1)
-          socket1.on 'loginConfirmed', ->
-            socket1.emit 'listRooms', (error, data) ->
-              done()
-
         it 'should execute server errors hook', (done) ->
           error = 'some error'
           fn = (e) ->
