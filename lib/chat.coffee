@@ -397,13 +397,12 @@ RoomHelpers =
           return cb()
         if name == owner
           return cb @errorBuilder.makeError 'notAllowed'
-        @roomState.hasInList 'adminlist', name, withEH cb, (hasName) =>
-          if hasName
+        if listName == 'adminlist'
+          return cb @errorBuilder.makeError 'notAllowed'
+        @roomState.hasInList 'adminlist', author, withEH cb, (hasAuthor) =>
+          unless hasAuthor
             return cb @errorBuilder.makeError 'notAllowed'
-          @roomState.hasInList 'adminlist', author, withEH cb, (hasAuthor) =>
-            unless hasAuthor
-              return cb @errorBuilder.makeError 'notAllowed'
-            cb()
+          cb()
 
   # @private
   checkListAdd : (author, listName, name, cb) ->

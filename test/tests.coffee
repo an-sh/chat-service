@@ -450,7 +450,7 @@ describe 'Chat service.', ->
                     expect(error).ok
                     done()
 
-        it 'should check for existing list names on deleting' , (done) ->
+        it 'should check for existing user names on deleting' , (done) ->
           chatServer = new ChatService { port : port
             , enableRoomsManagement : true }
           , null, state
@@ -557,7 +557,7 @@ describe 'Chat service.', ->
             socket1 = ioClient.connect url1, makeParams(user1)
             socket1.on 'loginConfirmed', ->
               socket1.emit 'roomJoin', roomName1, (error, data) ->
-                socket1.emit 'roomAddToList', roomName1, 'adminlist', [user2]
+                socket1.emit 'roomAddToList', roomName1, 'whitelist', [user2]
                 , (error, data) ->
                   expect(error).ok
                   done()

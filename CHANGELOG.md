@@ -1,6 +1,10 @@
 
 ### 0.5.0
 
+- Allow room adminlist changing only for owner.
+- Dependencies update.
+- Message hooks fix/simplification.
+- Pass state options.
 
 ### 0.4.0 (2015/09/02)
 
