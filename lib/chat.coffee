@@ -56,6 +56,16 @@ class ServerMessages
   # Indicates that the user has lost an access permission.
   # @param roomName [String] Room name.
   roomAccessRemoved : (roomName) ->
+  # Indicates room admin list add.
+  # @param roomName [String] Rooms name.
+  # @param userName [String] Username.
+  # @see UserCommands#roomAddToList
+  roomAdminAdded : (roomName, userName) ->
+  # Indicates room admin list remove.
+  # @param roomName [String] Rooms name.
+  # @param userName [String] Username.
+  # @see UserCommands#roomRemoveFromList
+  roomAdminRemoved : (roomName, userName) ->
   # Echoes room join from other user's connections.
   # @see UserCommands#roomJoin
   roomJoinedEcho : (roomName) ->
@@ -779,6 +789,7 @@ class User extends DirectMessaging
     super @server, @username
     @chatState = @server.chatState
     @enableUserlistUpdates = @server.enableUserlistUpdates
+    @enableAdminListUpdates = @server.enableAdminListUpdates
     @enableRoomsManagement = @server.enableRoomsManagement
     @enableDirectMessages = @server.enableDirectMessages
     state = @server.chatState.userState
@@ -880,6 +891,9 @@ class User extends DirectMessaging
   roomAddToList : (roomName, listName, values, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       room.addToList @username, listName, values, withEH cb, (data) =>
+        if @enableAdminListUpdates
+          for name in values
+            @send roomName, 'roomAdminAdded', roomName, name
         @sendAccessRemoved data, roomName, cb
 
   # @private
@@ -974,6 +988,9 @@ class User extends DirectMessaging
   roomRemoveFromList : (roomName, listName, values, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       room.removeFromList @username, listName, values, withEH cb, (data) =>
+        if @enableAdminListUpdates
+          for name in values
+            @send roomName, 'roomAdminRemoved', roomName, name
         @sendAccessRemoved data, roomName, cb
 
   # @private
@@ -996,6 +1013,9 @@ class ChatService
   # @option options [Boolean] enableUserlistUpdates
   #   Enables {ServerMessages#roomUserJoined} and
   #   {ServerMessages#roomUserLeft} messages, default is false.
+  # @option options [Boolean] enableUserlistUpdates
+  #   Enables {ServerMessages#roomAdminAdded} and
+  #   {ServerMessages#roomAdminRemoved} messages, default is false.
   # @option options [Boolean] enableDirectMessages
   #   Enables user to user {UserCommands#directMessage}, default is false.
   # @option options [Boolean] serverOptions
@@ -1045,6 +1065,7 @@ class ChatService
     @historyMaxMessages = @options.historyMaxMessages || 100
     @useRawErrorObjects = @options.useRawErrorObjects || false
     @enableUserlistUpdates = @options.enableUserlistUpdates || false
+    @enableAdminListUpdates = @options.enableAdminListUpdates || false
     @enableRoomsManagement = @options.enableRoomsManagement || false
     @enableDirectMessages = @options.enableDirectMessages || false
     @serverOptions = @options.serverOptions

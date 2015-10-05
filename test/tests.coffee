@@ -463,6 +463,27 @@ describe 'Chat service.', ->
                   expect(error).ok
                   done()
 
+        it 'should send admin list changed messages', (done) ->
+          chatServer = new ChatService { port : port
+            , enableAdminListUpdates : true }
+          , null, state
+          room = new Room chatServer, roomName1
+          room.roomState.ownerSet user1, ->
+            chatServer.chatState.addRoom room, ->
+              socket1 = ioClient.connect url1, makeParams(user1)
+              socket1.on 'loginConfirmed', ->
+                socket1.emit 'roomJoin',  roomName1, (error, data) ->
+                  socket1.emit 'roomAddToList', roomName1, 'adminlist', [user3]
+                  socket1.on 'roomAdminAdded', (r, u) ->
+                    expect(r).equal(roomName1)
+                    expect(u).equal(user3)
+                    socket1.emit 'roomRemoveFromList', roomName1, 'adminlist'
+                    , [user3]
+                    socket1.on 'roomAdminRemoved', (r, u) ->
+                      expect(r).equal(roomName1)
+                      expect(u).equal(user3)
+                      done()
+
         it 'should allow wl and bl modifications for admins', (done) ->
           chatServer = new ChatService { port : port }, null, state
           room = new Room chatServer, roomName1
