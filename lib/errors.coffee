@@ -58,7 +58,7 @@ withEH = (errorCallback, normallCallback) ->
 
 # @private
 # @nodoc
-withErrorLog = (errorBuilder ,normallCallback) ->
+withErrorLog = (errorBuilder, normallCallback) ->
   (error, args...) ->
     if error
       errorBuilder.handleServerError error

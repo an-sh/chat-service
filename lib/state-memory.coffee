@@ -83,7 +83,7 @@ class RoomStateMemory extends ListsStateMemory
     @owner = null
 
   # @private
-  initState : ( state = {}, cb ) ->
+  initState : (state = {}, cb) ->
     { whitelist, blacklist, adminlist
     , lastMessages, whitelistOnly, owner } = state
     initState @whitelist, whitelist
@@ -92,6 +92,10 @@ class RoomStateMemory extends ListsStateMemory
     initState @lastMessages, lastMessages
     @whitelistOnly = if whitelistOnly then true else false
     @owner = if owner then owner else null
+    if cb then process.nextTick -> cb()
+
+  # @private
+  removeState : (cb) ->
     if cb then process.nextTick -> cb()
 
   # @private
@@ -221,7 +225,8 @@ class MemoryState
       @rooms[name] = room
     else
       error = @errorBuilder.makeError 'roomExists', name
-    process.nextTick -> cb error
+    process.nextTick ->
+      if error then cb error else cb null, 1
 
   # @private
   removeRoom : (name, cb) ->

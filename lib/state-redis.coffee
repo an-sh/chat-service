@@ -95,7 +95,7 @@ class RoomStateRedis extends ListsStateRedis
     return listName in [ 'adminlist', 'whitelist', 'blacklist', 'userlist' ]
 
   # @private
-  initState : ( state = {}, cb ) ->
+  initState : (state = {}, cb = ->) ->
     { whitelist, blacklist, adminlist
     , lastMessages, whitelistOnly, owner } = state
     async.parallel [
@@ -116,6 +116,19 @@ class RoomStateRedis extends ListsStateRedis
       , (fn) =>
         unless owner then return fn()
         @redis.hset @makeDBHashName('owners'), @name, owner, fn
+    ] , @withTE cb
+
+  # @private
+  removeState : (cb = ->) ->
+    async.parallel [
+      (fn) =>
+        @redis.del @makeDBListName('whitelist'), @makeDBListName('blacklist')
+        , @makeDBListName('adminlist'), @makeDBListName('history')
+        , fn
+      , (fn) =>
+        @redis.srem @makeDBHashName('whitelistmodes'), @name, fn
+      , (fn) =>
+        @redis.srem @makeDBHashName('owners'), @name, fn
     ] , @withTE cb
 
   # @private

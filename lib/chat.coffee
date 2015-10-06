@@ -760,7 +760,7 @@ UserHelpers =
             if @enableUserlistUpdates
               @send roomName, 'roomUserLeft', roomName, @username
             fn()
-       , =>
+      , =>
         @chatState.logoutUser @username, cb
 
   # @private
@@ -901,13 +901,15 @@ class User extends DirectMessaging
     unless @enableRoomsManagement
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
-    @chatState.getRoom roomName, (error, room) =>
-      if room
+    room = new Room @server, roomName
+    @chatState.addRoom room, withEH cb, (nadded) =>
+      if nadded != 1
         error = @errorBuilder.makeError 'roomExists', roomName
         return cb error
-      room = new Room @server, roomName
       room.initState { owner : @username, whitelistOnly : whitelistOnly }
-      , withEH cb, => @chatState.addRoom room, cb
+      , (error) =>
+        if error then @errorBuilder.handleServerError error
+        cb error
 
   # @private
   # @nodoc
@@ -918,8 +920,11 @@ class User extends DirectMessaging
     @withRoom roomName, withEH cb, (room) =>
       room.checkIsOwner @username, withEH cb, =>
         @chatState.removeRoom room.name, withEH cb, =>
-          room.roomState.getList 'userlist', withEH cb, (list) =>
-            @sendAccessRemoved list, roomName, cb
+          room.roomState.getList 'userlist', withErrorLog @errorBuilder
+          , (list) =>
+            @sendAccessRemoved list, roomName, =>
+              room.roomState.removeState withErrorLog @errorBuilder
+              , -> cb()
 
   # @private
   # @nodoc
