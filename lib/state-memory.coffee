@@ -148,7 +148,11 @@ class DirectMessagingStateMemory extends ListsStateMemory
     initState @whitelist, whitelist
     initState @blacklist, blacklist
     @whitelistOnly = if whitelistOnly then true else false
-    process.nextTick -> cb()
+    if cb then process.nextTick -> cb()
+
+  # @private
+  removeState : (cb) ->
+    if cb then process.nextTick -> cb()
 
   # @private
   hasList : (listName) ->
@@ -304,7 +308,7 @@ class MemoryState
       unless user
         error = @errorBuilder.makeError 'noUser', name
       cb error if cb
-    if user then user.removeUser fn
+    if user then user.disconnectUser fn
     else process.nextTick -> fn()
 
 

@@ -630,6 +630,10 @@ class DirectMessaging
     @directMessagingState.initState state, cb
 
   # @private
+  removeState : (cb) ->
+    @directMessagingState.removeState cb
+
+  # @private
   message : (author, msg, cb) ->
     @checkAcess author, cb
 
@@ -813,7 +817,7 @@ class User extends DirectMessaging
 
   # @private
   # @nodoc
-  removeUser : (cb) ->
+  disconnectUser : (cb) ->
     @userState.socketsGetAll withEH cb, (sockets) =>
       async.eachLimit sockets, asyncLimit
       , (sid, fn) =>

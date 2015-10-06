@@ -178,7 +178,7 @@ class DirectMessagingStateRedis extends ListsStateRedis
     return listName in [ 'whitelist', 'blacklist' ]
 
   # @private
-  initState : ( state = {}, cb ) ->
+  initState : (state = {}, cb = ->) ->
     { whitelist, blacklist, whitelistOnly } = state
     async.parallel [
       (fn) =>
@@ -188,6 +188,16 @@ class DirectMessagingStateRedis extends ListsStateRedis
       , (fn) =>
         unless whitelistOnly then return fn()
         @redis.hset @makeDBHashName('whitelistmodes'), @name, whitelistOnly, fn
+    ] , @withTE cb
+
+  # @private
+  removeState : (cb = ->) ->
+    async.parallel [
+      (fn) =>
+        @redis.del @makeDBListName('whitelist'), @makeDBListName('blacklist')
+        , fn
+      , (fn) =>
+        @redis.srem @makeDBHashName('whitelistmodes'), @name, fn
     ] , @withTE cb
 
 
@@ -334,6 +344,7 @@ class RedisState
 
   # @private
   removeUser : (name, cb = ->) ->
+    user = new @server.User name
     @redis.sismember @makeDBHashName('usersOnline'), name, @withTE cb, (data) =>
       fn = =>
         @redis.sismember @makeDBHashName('users'), name, @withTE cb, (data) =>
@@ -344,10 +355,10 @@ class RedisState
                 @redis.srem @makeDBHashName('users'), name, fn
               (fn) =>
                 @redis.srem @makeDBHashName('usersOnline'), name, fn
+              (fn) ->
+                user.removeState fn
           ], @withTE cb
-      if data
-        user = new @server.User name
-        user.removeUser fn
+      if data then user.disconnectUser fn
       else fn()
 
 
