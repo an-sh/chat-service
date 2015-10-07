@@ -778,7 +778,7 @@ UserHelpers =
       @send sid, msgName, roomName
 
 
-# Implements socket.io messages to function calls association.
+# Implements a chat user.
 # @extend CommandBinders
 # @extend UserHelpers
 class User extends DirectMessaging
@@ -786,8 +786,8 @@ class User extends DirectMessaging
   extend @, CommandBinders, UserHelpers
 
 
-  # @param server [object] ChatService object
-  # @param name [string] User name
+  # @param server [Object] ChatService object
+  # @param name [String] User name
   constructor : (@server, @username) ->
     super @server, @username
     @chatState = @server.chatState
@@ -799,8 +799,8 @@ class User extends DirectMessaging
     @userState = new state @server, @username
 
   # Resets user direct messaging state according to the object.
-  # @param state [object]
-  # @param cb [callback]
+  # @param state [Object]
+  # @param cb [Callback]
   # @option state [Array<String>] whitelist
   # @option state [Array<String>] blacklist
   # @option state [Boolean] whitelistOnly
@@ -1049,7 +1049,7 @@ class ChatService
   #   either Error or an optional User and an optional 3rd argument,
   #   user state object.
   # @option hooks [Function(<ChatService>, <Error>, <Function(<Error>)>)]
-  #  onClose Executes when server is closed. Must call a callback.
+  #   onClose Executes when server is closed. Must call a callback.
   # @option hooks [Function(<ChatService>, <Function(<Error>)>)] onStart
   #   Executes when server is started. Must call a callback.
   # @param options [Object] Options.
@@ -1058,10 +1058,10 @@ class ChatService
   #   look like `roomCreateBefore`. Before hook is ran after arguments
   #   validation, but before an actual server command processing. After
   #   hook is executed after a server has finshed command processing.
-  #   Check Hooks unit tests section in the `/test` directory for
+  #   Check Hooks unit tests section in the `test` directory for
   #   more details and hooks ussage examples.
   # @param state [String or Constructor] Chat state. Can be either
-  #   'memory' or 'redis' for built-in state storage, ot a custom state
+  #   'memory' or 'redis' for built-in state storage, or a custom state
   #   constructor function that implements the same API.
   constructor : (@options = {}, @hooks = {}, @state = 'memory') ->
     @setOptions()

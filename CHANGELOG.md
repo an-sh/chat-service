@@ -1,10 +1,12 @@
 
-### 0.5.0
+### 0.5.0 (2015/10/07)
 
 - Allow room adminlist changing only for owner.
 - Dependencies update.
 - Message hooks fix/simplification.
 - Pass state options.
+- Use locks in redis state.
+- Wait for clients disconnection in close function.
 
 ### 0.4.0 (2015/09/02)
 

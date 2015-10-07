@@ -70,7 +70,7 @@ describe 'Chat service.', ->
 
       describe 'Initialization', ->
 
-        it 'should integrate with a http server', (done) ->
+        it 'should integrate with a provided http server', (done) ->
           httpInst = http.createServer (req, res) -> res.end()
           enableDestroy httpInst
           chatServer1 = new ChatService { http : httpInst }, null, state
@@ -111,7 +111,7 @@ describe 'Chat service.', ->
 
       describe 'User management', ->
 
-        it 'should support server side user disconnection', (done) ->
+        it 'should support a server side user disconnection', (done) ->
           chatServer = new ChatService { port : port }, null, state
           socket1 = ioClient.connect url1, makeParams(user1)
           socket1.on 'loginConfirmed', (u) ->
@@ -180,7 +180,7 @@ describe 'Chat service.', ->
           socket1.on 'loginRejected', ->
             done()
 
-        it 'should execute auth hook', (done) ->
+        it 'should execute an auth hook', (done) ->
           reason = 'some reason'
           auth = (socket, cb) ->
             cb( new Error reason )
@@ -246,7 +246,7 @@ describe 'Chat service.', ->
             expect(error).ok
             done()
 
-        it 'should reject room management when option is disabled'
+        it 'should reject room management when the option is disabled'
         , (done) ->
           chatServer = new ChatService { port : port }, null, state
           room = new Room chatServer, roomName2
@@ -274,7 +274,7 @@ describe 'Chat service.', ->
                     expect(data).include(roomName1)
                     done()
 
-        it 'should send access remove on room delete', (done) ->
+        it 'should send access removed on a room deletion', (done) ->
           chatServer = new ChatService { port : port
             , enableRoomsManagement : true }
           , null, state
@@ -292,7 +292,7 @@ describe 'Chat service.', ->
 
       describe 'Room messaging', ->
 
-        it 'should emit join and leave for user\'s sockets', (done) ->
+        it 'should emit join and leave for all user\'s sockets', (done) ->
           chatServer = new ChatService { port : port }, null, state
           room = new Room chatServer, roomName1
           chatServer.chatState.addRoom room, ->
@@ -390,7 +390,7 @@ describe 'Chat service.', ->
                   expect(error).ok
                   done()
 
-        it 'should send whitelistonly mode', (done) ->
+        it 'should send a whitelistonly mode', (done) ->
           chatServer = new ChatService { port : port }, null, state
           room1 = new Room chatServer, roomName1
           room1.initState { whitelistOnly : true }, ->
@@ -437,7 +437,7 @@ describe 'Chat service.', ->
                   expect(error).ok
                   done()
 
-        it 'should check for existing user names on adding' , (done) ->
+        it 'should check existing user names on adding' , (done) ->
           chatServer = new ChatService { port : port
             , enableRoomsManagement : true }
           , null, state
@@ -452,7 +452,7 @@ describe 'Chat service.', ->
                     expect(error).ok
                     done()
 
-        it 'should check for existing user names on deleting' , (done) ->
+        it 'should check existing user names on deleting' , (done) ->
           chatServer = new ChatService { port : port
             , enableRoomsManagement : true }
           , null, state
@@ -602,7 +602,7 @@ describe 'Chat service.', ->
                       socket2.emit 'roomJoin', roomName1, (error, data) ->
                         done()
 
-        it 'should remove users on permission changes', (done) ->
+        it 'should remove users on permissions changes', (done) ->
           chatServer = new ChatService { port : port }, null, state
           room = new Room chatServer, roomName1
           room.roomState.addToList 'adminlist', [user1], ->
@@ -635,7 +635,7 @@ describe 'Chat service.', ->
                         expect(r).equal(roomName1)
                         done()
 
-        it 'should remove users on permission changes in whitelist mode'
+        it 'should remove users on permissions changes in whitelist mode'
         , (done) ->
           chatServer = new ChatService { port : port }, null, state
           room = new Room chatServer, roomName1
@@ -693,7 +693,8 @@ describe 'Chat service.', ->
                 expect(msg).ownProperty('timestamp')
                 done()
 
-        it 'should not send direct messages when option is disabled', (done) ->
+        it 'should not send direct messages when the option is disabled'
+        , (done) ->
           txt = 'Test message.'
           message = { textMessage : txt }
           chatServer = new ChatService { port : port }
@@ -727,7 +728,7 @@ describe 'Chat service.', ->
 
       describe 'Direct permissions', ->
 
-        it 'should check user permission', (done) ->
+        it 'should check user permissions', (done) ->
           txt = 'Test message.'
           message = { textMessage : txt }
           chatServer = new ChatService { port : port
@@ -744,7 +745,7 @@ describe 'Chat service.', ->
                     expect(error).ok
                     done()
 
-        it 'should check user permission in whitelist mode', (done) ->
+        it 'should check user permissions in whitelist mode', (done) ->
           txt = 'Test message.'
           message = { textMessage : txt }
           chatServer = new ChatService { port : port
@@ -768,7 +769,7 @@ describe 'Chat service.', ->
                           expect(error).ok
                           done()
 
-        it 'should allow user to modify own lists', (done) ->
+        it 'should allow an user to modify own lists', (done) ->
           chatServer = new ChatService { port : port
             , enableDirectMessages : true }
           , null, state
@@ -799,7 +800,7 @@ describe 'Chat service.', ->
               expect(error).ok
               done()
 
-        it 'should check for existing user names on deleting' , (done) ->
+        it 'should check existing user names on deleting' , (done) ->
           chatServer = new ChatService { port : port
             , enableDirectMessages : true }
           , null, state
@@ -810,7 +811,7 @@ describe 'Chat service.', ->
               expect(error).ok
               done()
 
-        it 'should check for existing list names on adding' , (done) ->
+        it 'should check existing list names on adding' , (done) ->
           chatServer = new ChatService { port : port
             , enableDirectMessages : true }
           , null, state
@@ -824,7 +825,7 @@ describe 'Chat service.', ->
                 expect(error).ok
                 done()
 
-        it 'should allow user to modify own mode', (done) ->
+        it 'should allow an user to modify own mode', (done) ->
           chatServer = new ChatService { port : port
             , enableDirectMessages : true }
           , null, state
@@ -838,7 +839,7 @@ describe 'Chat service.', ->
 
       describe 'Hooks', ->
 
-        it 'should restore user state from onConnect hook', (done) ->
+        it 'should restore an user state from onConnect hook', (done) ->
           userName = 'user'
           onConnect = (server, socket, cb) ->
             cb null, userName, { whitelistOnly : true }
@@ -854,7 +855,7 @@ describe 'Chat service.', ->
                 expect(data).true
                 done()
 
-        it 'should restore room state from onStart hook', (done) ->
+        it 'should restore a room state from onStart hook', (done) ->
           room = null
           msg1 = { author : user1, textMessage : "message", timestamp : 0 }
           fn = ->
@@ -963,7 +964,7 @@ describe 'Chat service.', ->
               expect(error).ok
               done()
 
-        it 'should validate message argument count', (done) ->
+        it 'should validate a message argument count', (done) ->
           chatServer = new ChatService {port : port
             , enableRoomsManagement : true},
           null, state
@@ -973,7 +974,7 @@ describe 'Chat service.', ->
               expect(error).ok
               done()
 
-        it 'should have server messages field', (done) ->
+        it 'should have a server messages field', (done) ->
           chatServer = new ChatService {port : port}, null, state
           for k, fn of chatServer.serverMessages
             fn()

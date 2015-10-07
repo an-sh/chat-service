@@ -8,14 +8,58 @@
 Server side chat based on top of socket.io focused on scalability and
 extensibility.
 
+
 ### Features
 
 - Simple network layer using socket.io and json based messages.
 - Room and user2user chatting with permissions management.
+- Allows a single user to have multiple connected sockets.
 - Runs as a stateless service with built-in Redis state storage.
 - Can be extened via command hooks.
 - Can use external state storage implementations.
 - Extensive unit test coverage (95%+).
+
+
+### Basic usage
+
+```javascript
+var chatServer = new ChatService({ port : port },
+                                 { auth : auth, onConnect : onConnect },
+                                 'redis');
+```
+Here we have created a new server instance. It is ruuning _`port`_
+according to options argument. The second argument represents hooks,
+that will run during server lifetime. _`auth`_ hook is simular to the
+one that is described in socket.io documentation, and _`onConnect`_
+hook will run when client is connected. These hook are intended for
+integration to existing user authentication systems. The last argument
+is a state storage.
+
+Connection from a client side is trivial:
+```javascript
+socket = ioClient.connect(url1, params);
+socket.on('loginConfirmed', function(username) {
+  // code
+});
+```
+A conneted client can send `UserCommands` to a server:
+```javascript
+socket.emit('roomJoin', 'someRoom', function(error, data) {
+  // code
+});
+```
+A server reply is send as a socket.io ack and has a standart node
+(error, data) callback arguments format. Semantics of most commands is
+very straitforward and simple. Only for room commands a client must
+join a room to succesfully execute them.
+
+```javascript
+socket.on('roomMessage', function(room, user, msg) {
+});
+```
+Also a server will send `ServerMessages`.  Note that these messages
+don't require any reply.
+
 
 ### Documentation
 
@@ -34,9 +78,11 @@ client to a server. Server will send back a socket.io ack reply with
 Look in the test directory, for socket.io-client messages, server
 setup and hooks usage.
 
+
 ### TODO
 
 - API for adding custom messages.
+
 
 ### License
 

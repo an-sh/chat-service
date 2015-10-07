@@ -34,8 +34,8 @@ class ErrorBuilder
     return @errorStrings[code] || "Unknown error: #{code}"
 
   # Error formating.
-  # @param error [String] Error id in errorStrings
-  # @param args [Array<Object>] Error data arguments
+  # @param error [String] Error key in {ErrorBuilder.errorStrings} object.
+  # @param args [Array<Object>] Error data arguments.
   makeError : (error, args...) ->
     if @useRawErrorObjects
       return { name : error, args : args }
