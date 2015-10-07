@@ -823,11 +823,11 @@ class User extends DirectMessaging
       , (sid, fn) =>
         if @server.io.sockets.connected[sid]
           @server.io.sockets.connected[sid].disconnect(true)
-          @sendAllRoomsLeave fn
+          fn()
         else
           # TODO all adapter sockets proper disconnection
           @send sid, 'disconnect'
-          @server.nsp.adapter.delAll sid, => @sendAllRoomsLeave fn
+          @server.nsp.adapter.delAll sid, fn
       , cb
 
   # @private
@@ -877,12 +877,19 @@ class User extends DirectMessaging
   # @private
   # @nodoc
   disconnect : (reason, cb, id) ->
-    # TODO lock user sockets
-    @userState.socketRemove id, withEH cb, =>
-      @userState.socketsGetAll withEH cb, (sockets) =>
-        nsockets = sockets.lenght
-        if nsockets > 0 then return cb()
-        @sendAllRoomsLeave cb
+    @server.startCleintDisconnect()
+    fin2 = (args...) =>
+      @server.endClientDisconnect()
+      cb args...
+    @chatState.lockUser @username, withEH fin2, (lock) =>
+      fin = (args...) ->
+        lock.unlock()
+        fin2 args...
+      @userState.socketRemove id, withEH fin, =>
+        @userState.socketsGetAll withEH fin, (sockets) =>
+          nsockets = sockets.lenght
+          if nsockets > 0 then fin()
+          else @sendAllRoomsLeave fin
 
   # @private
   # @nodoc
@@ -1041,9 +1048,9 @@ class ChatService
   #   onConnect Client connection hook. Must call a callback with
   #   either Error or an optional User and an optional 3rd argument,
   #   user state object.
-  # @option hooks [Function(<ChatService, <Error>, <Function(<Error>)>)] onClose
-  #   Executes when server is closed. Must call a callback.
-  # @option hooks [Function(<ChatService, <Function(<Error>)>)] onStart
+  # @option hooks [Function(<ChatService>, <Error>, <Function(<Error>)>)]
+  #  onClose Executes when server is closed. Must call a callback.
+  # @option hooks [Function(<ChatService>, <Function(<Error>)>)] onStart
   #   Executes when server is started. Must call a callback.
   # @param options [Object] Options.
   # @param hooks [Object] Hooks. Every `UserCommand` is wrapped with
@@ -1061,8 +1068,8 @@ class ChatService
     @setServer()
     if @hooks.onStart
       @hooks.onStart @, (error) =>
-        if error then return @close null, error
-        @setEvents()
+        if error then throw error
+        else @setEvents()
     else
       @setEvents()
 
@@ -1076,6 +1083,7 @@ class ChatService
     @enableAdminListUpdates = @options.enableAdminListUpdates || false
     @enableRoomsManagement = @options.enableRoomsManagement || false
     @enableDirectMessages = @options.enableDirectMessages || false
+    @closeTimeout = @options.closeTimeout || 5000
     @serverOptions = @options.serverOptions
     @stateOptions = @options.stateOptions
 
@@ -1085,6 +1093,8 @@ class ChatService
     @io = @options.io
     @sharedIO = true if @io
     @http = @options.http unless @io
+    @nclosing = 0
+    @closeCB = null
     state = switch @state
       when 'memory' then MemoryState
       when 'redis' then RedisState
@@ -1134,23 +1144,57 @@ class ChatService
       unless userName
         error = @errorBuilder.makeError 'noLogin'
         return @rejectLogin socket, error
-    @chatState.loginUser userName, socket, (error, user) ->
+    @chatState.loginUser userName, socket, (error, user) =>
       if error then return @rejectLogin socket, error
       fn = -> socket.emit 'loginConfirmed', userName, {}
       if userState then user.initState userState, fn
       else fn()
 
+  # @private
+  # @nodoc
+  finish : () ->
+    if @closeCB and !@fineshed
+      @finished = true
+      @closeCB()
+
+  # @private
+  # @nodoc
+  startCleintDisconnect : () ->
+    unless @closeCB then @nclosing++
+
+  # @private
+  # @nodoc
+  endClientDisconnect : () ->
+    @nclosing--
+    if @closeCB and @nclosing == 0
+      process.nextTick => @finish()
+
   # Closes server.
   # @param done [callback] Optional callback
-  # @param error [object] Optional error vallue for done callback
-  close : (done, error) ->
-    cb = (error) =>
-      unless @sharedIO or @http then @io.close()
-      if done then process.nextTick -> done error
-    if @hooks.onClose
-      @hooks.onClose @, error, cb
+  close : (done = ->) ->
+    timeStart = new Date().getTime()
+    @closeCB = (error) =>
+      unless @sharedIO or @http
+        @io.close()
+      if @hooks.onClose
+        @hooks.onClose @, error, done
+      else
+        done error
+    waitFunction = =>
+      if @finished then return
+      timeCurrent = new Date().getTime()
+      if timeCurrent > timeStart + @closeTimeout
+        @finished = true
+        return @closeCB new Error 'Server closing timeout.'
+      else
+        setTimeout waitFunction, 100
+    for sid, socket of @nsp.connected
+      @nclosing++
+      socket.disconnect(true)
+    if @nclosing == 0
+      process.nextTick => @closeCB()
     else
-      cb()
+      waitFunction()
 
 
 module.exports = {

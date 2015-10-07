@@ -151,10 +151,6 @@ class DirectMessagingStateMemory extends ListsStateMemory
     if cb then process.nextTick -> cb()
 
   # @private
-  removeState : (cb) ->
-    if cb then process.nextTick -> cb()
-
-  # @private
   hasList : (listName) ->
     return listName in [ 'whitelist', 'blacklist' ]
 
@@ -252,6 +248,11 @@ class MemoryState
     process.nextTick -> cb error, u
 
   # @private
+  lockUser : (name, cb) ->
+    process.nextTick ->
+      cb null, { unlock : -> }
+
+  # @private
   getUser : (name, cb) ->
     isOnline = if @usersOnline[name] then true else false
     user = @users[name]
@@ -303,10 +304,11 @@ class MemoryState
     user = @usersOnline[name]
     fn = =>
       user = @users[name]
-      delete @usersOnline[name]
-      delete @users[name]
       unless user
         error = @errorBuilder.makeError 'noUser', name
+      else
+        delete @usersOnline[name]
+        delete @users[name]
       cb error if cb
     if user then user.disconnectUser fn
     else process.nextTick -> fn()

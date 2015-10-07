@@ -1,6 +1,7 @@
 
 async = require 'async'
 Redis = require 'ioredis'
+Redlock = require 'redlock'
 _ = require 'lodash'
 withEH = require('./errors.coffee').withEH
 withTansformedError = require('./errors.coffee').withTansformedError
@@ -256,10 +257,15 @@ class RedisState
     @roomState = RoomStateRedis
     @userState = UserStateRedis
     @directMessagingState = DirectMessagingStateRedis
+    @lockTTL = @options?.lockTTL || 2000
+    @lock = new Redlock [@redis], {}
 
   # @private
   makeDBHashName : (hashName) ->
     "#{namespace}:#{hashName}"
+
+  makeLockName : (name) ->
+    "#{namespace}:locks:#{name}"
 
   # @private
   getRoom : (name, cb) ->
@@ -298,6 +304,10 @@ class RedisState
       cb null, user
 
   # @private
+  lockUser : (name, cb) ->
+    @lock.lock (@makeLockName name), @lockTTL, @withTE cb
+
+  # @private
   getUser : (name, cb) ->
     @redis.sismember @makeDBHashName('usersOnline'), name, @withTE cb, (data) =>
       if data then return cb null, user, true
@@ -308,20 +318,26 @@ class RedisState
 
   # @private
   loginUser : (name, socket, cb) ->
-    @redis.sismember @makeDBHashName('usersOnline'), name, @withTE cb, (data) =>
-      if data
-        user = new @server.User name
-        user.registerSocket socket, (error) -> cb error, user
-      else
-        @redis.sismember @makeDBHashName('users'), name, @withTE cb, (data) =>
+    @lock.lock (@makeLockName name), @lockTTL, @withTE cb, (lock) =>
+      fin = (args...) ->
+        lock.unlock()
+        cb args...
+      @redis.sismember @makeDBHashName('usersOnline'), name, @withTE fin
+      , (data) =>
+        if data
           user = new @server.User name
-          async.parallel [
-            (fn) =>
-              @redis.sadd @makeDBHashName('users'), name, fn
-            (fn) =>
-              @redis.sadd @makeDBHashName('usersOnline'), name, fn
-          ], @withTE cb, ->
-            user.registerSocket socket, cb
+          user.registerSocket socket, (error) -> fin error, user
+        else
+          @redis.sismember @makeDBHashName('users'), name, @withTE fin
+          , (data) =>
+            user = new @server.User name
+            async.parallel [
+              (fn) =>
+                @redis.sadd @makeDBHashName('users'), name, fn
+              (fn) =>
+                @redis.sadd @makeDBHashName('usersOnline'), name, fn
+            ], @withTE fin, ->
+              user.registerSocket socket, fin
 
   # @private
   logoutUser : (name, cb) ->

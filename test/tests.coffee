@@ -202,13 +202,15 @@ describe 'Chat service.', ->
                   done()
 
         it 'should disconnect all users on a server shutdown', (done) ->
-          chatServer = new ChatService { port : port }, null, state
+          chatServer1 = new ChatService { port : port }, null, state
           socket1 = ioClient.connect url1, makeParams(user1)
           socket1.on 'loginConfirmed', ->
-            socket1.once 'disconnect', ->
-              done()
-            chatServer.close()
-            chatServer = null
+            async.parallel [ (cb) ->
+              socket1.on 'disconnect', ->
+                cb()
+            , (cb) ->
+              chatServer1.close cb
+            ], done
 
 
       describe 'Room management', ->
@@ -872,20 +874,19 @@ describe 'Chat service.', ->
               , lastMessages : [ msg1 ] }
             , ->
               server.chatState.addRoom room, ->
-                cb null, room
+                cb()
                 fn()
           chatServer = new ChatService { port : port }
           , { onStart : onStart }, state
 
         it 'should exectute onClose hook', (done) ->
-          err = 'error'
           closeHook = (server, error, cb) ->
             expect(server).instanceof(ChatService)
-            expect(error).equal(err)
+            expect(error).not.ok
             cb()
           chatServer1 = new ChatService { port : port }
           , { onClose : closeHook }, state
-          chatServer1.close done, err
+          chatServer1.close done
 
         it 'should execute before and after messages hooks', (done) ->
           someData = 'data'
