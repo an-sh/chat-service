@@ -93,8 +93,10 @@ class ServerMessages
 # @private
 # @nodoc
 checkMessage = (msg) ->
-  r = check.map msg, { textMessage : check.string }
-  if r then return Object.keys(msg).length == 1
+  passed = check.object msg
+  unless passed then return false
+  passed = check.map msg, { textMessage : check.string }
+  if passed then return Object.keys(msg).length == 1
 
 # @private
 # @nodoc
