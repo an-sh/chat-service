@@ -1,4 +1,8 @@
 
+### 0.5.1 (2015/10/26)
+
+- Security: Fix type error throwing on primitive message objects.
+
 ### 0.5.0 (2015/10/07)
 
 - Allow room adminlist changing only for owner.
