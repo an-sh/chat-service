@@ -95,8 +95,7 @@ class ServerMessages
 checkMessage = (msg) ->
   passed = check.object msg
   unless passed then return false
-  passed = check.map msg, { textMessage : check.string }
-  if passed then return Object.keys(msg).length == 1
+  return check.map msg, { textMessage : check.string }
 
 # @private
 # @nodoc
@@ -855,15 +854,15 @@ class User extends DirectMessaging
       return cb error
     @chatState.getOnlineUser toUserName, withEH cb, (toUser) =>
       @chatState.getOnlineUser @username, withEH cb, (fromUser) =>
-        msg = processMessage @username, msg
-        toUser.message @username, msg, withEH cb, =>
+        pmsg = processMessage @username, msg
+        toUser.message @username, pmsg, withEH cb, =>
           fromUser.userState.socketsGetAll withEH cb, (sockets) =>
             for sid in sockets
               if sid != id
-                @send sid, 'directMessageEcho', toUserName, msg
+                @send sid, 'directMessageEcho', toUserName, pmsg
             toUser.userState.socketsGetAll withEH cb, (sockets) =>
               for sid in sockets
-                @send sid, 'directMessage', @username, msg
+                @send sid, 'directMessage', @username, pmsg
               cb null, msg
 
   # @private
@@ -995,9 +994,9 @@ class User extends DirectMessaging
   # @nodoc
   roomMessage : (roomName, msg, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      msg = processMessage @username, msg
-      room.message @username, msg, withEH cb, =>
-        @send roomName, 'roomMessage', roomName, @username, msg
+      pmsg = processMessage @username, msg
+      room.message @username, pmsg, withEH cb, =>
+        @send roomName, 'roomMessage', roomName, @username, pmsg
         cb null, msg
 
   # @private
