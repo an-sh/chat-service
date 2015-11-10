@@ -1154,7 +1154,7 @@ class ChatService
   # @private
   # @nodoc
   finish : () ->
-    if @closeCB and !@fineshed
+    if @closeCB and !@finished
       @finished = true
       @closeCB()
 
