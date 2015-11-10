@@ -793,7 +793,7 @@ class User extends DirectMessaging
     super @server, @username
     @chatState = @server.chatState
     @enableUserlistUpdates = @server.enableUserlistUpdates
-    @enableAdminListUpdates = @server.enableAdminListUpdates
+    @enableAdminlistUpdates = @server.enableAdminlistUpdates
     @enableRoomsManagement = @server.enableRoomsManagement
     @enableDirectMessages = @server.enableDirectMessages
     state = @server.chatState.userState
@@ -902,7 +902,7 @@ class User extends DirectMessaging
   roomAddToList : (roomName, listName, values, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       room.addToList @username, listName, values, withEH cb, (data) =>
-        if @enableAdminListUpdates
+        if @enableAdminlistUpdates
           for name in values
             @send roomName, 'roomAdminAdded', roomName, name
         @sendAccessRemoved data, roomName, cb
@@ -1004,7 +1004,7 @@ class User extends DirectMessaging
   roomRemoveFromList : (roomName, listName, values, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       room.removeFromList @username, listName, values, withEH cb, (data) =>
-        if @enableAdminListUpdates
+        if @enableAdminlistUpdates
           for name in values
             @send roomName, 'roomAdminRemoved', roomName, name
         @sendAccessRemoved data, roomName, cb
@@ -1029,15 +1029,15 @@ class ChatService
   # @option options [Boolean] enableUserlistUpdates
   #   Enables {ServerMessages#roomUserJoined} and
   #   {ServerMessages#roomUserLeft} messages, default is false.
-  # @option options [Boolean] enableUserlistUpdates
+  # @option options [Boolean] enableAdminlistUpdates
   #   Enables {ServerMessages#roomAdminAdded} and
   #   {ServerMessages#roomAdminRemoved} messages, default is false.
   # @option options [Boolean] enableDirectMessages
   #   Enables user to user {UserCommands#directMessage}, default is false.
   # @option options [Boolean] serverOptions
-  #   Options that are passes to socket.io if server creation is required.
+  #   Options that are passed to socket.io if server creation is required.
   # @option options [Boolean] stateOptions
-  #   Options that are passes to a service state.
+  #   Options that are passed to a service state.
   # @option options [Object] io
   #   Socket.io instance that should be user by ChatService.
   # @option options [Object] http
@@ -1081,7 +1081,7 @@ class ChatService
     @historyMaxMessages = @options.historyMaxMessages || 100
     @useRawErrorObjects = @options.useRawErrorObjects || false
     @enableUserlistUpdates = @options.enableUserlistUpdates || false
-    @enableAdminListUpdates = @options.enableAdminListUpdates || false
+    @enableAdminlistUpdates = @options.enableAdminlistUpdates || false
     @enableRoomsManagement = @options.enableRoomsManagement || false
     @enableDirectMessages = @options.enableDirectMessages || false
     @closeTimeout = @options.closeTimeout || 5000

@@ -79,11 +79,6 @@ Look in the test directory, for socket.io-client messages, server
 setup and hooks usage.
 
 
-### TODO
-
-- API for adding custom messages.
-
-
 ### License
 
 MIT

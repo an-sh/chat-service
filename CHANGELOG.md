@@ -1,4 +1,9 @@
 
+### 0.6.0 ()
+
+- Rename enableAdminListUpdates to enableAdminlistUpdates.
+
+
 ### 0.5.1 (2015/10/26)
 
 - Security: Fix type error throwing on primitive message objects.

@@ -467,7 +467,7 @@ describe 'Chat service.', ->
 
         it 'should send admin list changed messages', (done) ->
           chatServer = new ChatService { port : port
-            , enableAdminListUpdates : true }
+            , enableAdminlistUpdates : true }
           , null, state
           room = new Room chatServer, roomName1
           room.roomState.ownerSet user1, ->
