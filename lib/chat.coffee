@@ -45,7 +45,11 @@ class ServerMessages
   # @see UserCommands#directMessage
   directMessageEcho : (toUser, msg) ->
   # Disconnected from a server.
-  disconnect : () ->
+  # @param reason Socket.io disconnect type.
+  disconnect : (reason) ->
+  # Error events, like socket.io middleware error.
+  # @param error [Object]
+  error : (error) ->
   # Indicates a successful login.
   # @param username [String]
   # @param data [Object]
@@ -183,7 +187,7 @@ class UserCommands
       check.boolean
     ]
   # Disconnects from server.
-  # @param reason [String] Reason.
+  # @param reason [String] Socket.io disconnect type.
   disconnect : (reason) ->
     dataChecker arguments, [
       check.string
@@ -1039,7 +1043,7 @@ class ChatService
   # @option options [Boolean] stateOptions
   #   Options that are passed to a service state.
   # @option options [Object] io
-  #   Socket.io instance that should be user by ChatService.
+  #   Socket.io instance that should be used by ChatService.
   # @option options [Object] http
   #   Use socket.io http server integration.
   # @option hooks [Function] auth Socket.io auth hook. Look in the
@@ -1060,7 +1064,7 @@ class ChatService
   #   validation, but before an actual server command processing. After
   #   hook is executed after a server has finshed command processing.
   #   Check Hooks unit tests section in the `test` directory for
-  #   more details and hooks ussage examples.
+  #   more details and hooks usage examples.
   # @param state [String or Constructor] Chat state. Can be either
   #   'memory' or 'redis' for built-in state storage, or a custom state
   #   constructor function that implements the same API.
