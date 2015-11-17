@@ -841,14 +841,16 @@ describe 'Chat service.', ->
 
         it 'should restore an user state from onConnect hook', (done) ->
           userName = 'user'
+          authData = 'somedata'
           onConnect = (server, socket, cb) ->
-            cb null, userName, { whitelistOnly : true }
+            cb null, userName, authData, { whitelistOnly : true }
           chatServer = new ChatService { port : port }
           , { onConnect : onConnect }
           , state
           socket1 = ioClient.connect url1, makeParams(user1)
-          socket1.on 'loginConfirmed', (u) ->
+          socket1.on 'loginConfirmed', (u, d) ->
             expect(u).equal(userName)
+            expect(d).equal(authData)
             chatServer.chatState.getOnlineUser userName, (error, u) ->
               expect(u.username).equal(userName)
               u.directMessagingState.whitelistOnlyGet (error, data) ->

@@ -1040,10 +1040,12 @@ class ChatService
   # @option hooks [Function] auth Socket.io auth hook. Look in the
   #   socket.io documentation.
   # @option hooks
-  #   [Function(<ChatService>, <Socket>, <Function(<Error>, <User>, <Object>)>)]
+  #   [Function(<ChatService>, <Socket>, <Function(<Error>, <String>, <Object>, <Object>)>)]
   #   onConnect Client connection hook. Must call a callback with
-  #   either Error or an optional User and an optional 3rd argument,
-  #   user state object.
+  #   either error or user name, auth data and user state. User name
+  #   and auth data are send back with `loginConfirmed` message. Error
+  #   is sent as `loginRejected` message. User state is the same as
+  #   {User#initState}.
   # @option hooks [Function(<ChatService>, <Error>, <Function(<Error>)>)]
   #   onClose Executes when server is closed. Must call a callback.
   # @option hooks [Function(<ChatService>, <Function(<Error>)>)] onStart
@@ -1119,8 +1121,8 @@ class ChatService
       @nsp.use @hooks.auth
     if @hooks.onConnect
       @nsp.on 'connection', (socket) =>
-        @hooks.onConnect @, socket, (error, userName, userState) =>
-          @addClient error, socket, userName, userState
+        @hooks.onConnect @, socket, (error, userName, authData, userState) =>
+          @addClient error, socket, userName, authData, userState
     else
       @nsp.on 'connection', (socket) =>
         @addClient null, socket
@@ -1133,7 +1135,7 @@ class ChatService
 
   # @private
   # @nodoc
-  addClient : (error, socket, userName, userState) ->
+  addClient : (error, socket, userName, authData = {}, userState) ->
     if error then return @rejectLogin socket, error
     unless userName
       userName = socket.handshake.query?.user
@@ -1142,7 +1144,7 @@ class ChatService
         return @rejectLogin socket, error
     @chatState.loginUser userName, socket, (error, user) =>
       if error then return @rejectLogin socket, error
-      fn = -> socket.emit 'loginConfirmed', userName, {}
+      fn = -> socket.emit 'loginConfirmed', userName, authData
       if userState then user.initState userState, fn
       else fn()
 
