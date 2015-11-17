@@ -773,14 +773,9 @@ UserHelpers =
         @chatState.logoutUser @username, cb
 
   # @private
-  reportRoomConnections : (error, id, sid, roomName, msgName, cb) ->
-    if error
-      @errorBuilder.handleServerError error
-      error = @errorBuilder.makeError serverError, '500'
-    if sid == id
-      cb error
-    else unless error
-      @send sid, msgName, roomName
+  reportRoomConnections : (id, sid, msgName, roomName, cb) ->
+    if id == sid then return cb()
+    else @send sid, msgName, roomName
 
 
 # Implements a chat user.
@@ -965,17 +960,13 @@ class User extends DirectMessaging
   roomJoin : (roomName, cb, id = null) ->
     @withRoom roomName, withEH cb, (room) =>
       room.join @username, withEH cb, =>
-        @userState.roomAdd roomName, withEH cb, =>
-          if @enableUserlistUpdates
-            @send roomName, 'roomUserJoined', roomName, @username
-          # TODO lock user sockets
-          @userState.socketsGetAll withEH cb, (sockets) =>
-            async.eachLimit sockets, asyncLimit, (sid, fn) =>
-              @server.nsp.adapter.add sid, roomName
-              , (error) =>
-                @reportRoomConnections error, id, sid, roomName
-                , 'roomJoinedEcho', cb
-                fn()
+        @userState.roomAdd roomName, withEH cb, (nadded) =>
+          @server.nsp.adapter.add id, roomName, withEH cb, =>
+            if @enableUserlistUpdates and nadded
+              @send roomName, 'roomUserJoined', roomName, @username
+            @userState.socketsGetAll withEH cb, (sockets) =>
+              for sid in sockets
+                @reportRoomConnections id, sid, 'roomJoinedEcho', roomName, cb
 
   # @private
   # @nodoc
@@ -983,16 +974,16 @@ class User extends DirectMessaging
     @withRoom roomName, withEH cb, (room) =>
       room.leave @username, withEH cb, =>
         @userState.roomRemove roomName, withEH cb, =>
-          if @enableUserlistUpdates
-            @send roomName, 'roomUserLeft', roomName, @username
-          # TODO lock user sockets
-          @userState.socketsGetAll withEH cb, (sockets) =>
-            async.eachLimit sockets, asyncLimit, (sid, fn) =>
-              @server.nsp.adapter.del sid, roomName
-              , (error) =>
-                @reportRoomConnections error, id, sid, roomName
-                , 'roomLeftEcho', cb
-                fn()
+          @server.nsp.adapter.del id, roomName, withEH cb, =>
+            @userState.socketsGetAll withEH cb, (sockets) =>
+              nconnected = 0
+              for sid in sockets
+                @reportRoomConnections id, sid, 'roomLeftEcho', roomName, cb
+                if @server.nsp.adapter.rooms?[roomName]?[sid]
+                  nconnected++
+              if @enableUserlistUpdates and nconnected == 0
+                @send roomName, 'roomUserLeft', roomName, @username
+
 
   # @private
   # @nodoc

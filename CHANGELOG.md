@@ -2,6 +2,7 @@
 ### 0.6.0 ()
 
 - Rename enableAdminListUpdates to enableAdminlistUpdates.
+- Don't join/leave user sockets from rooms at server size.
 
 
 ### 0.5.1 (2015/10/26)
