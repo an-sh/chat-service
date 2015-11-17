@@ -882,7 +882,7 @@ class User extends DirectMessaging
   # @private
   # @nodoc
   disconnect : (reason, cb, id) ->
-    @server.startCleintDisconnect()
+    @server.startClientDisconnect()
     fin2 = (args...) =>
       @server.endClientDisconnect()
       cb args...
@@ -1164,7 +1164,7 @@ class ChatService
 
   # @private
   # @nodoc
-  startCleintDisconnect : () ->
+  startClientDisconnect : () ->
     unless @closeCB then @nclosing++
 
   # @private
