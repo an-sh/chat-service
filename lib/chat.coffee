@@ -39,25 +39,25 @@ class ServerMessages
   # different clients, and if one client sends
   # {UserCommands#directMessage}, others will receive a message
   # echo.
-  # @param toUser [String] Message receiver
+  # @param toUser [String] Message receiver.
   # @param msg [Object<textMessage:String, timestamp:Number, author:String>]
   #   Message.
   # @see UserCommands#directMessage
   directMessageEcho : (toUser, msg) ->
   # Disconnected from a server.
-  # @param reason Socket.io disconnect type.
+  # @param reason [Object] Socket.io disconnect type.
   disconnect : (reason) ->
   # Error events, like socket.io middleware error.
   # @param error [Object]
   error : (error) ->
   # Indicates a successful login.
-  # @param username [String]
-  # @param data [Object]
+  # @param username [String] Username.
+  # @param data [Object] Additional login data.
   loginConfirmed : (username, data) ->
   # Indicates a login error.
   # @param error [Object] Error.
   loginRejected : (error) ->
-  # Indicates that the user has lost an access permission.
+  # Indicates that a user has lost a room access permission.
   # @param roomName [String] Room name.
   roomAccessRemoved : (roomName) ->
   # Indicates room admin list add.
@@ -80,7 +80,7 @@ class ServerMessages
   # @param roomName [String] Rooms name.
   # @param userName [String] Message author.
   # @param msg [Object<textMessage:String, timestamp:Number, author:String>]
-  #   Message
+  #   Message.
   # @see UserCommands#roomMessage
   roomMessage : (roomName, userName, msg) ->
   # Indicates that an another user has joined a room.
@@ -247,7 +247,8 @@ class UserCommands
     dataChecker arguments, [
       check.string
     ]
-  # Gets latest room messages.
+  # Gets latest room messages. The maximum size is set by
+  # {ChatService} `historyMaxMessages` option.
   # @param roomName [String] Room name.
   # @return [error, Array<Objects>] Sends ack: error, array of messages.
   # @see UserCommands#roomMessage
@@ -1019,7 +1020,8 @@ class ChatService
   # @option options [Integer] historyMaxMessages
   #   room history size, default is 100.
   # @option options [Boolean] useRawErrorObjects
-  #   Send error objects instead of strings, default is false.
+  #   Send error objects (see {ErrorBuilder}) instead of strings,
+  #   default is false.
   # @option options [Boolean] enableUserlistUpdates
   #   Enables {ServerMessages#roomUserJoined} and
   #   {ServerMessages#roomUserLeft} messages, default is false.

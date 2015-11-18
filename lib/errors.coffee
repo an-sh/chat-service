@@ -35,13 +35,18 @@ class ErrorBuilder
 
   # Error formating.
   # @param error [String] Error key in {ErrorBuilder.errorStrings} object.
-  # @param args [Array<Object>] Error data arguments.
+  # @param args [Arguments<Object>] Error data arguments.
+  # @return [String or Object] Formatted error, according to a
+  #   {ChatService} `useRawErrorObjects` option.
   makeError : (error, args...) ->
     if @useRawErrorObjects
       return { name : error, args : args }
     return util.format @getErrorString(error), args...
 
-  # Server internal errors handling.
+  # @private
+  # Server internal errors handling. Used in some commands that have
+  # failed on some of user's sockets. Calls `serverErrorHook` if it is
+  # set.
   # @param error [Object]
   handleServerError : (error) ->
     if @serverErrorHook
