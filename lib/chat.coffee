@@ -785,7 +785,6 @@ class User extends DirectMessaging
 
   extend @, CommandBinders, UserHelpers
 
-
   # @param server [Object] ChatService object
   # @param name [String] User name
   constructor : (@server, @username) ->
@@ -878,18 +877,18 @@ class User extends DirectMessaging
   # @nodoc
   disconnect : (reason, cb, id) ->
     @server.startClientDisconnect()
-    fin2 = (args...) =>
+    endDisconnect = (args...) =>
       @server.endClientDisconnect()
       cb args...
-    @chatState.lockUser @username, withEH fin2, (lock) =>
-      fin = (args...) ->
+    @chatState.lockUser @username, withEH endDisconnect, (lock) =>
+      unlock = (args...) ->
         lock.unlock()
-        fin2 args...
-      @userState.socketRemove id, withEH fin, =>
-        @userState.socketsGetAll withEH fin, (sockets) =>
+        endDisconnect args...
+      @userState.socketRemove id, withEH unlock, =>
+        @userState.socketsGetAll withEH unlock, (sockets) =>
           nsockets = sockets.lenght
-          if nsockets > 0 then fin()
-          else @sendAllRoomsLeave fin
+          if nsockets > 0 then unlock()
+          else @sendAllRoomsLeave unlock
 
   # @private
   # @nodoc
@@ -1135,7 +1134,7 @@ class ChatService
 
   # @private
   # @nodoc
-  addClient : (error, socket, userName, authData = {}, userState) ->
+  addClient : (error, socket, userName, authData = {}, userState = null) ->
     if error then return @rejectLogin socket, error
     unless userName
       userName = socket.handshake.query?.user
@@ -1168,31 +1167,32 @@ class ChatService
       process.nextTick => @finish()
 
   # Closes server.
-  # @param done [callback] Optional callback
+  # @param done [callback] Optional callback.
   close : (done = ->) ->
-    timeStart = new Date().getTime()
     @closeCB = (error) =>
+      @closeCB = null
       unless @sharedIO or @http
         @io.close()
       if @hooks.onClose
         @hooks.onClose @, error, done
       else
         done error
-    waitFunction = =>
+    closeStartingTime = new Date().getTime()
+    closingTimeoutChecker = =>
       if @finished then return
       timeCurrent = new Date().getTime()
-      if timeCurrent > timeStart + @closeTimeout
+      if timeCurrent > closeStartingTime + @closeTimeout
         @finished = true
-        return @closeCB new Error 'Server closing timeout.'
+        @closeCB new Error 'Server closing timeout.'
       else
-        setTimeout waitFunction, 100
+        setTimeout closingTimeoutChecker, 100
     for sid, socket of @nsp.connected
       @nclosing++
       socket.disconnect(true)
     if @nclosing == 0
       process.nextTick => @closeCB()
     else
-      waitFunction()
+      closingTimeoutChecker()
 
 
 module.exports = {

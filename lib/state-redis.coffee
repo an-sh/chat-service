@@ -319,16 +319,16 @@ class RedisState
   # @private
   loginUser : (name, socket, cb) ->
     @lock.lock (@makeLockName name), @lockTTL, @withTE cb, (lock) =>
-      fin = (args...) ->
+      unlock = (args...) ->
         lock.unlock()
         cb args...
-      @redis.sismember @makeDBHashName('usersOnline'), name, @withTE fin
+      @redis.sismember @makeDBHashName('usersOnline'), name, @withTE unlock
       , (data) =>
         if data
           user = new @server.User name
-          user.registerSocket socket, (error) -> fin error, user
+          user.registerSocket socket, (error) -> unlock error, user
         else
-          @redis.sismember @makeDBHashName('users'), name, @withTE fin
+          @redis.sismember @makeDBHashName('users'), name, @withTE unlock
           , (data) =>
             user = new @server.User name
             async.parallel [
@@ -336,8 +336,8 @@ class RedisState
                 @redis.sadd @makeDBHashName('users'), name, fn
               (fn) =>
                 @redis.sadd @makeDBHashName('usersOnline'), name, fn
-            ], @withTE fin, ->
-              user.registerSocket socket, fin
+            ], @withTE unlock, ->
+              user.registerSocket socket, unlock
 
   # @private
   logoutUser : (name, cb) ->
