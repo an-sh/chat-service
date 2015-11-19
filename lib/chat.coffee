@@ -882,7 +882,7 @@ class User extends DirectMessaging
         endDisconnect args...
       @userState.socketRemove id, withEH unlock, =>
         @userState.socketsGetAll withEH unlock, (sockets) =>
-          nsockets = sockets.lenght
+          nsockets = sockets.length
           if nsockets > 0 then unlock()
           else @sendAllRoomsLeave unlock
 
