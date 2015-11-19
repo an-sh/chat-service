@@ -264,7 +264,7 @@ class UserCommands
   # @see ServerMessages#roomJoinedEcho
   # @see ServerMessages#roomUserJoined
   # @param roomName [String] Room name.
-  # @return [error, null] Sends ack: error, null.
+  # @return [error, Number] Sends ack: error, number of joined user sockets.
   roomJoin : (roomName) ->
     dataChecker arguments, [
       check.string
@@ -275,7 +275,7 @@ class UserCommands
   # @see ServerMessages#roomLeftEcho
   # @see ServerMessages#roomUserLeft
   # @param roomName [String] Room name.
-  # @return [error, null] Sends ack: error, null.
+  # @return [error, Number] Sends ack: error, number of joined user sockets.
   roomLeave : (roomName) ->
     dataChecker arguments, [
       check.string
@@ -773,11 +773,6 @@ UserHelpers =
       , =>
         @chatState.logoutUser @username, cb
 
-  # @private
-  reportRoomConnections : (id, sid, msgName, roomName, cb) ->
-    if id == sid then return cb()
-    else @send sid, msgName, roomName
-
 
 # Implements a chat user.
 # @extend CommandBinders
@@ -960,13 +955,18 @@ class User extends DirectMessaging
   roomJoin : (roomName, cb, id = null) ->
     @withRoom roomName, withEH cb, (room) =>
       room.join @username, withEH cb, =>
-        @userState.roomAdd roomName, withEH cb, (nadded) =>
+        @userState.roomAdd roomName, withEH cb, =>
           @server.nsp.adapter.add id, roomName, withEH cb, =>
-            if @enableUserlistUpdates and nadded
-              @send roomName, 'roomUserJoined', roomName, @username
             @userState.socketsGetAll withEH cb, (sockets) =>
+              njoined = 0
               for sid in sockets
-                @reportRoomConnections id, sid, 'roomJoinedEcho', roomName, cb
+                if sid != id
+                  @send sid, 'roomJoinedEcho', roomName
+                if @server.nsp.adapter.rooms?[roomName]?[sid]
+                  njoined++
+              if @enableUserlistUpdates and njoined == 1
+                @send roomName, 'roomUserJoined', roomName, @username
+              cb null, njoined
 
   # @private
   # @nodoc
@@ -976,14 +976,15 @@ class User extends DirectMessaging
         @userState.roomRemove roomName, withEH cb, =>
           @server.nsp.adapter.del id, roomName, withEH cb, =>
             @userState.socketsGetAll withEH cb, (sockets) =>
-              nconnected = 0
+              njoined = 0
               for sid in sockets
-                @reportRoomConnections id, sid, 'roomLeftEcho', roomName, cb
+                if sid != id
+                  @send sid, 'roomLeftEcho', roomName
                 if @server.nsp.adapter.rooms?[roomName]?[sid]
-                  nconnected++
-              if @enableUserlistUpdates and nconnected == 0
+                  njoined++
+              if @enableUserlistUpdates and njoined == 0
                 @send roomName, 'roomUserLeft', roomName, @username
-
+              cb null, njoined
 
   # @private
   # @nodoc

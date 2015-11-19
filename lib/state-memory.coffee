@@ -182,9 +182,8 @@ class UserStateMemory
 
   # @private
   roomAdd : (roomName, cb) ->
-    nadded = if @roomslist.has roomName then 0 else 1
     @roomslist.add roomName
-    process.nextTick -> cb null, nadded
+    process.nextTick -> cb null
 
   # @private
   roomRemove : (roomName, cb) ->

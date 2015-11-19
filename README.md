@@ -63,7 +63,7 @@ don't require any reply.
 
 ### Documentation
 
-Is available at [gitpages](http://an-sh.github.io/chat-service/0.6/) .
+Is available at [gitpages](http://an-sh.github.io/chat-service/0.6/)
 
 Run `npm install -g codo` and `codo` to generate documentation. Public
 API consists of public methods of the following classes:
