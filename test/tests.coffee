@@ -190,6 +190,17 @@ describe 'Chat service.', ->
             expect(e).deep.equal(reason)
             done()
 
+        it 'should reject login if onConnect hook passes error', (done) ->
+          err = { someField : 'some reason' }
+          onConnect = (server, socket, cb) ->
+            cb err
+          chatServer = new ChatService { port : port }
+            , { onConnect : onConnect }
+          socket1 = ioClient.connect url1, makeParams(user1)
+          socket1.on 'loginRejected', (e) ->
+            expect(e).deep.equal(err)
+            done()
+
         it 'should support multiple sockets per user', (done) ->
           chatServer = new ChatService { port : port }, null, state
           socket1 = ioClient.connect url1, makeParams(user1)
