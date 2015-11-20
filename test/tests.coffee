@@ -301,12 +301,45 @@ describe 'Chat service.', ->
               socket2 = ioClient.connect url1, makeParams(user1)
               socket2.on 'loginConfirmed', ->
                 socket2.emit 'roomJoin', roomName1
-                socket1.on 'roomJoinedEcho', (room) ->
+                socket1.on 'roomJoinedEcho', (room, njoined) ->
                   expect(room).equal(roomName1)
+                  expect(njoined).equal(1)
                   socket1.emit 'roomLeave', roomName1
-                  socket2.on 'roomLeftEcho', (room) ->
+                  socket2.on 'roomLeftEcho', (room, njoined) ->
                     expect(room).equal(roomName1)
+                    expect(njoined).equal(1)
                     done()
+
+        it 'should emit leave echo on disconnect', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          room = new Room chatServer, roomName1
+          chatServer.chatState.addRoom room, ->
+            socket3 = ioClient.connect url1, makeParams(user1)
+            socket3.on 'loginConfirmed', ->
+              socket1 = ioClient.connect url1, makeParams(user1)
+              socket1.on 'loginConfirmed', ->
+                socket1.emit 'roomJoin', roomName1, ->
+                  socket2 = ioClient.connect url1, makeParams(user1)
+                  socket2.on 'loginConfirmed', ->
+                    socket2.emit 'roomJoin', roomName1, ->
+                      socket2.disconnect()
+                      async.parallel [
+                        (cb) ->
+                          socket1.once 'roomLeftEcho', (room, njoined) ->
+                            expect(room).equal(roomName1)
+                            expect(njoined).equal(1)
+                            cb()
+                        (cb) ->
+                          socket3.once 'roomLeftEcho', (room, njoined) ->
+                            expect(room).equal(roomName1)
+                            expect(njoined).equal(1)
+                            cb()
+                      ] , ->
+                        socket1.disconnect()
+                        socket3.once 'roomLeftEcho', (room, njoined) ->
+                          expect(room).equal(roomName1)
+                          expect(njoined).equal(0)
+                          done()
 
         it 'should broadcast join and leave room messages', (done) ->
           chatServer = new ChatService { port : port
@@ -316,7 +349,8 @@ describe 'Chat service.', ->
           chatServer.chatState.addRoom room, ->
             socket1 = ioClient.connect url1, makeParams(user1)
             socket1.on 'loginConfirmed', ->
-              socket1.emit 'roomJoin', roomName1, (error, data) ->
+              socket1.emit 'roomJoin', roomName1, (error, njoined) ->
+                expect(njoined).equal(1)
                 socket2 = ioClient.connect url1, makeParams(user2)
                 socket2.on 'loginConfirmed', ->
                   socket2.emit 'roomJoin', roomName1

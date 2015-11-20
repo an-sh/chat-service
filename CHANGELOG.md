@@ -3,6 +3,7 @@
 
 - Rename enableAdminListUpdates to enableAdminlistUpdates.
 - Don't join/leave user sockets from rooms at server size.
+- Add njoined data in related server messages.
 - Changed onConnect hook arguments.
 
 

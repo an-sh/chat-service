@@ -71,11 +71,15 @@ class ServerMessages
   # @see UserCommands#roomRemoveFromList
   roomAdminRemoved : (roomName, userName) ->
   # Echoes room join from other user's connections.
+  # @param userName [String] Username.
+  # @param njoined [Number] Number of sockets that are still joined.
   # @see UserCommands#roomJoin
-  roomJoinedEcho : (roomName) ->
+  roomJoinedEcho : (roomName, njoined) ->
   # Echoes room leave from other user's connections.
+  # @param userName [String] Username.
+  # @param njoined [Number] Number of sockets that are still joined.
   # @see UserCommands#roomLeave
-  roomLeftEcho : (roomName) ->
+  roomLeftEcho : (roomName, njoined) ->
   # Room message.
   # @param roomName [String] Rooms name.
   # @param userName [String] Message author.
@@ -748,6 +752,16 @@ UserHelpers =
     @server.nsp.in(id).emit args...
 
   # @private
+  isInRoom : (id, roomName) ->
+    @server.nsp.adapter.rooms?[roomName]?[id]
+
+  # @private
+  socketsInRoom : (sockets, roomName) ->
+    sockets.reduce (count, socket) =>
+      if @isInRoom socket, roomName then count+1 else count
+    , 0
+
+  # @private
   sendAccessRemoved : (userNames, roomName, cb) ->
     async.eachLimit userNames, asyncLimit
     , (userName, fn) =>
@@ -760,18 +774,26 @@ UserHelpers =
     , cb
 
   # @private
-  sendAllRoomsLeave : (cb) ->
+  processDisconnect : (id, cb) ->
     @userState.roomsGetAll withEH cb, (rooms) =>
-      async.eachLimit rooms, asyncLimit
-      , (roomName, fn) =>
-        @chatState.getRoom roomName, withErrorLog @errorBuilder, (room) =>
-          unless room then return fn()
-          room.leave @username, withErrorLog @errorBuilder, =>
-            if @enableUserlistUpdates
-              @send roomName, 'roomUserLeft', roomName, @username
+      @userState.socketsGetAll withEH cb, (sockets) =>
+        nsockets = sockets.length
+        async.eachLimit rooms, asyncLimit
+        , (roomName, fn) =>
+          @chatState.getRoom roomName, withEH fn, (room) =>
+            njoined = @socketsInRoom sockets, roomName
+            if njoined == 0
+              room.leave @username, withErrorLog @errorBuilder, =>
+                if @enableUserlistUpdates
+                  @send roomName, 'roomUserLeft', roomName, @username
+            for sid in sockets
+              @send sid, 'roomLeftEcho', roomName, njoined
             fn()
-      , =>
-        @chatState.logoutUser @username, cb
+        , =>
+          if nsockets == 0
+            @chatState.logoutUser @username, cb
+          else
+            cb()
 
 
 # Implements a chat user.
@@ -881,10 +903,7 @@ class User extends DirectMessaging
         lock.unlock()
         endDisconnect args...
       @userState.socketRemove id, withEH unlock, =>
-        @userState.socketsGetAll withEH unlock, (sockets) =>
-          nsockets = sockets.length
-          if nsockets > 0 then unlock()
-          else @sendAllRoomsLeave unlock
+        @processDisconnect id, unlock
 
   # @private
   # @nodoc
@@ -958,12 +977,10 @@ class User extends DirectMessaging
         @userState.roomAdd roomName, withEH cb, =>
           @server.nsp.adapter.add id, roomName, withEH cb, =>
             @userState.socketsGetAll withEH cb, (sockets) =>
-              njoined = 0
+              njoined = @socketsInRoom sockets, roomName
               for sid in sockets
                 if sid != id
-                  @send sid, 'roomJoinedEcho', roomName
-                if @server.nsp.adapter.rooms?[roomName]?[sid]
-                  njoined++
+                  @send sid, 'roomJoinedEcho', roomName, njoined
               if @enableUserlistUpdates and njoined == 1
                 @send roomName, 'roomUserJoined', roomName, @username
               cb null, njoined
@@ -976,12 +993,10 @@ class User extends DirectMessaging
         @userState.roomRemove roomName, withEH cb, =>
           @server.nsp.adapter.del id, roomName, withEH cb, =>
             @userState.socketsGetAll withEH cb, (sockets) =>
-              njoined = 0
+              njoined = @socketsInRoom sockets, roomName
               for sid in sockets
                 if sid != id
-                  @send sid, 'roomLeftEcho', roomName
-                if @server.nsp.adapter.rooms?[roomName]?[sid]
-                  njoined++
+                  @send sid, 'roomLeftEcho', roomName, njoined
               if @enableUserlistUpdates and njoined == 0
                 @send roomName, 'roomUserLeft', roomName, @username
               cb null, njoined
