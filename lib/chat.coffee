@@ -749,7 +749,10 @@ UserHelpers =
 
   # @private
   send : (id, args...) ->
-    @server.nsp.in(id).emit args...
+    @server.nsp.in(id)?.emit args...
+
+  broadcast : (id, roomName, args...) ->
+    @server.nsp.connected[id]?.broadcast.in(roomName)?.emit args...
 
   # @private
   isInRoom : (id, roomName) ->
@@ -982,7 +985,7 @@ class User extends DirectMessaging
                 if sid != id
                   @send sid, 'roomJoinedEcho', roomName, njoined
               if @enableUserlistUpdates and njoined == 1
-                @send roomName, 'roomUserJoined', roomName, @username
+                @broadcast id, roomName, 'roomUserJoined', roomName, @username
               cb null, njoined
 
   # @private
@@ -998,7 +1001,7 @@ class User extends DirectMessaging
                 if sid != id
                   @send sid, 'roomLeftEcho', roomName, njoined
               if @enableUserlistUpdates and njoined == 0
-                @send roomName, 'roomUserLeft', roomName, @username
+                @broadcast id, roomName, 'roomUserLeft', roomName, @username
               cb null, njoined
 
   # @private
