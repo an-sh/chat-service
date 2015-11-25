@@ -732,8 +732,8 @@ CommandBinders =
         cb = null
         args = arguments
       ack = (error, data) ->
-        error = null unless error
-        data = null unless data
+        error = null unless error?
+        data = null unless data?
         cb error, data if cb
       cmd args..., ack, socket.id
 
