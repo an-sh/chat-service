@@ -992,17 +992,21 @@ class User extends DirectMessaging
   # @nodoc
   roomLeave : (roomName, cb, id = null) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.leave @username, withEH cb, =>
-        @userState.roomRemove roomName, withEH cb, =>
-          @server.nsp.adapter.del id, roomName, withEH cb, =>
-            @userState.socketsGetAll withEH cb, (sockets) =>
-              njoined = @socketsInRoom sockets, roomName
-              for sid in sockets
-                if sid != id
-                  @send sid, 'roomLeftEcho', roomName, njoined
-              if @enableUserlistUpdates and njoined == 0
-                @broadcast id, roomName, 'roomUserLeft', roomName, @username
-              cb null, njoined
+      @server.nsp.adapter.del id, roomName, withEH cb, =>
+        @userState.socketsGetAll withEH cb, (sockets) =>
+          njoined = @socketsInRoom sockets, roomName
+          report = =>
+            for sid in sockets
+              if sid != id
+                @send sid, 'roomLeftEcho', roomName, njoined
+            if @enableUserlistUpdates and njoined == 0
+              @broadcast id, roomName, 'roomUserLeft', roomName, @username
+            cb null, njoined
+          if njoined == 0
+            room.leave @username, withEH cb, =>
+              @userState.roomRemove roomName, withEH cb, report
+          else
+            report()
 
   # @private
   # @nodoc

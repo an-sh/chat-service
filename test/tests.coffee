@@ -304,6 +304,8 @@ describe 'Chat service.', ->
       describe 'Room messaging', ->
 
         it 'should emit join and leave for all user\'s sockets', (done) ->
+          txt = 'Test message.'
+          message = { textMessage : txt }
           chatServer = new ChatService { port : port }, null, state
           room = new Room chatServer, roomName1
           chatServer.chatState.addRoom room, ->
@@ -319,7 +321,10 @@ describe 'Chat service.', ->
                   socket2.on 'roomLeftEcho', (room, njoined) ->
                     expect(room).equal(roomName1)
                     expect(njoined).equal(1)
-                    done()
+                    socket1.emit 'roomMessage', roomName1, message
+                    , (error, data) ->
+                      expect(error).not.ok
+                      done()
 
         it 'should emit leave echo on disconnect', (done) ->
           chatServer = new ChatService { port : port }, null, state
