@@ -1,0 +1,17 @@
+
+doctype html
+html
+  head
+    title 'Example'
+    meta(charset='utf-8')
+    meta(name='viewport' content='width=device-width, initial-scale=1')
+    if settings.env == 'development'
+      script(type='text/javascript').
+        document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] +
+          ':35729/livereload.js?snipver=1"></' + 'script>')
+    include dependencies
+    script(src='javascripts/chat.js')
+    link(rel='stylesheet', href='stylesheets/chat.css')
+  body
+    div(ng-app='chatApp')
+      div(ui-view)

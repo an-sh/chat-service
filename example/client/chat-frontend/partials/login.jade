@@ -1,0 +1,14 @@
+
+div.chatLogin
+  div.input-group
+    input.form-control.loginInput(type='text'
+      placeholder='Login'
+      ng-model='data.login'
+      ng-enter="functions.connect('messages', {room : 'default'})")
+    span.input-group-btn
+      button.btn.btn-default(type='button'
+        ng-click="functions.connect('messages', {room : 'default'})")
+        | Login
+  span.text-info.small Use 'admin' login for the room administrator.
+  br
+  span.text-danger(ng-bind="data.error")

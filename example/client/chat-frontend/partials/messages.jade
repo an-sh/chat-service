@@ -1,0 +1,38 @@
+
+div.chatMessages(scroll-info='functions.checkScroll')
+  div.chatEntry(ng-repeat='msg in data.messages[data.room]')
+    span(ng-if='msg.author')
+      | {{msg.author + ': ' + msg.textMessage}}
+    span(ng-if='!msg.author' ng-attr-class="{{ msg.isError ? 'text-danger' : 'text-muted' }}")
+      | {{msg.textMessage}}
+  div.chatBottom(ng-attr-id="{{data.bottomID}}")
+div.chatControls
+  div.input-group
+    input.form-control.chatInput(type='text'
+      ng-model='data.newMessage'
+      ng-disabled="!chatService.isInRoom(data.room)"
+      ng-enter='functions.send()')
+    span.input-group-btn
+      button.btn.btn-default(type='button'
+        ng-click='functions.send()'
+        ng-disabled="!chatService.isInRoom(data.room)")
+        | Send
+  p.text-danger(ng-if='data.error') Error: {{data.error}}
+  p.text-info(ng-if='!data.error') Login: {{data.login}}
+div.testBtns.btn-toolbar
+  button.btn.btn-default(ng-if='!chatService.isConnected'
+    type='button'
+    ng-click='chatService.connect(data.login)')
+    | Connect
+  button.btn.btn-default(ng-if='chatService.isConnected'
+    type='button'
+    ng-click='chatService.disconnect()')
+    | Disconnect
+  button.btn.btn-default(ng-if='chatService.isConnected && !chatService.isInRoom(data.room)'
+    type='button'
+    ng-click='chatService.roomJoin(data.room)')
+    | Join: {{data.room}}
+  button.btn.btn-default(ng-if='chatService.isInRoom(data.room)'
+    type='button'
+    ng-click='chatService.roomLeave(data.room)')
+    | Leave: {{data.room}}

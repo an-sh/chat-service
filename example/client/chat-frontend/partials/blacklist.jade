@@ -1,0 +1,8 @@
+
+div.chatUsers
+  div.userEntry(ng-repeat='user in data.blacklist | filter:name | orderBy ')
+    span(ng-if='!chatService.isAdmin(data.room)') {{user}}
+    a(ng-if='chatService.isAdmin(data.room)'
+      href='#'
+      ng-click='functions.unban(user)')
+      | {{user}}

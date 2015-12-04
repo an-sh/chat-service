@@ -1,0 +1,42 @@
+
+chat-width = 400px
+chat-height = 650px
+margin-size = 10px
+padding-size = 5px
+messages-height = 450px
+users-height = 550px
+input-width = chat-width - 2 * padding-size
+
+.chatLogin
+  margin margin-size auto
+  width 300px
+  height 100px
+
+.chatMain
+  width chat-width
+  height chat-height
+  margin margin-size auto
+  padding padding-size
+  border 1px solid #ddd
+  border-radius 4px
+  display table
+
+.chatMessages
+  height messages-height
+  overflow-y auto
+  overflow-x hidden
+
+.chatUsers
+  height users-height
+  overflow-y auto
+  overflow-x hidden
+
+.chatControls
+  margin-top 15px
+
+.chatInput
+  width input-width
+  max-width input-width
+
+.login
+  text-align center

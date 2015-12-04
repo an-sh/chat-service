@@ -1,0 +1,14 @@
+
+div.chatMain
+  nav.navbar.navbar-default
+    div.container-fluid
+      div.navbar-header
+        a.navbar-brand {{data.room}}
+      ul.nav.navbar-nav
+        li(ui-sref-active='active')
+          a(ui-sref='messages') Messages
+        li(ui-sref-active='active')
+          a(ui-sref='users') Users
+        li(ui-sref-active='active')
+          a(ui-sref='blacklist') Banned
+  div.chatData(ui-view='')

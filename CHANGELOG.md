@@ -1,12 +1,13 @@
 
-### 0.6.0 ()
+### 0.6.0 (2015/12/05)
 
+- Don't join/leave all user sockets from rooms at server side.
 - Rename enableAdminListUpdates to enableAdminlistUpdates.
-- Don't join/leave user sockets from rooms at server size.
-- Add njoined data in related server messages.
 - Changed onConnect hook arguments.
+- Add njoined data in related server messages.
 - Fix user remove from room bugs.
 - Fix Redis states cleanup functions.
+- Include frontend example application.
 
 ### 0.5.1 (2015/10/26)
 
