@@ -7,7 +7,7 @@ class ErrorBuilder
 
   # @private
   # @nodoc
-  constructor : (@useRawErrorObjects, @serverErrorHook) ->
+  constructor : (@useRawErrorObjects) ->
 
   # server errors
   errorStrings :
@@ -43,30 +43,12 @@ class ErrorBuilder
       return { name : error, args : args }
     return util.format @getErrorString(error), args...
 
-  # @private
-  # Server internal errors handling. Used in some commands that have
-  # failed on some of user's sockets. Calls `serverErrorHook` if it is
-  # set.
-  # @param error [Object]
-  handleServerError : (error) ->
-    if @serverErrorHook
-      @serverErrorHook error
-
 
 # @private
 # @nodoc
 withEH = (errorCallback, normallCallback) ->
   (error, args...) ->
     if error then return errorCallback error
-    normallCallback args...
-
-
-# @private
-# @nodoc
-withErrorLog = (errorBuilder, normallCallback) ->
-  (error, args...) ->
-    if error
-      errorBuilder.handleServerError error
     normallCallback args...
 
 
@@ -85,6 +67,5 @@ withTansformedError = (errorBuilder, callback, normallCallback) ->
 module.exports = {
   ErrorBuilder
   withEH
-  withErrorLog
   withTansformedError
 }

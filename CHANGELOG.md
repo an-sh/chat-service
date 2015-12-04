@@ -5,7 +5,8 @@
 - Don't join/leave user sockets from rooms at server size.
 - Add njoined data in related server messages.
 - Changed onConnect hook arguments.
-
+- Fix user remove from room bugs.
+- Fix Redis states cleanup functions.
 
 ### 0.5.1 (2015/10/26)
 

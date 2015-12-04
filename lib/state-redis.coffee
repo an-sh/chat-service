@@ -127,9 +127,9 @@ class RoomStateRedis extends ListsStateRedis
         , @makeDBListName('adminlist'), @makeDBListName('history')
         , fn
       , (fn) =>
-        @redis.srem @makeDBHashName('whitelistmodes'), @name, fn
+        @redis.hdel @makeDBHashName('whitelistmodes'), @name, fn
       , (fn) =>
-        @redis.srem @makeDBHashName('owners'), @name, fn
+        @redis.hdel @makeDBHashName('owners'), @name, fn
     ] , @withTE cb
 
   # @private
@@ -198,7 +198,7 @@ class DirectMessagingStateRedis extends ListsStateRedis
         @redis.del @makeDBListName('whitelist'), @makeDBListName('blacklist')
         , fn
       , (fn) =>
-        @redis.srem @makeDBHashName('whitelistmodes'), @name, fn
+        @redis.hdel @makeDBHashName('whitelistmodes'), @name, fn
     ] , @withTE cb
 
 
@@ -309,12 +309,12 @@ class RedisState
 
   # @private
   getUser : (name, cb) ->
+    user = new @server.User name
     @redis.sismember @makeDBHashName('usersOnline'), name, @withTE cb, (data) =>
       if data then return cb null, user, true
       @redis.sismember @makeDBHashName('users'), name, @withTE cb, (data) =>
-        unless data
-          return cb @errorBuilder.makeError 'noUser', name
-        cb null, user, false
+        if data then return cb null, user, false
+        else return cb @errorBuilder.makeError 'noUser', name
 
   # @private
   loginUser : (name, socket, cb) ->

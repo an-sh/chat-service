@@ -983,15 +983,6 @@ describe 'Chat service.', ->
               expect(error).equal(err)
               done()
 
-        it 'should execute server errors hook', (done) ->
-          error = 'some error'
-          fn = (e) ->
-            expect(e).equal(error)
-            process.nextTick -> done()
-          chatServer = new ChatService { port : port }
-          , { serverErrorHook : fn }, state
-          chatServer.errorBuilder.handleServerError error
-
       describe 'Various', ->
 
         it 'should return raw error objects', (done) ->

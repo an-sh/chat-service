@@ -7,7 +7,6 @@ MemoryState = require('./state-memory.coffee').MemoryState
 RedisState = require('./state-redis.coffee').RedisState
 ErrorBuilder = require('./errors.coffee').ErrorBuilder
 withEH = require('./errors.coffee').withEH
-withErrorLog = require('./errors.coffee').withErrorLog
 
 # @private
 # @nodoc
@@ -765,16 +764,19 @@ UserHelpers =
     , 0
 
   # @private
-  sendAccessRemoved : (userNames, roomName, cb) ->
-    async.eachLimit userNames, asyncLimit
-    , (userName, fn) =>
-      @chatState.getOnlineUser userName, withEH fn, (user) =>
-        user.userState.roomRemove roomName, withEH fn, =>
-          user.userState.socketsGetAll withEH fn, (sockets) =>
-            for id in sockets
-              @send id, 'roomAccessRemoved', roomName
-            fn()
-    , cb
+  removeUsers : (userNames, roomName, cb) ->
+    @withRoom roomName, withEH cb, (room) =>
+      async.eachLimit userNames, asyncLimit
+      , (userName, fn) =>
+        room.leave userName, withEH fn, =>
+          @chatState.getUser userName, withEH fn, (user, isOnline) =>
+            user.userState.roomRemove roomName, withEH fn, =>
+              user.userState.socketsGetAll withEH fn, (sockets) =>
+                for id in sockets
+                  @send id, 'roomAccessRemoved', roomName
+                  @server.nsp.adapter.del id, roomName, ->
+                fn()
+      , -> cb()
 
   # @private
   processDisconnect : (id, cb) ->
@@ -783,20 +785,22 @@ UserHelpers =
         nsockets = sockets.length
         async.eachLimit rooms, asyncLimit
         , (roomName, fn) =>
-          @chatState.getRoom roomName, withEH fn, (room) =>
+          @withRoom roomName, withEH fn, (room) =>
+            fin = =>
+              for sid in sockets
+                @send sid, 'roomLeftEcho', roomName, njoined
+              fn()
             njoined = @socketsInRoom sockets, roomName
             if njoined == 0
-              room.leave @username, withErrorLog @errorBuilder, =>
-                if @enableUserlistUpdates
-                  @send roomName, 'roomUserLeft', roomName, @username
-            for sid in sockets
-              @send sid, 'roomLeftEcho', roomName, njoined
-            fn()
+              room.leave @username, withEH fn, =>
+                @userState.roomRemove roomName, withEH fn, =>
+                  if @enableUserlistUpdates
+                    @send roomName, 'roomUserLeft', roomName, @username
+                  fin()
+            else fin()
         , =>
-          if nsockets == 0
-            @chatState.logoutUser @username, cb
-          else
-            cb()
+          if nsockets == 0 then @chatState.logoutUser @username, cb
+          else cb()
 
 
 # Implements a chat user.
@@ -921,7 +925,7 @@ class User extends DirectMessaging
         if @enableAdminlistUpdates
           for name in values
             @send roomName, 'roomAdminAdded', roomName, name
-        @sendAccessRemoved data, roomName, cb
+        @removeUsers data, roomName, cb
 
   # @private
   # @nodoc
@@ -935,9 +939,7 @@ class User extends DirectMessaging
         error = @errorBuilder.makeError 'roomExists', roomName
         return cb error
       room.initState { owner : @username, whitelistOnly : whitelistOnly }
-      , (error) =>
-        if error then @errorBuilder.handleServerError error
-        cb error
+      , cb
 
   # @private
   # @nodoc
@@ -947,12 +949,10 @@ class User extends DirectMessaging
       return cb error
     @withRoom roomName, withEH cb, (room) =>
       room.checkIsOwner @username, withEH cb, =>
-        @chatState.removeRoom room.name, withEH cb, =>
-          room.roomState.getList 'userlist', withErrorLog @errorBuilder
-          , (list) =>
-            @sendAccessRemoved list, roomName, =>
-              room.roomState.removeState withErrorLog @errorBuilder
-              , -> cb()
+        room.roomState.getList 'userlist', withEH cb, (list) =>
+          @removeUsers list, roomName, =>
+            @chatState.removeRoom room.name, ->
+              room.roomState.removeState cb
 
   # @private
   # @nodoc
@@ -1025,14 +1025,14 @@ class User extends DirectMessaging
         if @enableAdminlistUpdates
           for name in values
             @send roomName, 'roomAdminRemoved', roomName, name
-        @sendAccessRemoved data, roomName, cb
+        @removeUsers data, roomName, cb
 
   # @private
   # @nodoc
   roomSetWhitelistMode : (roomName, mode, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       room.changeMode @username, mode, withEH cb, (data) =>
-        @sendAccessRemoved data, roomName, cb
+        @removeUsers data, roomName, cb
 
 
 # An instance creates a new chat service.
@@ -1135,7 +1135,7 @@ class ChatService
       new User @, args...
     @Room = (args...) =>
       new Room @, args...
-    @errorBuilder = new ErrorBuilder @useRawErrorObjects, @hooks.serverErrorHook
+    @errorBuilder = new ErrorBuilder @useRawErrorObjects
     @chatState = new state @, @stateOptions
 
   # @private
