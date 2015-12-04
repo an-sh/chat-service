@@ -352,6 +352,10 @@ processMessage = (author, msg) ->
 RoomHelpers =
 
   # @private
+  isUser : (userName, cb) ->
+    @roomState.hasInList 'userlist', userName, cb
+
+  # @private
   isAdmin : (userName, cb) ->
     @roomState.ownerGet withEH cb, (owner) =>
       @roomState.hasInList 'adminlist', userName, withEH cb, (hasName) ->
@@ -1003,10 +1007,12 @@ class User extends DirectMessaging
               @broadcast id, roomName, 'roomUserLeft', roomName, @username
             cb null, njoined
           if njoined == 0
-            room.leave @username, withEH cb, =>
-              @userState.roomRemove roomName, withEH cb, report
-          else
-            report()
+            room.isUser @username, withEH cb, (isRoomUser) =>
+              if isRoomUser
+                room.leave @username, withEH cb, =>
+                  @userState.roomRemove roomName, withEH cb, report
+              else cb @errorBuilder.makeError 'notJoined', roomName
+          else report()
 
   # @private
   # @nodoc
