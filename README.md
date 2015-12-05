@@ -63,9 +63,9 @@ don't require any reply.
 
 ### Frontend example
 
-Angular based example application is in `example` directory. From this
-directory run `npm install && gulp && bin/www` to build application
-and start server (by default on port 3000).
+An angular based application is in `example` directory. From this
+directory run `npm install && gulp && bin/www` to build the
+application and start a server (by default on port 3000).
 
 ![Example](http://an-sh.github.io/chat-service/example.png "Example")
 
