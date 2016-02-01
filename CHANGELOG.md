@@ -1,4 +1,9 @@
 
+### 0.6.1 (2016/02/01)
+
+- Update dependencies.
+- Lock socket-io minor version.
+
 ### 0.6.0 (2015/12/05)
 
 - Don't join/leave all user sockets from rooms at server side.

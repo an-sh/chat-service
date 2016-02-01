@@ -1,6 +1,6 @@
 {
   "name": "chat-service",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "private": false,
   "description": "Server side chat based on top of socket.io focused on scalability and extensibility.",
   "main": "index.js",
@@ -26,21 +26,21 @@
   "license": "MIT",
   "dependencies": {
     "async": "^1.3.0",
-    "check-types": "^5.0.0",
+    "check-types": "^6.0.0",
     "coffee-script": "^1.9.2",
-    "collections": "^1.2.3",
+    "collections": "^3.0.0",
     "ioredis": "^1.7.5",
-    "lodash": "^3.10.1",
+    "lodash": "^4.1.0",
     "redlock": "^1.0.0",
-    "socket.io": "^1.3.5"
+    "socket.io": "~1.3.5"
   },
   "devDependencies": {
     "chai": "^3.0.0",
-    "coffee-coverage": "^0.7.0",
+    "coffee-coverage": "^1.0.1",
     "coveralls": "^2.11.3",
     "istanbul": "^0.4.1",
     "mocha": "^2.2.5",
     "server-destroy": "^1.0.1",
-    "socket.io-client": "^1.3.5"
+    "socket.io-client": "~1.3.5"
   }
 }
