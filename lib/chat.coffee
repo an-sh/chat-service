@@ -754,12 +754,17 @@ UserHelpers =
   send : (id, args...) ->
     @server.nsp.in(id)?.emit args...
 
+  # @private
+  getSocketObject : (id) ->
+    @server.nsp.connected[id]
+
+  # @private
   broadcast : (id, roomName, args...) ->
-    @server.nsp.connected[id]?.broadcast.in(roomName)?.emit args...
+    @getSocketObject(id)?.broadcast.in(roomName)?.emit args...
 
   # @private
   isInRoom : (id, roomName) ->
-    @server.nsp.adapter.rooms?[roomName]?[id]
+    @getSocketObject(id)?.rooms[roomName]
 
   # @private
   socketsInRoom : (sockets, roomName) ->
@@ -778,7 +783,8 @@ UserHelpers =
               user.userState.socketsGetAll withEH fn, (sockets) =>
                 for id in sockets
                   @send id, 'roomAccessRemoved', roomName
-                  @server.nsp.adapter.del id, roomName, ->
+                  socket = @getSocketObject id
+                  socket?.leave roomName
                 fn()
       , -> cb()
 
@@ -849,13 +855,11 @@ class User extends DirectMessaging
     @userState.socketsGetAll withEH cb, (sockets) =>
       async.eachLimit sockets, asyncLimit
       , (sid, fn) =>
-        if @server.io.sockets.connected[sid]
-          @server.io.sockets.connected[sid].disconnect(true)
-          fn()
+        if @server.nsp.connected[sid]
+          @server.nsp.connected[sid].disconnect(true)
         else
-          # TODO all adapter sockets proper disconnection
           @send sid, 'disconnect'
-          @server.nsp.adapter.delAll sid, fn
+        fn()
       , cb
 
   # @private
@@ -982,7 +986,10 @@ class User extends DirectMessaging
     @withRoom roomName, withEH cb, (room) =>
       room.join @username, withEH cb, =>
         @userState.roomAdd roomName, withEH cb, =>
-          @server.nsp.adapter.add id, roomName, withEH cb, =>
+          socket = @getSocketObject id
+          unless socket
+            return cb @errorBuilder.makeError 'serverError', 500
+          socket.join roomName, withEH cb, =>
             @userState.socketsGetAll withEH cb, (sockets) =>
               njoined = @socketsInRoom sockets, roomName
               for sid in sockets
@@ -996,7 +1003,10 @@ class User extends DirectMessaging
   # @nodoc
   roomLeave : (roomName, cb, id = null) ->
     @withRoom roomName, withEH cb, (room) =>
-      @server.nsp.adapter.del id, roomName, withEH cb, =>
+      socket = @getSocketObject id
+      unless socket
+        return cb @errorBuilder.makeError 'serverError', 500
+      socket.leave roomName, withEH cb, =>
         @userState.socketsGetAll withEH cb, (sockets) =>
           njoined = @socketsInRoom sockets, roomName
           report = =>
