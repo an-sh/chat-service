@@ -63,10 +63,9 @@ withEH = (errorCallback, normallCallback) ->
     if error then return errorCallback error
     normallCallback args...
 
-
 # @private
 # @nodoc
-withTansformedError = (errorBuilder, callback, normallCallback) ->
+withTE = (errorBuilder, callback, normallCallback) ->
   return (error, data) ->
     if error
       callback errorBuilder.makeError 'serverError', error
@@ -75,11 +74,16 @@ withTansformedError = (errorBuilder, callback, normallCallback) ->
     else
       callback error, data
 
+# @private
+# @nodoc
+bindTE = (obj) ->
+  obj.withTE = (args...) -> withTE obj.errorBuilder, args...
+
 
 module.exports = {
   ErrorBuilder
   withEH
-  withTansformedError
+  bindTE
   extend
   asyncLimit
 }

@@ -4,7 +4,7 @@ Redis = require 'ioredis'
 Redlock = require 'redlock'
 _ = require 'lodash'
 withEH = require('./utils.coffee').withEH
-withTansformedError = require('./utils.coffee').withTansformedError
+bindTE = require('./utils.coffee').bindTE
 asyncLimit = require('./utils.coffee').asyncLimit
 
 
@@ -88,8 +88,8 @@ class RoomStateRedis extends ListsStateRedis
   # @private
   constructor : (@server, @name, @historyMaxMessages = 0) ->
     @errorBuilder = @server.errorBuilder
+    bindTE @
     @redis = @server.chatState.redis
-    @withTE = (args...) => withTansformedError @errorBuilder, args...
     @prefix = 'room'
 
   # @private
@@ -173,7 +173,7 @@ class DirectMessagingStateRedis extends ListsStateRedis
     @prefix = 'direct'
     @redis = @server.chatState.redis
     @errorBuilder = @server.errorBuilder
-    @withTE = (args...) => withTansformedError @errorBuilder, args...
+    bindTE @
 
   # @private
   hasList : (listName) ->
@@ -214,7 +214,7 @@ class UserStateRedis
     @prefix = 'user'
     @redis = @server.chatState.redis
     @errorBuilder = @server.errorBuilder
-    @withTE = (args...) => withTansformedError @errorBuilder, args...
+    bindTE @
 
   # @private
   makeDBListName : (listName) ->
@@ -253,8 +253,8 @@ class RedisState
   # @private
   constructor : (@server, @options) ->
     @errorBuilder = @server.errorBuilder
+    bindTE @
     @redis = new Redis @options
-    @withTE = (args...) => withTansformedError @errorBuilder, args...
     @roomState = RoomStateRedis
     @userState = UserStateRedis
     @directMessagingState = DirectMessagingStateRedis
