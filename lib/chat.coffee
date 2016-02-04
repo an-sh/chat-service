@@ -5,17 +5,11 @@ async = require 'async'
 check = require 'check-types'
 MemoryState = require('./state-memory.coffee').MemoryState
 RedisState = require('./state-redis.coffee').RedisState
-ErrorBuilder = require('./errors.coffee').ErrorBuilder
-withEH = require('./errors.coffee').withEH
+ErrorBuilder = require('./utils.coffee').ErrorBuilder
+withEH = require('./utils.coffee').withEH
+extend = require('./utils.coffee').extend
+asyncLimit = require('./utils.coffee').asyncLimit
 
-# @private
-# @nodoc
-extend = (c, mixins...) ->
-  for mixin in mixins
-    for name, method of mixin
-      unless c::[name]
-        c::[name] = method
-  return
 
 # @note This class describes socket.io outgoing messages, not methods.
 #
@@ -331,10 +325,6 @@ userCommands = new UserCommands
 # @private
 # @nodoc
 serverMessages = new ServerMessages
-
-# @private
-# @nodoc
-asyncLimit = 16
 
 # @private
 # @nodoc

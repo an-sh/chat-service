@@ -2,7 +2,8 @@
 async = require 'async'
 FastSet = require 'collections/fast-set'
 Deque = require 'collections/deque'
-withEH = require('./errors.coffee').withEH
+withEH = require('./utils.coffee').withEH
+asyncLimit = require('./utils.coffee').asyncLimit
 
 
 # @private
@@ -12,11 +13,6 @@ initState = (state, values) ->
     state.clear()
     if values
       state.addEach values
-
-
-# @private
-# @nodoc
-asyncLimit = 16
 
 
 # Implements state API lists management.

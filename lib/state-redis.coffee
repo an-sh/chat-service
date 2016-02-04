@@ -3,8 +3,9 @@ async = require 'async'
 Redis = require 'ioredis'
 Redlock = require 'redlock'
 _ = require 'lodash'
-withEH = require('./errors.coffee').withEH
-withTansformedError = require('./errors.coffee').withTansformedError
+withEH = require('./utils.coffee').withEH
+withTansformedError = require('./utils.coffee').withTansformedError
+asyncLimit = require('./utils.coffee').asyncLimit
 
 
 # @private

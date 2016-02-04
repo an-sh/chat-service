@@ -1,6 +1,18 @@
 
 util = require 'util'
 
+# @private
+# @nodoc
+asyncLimit = 16
+
+# @private
+# @nodoc
+extend = (c, mixins...) ->
+  for mixin in mixins
+    for name, method of mixin
+      unless c::[name]
+        c::[name] = method
+  return
 
 # Implements error formatting.
 class ErrorBuilder
@@ -68,4 +80,6 @@ module.exports = {
   ErrorBuilder
   withEH
   withTansformedError
+  extend
+  asyncLimit
 }
