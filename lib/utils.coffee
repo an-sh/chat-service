@@ -74,16 +74,25 @@ withTE = (errorBuilder, callback, normallCallback) ->
     else
       callback error, data
 
+
 # @private
 # @nodoc
 bindTE = (obj) ->
   obj.withTE = (args...) -> withTE obj.errorBuilder, args...
 
 
+# @private
+# @nodoc
+bindUnlock = (lock, cb) ->
+  return (args...) ->
+    lock.unlock()
+    cb args...
+
 module.exports = {
   ErrorBuilder
-  withEH
-  bindTE
-  extend
   asyncLimit
+  bindTE
+  bindUnlock
+  extend
+  withEH
 }

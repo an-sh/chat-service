@@ -13,7 +13,7 @@ Redis = require 'ioredis'
 
 describe 'Chat service.', ->
 
-  states  = [ 'memory' , 'redis' ]
+  states = [ 'memory' , 'redis' ]
 
   makeParams = (userName) ->
     q = 'query' : "user=#{userName}"
@@ -66,7 +66,6 @@ describe 'Chat service.', ->
     describe "State: #{state}.", ->
 
       afterEach afterEachFn
-
 
       describe 'Initialization', ->
 

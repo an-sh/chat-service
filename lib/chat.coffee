@@ -9,7 +9,7 @@ ErrorBuilder = require('./utils.coffee').ErrorBuilder
 withEH = require('./utils.coffee').withEH
 extend = require('./utils.coffee').extend
 asyncLimit = require('./utils.coffee').asyncLimit
-
+bindUnlock = require('./utils.coffee').bindUnlock
 
 # @note This class describes socket.io outgoing messages, not methods.
 #
@@ -799,7 +799,7 @@ UserHelpers =
                   fin()
             else fin()
         , =>
-          if nsockets == 0 then @chatState.logoutUser @username, cb
+          if nsockets == 0 then @chatState.setUserOffline @username, cb
           else cb()
 
 
@@ -846,7 +846,7 @@ class User extends DirectMessaging
       async.eachLimit sockets, asyncLimit
       , (sid, fn) =>
         if @server.nsp.connected[sid]
-          @server.nsp.connected[sid].disconnect(true)
+          @server.nsp.connected[sid].disconnect()
         else
           @send sid, 'disconnect'
         fn()
@@ -900,13 +900,14 @@ class User extends DirectMessaging
   # @nodoc
   disconnect : (reason, cb, id) ->
     @server.startClientDisconnect()
+    t1 = new Date().getTime()
     endDisconnect = (args...) =>
+      t3 = new Date().getTime()
       @server.endClientDisconnect()
       cb args...
     @chatState.lockUser @username, withEH endDisconnect, (lock) =>
-      unlock = (args...) ->
-        lock.unlock()
-        endDisconnect args...
+      t2 = new Date().getTime()
+      unlock = bindUnlock lock, endDisconnect
       @userState.socketRemove id, withEH unlock, =>
         @processDisconnect id, unlock
 

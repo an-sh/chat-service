@@ -244,6 +244,14 @@ class MemoryState
     process.nextTick -> cb error, u
 
   # @private
+  setUserOffline : (name, cb) ->
+    unless @usersOnline[name]
+      error = @errorBuilder.makeError 'noUserOnline', name
+    else
+      delete @usersOnline[name]
+    process.nextTick -> cb error
+
+  # @private
   lockUser : (name, cb) ->
     process.nextTick ->
       cb null, { unlock : -> }
@@ -275,12 +283,7 @@ class MemoryState
         cb error, newUser
 
   # @private
-  logoutUser : (name, cb) ->
-    unless @usersOnline[name]
-      error = @errorBuilder.makeError 'noUserOnline', name
-    else
-      delete @usersOnline[name]
-    process.nextTick -> cb error
+  logoutUser : @::setUserOffline
 
   # @private
   addUser : (name, cb, state = null) ->

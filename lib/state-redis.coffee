@@ -5,12 +5,9 @@ Redlock = require 'redlock'
 _ = require 'lodash'
 withEH = require('./utils.coffee').withEH
 bindTE = require('./utils.coffee').bindTE
+bindUnlock = require('./utils.coffee').bindUnlock
 asyncLimit = require('./utils.coffee').asyncLimit
 
-
-# @private
-# @nodoc
-asyncLimit = 16
 
 # @private
 # @nodoc
@@ -305,10 +302,6 @@ class RedisState
       cb null, user
 
   # @private
-  lockUser : (name, cb) ->
-    @lock.lock (@makeLockName name), @lockTTL, @withTE cb
-
-  # @private
   getUser : (name, cb) ->
     user = new @server.User name
     @redis.sismember @makeDBHashName('usersOnline'), name, @withTE cb, (data) =>
@@ -318,11 +311,22 @@ class RedisState
         else return cb @errorBuilder.makeError 'noUser', name
 
   # @private
+  setUserOffline : (name, cb) ->
+    @redis.sismember @makeDBHashName('usersOnline'), name, @withTE cb
+    , (data) =>
+      unless data
+        return cb @errorBuilder.makeError 'noUserOnline', name
+      @redis.srem @makeDBHashName('usersOnline'), name, @withTE cb
+
+
+  # @private
+  lockUser : (name, cb) ->
+    @lock.lock (@makeLockName name), @lockTTL, @withTE cb
+
+  # @private
   loginUser : (name, socket, cb) ->
-    @lock.lock (@makeLockName name), @lockTTL, @withTE cb, (lock) =>
-      unlock = (args...) ->
-        lock.unlock()
-        cb args...
+    @lockUser name, @withTE cb, (lock) =>
+      unlock = bindUnlock lock, cb
       @redis.sismember @makeDBHashName('usersOnline'), name, @withTE unlock
       , (data) =>
         if data
@@ -342,41 +346,47 @@ class RedisState
 
   # @private
   logoutUser : (name, cb) ->
-    @redis.sismember @makeDBHashName('usersOnline'), name, @withTE cb, (data) =>
-      unless data
-        return cb @errorBuilder.makeError 'noUserOnline', name
-      @redis.srem @makeDBHashName('usersOnline'), name, @withTE cb
+    @lockUser name, @withTE cb, (lock) =>
+      unlock = bindUnlock lock, cb
+      @setUserOffline name, unlock
 
   # @private
   addUser : (name, cb = (->), state = null) ->
-    @redis.sismember @makeDBHashName('users'), name, @withTE cb, (data) =>
-      if data
-        return cb @errorBuilder.makeError 'userExists', name
-      user = new @server.User name
-      @redis.sadd @makeDBHashName('users'), name, @withTE cb, ->
-        if state
-          user.initState state, cb
-        else
-          cb()
+    @lockUser name, @withTE cb, (lock) =>
+      unlock = bindUnlock lock, cb
+      @redis.sismember @makeDBHashName('users'), name, @withTE unlock
+      , (data) =>
+        if data
+          return unlock @errorBuilder.makeError 'userExists', name
+        user = new @server.User name
+        @redis.sadd @makeDBHashName('users'), name, @withTE unlock, ->
+          if state
+            user.initState state, unlock
+          else
+            unlock()
 
   # @private
   removeUser : (name, cb = ->) ->
     user = new @server.User name
-    @redis.sismember @makeDBHashName('usersOnline'), name, @withTE cb, (data) =>
-      fn = =>
-        @redis.sismember @makeDBHashName('users'), name, @withTE cb, (data) =>
-          unless data
-            return cb @errorBuilder.makeError 'noUser', name
-          async.parallel [
-              (fn) =>
-                @redis.srem @makeDBHashName('users'), name, fn
-              (fn) =>
-                @redis.srem @makeDBHashName('usersOnline'), name, fn
-              (fn) ->
-                user.removeState fn
-          ], @withTE cb
-      if data then user.disconnectUser fn
-      else fn()
+    @lockUser name, @withTE cb, (lock) =>
+      unlock = bindUnlock lock, cb
+      @redis.sismember @makeDBHashName('usersOnline'), name, @withTE unlock
+      , (data) =>
+        removeDBentries = =>
+          @redis.sismember @makeDBHashName('users'), name, @withTE unlock
+          , (data) =>
+            unless data
+              return unlock @errorBuilder.makeError 'noUser', name
+            async.parallel [
+                (fn) =>
+                  @redis.srem @makeDBHashName('users'), name, fn
+                (fn) =>
+                  @redis.srem @makeDBHashName('usersOnline'), name, fn
+                (fn) ->
+                  user.removeState fn
+            ], @withTE unlock
+        if data then user.disconnectUser removeDBentries
+        else removeDBentries()
 
 
 module.exports = {
