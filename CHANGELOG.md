@@ -1,6 +1,7 @@
 
 ### 0.7.0 (unreleased)
 
+- Use redlock when modifying user to room associations.
 - Fix adminlist updates.
 
 ### 0.6.1 (2016/02/01)
