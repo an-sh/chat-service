@@ -1,6 +1,7 @@
 
-### 0.7.0 ()
+### 0.7.0 (unreleased)
 
+- Fix adminlist updates.
 
 ### 0.6.1 (2016/02/01)
 

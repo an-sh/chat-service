@@ -921,7 +921,7 @@ class User extends DirectMessaging
   roomAddToList : (roomName, listName, values, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       room.addToList @username, listName, values, withEH cb, (data) =>
-        if @enableAdminlistUpdates
+        if @enableAdminlistUpdates and listName == 'adminlist'
           for name in values
             @send roomName, 'roomAdminAdded', roomName, name
         @removeUsers data, roomName, cb
@@ -1029,7 +1029,7 @@ class User extends DirectMessaging
   roomRemoveFromList : (roomName, listName, values, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       room.removeFromList @username, listName, values, withEH cb, (data) =>
-        if @enableAdminlistUpdates
+        if @enableAdminlistUpdates and listName == 'adminlist'
           for name in values
             @send roomName, 'roomAdminRemoved', roomName, name
         @removeUsers data, roomName, cb
