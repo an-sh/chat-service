@@ -2,7 +2,7 @@
 require './services.coffee'
 
 chatControllers = angular.module 'chatControllers'
-  , ['ngCookies', 'chatServices']
+  , ['ngStorage', 'chatServices']
 
 getRandomString = (length=16)->
   chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -14,7 +14,7 @@ getRandomString = (length=16)->
   .join ''
 
 chatControllers.controller 'messagesController'
-  , ($scope, $cookies, $stateParams, $anchorScroll, chatService) ->
+  , ($scope, $sessionStorage, $stateParams, $anchorScroll, chatService) ->
     $scope.data.messages = chatService.messages
     room = $stateParams.room
     fn = (error) ->
@@ -40,7 +40,7 @@ chatControllers.controller 'messagesController'
     if chatService.isConnected
       fn()
     else
-      login = $cookies.get 'login'
+      login = $sessionStorage.login
       chatService.connect login, null
       , { namespace : '/chat-service' }
       , fn
@@ -76,16 +76,16 @@ chatControllers.controller 'blacklistController'
           $scope.$apply()
 
 chatControllers.controller 'chatController'
-  , ($scope, $cookies, $stateParams, chatService) ->
+  , ($scope, $sessionStorage, $stateParams, chatService) ->
     $scope.functions = $scope.functions || {}
     $scope.data = $scope.data || {}
     $scope.data.bottomID = getRandomString()
-    $scope.data.login = $cookies.get 'login'
+    $scope.data.login = $sessionStorage.login
     $scope.data.room = $stateParams.room
     $scope.chatService = chatService
 
 chatControllers.controller 'loginController'
-  , ($scope, $state, $cookies, chatService) ->
+  , ($scope, $state, $sessionStorage, chatService) ->
     $scope.data = {}
     $scope.functions = {}
     $scope.functions.connect = (path, opts) ->
@@ -96,6 +96,6 @@ chatControllers.controller 'loginController'
           $scope.data.error = error
           $scope.$apply()
         else
-          $cookies.put 'login', $scope.data.login
+          $sessionStorage.login = $scope.data.login
           $scope.data.error = null
           $state.go path, opts
