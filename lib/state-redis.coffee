@@ -349,12 +349,6 @@ class RedisState
               user.registerSocket socket, unlock
 
   # @private
-  logoutUser : (name, cb) ->
-    @lockUser name, @withTE cb, (lock) =>
-      unlock = bindUnlock lock, cb
-      @setUserOffline name, unlock
-
-  # @private
   addUser : (name, cb = (->), state = null) ->
     @lockUser name, @withTE cb, (lock) =>
       unlock = bindUnlock lock, cb

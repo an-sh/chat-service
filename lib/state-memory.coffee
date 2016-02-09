@@ -283,9 +283,6 @@ class MemoryState
         cb error, newUser
 
   # @private
-  logoutUser : @::setUserOffline
-
-  # @private
   addUser : (name, cb, state = null) ->
     user = @users[name]
     if user
