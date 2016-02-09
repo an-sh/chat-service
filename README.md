@@ -25,7 +25,7 @@ extensibility.
 ```javascript
 var chatServer = new ChatService({ port : port },
                                  { auth : auth, onConnect : onConnect },
-                                 'redis');
+                                 { state : 'redis', redisOptions : myOptions });
 ```
 Here we have created a new server instance. It is ruuning _`port`_
 according to options argument. The second argument represents hooks,
@@ -33,7 +33,7 @@ that will run during server lifetime. _`auth`_ hook is simular to the
 one that is described in socket.io documentation, and _`onConnect`_
 hook will run when client is connected. These hook are intended for
 integration to existing user authentication systems. The last argument
-is a state storage.
+is for storage options.
 
 Connection from a client side is trivial:
 ```javascript
@@ -51,10 +51,11 @@ socket.emit('roomJoin', 'someRoom', function(error, data) {
 A server reply is send as a socket.io ack and has a standart node
 (error, data) callback arguments format. Semantics of most commands is
 very straitforward and simple. Only for room commands a client must
-join a room to succesfully execute them.
+join a room to successfully execute them.
 
 ```javascript
 socket.on('roomMessage', function(room, user, msg) {
+  // code
 });
 ```
 Also a server will send `ServerMessages`.  Note that these messages
@@ -78,7 +79,7 @@ Run `npm install -g codo` and `codo` to generate documentation. Public
 API consists of public methods of the following classes:
 
 - Class: `ServerMessages` - represents socket.io messages sent from a
-server to a client. No client reply is requered.
+server to a client. No client reply is required.
 - Class: `UserCommands` - represents socket.io messages sent from a
 client to a server. Server will send back a socket.io ack reply with
 (error, data) arguments.
