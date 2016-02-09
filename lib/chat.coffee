@@ -1065,11 +1065,6 @@ class ChatService
   #   Enables user to user {UserCommands#directMessage}, default is false.
   # @option options [Object] socketIoServerOptions
   #   Options that are passed to socket.io if server creation is required.
-  # @option options [Object] socketIoAdapterOptions
-  #   Options that are passed to socket.io adapter if adapter creation
-  #   is required.
-  # @option options [Object] stateOptions
-  #   Options that are passed to a service state.
   # @option options [Object] io
   #   Socket.io instance that should be used by ChatService.
   # @option options [Object] http
@@ -1095,11 +1090,31 @@ class ChatService
   #   hook is executed after a server has finshed command processing.
   #   Check Hooks unit tests section in the `test` directory for
   #   more details and hooks usage examples.
-  # @param state [String or Constructor] Chat state. Can be either
-  #   'memory' or 'redis' for built-in state storage, or a custom state
-  #   constructor function that implements the same API.
-  constructor : (@options = {}, @hooks = {}
-    { @state = 'memory', @adapter = 'memory' } = {}) ->
+  # @param storageOptions [Object] Selects state and socket.io adapter.
+  # @option storageOptions [String or Constructor] state Chat state.
+  #   Can be either 'memory' or 'redis' for built-in state storages, or a
+  #   custom state constructor function that implements the same API.
+  # @option storageOptions [String or Constructor] adapter Socket.io
+  #   adapter, used if no io object is passed.  Can be either 'memory'
+  #   or 'redis' for built-in state storages, or a custom state
+  #   constructor function that implements the Socket.io adapter API.
+  # @option storageOptions [Object] socketIoAdapterOptions
+  #   Options that are passed to socket.io adapter if adapter creation
+  #   is required.
+  # @option storageOptions [Object] stateOptions Options that are
+  #   passed to a service state. 'memory' state has no options,
+  #   'redis' state options are listed below.
+  # @option stateOptions [Object] redisOptions
+  #   ioredis constructor options.
+  # @option stateOptions [Object] redisClusterHosts
+  #   ioredis cluster constructor hosts. Overrides redisOptions.
+  # @option stateOptions [Object] redisClusterOptions
+  #   ioredis cluster constructor options.
+  # @option stateOptions [Object] redlockOptions
+  #   redlock constructor options.
+  # @option stateOptions [Integer] redlockTTL
+  #   redlock TTL option. default 2000.
+  constructor : (@options = {}, @hooks = {}, @storageOptions = {}) ->
     @setOptions()
     @setServer()
     if @hooks.onStart
@@ -1121,8 +1136,10 @@ class ChatService
     @enableDirectMessages = @options.enableDirectMessages || false
     @closeTimeout = @options.closeTimeout || 5000
     @socketIoServerOptions = @options.socketIoServerOptions
-    @stateOptions = @options.stateOptions
-    @socketIoAdapterOptions = @options.socketIoAdapterOptions
+    @state = @storageOptions.state
+    @adapter = @storageOptions.adapter
+    @socketIoAdapterOptions = @storageOptions.socketIoAdapterOptions
+    @storageOptions = @options.stateOptions
 
   # @private
   # @nodoc
