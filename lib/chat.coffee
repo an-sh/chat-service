@@ -1,5 +1,6 @@
 
-socketIO = require 'socket.io'
+RedisAdapter = require 'socket.io-redis'
+SocketServer = require 'socket.io'
 _ = require 'lodash'
 async = require 'async'
 check = require 'check-types'
@@ -1062,9 +1063,12 @@ class ChatService
   #   {ServerMessages#roomAdminRemoved} messages, default is false.
   # @option options [Boolean] enableDirectMessages
   #   Enables user to user {UserCommands#directMessage}, default is false.
-  # @option options [Boolean] serverOptions
+  # @option options [Object] socketIoServerOptions
   #   Options that are passed to socket.io if server creation is required.
-  # @option options [Boolean] stateOptions
+  # @option options [Object] socketIoAdapterOptions
+  #   Options that are passed to socket.io adapter if adapter creation
+  #   is required.
+  # @option options [Object] stateOptions
   #   Options that are passed to a service state.
   # @option options [Object] io
   #   Socket.io instance that should be used by ChatService.
@@ -1094,7 +1098,8 @@ class ChatService
   # @param state [String or Constructor] Chat state. Can be either
   #   'memory' or 'redis' for built-in state storage, or a custom state
   #   constructor function that implements the same API.
-  constructor : (@options = {}, @hooks = {}, @state = 'memory') ->
+  constructor : (@options = {}, @hooks = {}
+    { @state = 'memory', @adapter = 'memory' } = {}) ->
     @setOptions()
     @setServer()
     if @hooks.onStart
@@ -1115,8 +1120,9 @@ class ChatService
     @enableRoomsManagement = @options.enableRoomsManagement || false
     @enableDirectMessages = @options.enableDirectMessages || false
     @closeTimeout = @options.closeTimeout || 5000
-    @serverOptions = @options.serverOptions
+    @socketIoServerOptions = @options.socketIoServerOptions
     @stateOptions = @options.stateOptions
+    @socketIoAdapterOptions = @options.socketIoAdapterOptions
 
   # @private
   # @nodoc
@@ -1131,12 +1137,20 @@ class ChatService
       when 'redis' then RedisState
       when typeof @state == 'function' then @state
       else throw new Error "Invalid state: #{@state}"
+    Adapter = switch @adapter
+      when 'memory' then null
+      when 'redis' then RedisAdapter
+      when typeof @state == 'function' then @adapter
+      else throw new Error "Invalid adapter: #{@adapter}"
     unless @io
       if @http
-        @io = socketIO @http, @serverOptions
+        @io = new SocketServer @http, @socketIoServerOptions
       else
-        port = @serverOptions?.port || 8000
-        @io = socketIO port, @serverOptions
+        port = @socketIoServerOptions?.port || 8000
+        @io = new SocketServer port, @socketIoServerOptions
+      if Adapter
+        @ioAdapter = new Adapter @socketIoAdapterOptions
+        @io.adapter @ioAdapter
     @nsp = @io.of @namespace
     @userCommands = userCommands
     @serverMessages = serverMessages

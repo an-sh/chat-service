@@ -13,7 +13,8 @@ Redis = require 'ioredis'
 
 describe 'Chat service.', ->
 
-  states = [ 'memory' , 'redis' ]
+  states = [ { state : 'memory', adapter : 'memory' }
+    , { state : 'redis', adapter : 'redis' } ]
 
   makeParams = (userName) ->
     q = 'query' : "user=#{userName}"
@@ -63,7 +64,7 @@ describe 'Chat service.', ->
 
   states.forEach (state) ->
 
-    describe "State: #{state}.", ->
+    describe "State #{state.state} with #{state.adapter} adapter.", ->
 
       afterEach afterEachFn
 
@@ -194,7 +195,7 @@ describe 'Chat service.', ->
           onConnect = (server, socket, cb) ->
             cb err
           chatServer = new ChatService { port : port }
-            , { onConnect : onConnect }
+            , { onConnect : onConnect }, state
           socket1 = ioClient.connect url1, makeParams(user1)
           socket1.on 'loginRejected', (e) ->
             expect(e).deep.equal(err)

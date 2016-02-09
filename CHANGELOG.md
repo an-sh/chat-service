@@ -3,6 +3,8 @@
 
 - Use redlock when modifying user to room associations.
 - Fix adminlist updates.
+- Change chat constructor options.
+- Include redis socket.io adapter.
 
 ### 0.6.1 (2016/02/01)
 
