@@ -218,6 +218,10 @@ class UserStateRedis
     "#{namespace}:#{@prefix}:#{listName}:#{@name}"
 
   # @private
+  makeSocketListName : (id) ->
+    @makeDBListName('socketrooms') + ":#{id}"
+
+  # @private
   socketAdd : (id, cb) ->
     @redis.sadd @makeDBListName('sockets'), id, @withTE cb
 
@@ -230,12 +234,44 @@ class UserStateRedis
     @redis.smembers @makeDBListName('sockets'), @withTE cb
 
   # @private
-  roomAdd : (roomName, cb) ->
-    @redis.sadd @makeDBListName('rooms') ,roomName, @withTE cb
+  isSocketInRoom : (id, roomName, cb) ->
+    @redis.sismember @makeSocketListName(id), roomName, @withTE cb
 
   # @private
-  roomRemove : (roomName, cb) ->
-    @redis.srem @makeDBListName('rooms'), roomName, @withTE cb
+  filterRoomSockets : (sockets, roomName, cb) ->
+    async.filter sockets, (id, fn) =>
+      @isSocketInRoom id, roomName, (err, data) ->
+        fn data
+    , (sockets) -> cb null, sockets
+
+  # @private
+  getRoomSockets : (roomName, cb) ->
+    @socketsGetAll @withTE cb, (sockets) =>
+      @filterRoomSockets sockets, roomName, cb
+
+  # @private
+  roomAdd : (roomName, id, cb) ->
+    @redis.multi()
+    .sadd @makeDBListName('rooms'), roomName
+    .sadd @makeSocketListName(id), roomName
+    .exec @withTE cb
+
+  # @private
+  roomRemove : (roomName, id, cb) ->
+    @redis.srem @makeSocketListName(id), roomName, @withTE cb, =>
+      @getRoomSockets roomName, @withTE cb, (sockets) =>
+        if !sockets or sockets.length == 0
+          @redis.srem @makeDBListName('rooms'), roomName, @withTE cb
+        else
+          cb()
+
+  # @private
+  roomRemoveAll : (roomName, cb) ->
+    @redis.srem @makeDBListName('rooms'), roomName, @withTE cb, =>
+      @getRoomSockets roomName, @withTE cb, (sockets) =>
+        async.eachLimit sockets, asyncLimit, (id, fn) =>
+          @redis.srem @makeSocketListName(id), roomName, @withTE fn
+        , cb
 
   # @private
   roomsGetAll : (cb) ->

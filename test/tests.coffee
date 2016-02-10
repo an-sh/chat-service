@@ -13,8 +13,9 @@ Redis = require 'ioredis'
 
 describe 'Chat service.', ->
 
-  states = [ { state : 'memory', adapter : 'memory' }
-    , { state : 'redis', adapter : 'redis' } ]
+  states = [ { state : 'memory', adapter : 'memory' } ,
+    { state : 'redis', adapter : 'redis' }
+  ]
 
   makeParams = (userName) ->
     q = 'query' : "user=#{userName}"
@@ -66,7 +67,7 @@ describe 'Chat service.', ->
 
     describe "State #{state.state} with #{state.adapter} adapter.", ->
 
-      @timeout(6000)
+      @timeout 3000
 
       afterEach afterEachFn
 

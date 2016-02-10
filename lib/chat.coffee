@@ -343,10 +343,6 @@ processMessage = (author, msg) ->
 RoomHelpers =
 
   # @private
-  isUser : (userName, cb) ->
-    @roomState.hasInList 'userlist', userName, cb
-
-  # @private
   isAdmin : (userName, cb) ->
     @roomState.ownerGet withEH cb, (owner) =>
       @roomState.hasInList 'adminlist', userName, withEH cb, (hasName) ->
@@ -754,14 +750,9 @@ UserHelpers =
     @getSocketObject(id)?.broadcast.in(roomName)?.emit args...
 
   # @private
-  isInRoom : (id, roomName) ->
-    @getSocketObject(id)?.rooms[roomName]
-
-  # @private
-  socketsInRoom : (sockets, roomName) ->
-    sockets.reduce (count, socket) =>
-      if @isInRoom socket, roomName then count+1 else count
-    , 0
+  socketsInRoom : (roomName, cb) ->
+    @userState.getRoomSockets roomName, withEH cb, (sockets) ->
+      cb null, sockets?.length || 0
 
   # @private
   removeRoomUsers : (userNames, roomName, cb) ->
@@ -772,7 +763,7 @@ UserHelpers =
           unlock = bindUnlock lock, fn
           room.leave userName, withEH unlock, =>
             @chatState.getUser userName, withEH unlock, (user, isOnline) =>
-              user.userState.roomRemove roomName, withEH unlock, =>
+              user.userState.roomRemoveAll roomName, withEH unlock, =>
                 user.userState.socketsGetAll withEH unlock, (sockets) =>
                   for id in sockets
                     @send id, 'roomAccessRemoved', roomName
@@ -788,18 +779,19 @@ UserHelpers =
         nsockets = sockets.length
         async.eachLimit rooms, asyncLimit, (roomName, fn) =>
           @withRoom roomName, withEH fn, (room) =>
-            sendEcho = =>
-              for sid in sockets
-                @send sid, 'roomLeftEcho', roomName, njoined
-              fn()
-            njoined = @socketsInRoom sockets, roomName
-            if njoined == 0
-              room.leave @username, withEH fn, =>
-                @userState.roomRemove roomName, withEH fn, =>
-                  if @enableUserlistUpdates
-                    @send roomName, 'roomUserLeft', roomName, @username
-                  sendEcho()
-            else sendEcho()
+            @socketsInRoom roomName, withEH fn, (njoined) =>
+              sendEcho = =>
+                for sid in sockets
+                  @send sid, 'roomLeftEcho', roomName, njoined
+                fn()
+              if njoined == 0
+                room.leave @username, withEH fn, =>
+                  @userState.roomRemoveAll roomName, withEH fn, =>
+                    if @enableUserlistUpdates
+                      @send roomName, 'roomUserLeft', roomName, @username
+                    sendEcho()
+              else
+                sendEcho()
         , =>
           if nsockets == 0 then @chatState.setUserOffline @username, cb
           else cb()
@@ -871,7 +863,7 @@ class User extends DirectMessaging
 
   # @private
   # @nodoc
-  directMessage : (toUserName, msg, cb, id = null) ->
+  directMessage : (toUserName, msg, cb, id) ->
     unless @enableDirectMessages
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
@@ -972,28 +964,31 @@ class User extends DirectMessaging
 
   # @private
   # @nodoc
-  roomJoin : (roomName, cb, id = null) ->
+  roomJoin : (roomName, cb, id) ->
     @withRoom roomName, withEH cb, (room) =>
       @chatState.lockUser @username, withEH cb, (lock) =>
         unlock = bindUnlock lock, cb
+        socket = @getSocketObject id
+        unless socket
+          return unlock @errorBuilder.makeError 'serverError', 500
         room.join @username, withEH unlock, =>
-          @userState.roomAdd roomName, withEH unlock, =>
-            socket = @getSocketObject id
-            unless socket
-              return unlock @errorBuilder.makeError 'serverError', 500
+          @userState.roomAdd roomName, id, withEH unlock, =>
             socket.join roomName, withEH unlock, =>
               @userState.socketsGetAll withEH unlock, (sockets) =>
-                njoined = @socketsInRoom sockets, roomName
-                for sid in sockets
-                  if sid != id
-                    @send sid, 'roomJoinedEcho', roomName, njoined
-                if @enableUserlistUpdates and njoined == 1
-                  @broadcast id, roomName, 'roomUserJoined', roomName, @username
-                unlock null, njoined
+                @userState.filterRoomSockets sockets, roomName, withEH unlock
+                , (roomSockets) =>
+                  njoined = roomSockets?.length
+                  for sid in sockets
+                    if sid != id
+                      @send sid, 'roomJoinedEcho', roomName, njoined
+                  if @enableUserlistUpdates and njoined == 1
+                    @broadcast id, roomName, 'roomUserJoined'
+                    , roomName, @username
+                  unlock null, njoined
 
   # @private
   # @nodoc
-  roomLeave : (roomName, cb, id = null) ->
+  roomLeave : (roomName, cb, id) ->
     @withRoom roomName, withEH cb, (room) =>
       @chatState.lockUser @username, withEH cb, (lock) =>
         unlock = bindUnlock lock, cb
@@ -1001,22 +996,17 @@ class User extends DirectMessaging
         unless socket
           return unlock @errorBuilder.makeError 'serverError', 500
         socket.leave roomName, withEH unlock, =>
-          @userState.socketsGetAll withEH unlock, (sockets) =>
-            njoined = @socketsInRoom sockets, roomName
-            report = =>
-              for sid in sockets
-                if sid != id
-                  @send sid, 'roomLeftEcho', roomName, njoined
-              if @enableUserlistUpdates and njoined == 0
-                @broadcast id, roomName, 'roomUserLeft', roomName, @username
-              unlock null, njoined
-            if njoined == 0
-              room.isUser @username, withEH unlock, (isRoomUser) =>
-                if isRoomUser
-                  room.leave @username, withEH unlock, =>
-                    @userState.roomRemove roomName, withEH unlock, report
-                else unlock @errorBuilder.makeError 'notJoined', roomName
-            else report()
+          @userState.roomRemove roomName, id, withEH unlock, =>
+            @userState.socketsGetAll withEH unlock, (sockets) =>
+              @userState.filterRoomSockets sockets, roomName, withEH unlock
+              , (roomSockets) =>
+                njoined = roomSockets?.length
+                for sid in sockets
+                  if sid != id
+                    @send sid, 'roomLeftEcho', roomName, njoined
+                if @enableUserlistUpdates and njoined == 0
+                  @broadcast id, roomName, 'roomUserLeft', roomName, @username
+                unlock null, njoined
 
   # @private
   # @nodoc

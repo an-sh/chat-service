@@ -1,7 +1,9 @@
 
 async = require 'async'
+_ = require 'lodash'
 FastSet = require 'collections/fast-set'
 Deque = require 'collections/deque'
+Map = require 'collections/map'
 withEH = require('./utils.coffee').withEH
 asyncLimit = require('./utils.coffee').asyncLimit
 
@@ -160,6 +162,7 @@ class UserStateMemory
   constructor : (@server, @username) ->
     @roomslist = new FastSet
     @sockets = new FastSet
+    @socketrooms = new Map
 
   # @private
   socketAdd : (id, cb) ->
@@ -177,13 +180,54 @@ class UserStateMemory
     process.nextTick -> cb null, sockets
 
   # @private
-  roomAdd : (roomName, cb) ->
+  isSocketInRoomSync : (id, roomName) ->
+    set = @socketrooms.get id
+    set?.has roomName
+
+  # @private
+  filterRoomSocketsSync : (sockets, roomName) ->
+    _.filter sockets, (id) =>
+      @isSocketInRoomSync id, roomName
+
+  # @private
+  filterRoomSockets : (sockets, roomName, cb) ->
+    roomSockets = @filterRoomSocketsSync sockets, roomName
+    process.nextTick -> cb null, roomSockets
+
+  # @private
+  getRoomSockets : (roomName, cb) ->
+    sockets = @sockets.toArray()
+    @filterRoomSockets sockets, roomName, cb
+
+  # @private
+  getRoomSocketsSync : (roomName) ->
+    sockets = @sockets.toArray()
+    @filterRoomSocketsSync sockets, roomName
+
+  # @private
+  roomAdd : (roomName, id, cb) ->
+    set = @socketrooms.get id
+    unless set
+      set = new FastSet
+      @socketrooms.set  id, set
+    set.add roomName
     @roomslist.add roomName
     process.nextTick -> cb null
 
   # @private
-  roomRemove : (roomName, cb) ->
+  roomRemove : (roomName, id, cb) ->
+    set = @socketrooms.get id
+    set?.remove roomName
     @roomslist.remove roomName
+    process.nextTick -> cb null
+
+  # @private
+  roomRemoveAll : (roomName, cb) ->
+    @roomslist.remove roomName
+    sockets = @getRoomSocketsSync roomName
+    for id in sockets
+      set = @socketrooms.get id
+      set?.remove roomName
     process.nextTick -> cb null
 
   # @private
