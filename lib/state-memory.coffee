@@ -309,22 +309,19 @@ class MemoryState
     process.nextTick -> cb error, user, isOnline
 
   # @private
-  loginUser : (name, socket, cb) ->
+  loginUser : (uid, name, socket, cb) ->
     currentUser = @usersOnline[name]
     returnedUser = @users[name] unless currentUser
     if currentUser
-      currentUser.registerSocket socket, (error) ->
-        cb error, currentUser
+      currentUser.registerSocket socket, cb
     else if returnedUser
       @usersOnline[name] = returnedUser
-      returnedUser.registerSocket socket, (error) ->
-        cb error, returnedUser
+      returnedUser.registerSocket socket, cb
     else
       newUser = new @server.User name
       @usersOnline[name] = newUser
       @users[name] = newUser
-      newUser.registerSocket socket, (error) ->
-        cb error, newUser
+      newUser.registerSocket socket, cb
 
   # @private
   addUser : (name, cb, state = null) ->

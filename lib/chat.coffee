@@ -4,6 +4,8 @@ SocketServer = require 'socket.io'
 _ = require 'lodash'
 async = require 'async'
 check = require 'check-types'
+uid = require 'uid-safe'
+
 MemoryState = require('./state-memory.coffee').MemoryState
 RedisState = require('./state-redis.coffee').RedisState
 ErrorBuilder = require('./utils.coffee').ErrorBuilder
@@ -1131,6 +1133,7 @@ class ChatService
     @adapter = @storageOptions.adapter
     @socketIoAdapterOptions = @storageOptions.socketIoAdapterOptions
     @storageOptions = @options.stateOptions
+    @serverUID = uid.sync 18
 
   # @private
   # @nodoc
@@ -1204,7 +1207,7 @@ class ChatService
       unless userName
         error = @errorBuilder.makeError 'noLogin'
         return @rejectLogin socket, error
-    @chatState.loginUser userName, socket, (error, user) =>
+    @chatState.loginUser @serverUID, userName, socket, (error) =>
       if error
         @rejectLogin socket, error
       else

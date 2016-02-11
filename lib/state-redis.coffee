@@ -219,7 +219,7 @@ class UserStateRedis
 
   # @private
   makeSocketListName : (id) ->
-    @makeDBListName('socketrooms') + ":#{id}"
+    "#{namespace}:#{@prefix}:socketrooms:#{id}"
 
   # @private
   socketAdd : (id, cb) ->
@@ -305,6 +305,9 @@ class RedisState
   makeLockName : (name) ->
     "#{namespace}:locks:#{name}"
 
+  makeDBSocketsName : (inst) ->
+    "#{namespace}:instancesockets:#{inst}"
+
   # @private
   getRoom : (name, cb) ->
     @redis.sismember @makeDBHashName('rooms'), name, @withTE cb, (data) =>
@@ -364,24 +367,21 @@ class RedisState
     @lock.lock (@makeLockName name), @lockTTL, @withTE cb
 
   # @private
-  loginUser : (name, socket, cb) ->
+  loginUser : (uid, name, socket, cb) ->
     @lockUser name, @withTE cb, (lock) =>
       unlock = bindUnlock lock, cb
-      @redis.sismember @makeDBHashName('usersOnline'), name, @withTE unlock
-      , (data) =>
-        if data
+      @redis.sadd @makeDBSocketsName(uid), socket.id, @withTE unlock, =>
+        @redis.sismember @makeDBHashName('usersOnline'), name, @withTE unlock
+        , (data) =>
           user = new @server.User name
-          user.registerSocket socket, (error) -> unlock error, user
-        else
-          @redis.sismember @makeDBHashName('users'), name, @withTE unlock
-          , (data) =>
+          if data
+            user.registerSocket socket, unlock
+          else
             user = new @server.User name
-            async.parallel [
-              (fn) =>
-                @redis.sadd @makeDBHashName('users'), name, fn
-              (fn) =>
-                @redis.sadd @makeDBHashName('usersOnline'), name, fn
-            ], @withTE unlock, ->
+            @redis.multi()
+            .sadd @makeDBHashName('users'), name
+            .sadd @makeDBHashName('usersOnline'), name
+            .exec @withTE unlock, ->
               user.registerSocket socket, unlock
 
   # @private
@@ -411,14 +411,11 @@ class RedisState
           , (data) =>
             unless data
               return unlock @errorBuilder.makeError 'noUser', name
-            async.parallel [
-                (fn) =>
-                  @redis.srem @makeDBHashName('users'), name, fn
-                (fn) =>
-                  @redis.srem @makeDBHashName('usersOnline'), name, fn
-                (fn) ->
-                  user.removeState fn
-            ], @withTE unlock
+            @redis.multi()
+            .srem @makeDBHashName('users'), name
+            .srem @makeDBHashName('usersOnline'), name
+            .exec @withTE unlock, ->
+              user.removeState unlock
         if data then user.disconnectUser removeDBentries
         else removeDBentries()
 
