@@ -892,24 +892,6 @@ describe 'Chat service.', ->
 
       describe 'Hooks', ->
 
-        it 'should restore an user state from onConnect hook', (done) ->
-          userName = 'user'
-          authData = 'somedata'
-          onConnect = (server, socket, cb) ->
-            cb null, userName, authData, { whitelistOnly : true }
-          chatServer = new ChatService { port : port }
-          , { onConnect : onConnect }
-          , state
-          socket1 = ioClient.connect url1, makeParams(user1)
-          socket1.on 'loginConfirmed', (u, d) ->
-            expect(u).equal(userName)
-            expect(d).equal(authData)
-            chatServer.chatState.getOnlineUser userName, (error, u) ->
-              expect(u.username).equal(userName)
-              u.directMessagingState.whitelistOnlyGet (error, data) ->
-                expect(data).true
-                done()
-
         it 'should restore a room state from onStart hook', (done) ->
           room = null
           msg1 = { author : user1, textMessage : "message", timestamp : 0 }
@@ -973,6 +955,19 @@ describe 'Chat service.', ->
               expect(error).not.ok
               expect(data).equal(someData)
               done()
+
+        it 'should execute disconnectAfter hook', (done) ->
+          disconnectAfter = (user, error, data, args, cb) ->
+            expect(user).instanceof(User)
+            expect(args).instanceof(Array)
+            expect(cb).instanceof(Function)
+            done()
+            cb()
+          chatServer1 = new ChatService { port : port }
+          , { disconnectAfter : disconnectAfter }, state
+          socket1 = ioClient.connect url1, makeParams(user1)
+          socket1.on 'loginConfirmed', ->
+            chatServer1.close()
 
         it 'should stop commands on before hook error or data', (done) ->
           err = 'error'

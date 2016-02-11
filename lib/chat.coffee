@@ -1061,13 +1061,12 @@ class ChatService
   #   Use socket.io http server integration.
   # @option hooks [Function] auth Socket.io auth hook. Look in the
   #   socket.io documentation.
-  # @option hooks
-  #   [Function(<ChatService>, <Socket>, <Function(<Error>, <String>, <Object>, <Object>)>)]
-  #   onConnect Client connection hook. Must call a callback with
-  #   either error or user name, auth data and user state. User name
-  #   and auth data are send back with `loginConfirmed` message. Error
-  #   is sent as `loginRejected` message. User state is the same as
-  #   {User#initState}.
+  # @option hooks [Function(<ChatService>, <Socket>,
+  #   <Function(<Error>, <String>, <Object>)>)] onConnect Client
+  #   connection hook. Must call a callback with either error or user
+  #   name and auth data. User name and auth data are send back with
+  #   `loginConfirmed` message. Error is sent as `loginRejected`
+  #   message.
   # @option hooks [Function(<ChatService>, <Error>, <Function(<Error>)>)]
   #   onClose Executes when server is closed. Must call a callback.
   # @option hooks [Function(<ChatService>, <Function(<Error>)>)] onStart
@@ -1175,8 +1174,8 @@ class ChatService
       @nsp.use @hooks.auth
     if @hooks.onConnect
       @nsp.on 'connection', (socket) =>
-        @hooks.onConnect @, socket, (error, userName, authData, userState) =>
-          @addClient error, socket, userName, authData, userState
+        @hooks.onConnect @, socket, (error, userName, authData) =>
+          @addClient error, socket, userName, authData
     else
       @nsp.on 'connection', (socket) =>
         @addClient null, socket
@@ -1189,7 +1188,12 @@ class ChatService
 
   # @private
   # @nodoc
-  addClient : (error, socket, userName, authData = {}, userState = null) ->
+  confirmLogin : (socket, userName, authData) ->
+    socket.emit 'loginConfirmed', userName, authData
+
+  # @private
+  # @nodoc
+  addClient : (error, socket, userName, authData = {}) ->
     if error then return @rejectLogin socket, error
     unless userName
       userName = socket.handshake.query?.user
@@ -1197,10 +1201,10 @@ class ChatService
         error = @errorBuilder.makeError 'noLogin'
         return @rejectLogin socket, error
     @chatState.loginUser userName, socket, (error, user) =>
-      if error then return @rejectLogin socket, error
-      fn = -> socket.emit 'loginConfirmed', userName, authData
-      if userState then user.initState userState, fn
-      else fn()
+      if error
+        @rejectLogin socket, error
+      else
+        @confirmLogin socket, userName, authData
 
   # @private
   # @nodoc
