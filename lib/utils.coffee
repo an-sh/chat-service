@@ -68,7 +68,7 @@ withEH = (errorCallback, normallCallback) ->
 withTE = (errorBuilder, callback, normallCallback) ->
   return (error, data) ->
     if error
-      callback errorBuilder.makeError 'serverError', error
+      callback errorBuilder.makeError 'serverError', 500
     else if normallCallback
       normallCallback data
     else
