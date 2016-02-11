@@ -1,7 +1,8 @@
 
 ### 0.7.0 (unreleased)
 
-- Change chat constructor options.
+- Changed chat constructor options.
+- Changed roomJoinedEcho and roomLeftEcho ServerMessages.
 - Include redis socket.io adapter.
 - Use redlock when modifying user to room associations.
 - adminlist to access lists changed.

@@ -67,15 +67,17 @@ class ServerMessages
   # @see UserCommands#roomRemoveFromList
   roomAccessListRemoved : (roomName, listName, usernames) ->
   # Echoes room join from other user's connections.
+  # @param id [String] Socket id.
   # @param userName [String] Username.
   # @param njoined [Number] Number of sockets that are still joined.
   # @see UserCommands#roomJoin
-  roomJoinedEcho : (roomName, njoined) ->
+  roomJoinedEcho : (id, roomName, njoined) ->
   # Echoes room leave from other user's connections.
+  # @param id [String] Socket id.
   # @param userName [String] Username.
   # @param njoined [Number] Number of sockets that are still joined.
   # @see UserCommands#roomLeave
-  roomLeftEcho : (roomName, njoined) ->
+  roomLeftEcho : (id, roomName, njoined) ->
   # Room message.
   # @param roomName [String] Rooms name.
   # @param userName [String] Message author.
@@ -784,7 +786,7 @@ UserHelpers =
             @socketsInRoom roomName, withEH fn, (njoined) =>
               sendEcho = =>
                 for sid in sockets
-                  @send sid, 'roomLeftEcho', roomName, njoined
+                  @send sid, 'roomLeftEcho', id, roomName, njoined
                 fn()
               if njoined == 0
                 room.leave @username, withEH fn, =>
@@ -981,7 +983,7 @@ class User extends DirectMessaging
                   njoined = roomSockets?.length
                   for sid in sockets
                     if sid != id
-                      @send sid, 'roomJoinedEcho', roomName, njoined
+                      @send sid, 'roomJoinedEcho', id, roomName, njoined
                   if @enableUserlistUpdates and njoined == 1
                     @broadcast id, roomName, 'roomUserJoined'
                     , roomName, @username
@@ -1004,7 +1006,7 @@ class User extends DirectMessaging
                 njoined = roomSockets?.length
                 for sid in sockets
                   if sid != id
-                    @send sid, 'roomLeftEcho', roomName, njoined
+                    @send sid, 'roomLeftEcho', id, roomName, njoined
                 if @enableUserlistUpdates and njoined == 0
                   @broadcast id, roomName, 'roomUserLeft', roomName, @username
                 unlock null, njoined

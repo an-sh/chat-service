@@ -321,15 +321,19 @@ describe 'Chat service.', ->
           room = new Room chatServer, roomName1
           chatServer.chatState.addRoom room, ->
             socket1 = ioClient.connect url1, makeParams(user1)
-            socket1.on 'loginConfirmed', ->
+            socket1.on 'loginConfirmed', (u, data) ->
+              s1id = data.id
               socket2 = ioClient.connect url1, makeParams(user1)
-              socket2.on 'loginConfirmed', ->
+              socket2.on 'loginConfirmed', (u, data) ->
+                s2id = data.id
                 socket2.emit 'roomJoin', roomName1
-                socket1.on 'roomJoinedEcho', (room, njoined) ->
+                socket1.on 'roomJoinedEcho', (id, room, njoined) ->
+                  expect(id).equal(s2id)
                   expect(room).equal(roomName1)
                   expect(njoined).equal(1)
                   socket1.emit 'roomLeave', roomName1
-                  socket2.on 'roomLeftEcho', (room, njoined) ->
+                  socket2.on 'roomLeftEcho', (id, room, njoined) ->
+                    expect(id).equal(s1id)
                     expect(room).equal(roomName1)
                     expect(njoined).equal(1)
                     socket1.emit 'roomMessage', roomName1, message
@@ -344,26 +348,31 @@ describe 'Chat service.', ->
             socket3 = ioClient.connect url1, makeParams(user1)
             socket3.on 'loginConfirmed', ->
               socket1 = ioClient.connect url1, makeParams(user1)
-              socket1.on 'loginConfirmed', ->
+              socket1.on 'loginConfirmed', (u, data) ->
+                s1id = data.id
                 socket1.emit 'roomJoin', roomName1, ->
                   socket2 = ioClient.connect url1, makeParams(user1)
-                  socket2.on 'loginConfirmed', ->
+                  socket2.on 'loginConfirmed', (u, data) ->
+                    s2id = data.id
                     socket2.emit 'roomJoin', roomName1, ->
                       socket2.disconnect()
                       async.parallel [
                         (cb) ->
-                          socket1.once 'roomLeftEcho', (room, njoined) ->
+                          socket1.once 'roomLeftEcho', (id, room, njoined) ->
+                            expect(id).equal(s2id)
                             expect(room).equal(roomName1)
                             expect(njoined).equal(1)
                             cb()
                         (cb) ->
-                          socket3.once 'roomLeftEcho', (room, njoined) ->
+                          socket3.once 'roomLeftEcho', (id, room, njoined) ->
+                            expect(id).equal(s2id)
                             expect(room).equal(roomName1)
                             expect(njoined).equal(1)
                             cb()
                       ] , ->
                         socket1.disconnect()
-                        socket3.once 'roomLeftEcho', (room, njoined) ->
+                        socket3.once 'roomLeftEcho', (id, room, njoined) ->
+                          expect(id).equal(s1id)
                           expect(room).equal(roomName1)
                           expect(njoined).equal(0)
                           done()
