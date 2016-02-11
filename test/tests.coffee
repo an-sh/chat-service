@@ -177,6 +177,14 @@ describe 'Chat service.', ->
 
       describe 'Connection', ->
 
+        it 'should send auth data with id', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.chatState.addUser user1, ->
+            socket1 = ioClient.connect url1, makeParams(user1)
+            socket1.on 'loginConfirmed', (u, data) ->
+              expect(data).include.keys('id')
+              done()
+
         it 'should reject an empty user query', (done) ->
           chatServer = new ChatService { port : port }, null, state
           socket1 = ioClient.connect url1, makeParams()

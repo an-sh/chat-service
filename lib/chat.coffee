@@ -46,7 +46,7 @@ class ServerMessages
   error : (error) ->
   # Indicates a successful login.
   # @param username [String] Username.
-  # @param data [Object] Additional login data.
+  # @param data [Object] Additional login data with an id for socket.
   loginConfirmed : (username, data) ->
   # Indicates a login error.
   # @param error [Object] Error.
@@ -1189,6 +1189,8 @@ class ChatService
   # @private
   # @nodoc
   confirmLogin : (socket, userName, authData) ->
+    if _.isObject(authData) and !authData.id
+      authData.id = socket.id
     socket.emit 'loginConfirmed', userName, authData
 
   # @private
