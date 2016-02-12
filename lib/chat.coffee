@@ -363,8 +363,8 @@ RoomHelpers =
         return cb null, false
       @isAdmin userName, withEH cb, (admin) =>
         if admin
-          return cb null, false
-        if listName == 'whitelist'
+          cb null, false
+        else if listName == 'whitelist'
           @roomState.whitelistOnlyGet withEH cb, (whitelistOnly) ->
             cb null, whitelistOnly
         else
@@ -372,12 +372,16 @@ RoomHelpers =
 
   # @private
   hasAddChangedCurrentAccess : (userName, listName, cb) ->
-    @roomState.hasInList 'userlist', userName, withEH cb, (hasUser) ->
+    @roomState.hasInList 'userlist', userName, withEH cb, (hasUser) =>
       unless hasUser
         return cb null, false
-      if listName == 'blacklist'
-        return cb null, true
-      cb null, false
+      @isAdmin userName, withEH cb, (admin) ->
+        if admin
+          cb null, false
+        else if listName == 'blacklist'
+          cb null, true
+        else
+          cb null, false
 
   # @private
   getModeChangedCurrentAccess : (value, cb) ->

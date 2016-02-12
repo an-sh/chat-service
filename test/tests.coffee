@@ -435,8 +435,7 @@ describe 'Chat service.', ->
                         expect(msg.textMessage).equal(txt)
                         expect(msg).ownProperty('timestamp')
                         cb()
-                    ]
-                    , -> done()
+                    ], -> done()
 
 
       describe 'Room permissions', ->
@@ -686,7 +685,7 @@ describe 'Chat service.', ->
                         expect(r).equal(roomName1)
                         done()
 
-        it 'should remove users on mode changes', (done) ->
+        it 'should remove affected users on mode changes', (done) ->
           chatServer = new ChatService { port : port }, null, state
           room = new Room chatServer, roomName1
           room.roomState.addToList 'adminlist', [user1], ->
