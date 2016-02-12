@@ -548,9 +548,7 @@ DirectMessagingHelpers =
 
   # @private
   checkUser : (author, cb) ->
-    if author != @username
-      error = @errorBuilder.makeError 'notAllowed'
-    process.nextTick -> cb error
+    process.nextTick -> cb()
 
   # @private
   checkList : (author, listName, cb) ->
@@ -583,7 +581,7 @@ DirectMessagingHelpers =
   # @private
   checkAcess : (userName, cb) ->
     if userName == @username
-      return process.nextTick -> cb @errorBuilder.makeError 'notAllowed'
+      return process.nextTick => cb @errorBuilder.makeError 'notAllowed'
     @directMessagingState.hasInList 'blacklist', userName
     , withEH cb, (blacklisted) =>
       if blacklisted

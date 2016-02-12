@@ -309,7 +309,7 @@ describe 'Chat service.', ->
 
       describe 'Room messaging', ->
 
-        it 'should emit join and leave for all user\'s sockets', (done) ->
+        it 'should emit join and leave echo for all user\'s sockets', (done) ->
           txt = 'Test message.'
           message = { textMessage : txt }
           chatServer = new ChatService { port : port }, null, state
@@ -530,7 +530,7 @@ describe 'Chat service.', ->
                   expect(error).ok
                   done()
 
-        it 'should send admin list changed messages', (done) ->
+        it 'should send access list changed messages', (done) ->
           chatServer = new ChatService { port : port
             , enableAccessListsUpdates : true }
           , null, state
@@ -606,7 +606,7 @@ describe 'Chat service.', ->
                         expect(error).ok
                         done()
 
-        it 'should reject userlist modifications', (done) ->
+        it 'should reject direct userlist modifications', (done) ->
           chatServer = new ChatService { port : port }, null, state
           room = new Room chatServer, roomName1
           room.roomState.addToList 'adminlist', [user1], ->
@@ -619,7 +619,7 @@ describe 'Chat service.', ->
                     expect(error).ok
                     done()
 
-        it 'should reject lists modifications for non-admins', (done) ->
+        it 'should reject any lists modifications for non-admins', (done) ->
           chatServer = new ChatService { port : port }, null, state
           room = new Room chatServer, roomName1
           chatServer.chatState.addRoom room, ->
@@ -774,6 +774,19 @@ describe 'Chat service.', ->
                 expect(error).ok
                 done()
 
+        it 'should not send self-direct messages'
+        , (done) ->
+          txt = 'Test message.'
+          message = { textMessage : txt }
+          chatServer = new ChatService { port : port
+            , enableDirectMessages : true }
+          , null, state
+          socket1 = ioClient.connect url1, makeParams(user1)
+          socket1.on 'loginConfirmed', ->
+            socket1.emit 'directMessage', user1, message, (error, data) ->
+              expect(error).ok
+              done()
+
         it 'should echo direct messges to user\'s sockets', (done) ->
           txt = 'Test message.'
           message = { textMessage : txt }
@@ -855,6 +868,17 @@ describe 'Chat service.', ->
                   , (error, data) ->
                     expect(data).not.include(user2)
                     done()
+
+        it 'should reject to add user to own lists', (done) ->
+          chatServer = new ChatService { port : port
+            , enableDirectMessages : true }
+          , null, state
+          socket1 = ioClient.connect url1, makeParams(user1)
+          socket1.on 'loginConfirmed', ->
+            socket1.emit 'directAddToList', 'blacklist', [user1]
+            , (error, data) ->
+              expect(error).ok
+              done()
 
         it 'should check user list names', (done) ->
           chatServer = new ChatService { port : port
