@@ -926,12 +926,10 @@ class User extends DirectMessaging
 
   # @private
   roomJoin : (roomName, cb, id) ->
+    socket = @getSocketObject id
     @withRoom roomName, withEH cb, (room) =>
       @chatState.lockUser @username, withEH cb, (lock) =>
         unlock = bindUnlock lock, cb
-        socket = @getSocketObject id
-        unless socket
-          return unlock @errorBuilder.makeError 'serverError', 500
         room.join @username, withEH unlock, =>
           @userState.roomAdd roomName, id, withEH unlock, =>
             socket.join roomName, withEH unlock, =>
@@ -949,12 +947,10 @@ class User extends DirectMessaging
 
   # @private
   roomLeave : (roomName, cb, id) ->
+    socket = @getSocketObject id
     @withRoom roomName, withEH cb, (room) =>
       @chatState.lockUser @username, withEH cb, (lock) =>
         unlock = bindUnlock lock, cb
-        socket = @getSocketObject id
-        unless socket
-          return unlock @errorBuilder.makeError 'serverError', 500
         socket.leave roomName, withEH unlock, =>
           @userState.roomRemove roomName, id, withEH unlock, =>
             @userState.socketsGetAll withEH unlock, (sockets) =>
