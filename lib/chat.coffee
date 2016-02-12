@@ -780,27 +780,28 @@ UserHelpers =
 
   # @private
   processDisconnect : (id, cb) ->
-    @userState.roomsGetAll withEH cb, (rooms) =>
-      @userState.socketsGetAll withEH cb, (sockets) =>
-        nsockets = sockets.length
-        async.eachLimit rooms, asyncLimit, (roomName, fn) =>
-          @withRoom roomName, withEH fn, (room) =>
-            @socketsInRoom roomName, withEH fn, (njoined) =>
-              sendEcho = =>
-                for sid in sockets
-                  @send sid, 'roomLeftEcho', id, roomName, njoined
-                fn()
-              if njoined == 0
-                room.leave @username, withEH fn, =>
-                  @userState.roomRemoveAll roomName, withEH fn, =>
-                    if @enableUserlistUpdates
-                      @send roomName, 'roomUserLeft', roomName, @username
-                    sendEcho()
-              else
-                sendEcho()
-        , =>
-          if nsockets == 0 then @chatState.setUserOffline @username, cb
-          else cb()
+    @chatState.removeSocket @chatState.serverUID, id, withEH cb, =>
+      @userState.roomsGetAll withEH cb, (rooms) =>
+        @userState.socketsGetAll withEH cb, (sockets) =>
+          nsockets = sockets.length
+          async.eachLimit rooms, asyncLimit, (roomName, fn) =>
+            @withRoom roomName, withEH fn, (room) =>
+              @socketsInRoom roomName, withEH fn, (njoined) =>
+                sendEcho = =>
+                  for sid in sockets
+                    @send sid, 'roomLeftEcho', id, roomName, njoined
+                  fn()
+                if njoined == 0
+                  room.leave @username, withEH fn, =>
+                    @userState.roomRemoveAll roomName, withEH fn, =>
+                      if @enableUserlistUpdates
+                        @send roomName, 'roomUserLeft', roomName, @username
+                      sendEcho()
+                else
+                  sendEcho()
+          , =>
+            if nsockets == 0 then @chatState.setUserOffline @username, cb
+            else cb()
 
 
 # Implements a chat user.

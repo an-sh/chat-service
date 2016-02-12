@@ -296,6 +296,11 @@ class MemoryState
     process.nextTick -> cb error
 
   # @private
+  removeSocket : (uid, id, cb) ->
+    process.nextTick ->
+      cb null
+
+  # @private
   lockUser : (name, cb) ->
     process.nextTick ->
       cb null, { unlock : -> }

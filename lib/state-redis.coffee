@@ -363,6 +363,10 @@ class RedisState
 
 
   # @private
+  removeSocket : (uid, id, cb) ->
+    @redis.sadd @makeDBSocketsName(uid), id, @withTE cb
+
+  # @private
   lockUser : (name, cb) ->
     @lock.lock (@makeLockName name), @lockTTL, @withTE cb
 
