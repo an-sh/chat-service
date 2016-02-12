@@ -1182,6 +1182,12 @@ class ChatService
     if @closeCB and @nclosing == 0
       process.nextTick => @finish()
 
+  # Remove all user data and closes all user connections
+  # @param userName [String] User name.
+  # @param cb [callback] Optional callback.
+  removeUser : (userName, cb = ->) ->
+    @chatState.removeUser userName, cb
+
   # Closes server.
   # @param done [callback] Optional callback.
   close : (done = ->) ->

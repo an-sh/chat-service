@@ -94,7 +94,7 @@ class RoomStateRedis extends ListsStateRedis
     return listName in [ 'adminlist', 'whitelist', 'blacklist', 'userlist' ]
 
   # @private
-  initState : (state = {}, cb = ->) ->
+  initState : (state = {}, cb) ->
     { whitelist, blacklist, adminlist
     , lastMessages, whitelistOnly, owner } = state
     async.parallel [
@@ -118,7 +118,7 @@ class RoomStateRedis extends ListsStateRedis
     ] , @withTE cb
 
   # @private
-  removeState : (cb = ->) ->
+  removeState : (cb) ->
     async.parallel [
       (fn) =>
         @redis.del @makeDBListName('whitelist'), @makeDBListName('blacklist')
@@ -177,7 +177,7 @@ class DirectMessagingStateRedis extends ListsStateRedis
     return listName in [ 'whitelist', 'blacklist' ]
 
   # @private
-  initState : (state = {}, cb = ->) ->
+  initState : (state = {}, cb) ->
     { whitelist, blacklist, whitelistOnly } = state
     async.parallel [
       (fn) =>
@@ -190,7 +190,7 @@ class DirectMessagingStateRedis extends ListsStateRedis
     ] , @withTE cb
 
   # @private
-  removeState : (cb = ->) ->
+  removeState : (cb) ->
     async.parallel [
       (fn) =>
         @redis.del @makeDBListName('whitelist'), @makeDBListName('blacklist')
@@ -361,7 +361,6 @@ class RedisState
         return cb @errorBuilder.makeError 'noUserOnline', name
       @redis.srem @makeDBHashName('usersOnline'), name, @withTE cb
 
-
   # @private
   removeSocket : (uid, id, cb) ->
     @redis.sadd @makeDBSocketsName(uid), id, @withTE cb
@@ -389,7 +388,7 @@ class RedisState
               user.registerSocket socket, unlock
 
   # @private
-  addUser : (name, cb = (->), state = null) ->
+  addUser : (name, cb, state = null) ->
     @lockUser name, @withTE cb, (lock) =>
       unlock = bindUnlock lock, cb
       @redis.sismember @makeDBHashName('users'), name, @withTE unlock
@@ -404,7 +403,7 @@ class RedisState
             unlock()
 
   # @private
-  removeUser : (name, cb = ->) ->
+  removeUser : (name, cb) ->
     user = new @server.User name
     @lockUser name, @withTE cb, (lock) =>
       unlock = bindUnlock lock, cb

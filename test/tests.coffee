@@ -81,11 +81,9 @@ describe 'Chat service.', ->
           cleanup = (error) ->
             chatServer1.close ->
               httpInst.destroy done, error
-          process.once 'uncaughtException', cleanup
           socket1 = ioClient.connect url1, makeParams(user1)
           socket1.on 'loginConfirmed', (u) ->
             expect(u).equal(user1)
-            process.removeListener 'uncaughtException', cleanup
             cleanup()
 
         it 'should integrate with an existing io', (done) ->
@@ -96,13 +94,10 @@ describe 'Chat service.', ->
               chatServer1.close()
               io.close()
               done error
-          process.once 'uncaughtException', cleanup
           socket1 = ioClient.connect url1, makeParams(user1)
           socket1.on 'loginConfirmed', (u) ->
             expect(u).equal(user1)
-            process.removeListener 'uncaughtException', cleanup
             cleanup()
-
 
         it 'should spawn a new io server', (done) ->
           chatServer = new ChatService { port : port }, null, state
@@ -122,7 +117,7 @@ describe 'Chat service.', ->
             socket2 = ioClient.connect url1, makeParams(user1)
             socket2.on 'loginConfirmed', (u) ->
               expect(u).equal(user1)
-              chatServer.chatState.removeUser user1
+              chatServer.removeUser user1
               async.parallel [ (cb) ->
                 socket1.on 'disconnect', ->
                   expect(socket1.connected).not.ok
@@ -133,11 +128,11 @@ describe 'Chat service.', ->
                   cb()
               ], done
 
-        it 'should disconnect only connected users', (done) ->
+        it 'should remove only known users', (done) ->
           chatServer = new ChatService { port : port }, null, state
           socket1 = ioClient.connect url1, makeParams(user1)
           socket1.on 'loginConfirmed', (u) ->
-            chatServer.chatState.removeUser user2, (error, data) ->
+            chatServer.removeUser user2, (error, data) ->
               expect(error).ok
               done()
 
