@@ -84,8 +84,6 @@ server to a client. No client reply is required.
 client to a server. Server will send back a socket.io ack reply with
 (error, data) arguments.
 - Class: `ChatService` - is a server instance.
-- Class: `Room` - represents a room.
-- Class: `User` - represents an user.
 
 Look in the test directory, for socket.io-client messages, server
 setup and hooks usage.
