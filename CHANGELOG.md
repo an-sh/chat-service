@@ -6,6 +6,7 @@
 - Include redis socket.io adapter.
 - Use redlock when modifying user to room associations.
 - adminlist to access lists changed.
+- Hook arguments changed.
 
 ### 0.6.1 (2016/02/01)
 

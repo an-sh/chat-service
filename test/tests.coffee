@@ -972,14 +972,15 @@ describe 'Chat service.', ->
           someData = 'data'
           before = null
           after = null
-          beforeHook = (user, name, mode, cb) ->
+          beforeHook = (user, id, args, cb) ->
+            [ name , mode ] = args
             expect(user).instanceof(User)
             expect(name).a('string')
             expect(mode).a('boolean')
             expect(cb).instanceof(Function)
             before = true
             cb()
-          afterHook = (user, error, data, args, cb) ->
+          afterHook = (user, id, error, data, args, cb) ->
             expect(user).instanceof(User)
             expect(args).instanceof(Array)
             expect(cb).instanceof(Function)
@@ -999,7 +1000,7 @@ describe 'Chat service.', ->
               done()
 
         it 'should execute disconnectAfter hook', (done) ->
-          disconnectAfter = (user, error, data, args, cb) ->
+          disconnectAfter = (user, id, error, data, args, cb) ->
             expect(user).instanceof(User)
             expect(args).instanceof(Array)
             expect(cb).instanceof(Function)
@@ -1013,7 +1014,7 @@ describe 'Chat service.', ->
 
         it 'should stop commands on before hook error or data', (done) ->
           err = 'error'
-          beforeHook = (user, cb) ->
+          beforeHook = (user, id, args, cb) ->
             cb err
           chatServer = new ChatService { port : port }
           , { 'listRoomsBefore' : beforeHook }, state

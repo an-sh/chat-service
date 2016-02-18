@@ -652,13 +652,10 @@ CommandBinders =
           reportResults = (nerror = error, ndata = data) ->
             cb nerror, ndata
           if afterHook
-            afterHook @, error, data, oargs, reportResults, id
+            afterHook @, id, error, data, oargs, reportResults
           else
             reportResults()
-        fn.apply @
-        , [ oargs...
-          , afterCommand
-          , id ]
+        fn.apply @, [ oargs..., afterCommand, id ]
       process.nextTick =>
         checkerError = validator oargs...
         if checkerError
@@ -667,7 +664,7 @@ CommandBinders =
         unless beforeHook
           execCommand()
         else
-          beforeHook @, oargs..., execCommand, id
+          beforeHook @, id, oargs, execCommand
     return cmd
 
   # @private
@@ -676,7 +673,7 @@ CommandBinders =
     socket.on name, () ->
       cb = _.last arguments
       if typeof cb == 'function'
-        args = Array.prototype.slice.call arguments, 0, -1
+        args = _.slice arguments, 0, -1
       else
         cb = null
         args = arguments
@@ -996,8 +993,9 @@ class ChatService
   #   Socket.io instance that should be used by ChatService.
   # @option options [Object] http
   #   Use socket.io http server integration.
-  # @option hooks [Function] auth Socket.io auth hook. Look in the
-  #   socket.io documentation.
+  # @option hooks [Function] auth Socket.io middleware function to run
+  #   on all messages in the namespace. Look in the socket.io
+  #   documentation.
   # @option hooks [Function(<ChatService>, <Socket>,
   #   <Function(<Error>, <String>, <Object>)>)] onConnect Client
   #   connection hook. Must call a callback with either error or user
