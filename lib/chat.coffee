@@ -499,28 +499,26 @@ class Room
   # @private
   addToList : (author, listName, values, cb) ->
     @checkListAdd author, listName, values, withEH cb, =>
-      data = []
-      async.eachLimit values, asyncLimit
-      , (val, fn) =>
-        @hasAddChangedCurrentAccess val, listName, withEH fn, (changed) ->
-          if changed then data.push val
-          fn()
-      , withEH cb, =>
-        @roomState.addToList listName, values, (error) ->
-          cb error, data
+      @roomState.addToList listName, values, withEH cb, =>
+        data = []
+        async.eachLimit values, asyncLimit
+        , (val, fn) =>
+          @hasAddChangedCurrentAccess val, listName, withEH fn, (changed) ->
+            if changed then data.push val
+            fn()
+        , (error) -> cb error, data
 
   # @private
   removeFromList : (author, listName, values, cb) ->
     @checkListRemove author, listName, values, withEH cb, =>
-      data = []
-      async.eachLimit values, asyncLimit
-      , (val, fn) =>
-        @hasRemoveChangedCurrentAccess val, listName, withEH fn, (changed) ->
-          if changed then data.push val
-          fn()
-      , withEH cb, =>
-        @roomState.removeFromList listName, values, (error) ->
-          cb error, data
+      @roomState.removeFromList listName, values, withEH cb, =>
+        data = []
+        async.eachLimit values, asyncLimit
+        , (val, fn) =>
+          @hasRemoveChangedCurrentAccess val, listName, withEH fn, (changed) ->
+            if changed then data.push val
+            fn()
+        , (error) -> cb error, data
 
   # @private
   getMode : (author, cb) ->
@@ -734,29 +732,39 @@ UserHelpers =
       , -> cb()
 
   # @private
+  removeRoomSocket : (id, allsockets, roomName, cb) ->
+    @withRoom roomName, withEH cb, (room) =>
+      @socketsInRoom roomName, withEH cb, (njoined) =>
+        sendEcho = =>
+          for sid in allsockets
+            @send sid, 'roomLeftEcho', id, roomName, njoined
+        sendLeave = =>
+          if @enableUserlistUpdates
+            @send roomName, 'roomUserLeft', roomName, @username
+        if njoined == 0
+          room.leave @username, withEH cb, =>
+            @userState.roomRemoveAll roomName, withEH cb, ->
+              sendLeave()
+              sendEcho()
+              cb()
+        else
+          sendEcho()
+          cb()
+
+  # @private
   processDisconnect : (id, cb) ->
     @chatState.removeSocket @chatState.serverUID, id, withEH cb, =>
       @userState.roomsGetAll withEH cb, (rooms) =>
         @userState.socketsGetAll withEH cb, (sockets) =>
           nsockets = sockets.length
-          async.eachLimit rooms, asyncLimit, (roomName, fn) =>
-            @withRoom roomName, withEH fn, (room) =>
-              @socketsInRoom roomName, withEH fn, (njoined) =>
-                sendEcho = =>
-                  for sid in sockets
-                    @send sid, 'roomLeftEcho', id, roomName, njoined
-                  fn()
-                if njoined == 0
-                  room.leave @username, withEH fn, =>
-                    @userState.roomRemoveAll roomName, withEH fn, =>
-                      if @enableUserlistUpdates
-                        @send roomName, 'roomUserLeft', roomName, @username
-                      sendEcho()
-                else
-                  sendEcho()
+          async.eachLimit rooms, asyncLimit
+          , (roomName, fn) =>
+            @removeRoomSocket id, sockets, roomName, fn
           , =>
-            if nsockets == 0 then @chatState.setUserOffline @username, cb
-            else cb()
+            if nsockets == 0
+              @chatState.setUserOffline @username, cb
+            else
+              cb()
 
 
 # @private
@@ -788,7 +796,7 @@ class User extends DirectMessaging
       cb null, @
 
   # @private
-  disconnectUser : (cb) ->
+  disconnectSockets : (cb) ->
     @userState.socketsGetAll withEH cb, (sockets) =>
       async.eachLimit sockets, asyncLimit
       , (sid, fn) =>

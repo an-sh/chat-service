@@ -352,7 +352,7 @@ class MemoryState
         delete @usersOnline[name]
         delete @users[name]
       cb error if cb
-    if user then user.disconnectUser fn
+    if user then user.disconnectSockets fn
     else process.nextTick -> fn()
 
 

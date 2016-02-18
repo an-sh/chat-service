@@ -392,8 +392,8 @@ class RedisState
     @lockUser name, @withTE cb, (lock) =>
       unlock = bindUnlock lock, cb
       @redis.sismember @makeDBHashName('users'), name, @withTE unlock
-      , (data) =>
-        if data
+      , (hasUser) =>
+        if hasUser
           return unlock @errorBuilder.makeError 'userExists', name
         user = new @server.User name
         @redis.sadd @makeDBHashName('users'), name, @withTE unlock, ->
@@ -419,7 +419,7 @@ class RedisState
             .srem @makeDBHashName('usersOnline'), name
             .exec @withTE unlock, ->
               user.removeState unlock
-        if data then user.disconnectUser removeDBentries
+        if data then user.disconnectSockets removeDBentries
         else removeDBentries()
 
 
