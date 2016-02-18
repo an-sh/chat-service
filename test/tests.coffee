@@ -40,6 +40,8 @@ describe 'Chat service.', ->
   socket2 = null
   socket3 = null
 
+  cleanup = null
+
   afterEachFn = (done) ->
     endcb = -> redis.flushall done
     if socket1
@@ -51,7 +53,10 @@ describe 'Chat service.', ->
     if socket3
       socket3.disconnect()
       socket3 = null
-    if chatServer
+    if cleanup
+      cleanup endcb
+      cleanup = null
+    else if chatServer
       chatServer.close endcb
       chatServer = null
     else
@@ -78,26 +83,26 @@ describe 'Chat service.', ->
           enableDestroy httpInst
           chatServer1 = new ChatService { http : httpInst }, null, state
           httpInst.listen port
-          cleanup = (error) ->
+          cleanup = (cb) ->
             chatServer1.close ->
-              httpInst.destroy done, error
+              httpInst.destroy cb
           socket1 = ioClient.connect url1, makeParams(user1)
           socket1.on 'loginConfirmed', (u) ->
             expect(u).equal(user1)
-            cleanup()
+            done()
 
         it 'should integrate with an existing io', (done) ->
           io = socketIO port
           chatServer1 = new ChatService { io : io }, null, state
-          cleanup =  (error) ->
+          cleanup = (cb) ->
             chatServer1.close ->
               chatServer1.close()
               io.close()
-              done error
+              cb()
           socket1 = ioClient.connect url1, makeParams(user1)
           socket1.on 'loginConfirmed', (u) ->
             expect(u).equal(user1)
-            cleanup()
+            done()
 
         it 'should spawn a new io server', (done) ->
           chatServer = new ChatService { port : port }, null, state
