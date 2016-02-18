@@ -698,7 +698,7 @@ UserHelpers =
 
   # @private
   send : (id, args...) ->
-    @server.nsp.in(id)?.emit args...
+    @server.nsp.to(id)?.emit args...
 
   # @private
   getSocketObject : (id) ->
@@ -706,7 +706,7 @@ UserHelpers =
 
   # @private
   broadcast : (id, roomName, args...) ->
-    @getSocketObject(id)?.broadcast.in(roomName)?.emit args...
+    @getSocketObject(id)?.to(roomName)?.emit args...
 
   # @private
   socketsInRoom : (roomName, cb) ->
@@ -945,7 +945,8 @@ class User extends DirectMessaging
                   if sid != id
                     @send sid, 'roomLeftEcho', id, roomName, njoined
                 if @enableUserlistUpdates and njoined == 0
-                  @broadcast id, roomName, 'roomUserLeft', roomName, @username
+                  @broadcast id, roomName, 'roomUserLeft'
+                  , roomName, @username
                 unlock null, njoined
 
   # @private
