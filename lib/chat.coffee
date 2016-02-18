@@ -398,37 +398,30 @@ RoomHelpers =
       cb()
 
   # @private
-  checkListChange : (author, listName, name, cb) ->
+  checkListChanges : (author, listName, values, cb) ->
     @checkList author, listName, withEH cb, =>
       @roomState.ownerGet withEH cb, (owner) =>
         if listName == 'userlist'
           return cb @errorBuilder.makeError 'notAllowed'
         if author == owner
           return cb()
-        if name == owner
-          return cb @errorBuilder.makeError 'notAllowed'
         if listName == 'adminlist'
           return cb @errorBuilder.makeError 'notAllowed'
         @roomState.hasInList 'adminlist', author, withEH cb, (hasAuthor) =>
           unless hasAuthor
             return cb @errorBuilder.makeError 'notAllowed'
+          for name in values
+            if name == owner
+              return cb @errorBuilder.makeError 'notAllowed'
           cb()
 
   # @private
-  checkListAdd : (author, listName, name, cb) ->
-    @checkListChange author, listName, name, withEH cb, =>
-      @roomState.hasInList listName, name, withEH cb, (hasName) =>
-        if hasName
-          return cb @errorBuilder.makeError 'nameInList', name, listName
-        cb()
+  checkListAdd : (author, listName, values, cb) ->
+    @checkListChanges author, listName, values, cb
 
   # @private
-  checkListRemove : (author, listName, name, cb) ->
-    @checkListChange author, listName, name, withEH cb, =>
-      @roomState.hasInList listName, name, withEH cb, (hasName) =>
-        unless hasName
-          return cb @errorBuilder.makeError 'noNameInList', name, listName
-        cb()
+  checkListRemove : (author, listName, values, cb) ->
+    @checkListChanges author, listName, values, cb
 
   # @private
   checkModeChange : (author, value, cb) ->
@@ -505,9 +498,7 @@ class Room
 
   # @private
   addToList : (author, listName, values, cb) ->
-    async.eachLimit values, asyncLimit, (val, fn) =>
-      @checkListAdd author, listName, val, fn
-    , withEH cb, =>
+    @checkListAdd author, listName, values, withEH cb, =>
       data = []
       async.eachLimit values, asyncLimit
       , (val, fn) =>
@@ -520,9 +511,7 @@ class Room
 
   # @private
   removeFromList : (author, listName, values, cb) ->
-    async.eachLimit values, asyncLimit, (val, fn) =>
-      @checkListRemove author, listName, val, fn
-    , withEH cb, =>
+    @checkListRemove author, listName, values, withEH cb, =>
       data = []
       async.eachLimit values, asyncLimit
       , (val, fn) =>
@@ -562,25 +551,20 @@ DirectMessagingHelpers =
       cb error
 
   # @private
-  hasListValue : (author, listName, name, cb) ->
+  checkListValues : (author, listName, values, cb) ->
     @checkList author, listName, withEH cb, =>
-      if name == @username
-        return cb @errorBuilder.makeError 'notAllowed'
-      @directMessagingState.hasInList listName, name, cb
-
-  # @private
-  checkListAdd : (author, listName, name, cb) ->
-    @hasListValue author, listName, name, withEH cb, (hasName) =>
-      if hasName
-        return cb @errorBuilder.makeError 'nameInList', name, listName
+      for name in values
+        if name == @username
+          return cb @errorBuilder.makeError 'notAllowed'
       cb()
 
   # @private
-  checkListRemove : (author, listName, name, cb) ->
-    @hasListValue author, listName, name, withEH cb, (hasName) =>
-      unless hasName
-        return cb @errorBuilder.makeError 'noNameInList', name, listName
-      cb()
+  checkListAdd : (author, listName, values, cb) ->
+    @checkListValues author, listName, values, cb
+
+  # @private
+  checkListRemove : (author, listName, values, cb) ->
+    @checkListValues author, listName, values, cb
 
   # @private
   checkAcess : (userName, cb) ->
@@ -629,21 +613,13 @@ class DirectMessaging
 
   # @private
   addToList : (author, listName, values, cb) ->
-    @checkList author, listName, withEH cb, =>
-      async.eachLimit values, asyncLimit
-      , (val, fn) =>
-        @checkListAdd author, listName, val, fn
-      , withEH cb, =>
-        @directMessagingState.addToList listName, values, cb
+    @checkListAdd author, listName, values, withEH cb, =>
+      @directMessagingState.addToList listName, values, cb
 
   # @private
   removeFromList : (author, listName, values, cb) ->
-    @checkList author, listName, withEH cb, =>
-      async.eachLimit values, asyncLimit
-      , (val, fn) =>
-        @checkListRemove author, listName, val, fn
-      , withEH cb, =>
-        @directMessagingState.removeFromList listName, values, cb
+    @checkListRemove author, listName, values, withEH cb, =>
+      @directMessagingState.removeFromList listName, values, cb
 
   # @private
   getMode : (author, cb) ->

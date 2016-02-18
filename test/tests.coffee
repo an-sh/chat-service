@@ -501,7 +501,7 @@ describe 'Chat service.', ->
                   expect(error).ok
                   done()
 
-        it 'should check existing user names on adding' , (done) ->
+        it 'should allow duplicate adding to lists', (done) ->
           chatServer = new ChatService { port : port
             , enableRoomsManagement : true }
           , null, state
@@ -513,10 +513,10 @@ describe 'Chat service.', ->
                 , (error, data) ->
                   socket1.emit 'roomAddToList', roomName1, 'adminlist', [user2]
                   , (error, data) ->
-                    expect(error).ok
+                    expect(error).not.ok
                     done()
 
-        it 'should check existing user names on deleting' , (done) ->
+        it 'should allow not existing deleting from lists', (done) ->
           chatServer = new ChatService { port : port
             , enableRoomsManagement : true }
           , null, state
@@ -526,7 +526,7 @@ describe 'Chat service.', ->
               socket1.emit 'roomJoin',  roomName1, (error, data) ->
                 socket1.emit 'roomRemoveFromList', roomName1, 'adminlist'
                 , [user2], (error, data) ->
-                  expect(error).ok
+                  expect(error).not.ok
                   done()
 
         it 'should send access list changed messages', (done) ->
@@ -890,18 +890,7 @@ describe 'Chat service.', ->
               expect(error).ok
               done()
 
-        it 'should check existing user names on deleting' , (done) ->
-          chatServer = new ChatService { port : port
-            , enableDirectMessages : true }
-          , null, state
-          socket1 = ioClient.connect url1, makeParams(user1)
-          socket1.on 'loginConfirmed', ->
-            socket1.emit 'directRemoveFromList', 'blacklist', [user2]
-            , (error, data) ->
-              expect(error).ok
-              done()
-
-        it 'should check existing list names on adding' , (done) ->
+        it 'should allow duplicate adding to lists' , (done) ->
           chatServer = new ChatService { port : port
             , enableDirectMessages : true }
           , null, state
@@ -912,8 +901,19 @@ describe 'Chat service.', ->
               expect(error).not.ok
               socket1.emit 'directAddToList', 'blacklist', [user2]
               , (error, data) ->
-                expect(error).ok
+                expect(error).not.ok
                 done()
+
+        it 'should allow not existing deleting from lists' , (done) ->
+          chatServer = new ChatService { port : port
+            , enableDirectMessages : true }
+          , null, state
+          socket1 = ioClient.connect url1, makeParams(user1)
+          socket1.on 'loginConfirmed', ->
+            socket1.emit 'directRemoveFromList', 'blacklist', [user2]
+            , (error, data) ->
+              expect(error).not.ok
+              done()
 
         it 'should allow an user to modify own mode', (done) ->
           chatServer = new ChatService { port : port
