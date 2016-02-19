@@ -196,6 +196,14 @@ class UserCommands
     dataChecker arguments, [
       check.string
     ]
+  # Get own sockets with connected rooms.
+  # @return
+  #   [error, Object<String:Array<String>>]
+  #   Sends ack: error, object with sockets as keys and array of rooms
+  #   as values.
+  listAccountJoinedRooms : () ->
+    dataChecker arguments, [
+    ]
   # Gets a list of public rooms on a server.
   # @return [error, Array<String>] Sends ack: error, public rooms.
   listRooms : () ->
@@ -852,6 +860,20 @@ class User extends DirectMessaging
       unlock = bindUnlock lock, endDisconnect
       @userState.socketRemove id, withEH unlock, =>
         @processDisconnect id, unlock
+
+  # @private
+  listAccountJoinedRooms : (cb) ->
+    result = {}
+    @chatState.lockUser @username, withEH cb, (lock) =>
+      unlock = bindUnlock lock, cb
+      @userState.roomsGetAll withEH unlock, (rooms) =>
+        async.eachLimit rooms, asyncLimit
+        , (roomName, fn) =>
+          @userState.getRoomSockets roomName, withEH fn, (sockets) ->
+            result[roomName] = sockets
+            fn()
+        , withEH unlock, ->
+          unlock null, result
 
   # @private
   listRooms : (cb) ->

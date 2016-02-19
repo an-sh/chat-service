@@ -744,6 +744,28 @@ describe 'Chat service.', ->
                       expect(u).equal(user2)
                       done()
 
+        it 'should list own rooms and sockets', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          room1 = new Room chatServer, roomName1
+          room2 = new Room chatServer, roomName2
+          chatServer.chatState.addRoom room1, ->
+            chatServer.chatState.addRoom room2, ->
+              socket1 = ioClient.connect url1, makeParams(user1)
+              socket1.on 'loginConfirmed', (error, data1) ->
+                id1 = data1.id
+                socket1.emit 'roomJoin', roomName1, (error, data) ->
+                  socket1.emit 'roomJoin', roomName2, (error, data) ->
+                    socket2 = ioClient.connect url1, makeParams(user1)
+                    socket2.on 'loginConfirmed', (error, data2)->
+                      id2 = data2.id
+                      socket2.emit 'roomJoin', roomName1, (error, data) ->
+                        socket2.emit 'listAccountJoinedRooms', (error, data) ->
+                          expect(data[roomName1]).lengthOf(2)
+                          expect(data[roomName2]).lengthOf(1)
+                          expect(data[roomName1]).include.members([id1,id2])
+                          expect(data[roomName2]).include(id1)
+                          done()
+
 
       describe 'Direct messaging', ->
 
