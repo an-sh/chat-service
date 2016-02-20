@@ -29,11 +29,10 @@ var chatServer = new ChatService({ port : port },
 ```
 Here we have created a new server instance. It is ruuning _`port`_
 according to options argument. The second argument represents hooks,
-that will run during server lifetime. _`auth`_ hook is simular to the
-one that is described in socket.io documentation, and _`onConnect`_
-hook will run when client is connected. These hook are intended for
-integration to existing user authentication systems. The last argument
-is for storage options.
+that will run during server lifetime. _`auth`_ hook is a socket.io
+middleware, and _`onConnect`_ hook will run when client is
+connected. These hook are intended for integration to existing user
+authentication systems. The last argument is for storage options.
 
 Connection from a client side is trivial:
 ```javascript

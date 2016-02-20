@@ -7,6 +7,7 @@
 - Use redlock when modifying user to room associations.
 - adminlist to access lists changed.
 - Hook arguments changed.
+- Add listJoinedRooms command.
 
 ### 0.6.1 (2016/02/01)
 

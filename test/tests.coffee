@@ -327,14 +327,14 @@ describe 'Chat service.', ->
               socket2.on 'loginConfirmed', (u, data) ->
                 s2id = data.id
                 socket2.emit 'roomJoin', roomName1
-                socket1.on 'roomJoinedEcho', (id, room, njoined) ->
-                  expect(id).equal(s2id)
+                socket1.on 'roomJoinedEcho', (room, id, njoined) ->
                   expect(room).equal(roomName1)
+                  expect(id).equal(s2id)
                   expect(njoined).equal(1)
                   socket1.emit 'roomLeave', roomName1
-                  socket2.on 'roomLeftEcho', (id, room, njoined) ->
-                    expect(id).equal(s1id)
+                  socket2.on 'roomLeftEcho', (room, id, njoined) ->
                     expect(room).equal(roomName1)
+                    expect(id).equal(s1id)
                     expect(njoined).equal(1)
                     socket1.emit 'roomMessage', roomName1, message
                     , (error, data) ->
@@ -358,22 +358,22 @@ describe 'Chat service.', ->
                       socket2.disconnect()
                       async.parallel [
                         (cb) ->
-                          socket1.once 'roomLeftEcho', (id, room, njoined) ->
-                            expect(id).equal(s2id)
+                          socket1.once 'roomLeftEcho', (room, id, njoined) ->
                             expect(room).equal(roomName1)
+                            expect(id).equal(s2id)
                             expect(njoined).equal(1)
                             cb()
                         (cb) ->
-                          socket3.once 'roomLeftEcho', (id, room, njoined) ->
-                            expect(id).equal(s2id)
+                          socket3.once 'roomLeftEcho', (room, id, njoined) ->
                             expect(room).equal(roomName1)
+                            expect(id).equal(s2id)
                             expect(njoined).equal(1)
                             cb()
                       ] , ->
                         socket1.disconnect()
-                        socket3.once 'roomLeftEcho', (id, room, njoined) ->
-                          expect(id).equal(s1id)
+                        socket3.once 'roomLeftEcho', (room, id, njoined) ->
                           expect(room).equal(roomName1)
+                          expect(id).equal(s1id)
                           expect(njoined).equal(0)
                           done()
 
@@ -759,7 +759,7 @@ describe 'Chat service.', ->
                     socket2.on 'loginConfirmed', (error, data2)->
                       id2 = data2.id
                       socket2.emit 'roomJoin', roomName1, (error, data) ->
-                        socket2.emit 'listAccountJoinedRooms', (error, data) ->
+                        socket2.emit 'listJoinedRooms', (error, data) ->
                           expect(data[roomName1]).lengthOf(2)
                           expect(data[roomName2]).lengthOf(1)
                           expect(data[roomName1]).include.members([id1,id2])
@@ -1080,8 +1080,10 @@ describe 'Chat service.', ->
               expect(error).ok
               done()
 
-        it 'should have a server messages field', (done) ->
+        it 'should have a server messages and user commands fields', (done) ->
           chatServer = new ChatService {port : port}, null, state
           for k, fn of chatServer.serverMessages
+            fn()
+          for k, fn of chatServer.userCommands
             fn()
           process.nextTick -> done()
