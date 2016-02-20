@@ -210,6 +210,4 @@ class Room
         @getModeChangedCurrentAccess whitelistOnly, cb
 
 
-module.exports = {
-  Room
-}
+module.exports = Room

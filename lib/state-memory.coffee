@@ -356,6 +356,4 @@ class MemoryState
     else process.nextTick -> fn()
 
 
-module.exports = {
-  MemoryState
-}
+module.exports = MemoryState

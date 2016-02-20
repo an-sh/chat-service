@@ -423,6 +423,4 @@ class RedisState
         else removeDBentries()
 
 
-module.exports = {
-  RedisState
-}
+module.exports = RedisState
