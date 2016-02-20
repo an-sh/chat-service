@@ -465,13 +465,15 @@ argumentsValidators = new ArgumentsValidators
 # @private
 # @mixin
 # @nodoc
-RoomHelpers =
+RoomPermissions =
 
   # @private
   isAdmin : (userName, cb) ->
     @roomState.ownerGet withEH cb, (owner) =>
+      if owner == userName
+        return cb null, true
       @roomState.hasInList 'adminlist', userName, withEH cb, (hasName) ->
-        if owner == userName or hasName
+        if hasName
           return cb null, true
         cb null, false
 
@@ -575,7 +577,7 @@ RoomHelpers =
 # @nodoc
 class Room
 
-  extend @, RoomHelpers
+  extend @, RoomPermissions
 
   # @private
   constructor : (@server, @name) ->
@@ -586,6 +588,14 @@ class Room
   # @private
   initState : (state, cb) ->
     @roomState.initState state, cb
+
+  # @private
+  removeState : (cb) ->
+    @roomState.removeState cb
+
+  # @private
+  getUsers: (cb) ->
+    @roomState.getList 'userlist', cb
 
   # @private
   leave : (userName, cb) ->
@@ -654,7 +664,11 @@ class Room
 # @private
 # @mixin
 # @nodoc
-DirectMessagingHelpers =
+#
+# Implements permissions checks.
+# Required existence of username, directMessagingState and
+# errorBuilder in extented classes.
+DirectMessagingPermissions =
 
   # @private
   checkUser : (author, cb) ->
@@ -701,9 +715,13 @@ DirectMessagingHelpers =
 
 # @private
 # @nodoc
+#
+# @extend DirectMessagingPermissions
+# Implements DirectMessaging state manipulations with the respect to a
+# users permission.
 class DirectMessaging
 
-  extend @, DirectMessagingHelpers
+  extend @, DirectMessagingPermissions
 
   # @private
   constructor : (@server, @username) ->
@@ -753,6 +771,9 @@ class DirectMessaging
 # @private
 # @mixin
 # @nodoc
+#
+# Implements command implementation functions binding and wrapping.
+# Required existence of server in extented classes.
 CommandBinders =
 
   # @private
@@ -830,22 +851,22 @@ UserHelpers =
       cb null, sockets?.length || 0
 
   # @private
-  removeRoomUsers : (userNames, roomName, cb) ->
-    @withRoom roomName, withEH cb, (room) =>
-      async.eachLimit userNames, asyncLimit
-      , (userName, fn) =>
-        @chatState.lockUser userName, withEH fn, (lock) =>
-          unlock = bindUnlock lock, fn
-          room.leave userName, withEH unlock, =>
-            @chatState.getUser userName, withEH unlock, (user, isOnline) =>
-              user.userState.roomRemoveAll roomName, withEH unlock, =>
-                user.userState.socketsGetAll withEH unlock, (sockets) =>
-                  for id in sockets
-                    @send id, 'roomAccessRemoved', roomName
-                    socket = @getSocketObject id
-                    socket?.leave roomName
-                  unlock()
-      , -> cb()
+  removeRoomUsers : (room, userNames, cb) ->
+    roomName = room.name
+    async.eachLimit userNames, asyncLimit
+    , (userName, fn) =>
+      @chatState.lockUser userName, withEH fn, (lock) =>
+        unlock = bindUnlock lock, fn
+        room.leave userName, withEH unlock, =>
+          @chatState.getUser userName, withEH unlock, (user, isOnline) =>
+            user.userState.roomRemoveAll roomName, withEH unlock, =>
+              user.userState.socketsGetAll withEH unlock, (sockets) =>
+                for id in sockets
+                  @send id, 'roomAccessRemoved', roomName
+                  socket = @getSocketObject id
+                  socket?.leave roomName
+                unlock()
+    , -> cb()
 
   # @private
   removeRoomSocket : (id, allsockets, roomName, cb) ->
@@ -993,10 +1014,10 @@ class User extends DirectMessaging
   # @private
   roomAddToList : (roomName, listName, values, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.addToList @username, listName, values, withEH cb, (data) =>
+      room.addToList @username, listName, values, withEH cb, (usernames) =>
         if @enableAccessListsUpdates
           @send roomName, 'roomAccessListAdded', roomName, listName, values
-        @removeRoomUsers data, roomName, cb
+        @removeRoomUsers room, usernames, cb
 
   # @private
   roomCreate : (roomName, whitelistOnly, cb) ->
@@ -1018,10 +1039,10 @@ class User extends DirectMessaging
       return cb error
     @withRoom roomName, withEH cb, (room) =>
       room.checkIsOwner @username, withEH cb, =>
-        room.roomState.getList 'userlist', withEH cb, (list) =>
-          @removeRoomUsers list, roomName, =>
+        room.getUsers withEH cb, (usernames) =>
+          @removeRoomUsers room, usernames, =>
             @chatState.removeRoom room.name, ->
-              room.roomState.removeState cb
+              room.removeState cb
 
   # @private
   roomGetAccessList : (roomName, listName, cb) ->
@@ -1090,16 +1111,16 @@ class User extends DirectMessaging
   # @private
   roomRemoveFromList : (roomName, listName, values, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.removeFromList @username, listName, values, withEH cb, (data) =>
+      room.removeFromList @username, listName, values, withEH cb, (usernames) =>
         if @enableAccessListsUpdates
           @send roomName, 'roomAccessListRemoved', roomName, listName, values
-        @removeRoomUsers data, roomName, cb
+        @removeRoomUsers room, usernames, cb
 
   # @private
   roomSetWhitelistMode : (roomName, mode, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.changeMode @username, mode, withEH cb, (data) =>
-        @removeRoomUsers data, roomName, cb
+      room.changeMode @username, mode, withEH cb, (usernames) =>
+        @removeRoomUsers room, usernames, cb
 
 
 # An instance creates a new chat service.
