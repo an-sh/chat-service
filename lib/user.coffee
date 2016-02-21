@@ -430,7 +430,7 @@ class User extends DirectMessaging
 
   # @private
   directAddToList : (listName, values, cb) ->
-    @addToList @username, listName, values, cb
+    @addToList @username, listName, values, (error) -> cb error
 
   # @private
   directGetAccessList : (listName, cb) ->
@@ -460,11 +460,11 @@ class User extends DirectMessaging
 
   # @private
   directRemoveFromList : (listName, values, cb) ->
-    @removeFromList @username, listName, values, cb
+    @removeFromList @username, listName, values, (error) -> cb error
 
   # @private
   directSetWhitelistMode : (mode, cb) ->
-    @changeMode @username, mode, cb
+    @changeMode @username, mode, (error) -> cb error
 
   # @private
   disconnect : (reason, cb, id) ->
@@ -508,13 +508,13 @@ class User extends DirectMessaging
     unless @enableRoomsManagement
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
-    room = @server.Room roomName
+    room = @server.makeRoom roomName
     @chatState.addRoom room, withEH cb, (nadded) =>
       if nadded != 1
         error = @errorBuilder.makeError 'roomExists', roomName
         return cb error
       room.initState { owner : @username, whitelistOnly : whitelistOnly }
-      , cb
+      , (error) -> cb error
 
   # @private
   roomDelete : (roomName, cb) ->
@@ -526,7 +526,7 @@ class User extends DirectMessaging
         room.getUsers withEH cb, (usernames) =>
           @removeRoomUsers room, usernames, =>
             @chatState.removeRoom room.name, ->
-              room.removeState cb
+              room.removeState (error) -> cb error
 
   # @private
   roomGetAccessList : (roomName, listName, cb) ->
@@ -590,7 +590,7 @@ class User extends DirectMessaging
       pmsg = processMessage @username, msg
       room.message @username, pmsg, withEH cb, =>
         @send roomName, 'roomMessage', roomName, @username, pmsg
-        cb null, msg
+        cb()
 
   # @private
   roomRemoveFromList : (roomName, listName, values, cb) ->

@@ -314,7 +314,7 @@ class RedisState
       unless data
         error = @errorBuilder.makeError 'noRoom', name
         return cb error
-      room = new @server.Room name
+      room = @server.makeRoom name
       cb null, room
 
   # @private
@@ -341,12 +341,12 @@ class RedisState
     @redis.sismember @makeDBHashName('usersOnline'), name, @withTE cb, (data) =>
       unless data
         return cb @errorBuilder.makeError 'noUserOnline', name
-      user = new @server.User name
+      user = @server.makeUser name
       cb null, user
 
   # @private
   getUser : (name, cb) ->
-    user = new @server.User name
+    user = @server.makeUser name
     @redis.sismember @makeDBHashName('usersOnline'), name, @withTE cb, (data) =>
       if data then return cb null, user, true
       @redis.sismember @makeDBHashName('users'), name, @withTE cb, (data) =>
@@ -376,11 +376,11 @@ class RedisState
       @redis.sadd @makeDBSocketsName(uid), socket.id, @withTE unlock, =>
         @redis.sismember @makeDBHashName('usersOnline'), name, @withTE unlock
         , (data) =>
-          user = new @server.User name
+          user = @server.makeUser name
           if data
             user.registerSocket socket, unlock
           else
-            user = new @server.User name
+            user = @server.makeUser name
             @redis.multi()
             .sadd @makeDBHashName('users'), name
             .sadd @makeDBHashName('usersOnline'), name
@@ -388,14 +388,14 @@ class RedisState
               user.registerSocket socket, unlock
 
   # @private
-  addUser : (name, cb, state = null) ->
+  addUser : (name, state, cb) ->
     @lockUser name, @withTE cb, (lock) =>
       unlock = bindUnlock lock, cb
       @redis.sismember @makeDBHashName('users'), name, @withTE unlock
       , (hasUser) =>
         if hasUser
           return unlock @errorBuilder.makeError 'userExists', name
-        user = new @server.User name
+        user = @server.makeUser name
         @redis.sadd @makeDBHashName('users'), name, @withTE unlock, ->
           if state
             user.initState state, unlock
@@ -404,7 +404,7 @@ class RedisState
 
   # @private
   removeUser : (name, cb) ->
-    user = new @server.User name
+    user = @server.makeUser name
     @lockUser name, @withTE cb, (lock) =>
       unlock = bindUnlock lock, cb
       @redis.sismember @makeDBHashName('usersOnline'), name, @withTE unlock

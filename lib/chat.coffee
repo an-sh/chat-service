@@ -4,7 +4,7 @@ RedisAdapter = require 'socket.io-redis'
 SocketServer = require 'socket.io'
 uid = require 'uid-safe'
 
-ErrorBuilder = require('./utils.coffee').ErrorBuilder
+{ ErrorBuilder, extend, withEH } = require('./utils.coffee')
 MemoryState = require('./state-memory.coffee')
 RedisState = require('./state-redis.coffee')
 Room = require('./room.coffee')
@@ -21,7 +21,6 @@ User = require('./user.coffee')
 #       # just the same as any event. no reply is required.
 #
 class ServerMessages
-
   # Direct message.
   # @param fromUser [String] Message sender.
   # @param msg [Object<textMessage:String, timestamp:Number, author:String>]
@@ -131,7 +130,6 @@ class ServerMessages
 #       # only when the server has finished message processing.
 #
 class UserCommands
-
   # Adds usernames to user's direct messaging blacklist or whitelist.
   # @param listName [String] 'blacklist' or 'whitelist'.
   # @param usernames [Array<String>] Usernames to add to the list.
@@ -274,9 +272,8 @@ class UserCommands
   # @see ServerMessages#roomMessage
   # @param roomName [String] Room name.
   # @param msg [Object<textMessage : String>] Message.
-  # @param cb [Function<error, Object<textMessage:String,
-  #   timestamp:Number, author:String>>] Sends ack with an error or
-  #   a processed message.
+  # @param cb [Function<error, null>] Sends ack with an error or
+  #   empty data.
   roomMessage : (roomName, msg, cb) ->
 
   # Removes usernames from room's blacklist, adminlist and
@@ -306,8 +303,75 @@ class UserCommands
   roomSetWhitelistMode : (roomName, mode, cb) ->
 
 
-# An instance creates a new chat service.
+# @mixin
+# User creation/deletion API.
+UserManager =
+  # Remove all user data and closes all connections.
+  #
+  # @param userName [String] User name.
+  # @param cb [Callback] Optional callback.
+  removeUser : (userName, cb = ->) ->
+    @chatState.removeUser userName, cb
+
+  # Adds an user with a state.
+  #
+  # @param userName [String] User name.
+  # @param state [Object] User state.
+  # @param cb [Callback] Optional callback.
+  #
+  # @option state [Array<String>] whitelist User direct messages whitelist.
+  # @option state [Array<String>] blacklist User direct messages blacklist.
+  # @option state [Boolean] whitelistOnly User direct messages
+  #   whitelistOnly mode.
+  addUser : (userName, state, cb = ->) ->
+    @chatState.addUser userName, state, cb
+
+# @mixin
+# Room creation/deletion API.
+RoomManager =
+  # Removes all room data, and removes joined user from the room.
+  #
+  # @param roomName [String] User name.
+  # @param cb [Callback] Optional callback.
+  removeRoom : (roomName, cb = ->) ->
+    user = @makeUser()
+    user.withRoom roomName, withEH cb, (room) =>
+      room.getUsers withEH cb, (usernames) =>
+        user.removeRoomUsers room, usernames, =>
+          @chatState.removeRoom room.name, ->
+            room.removeState cb
+
+  # Adds a room with a state.
+  #
+  # @param roomName [String] Room name.
+  # @param state [Object] Room state.
+  # @param cb [Callback] Optional callback.
+  #
+  # @option state [Array<String>] whitelist Room whitelist.
+  # @option state [Array<String>] blacklist Room blacklist
+  # @option state [Array<String>] adminlist Room adminlist.
+  # @option state [Array<Object>] lastMessages Room lastMessages
+  #   history.
+  # @option state [Boolean] whitelistOnly Room whitelistOnly mode.
+  # @option state [String] owner Room owner.
+  addRoom : (roomName, state, cb = ->) ->
+    room = @makeRoom roomName
+    @chatState.addRoom room, withEH cb, (nadded) =>
+      if nadded != 1
+        error = @errorBuilder.makeError 'roomExists', roomName
+        return cb error
+      if state
+        room.initState state, cb
+      else
+        cb()
+
+# Service object.
+# @extend UserManager
+# @extend RoomManager
 class ChatService
+
+  extend @, UserManager, RoomManager
+
   # Crates an object and starts a new server instance.
   #
   # @option options [String] namespace
@@ -400,7 +464,6 @@ class ChatService
   #
   # @option stateOptions [Integer] redlockTTL
   #   redlock TTL option, default is 2000.
-  #
   constructor : (@options = {}, @hooks = {}, @storageOptions = {}) ->
     @setOptions()
     @setServer()
@@ -437,7 +500,7 @@ class ChatService
     @http = @options.http unless @io
     @nclosing = 0
     @closeCB = null
-    state = switch @state
+    State = switch @state
       when 'memory' then MemoryState
       when 'redis' then RedisState
       when typeof @state == 'function' then @state
@@ -445,7 +508,7 @@ class ChatService
     Adapter = switch @adapter
       when 'memory' then null
       when 'redis' then RedisAdapter
-      when typeof @state == 'function' then @adapter
+      when typeof @adapter == 'function' then @adapter
       else throw new Error "Invalid adapter: #{@adapter}"
     unless @io
       if @http
@@ -457,14 +520,14 @@ class ChatService
         @ioAdapter = new Adapter @socketIoAdapterOptions
         @io.adapter @ioAdapter
     @nsp = @io.of @namespace
-    userCommands = new UserCommands
-    serverMessages = new ServerMessages
-    @User = (args...) =>
+    @userCommands = new UserCommands()
+    @serverMessages = new ServerMessages()
+    @makeUser = (args...) =>
       new User @, args...
-    @Room = (args...) =>
+    @makeRoom = (args...) =>
       new Room @, args...
     @errorBuilder = new ErrorBuilder @useRawErrorObjects
-    @chatState = new state @, @stateOptions
+    @chatState = new State @, @stateOptions
 
   # @private
   # @nodoc
@@ -526,12 +589,6 @@ class ChatService
     if @closeCB and @nclosing == 0
       process.nextTick => @finish()
 
-  # Remove all user data and closes all user connections
-  # @param userName [String] User name.
-  # @param cb [callback] Optional callback.
-  removeUser : (userName, cb = ->) ->
-    @chatState.removeUser userName, cb
-
   # Closes server.
   # @param done [callback] Optional callback.
   close : (done = ->) ->
@@ -564,5 +621,4 @@ class ChatService
 module.exports = {
   ChatService
   User
-  Room
 }

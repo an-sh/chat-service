@@ -5,9 +5,12 @@
 - Changed roomJoinedEcho and roomLeftEcho ServerMessages.
 - Include redis socket.io adapter.
 - Use redlock when modifying user to room associations.
+- Use redlock when modifying user to socket associations.
 - adminlist to access lists changed.
 - Hook arguments changed.
 - Add listJoinedRooms command.
+- Change roomMessage command.
+- Change roomMessage and directMessage server messages.
 
 ### 0.6.1 (2016/02/01)
 

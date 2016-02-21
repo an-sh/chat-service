@@ -323,18 +323,18 @@ class MemoryState
       @usersOnline[name] = returnedUser
       returnedUser.registerSocket socket, cb
     else
-      newUser = new @server.User name
+      newUser = @server.makeUser name
       @usersOnline[name] = newUser
       @users[name] = newUser
       newUser.registerSocket socket, cb
 
   # @private
-  addUser : (name, cb, state = null) ->
+  addUser : (name, state, cb) ->
     user = @users[name]
     if user
       error = @errorBuilder.makeError 'userExists', name
       return process.nextTick -> cb error
-    user = new @server.User name
+    user = @server.makeUser name
     @users[name] = user
     if state
       user.initState state, cb
