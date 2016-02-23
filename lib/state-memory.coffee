@@ -161,78 +161,76 @@ class UserStateMemory
   constructor : (@server, @username) ->
     @roomslist = new FastSet
     @sockets = new FastSet
-    @socketrooms = new Map
+    @socketrooms = @server.state.socketrooms
+    @roomsockets = @server.state.roomsockets
 
   # @private
-  socketAdd : (id, cb) ->
+  addSocket : (id, cb) ->
     @sockets.add id
     process.nextTick -> cb null
 
   # @private
-  socketRemove : (id, cb) ->
+  removeSocket : (id, cb) ->
     @sockets.remove id
     process.nextTick -> cb null
 
   # @private
-  socketsGetAll : (cb) ->
+  getAllSockets : (cb) ->
     sockets = @sockets.toArray()
     process.nextTick -> cb null, sockets
 
   # @private
-  isSocketInRoomSync : (id, roomName) ->
-    set = @socketrooms.get id
-    set?.has roomName
-
-  # @private
-  filterRoomSocketsSync : (sockets, roomName) ->
-    _.filter sockets, (id) =>
-      @isSocketInRoomSync id, roomName
-
-  # @private
-  filterRoomSockets : (sockets, roomName, cb) ->
-    roomSockets = @filterRoomSocketsSync sockets, roomName
-    process.nextTick -> cb null, roomSockets
-
-  # @private
-  getRoomSockets : (roomName, cb) ->
-    sockets = @sockets.toArray()
-    @filterRoomSockets sockets, roomName, cb
+  getAllRooms : (cb) ->
+    rooms = @roomslist.toArray()
+    process.nextTick -> cb null, rooms
 
   # @private
   getRoomSocketsSync : (roomName) ->
-    sockets = @sockets.toArray()
-    @filterRoomSocketsSync sockets, roomName
+    socketsset = @roomsockets.get roomName
+    s = @sockets.intersection socketsset
+    s.toArray()
 
   # @private
-  roomAdd : (roomName, id, cb) ->
-    set = @socketrooms.get id
-    unless set
-      set = new FastSet
-      @socketrooms.set  id, set
-    set.add roomName
+  getRoomSockets : (roomName, cb) ->
+    sockets = @getRoomSocketsSync roomName
+    process.nextTick -> cb null, sockets
+
+  # @private
+  addSocketToRoom : (roomName, id, cb) ->
+    roomsset = @socketrooms.get id
+    socketsset = @roomsockets.get roomName
+    unless roomsset
+      roomsset = new FastSet
+      @socketrooms.set id, roomsset
+    unless socketsset
+      socketsset = new FastSet
+      @roomsockets.set roomName, socketsset
+    roomsset.add roomName
+    socketsset.add id
     @roomslist.add roomName
     process.nextTick -> cb null
 
   # @private
-  roomRemove : (roomName, id, cb) ->
-    set = @socketrooms.get id
-    set?.remove roomName
-    @roomslist.remove roomName
+  removeSocketFromRoom : (roomName, id, cb) ->
+    roomsset = @socketrooms.get id
+    socketsset = @roomsockets.get roomName
+    roomsset?.remove roomName
+    socketsset?.remove id
+    unless @getRoomSocketsSync(roomName)?.length
+      @roomslist.remove roomName
     process.nextTick -> cb null
 
   # @private
-  roomRemoveAll : (roomName, cb) ->
+  removeAllSocketsFromRoom : (roomName, cb) ->
+    sockets = @sockets.toArray()
+    socketsset = @roomsockets.get roomName
+    for id in socketsset?.toArray()
+      roomsset = @socketrooms.get id
+      roomsset?.remove roomName
+    socketsset = socketsset?.difference sockets
+    @roomsockets.set roomName, socketsset
     @roomslist.remove roomName
-    sockets = @getRoomSocketsSync roomName
-    for id in sockets
-      set = @socketrooms.get id
-      set?.remove roomName
     process.nextTick -> cb null
-
-  # @private
-  roomsGetAll : (cb) ->
-    rooms = @roomslist.toArray()
-    process.nextTick -> cb null, rooms
 
 
 # Implements global state API.
@@ -246,9 +244,11 @@ class MemoryState
     @usersOnline = {}
     @users = {}
     @rooms = {}
-    @roomState = RoomStateMemory
-    @userState = UserStateMemory
-    @directMessagingState = DirectMessagingStateMemory
+    @socketrooms = new Map
+    @roomsockets = new Map
+    @RoomState = RoomStateMemory
+    @UserState = UserStateMemory
+    @DirectMessagingState = DirectMessagingStateMemory
 
   # @private
   getRoom : (name, cb) ->
@@ -283,21 +283,6 @@ class MemoryState
     process.nextTick => cb null, _.keys @rooms
 
   # @private
-  getOnlineUser : (name, cb) ->
-    u = @usersOnline[name]
-    unless u
-      error = @errorBuilder.makeError 'noUserOnline', name
-    process.nextTick -> cb error, u
-
-  # @private
-  setUserOffline : (name, cb) ->
-    unless @usersOnline[name]
-      error = @errorBuilder.makeError 'noUserOnline', name
-    else
-      delete @usersOnline[name]
-    process.nextTick -> cb error
-
-  # @private
   removeSocket : (uid, id, cb) ->
     process.nextTick ->
       cb null
@@ -306,14 +291,6 @@ class MemoryState
   lockUser : (name, cb) ->
     process.nextTick ->
       cb null, { unlock : -> }
-
-  # @private
-  getUser : (name, cb) ->
-    isOnline = if @usersOnline[name] then true else false
-    user = @users[name]
-    unless user
-      error = @errorBuilder.makeError 'noUser', name
-    process.nextTick -> cb error, user, isOnline
 
   # @private
   loginUser : (uid, name, socket, cb) ->
@@ -329,6 +306,29 @@ class MemoryState
       @usersOnline[name] = newUser
       @users[name] = newUser
       newUser.registerSocket socket, cb
+
+  # @private
+  setUserOffline : (name, cb) ->
+    unless @usersOnline[name]
+      error = @errorBuilder.makeError 'noUserOnline', name
+    else
+      delete @usersOnline[name]
+    process.nextTick -> cb error
+
+  # @private
+  getUser : (name, cb) ->
+    isOnline = if @usersOnline[name] then true else false
+    user = @users[name]
+    unless user
+      error = @errorBuilder.makeError 'noUser', name
+    process.nextTick -> cb error, user, isOnline
+
+  # @private
+  getOnlineUser : (name, cb) ->
+    u = @usersOnline[name]
+    unless u
+      error = @errorBuilder.makeError 'noUserOnline', name
+    process.nextTick -> cb error, u
 
   # @private
   addUser : (name, state, cb) ->

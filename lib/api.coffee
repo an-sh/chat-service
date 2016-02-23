@@ -9,7 +9,7 @@ ServiceAPI =
   # @param userName [String] User name.
   # @param cb [Callback] Optional callback.
   removeUser : (userName, cb = ->) ->
-    @chatState.removeUser userName, withoutData cb
+    @state.removeUser userName, withoutData cb
 
   # Adds an user with a state.
   #
@@ -22,7 +22,7 @@ ServiceAPI =
   # @option state [Boolean] whitelistOnly User direct messages
   #   whitelistOnly mode.
   addUser : (userName, state, cb = ->) ->
-    @chatState.addUser userName, state, withoutData cb
+    @state.addUser userName, state, withoutData cb
 
   # Removes all room data, and removes joined user from the room.
   #
@@ -33,7 +33,7 @@ ServiceAPI =
     user.withRoom roomName, withEH cb, (room) =>
       room.getUsers withEH cb, (usernames) =>
         user.removeRoomUsers room, usernames, =>
-          @chatState.removeRoom room.name, ->
+          @state.removeRoom room.name, ->
             room.removeState withoutData cb
 
   # Adds a room with a state.
@@ -50,6 +50,6 @@ ServiceAPI =
   # @option state [Boolean] whitelistOnly Room whitelistOnly mode.
   # @option state [String] owner Room owner.
   addRoom : (roomName, state, cb = ->) ->
-    @chatState.addRoom roomName, state, withoutData cb
+    @state.addRoom roomName, state, withoutData cb
 
 module.exports = ServiceAPI

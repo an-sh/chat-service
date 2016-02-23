@@ -83,7 +83,7 @@ class RoomStateRedis extends ListsStateRedis
   constructor : (@server, @name, @historyMaxMessages = 0) ->
     @errorBuilder = @server.errorBuilder
     bindTE @
-    @redis = @server.chatState.redis
+    @redis = @server.state.redis
     @prefix = 'room'
 
   # @private
@@ -165,7 +165,7 @@ class DirectMessagingStateRedis extends ListsStateRedis
   constructor : (@server, @username) ->
     @name = @username
     @prefix = 'direct'
-    @redis = @server.chatState.redis
+    @redis = @server.state.redis
     @errorBuilder = @server.errorBuilder
     bindTE @
 
@@ -206,7 +206,7 @@ class UserStateRedis
   constructor : (@server, @username) ->
     @name = @username
     @prefix = 'user'
-    @redis = @server.chatState.redis
+    @redis = @server.state.redis
     @errorBuilder = @server.errorBuilder
     bindTE @
 
@@ -215,64 +215,65 @@ class UserStateRedis
     "#{namespace}:#{@prefix}:#{listName}:#{@name}"
 
   # @private
-  makeSocketListName : (id) ->
+  makeSocketToRoomsName : (id) ->
     "#{namespace}:#{@prefix}:socketrooms:#{id}"
 
   # @private
-  socketAdd : (id, cb) ->
+  makeRoomToSocketsName : (id) ->
+    "#{namespace}:#{@prefix}:roomsockets:#{id}"
+
+  # @private
+  addSocket : (id, cb) ->
     @redis.sadd @makeDBListName('sockets'), id, @withTE cb
 
   # @private
-  socketRemove : (id, cb) ->
+  removeSocket : (id, cb) ->
     @redis.srem @makeDBListName('sockets'), id, @withTE cb
 
   # @private
-  socketsGetAll : (cb) ->
+  getAllSockets : (cb) ->
     @redis.smembers @makeDBListName('sockets'), @withTE cb
 
   # @private
-  isSocketInRoom : (id, roomName, cb) ->
-    @redis.sismember @makeSocketListName(id), roomName, @withTE cb
-
-  # @private
-  filterRoomSockets : (sockets, roomName, cb) ->
-    async.filter sockets, (id, fn) =>
-      @isSocketInRoom id, roomName, (err, data) ->
-        fn data
-    , (sockets) -> cb null, sockets
+  getAllRooms : (cb) ->
+    @redis.smembers @makeDBListName('rooms'), @withTE cb
 
   # @private
   getRoomSockets : (roomName, cb) ->
-    @socketsGetAll @withTE cb, (sockets) =>
-      @filterRoomSockets sockets, roomName, cb
+    @redis.sinter @makeRoomToSocketsName(roomName), @makeDBListName('sockets')
+    , @withTE cb
 
   # @private
-  roomAdd : (roomName, id, cb) ->
+  addSocketToRoom : (roomName, id, cb) ->
     @redis.multi()
     .sadd @makeDBListName('rooms'), roomName
-    .sadd @makeSocketListName(id), roomName
+    .sadd @makeSocketToRoomsName(id), roomName
+    .sadd @makeRoomToSocketsName(roomName), id
     .exec @withTE cb
 
   # @private
-  roomRemove : (roomName, id, cb) ->
-    @redis.srem @makeSocketListName(id), roomName, @withTE cb, =>
+  removeSocketFromRoom : (roomName, id, cb) ->
+    @redis.multi()
+    .srem @makeSocketToRoomsName(id), roomName
+    .srem @makeRoomToSocketsName(roomName), id
+    .exec @withTE cb, =>
       @getRoomSockets roomName, @withTE cb, (sockets) =>
-        if !sockets or sockets.length == 0
+        if sockets?.length == 0
           @redis.srem @makeDBListName('rooms'), roomName, @withTE cb
         else
           cb()
 
   # @private
-  roomRemoveAll : (roomName, cb) ->
-    @redis.srem @makeDBListName('rooms'), roomName, @withTE cb, =>
-      @getRoomSockets roomName, @withTE cb, (sockets) =>
-        async.eachLimit sockets, asyncLimit, (id, fn) =>
-          @redis.srem @makeSocketListName(id), roomName, @withTE fn
-        , cb
-
-  # @private
-  roomsGetAll : (cb) ->
-    @redis.smembers @makeDBListName('rooms'), @withTE cb
+  removeAllSocketsFromRoom : (roomName, cb) ->
+    @getRoomSockets roomName, @withTE cb, (sockets) =>
+      cmds = []
+      for id in sockets
+        cmds.push [ 'srem', @makeSocketToRoomsName(id), roomName ]
+      @redis.multi cmds
+      .srem @makeDBListName('rooms'), roomName
+      .sdiffstore @makeRoomToSocketsName(roomName)
+      ,@makeRoomToSocketsName(roomName), @makeDBListName('sockets')
+      .exec @withTE cb
 
 
 # Implements global state API.
@@ -289,14 +290,14 @@ class RedisState
       , @options.redisClusterOptions
     else
       @redis = new Redis @options.redisOptions
-    @roomState = RoomStateRedis
-    @userState = UserStateRedis
-    @directMessagingState = DirectMessagingStateRedis
+    @RoomState = RoomStateRedis
+    @UserState = UserStateRedis
+    @DirectMessagingState = DirectMessagingStateRedis
     @lockTTL = @options?.lockTTL || 2000
     @lock = new Redlock [@redis], @options.redlockOptions
 
   # @private
-  makeDBHashName : (hashName) ->
+  makeDBListName : (hashName) ->
     "#{namespace}:#{hashName}"
 
   makeLockName : (name) ->
@@ -307,7 +308,7 @@ class RedisState
 
   # @private
   getRoom : (name, cb) ->
-    @redis.sismember @makeDBHashName('rooms'), name, @withTE cb, (data) =>
+    @redis.sismember @makeDBListName('rooms'), name, @withTE cb, (data) =>
       unless data
         error = @errorBuilder.makeError 'noRoom', name
         return cb error
@@ -317,7 +318,7 @@ class RedisState
   # @private
   addRoom : (name, state, cb) ->
     room = @server.makeRoom name
-    @redis.sadd @makeDBHashName('rooms'), name, @withTE cb, (nadded) =>
+    @redis.sadd @makeDBListName('rooms'), name, @withTE cb, (nadded) =>
       if nadded != 1
         return cb @errorBuilder.makeError 'roomExists', name
       if state
@@ -327,39 +328,14 @@ class RedisState
 
   # @private
   removeRoom : (name, cb) ->
-    @redis.sismember @makeDBHashName('rooms'), name, @withTE cb, (data) =>
+    @redis.sismember @makeDBListName('rooms'), name, @withTE cb, (data) =>
       unless data
         return cb @errorBuilder.makeError 'noRoom', name
-      @redis.srem @makeDBHashName('rooms'), name, @withTE cb
+      @redis.srem @makeDBListName('rooms'), name, @withTE cb
 
   # @private
   listRooms : (cb) ->
-    @redis.smembers @makeDBHashName('rooms'), @withTE cb
-
-  # @private
-  getOnlineUser : (name, cb) ->
-    @redis.sismember @makeDBHashName('usersOnline'), name, @withTE cb, (data) =>
-      unless data
-        return cb @errorBuilder.makeError 'noUserOnline', name
-      user = @server.makeUser name
-      cb null, user
-
-  # @private
-  getUser : (name, cb) ->
-    user = @server.makeUser name
-    @redis.sismember @makeDBHashName('usersOnline'), name, @withTE cb, (data) =>
-      if data then return cb null, user, true
-      @redis.sismember @makeDBHashName('users'), name, @withTE cb, (data) =>
-        if data then return cb null, user, false
-        else return cb @errorBuilder.makeError 'noUser', name
-
-  # @private
-  setUserOffline : (name, cb) ->
-    @redis.sismember @makeDBHashName('usersOnline'), name, @withTE cb
-    , (data) =>
-      unless data
-        return cb @errorBuilder.makeError 'noUserOnline', name
-      @redis.srem @makeDBHashName('usersOnline'), name, @withTE cb
+    @redis.smembers @makeDBListName('rooms'), @withTE cb
 
   # @private
   removeSocket : (uid, id, cb) ->
@@ -374,7 +350,7 @@ class RedisState
     @lockUser name, @withTE cb, (lock) =>
       unlock = bindUnlock lock, cb
       @redis.sadd @makeDBSocketsName(uid), socket.id, @withTE unlock, =>
-        @redis.sismember @makeDBHashName('usersOnline'), name, @withTE unlock
+        @redis.sismember @makeDBListName('usersOnline'), name, @withTE unlock
         , (data) =>
           user = @server.makeUser name
           if data
@@ -382,21 +358,46 @@ class RedisState
           else
             user = @server.makeUser name
             @redis.multi()
-            .sadd @makeDBHashName('users'), name
-            .sadd @makeDBHashName('usersOnline'), name
+            .sadd @makeDBListName('users'), name
+            .sadd @makeDBListName('usersOnline'), name
             .exec @withTE unlock, ->
               user.registerSocket socket, unlock
+
+  # @private
+  setUserOffline : (name, cb) ->
+    @redis.sismember @makeDBListName('usersOnline'), name, @withTE cb
+    , (data) =>
+      unless data
+        return cb @errorBuilder.makeError 'noUserOnline', name
+      @redis.srem @makeDBListName('usersOnline'), name, @withTE cb
+
+  # @private
+  getUser : (name, cb) ->
+    user = @server.makeUser name
+    @redis.sismember @makeDBListName('usersOnline'), name, @withTE cb, (data) =>
+      if data then return cb null, user, true
+      @redis.sismember @makeDBListName('users'), name, @withTE cb, (data) =>
+        if data then return cb null, user, false
+        else return cb @errorBuilder.makeError 'noUser', name
+
+  # @private
+  getOnlineUser : (name, cb) ->
+    @redis.sismember @makeDBListName('usersOnline'), name, @withTE cb, (data) =>
+      unless data
+        return cb @errorBuilder.makeError 'noUserOnline', name
+      user = @server.makeUser name
+      cb null, user
 
   # @private
   addUser : (name, state, cb) ->
     @lockUser name, @withTE cb, (lock) =>
       unlock = bindUnlock lock, cb
-      @redis.sismember @makeDBHashName('users'), name, @withTE unlock
+      @redis.sismember @makeDBListName('users'), name, @withTE unlock
       , (hasUser) =>
         if hasUser
           return unlock @errorBuilder.makeError 'userExists', name
         user = @server.makeUser name
-        @redis.sadd @makeDBHashName('users'), name, @withTE unlock, ->
+        @redis.sadd @makeDBListName('users'), name, @withTE unlock, ->
           if state
             user.initState state, unlock
           else
@@ -407,16 +408,16 @@ class RedisState
     user = @server.makeUser name
     @lockUser name, @withTE cb, (lock) =>
       unlock = bindUnlock lock, cb
-      @redis.sismember @makeDBHashName('usersOnline'), name, @withTE unlock
+      @redis.sismember @makeDBListName('usersOnline'), name, @withTE unlock
       , (data) =>
         removeDBentries = =>
-          @redis.sismember @makeDBHashName('users'), name, @withTE unlock
+          @redis.sismember @makeDBListName('users'), name, @withTE unlock
           , (data) =>
             unless data
               return unlock @errorBuilder.makeError 'noUser', name
             @redis.multi()
-            .srem @makeDBHashName('users'), name
-            .srem @makeDBHashName('usersOnline'), name
+            .srem @makeDBListName('users'), name
+            .srem @makeDBListName('usersOnline'), name
             .exec @withTE unlock, ->
               user.removeState unlock
         if data then user.disconnectSockets removeDBentries

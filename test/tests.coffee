@@ -150,28 +150,12 @@ describe 'Chat service.', ->
           chatServer.addUser user1, { whitelistOnly : true }, ->
             socket1 = clientConnect user1
             socket1.on 'loginConfirmed', (u) ->
-              chatServer.chatState.getOnlineUser user1, (error, user) ->
+              socket1.emit 'directGetWhitelistMode', (error, data) ->
                 expect(error).not.ok
-                expect(user).ok
-                user.directMessagingState.whitelistOnlyGet (error, wl) ->
-                  expect(error).not.ok
-                  expect(wl).true
-                  chatServer.removeUser user1, ->
-                    async.parallel [
-                      (cb) ->
-                        chatServer.chatState.getUser user1
-                        , (error, user, isOnline) ->
-                          expect(error).ok
-                          expect(user).not.ok
-                          expect(isOnline).not.ok
-                          cb()
-                      (cb) ->
-                        chatServer.chatState.getOnlineUser user1
-                        , (error, user) ->
-                          expect(error).ok
-                          expect(user).not.ok
-                          cb()
-                    ], done
+                expect(data).true
+                chatServer.removeUser user1
+                socket1.on 'disconnect', ->
+                  done()
 
         it 'should check existing users before adding new ones', (done) ->
           chatServer = new ChatService { port : port }, null, state

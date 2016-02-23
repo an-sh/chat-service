@@ -210,8 +210,8 @@ class DirectMessaging
   # @private
   constructor : (@server, @username) ->
     @errorBuilder = @server.errorBuilder
-    state = @server.chatState.directMessagingState
-    @directMessagingState = new state @server, @username
+    State = @server.state.DirectMessagingState
+    @directMessagingState = new State @server, @username
 
   # @private
   initState : (state, cb) ->
@@ -317,7 +317,7 @@ UserHelpers =
 
   # @private
   withRoom : (roomName, fn) ->
-    @chatState.getRoom roomName, fn
+    @state.getRoom roomName, fn
 
   # @private
   send : (id, args...) ->
@@ -332,7 +332,7 @@ UserHelpers =
     @getSocketObject(id)?.to(roomName)?.emit args...
 
   # @private
-  socketsInRoom : (roomName, cb) ->
+  socketsInRoomCount : (roomName, cb) ->
     @userState.getRoomSockets roomName, withEH cb, (sockets) ->
       cb null, sockets?.length || 0
 
@@ -349,12 +349,12 @@ UserCleanups =
     roomName = room.name
     async.eachLimit userNames, asyncLimit
     , (userName, fn) =>
-      @chatState.lockUser userName, withEH fn, (lock) =>
+      @state.lockUser userName, withEH fn, (lock) =>
         unlock = bindUnlock lock, fn
         room.leave userName, withEH unlock, =>
-          @chatState.getUser userName, withEH unlock, (user, isOnline) =>
-            user.userState.roomRemoveAll roomName, withEH unlock, =>
-              user.userState.socketsGetAll withEH unlock, (sockets) =>
+          @state.getUser userName, withEH unlock, (user, isOnline) =>
+            user.userState.removeAllSocketsFromRoom roomName, withEH unlock, =>
+              user.userState.getAllSockets withEH unlock, (sockets) =>
                 for id in sockets
                   @send id, 'roomAccessRemoved', roomName
                   socket = @getSocketObject id
@@ -365,30 +365,30 @@ UserCleanups =
   # @private
   removeRoomSocket : (id, allsockets, roomName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      @socketsInRoom roomName, withEH cb, (njoined) =>
-        sendEcho = =>
-          for sid in allsockets
-            @send sid, 'roomLeftEcho', roomName, id, njoined
-        sendLeave = =>
-          if @enableUserlistUpdates
-            @send roomName, 'roomUserLeft', roomName, @username
-        if njoined == 0
-          room.leave @username, withEH cb, =>
-            @userState.roomRemoveAll roomName, withEH cb, ->
+      @userState.removeSocketFromRoom roomName, id, withEH cb, =>
+        @socketsInRoomCount roomName, withEH cb, (njoined) =>
+          sendEcho = =>
+            for sid in allsockets
+              @send sid, 'roomLeftEcho', roomName, id, njoined
+          sendLeave = =>
+            if @enableUserlistUpdates
+              @send roomName, 'roomUserLeft', roomName, @username
+          if njoined == 0
+            room.leave @username, withEH cb, ->
               sendLeave()
               sendEcho()
               cb()
-        else
-          sendEcho()
-          cb()
+          else
+            sendEcho()
+            cb()
 
   # @private
   processDisconnect : (id, cb) ->
-    @userState.roomsGetAll withEH cb, (rooms) =>
-      @userState.socketsGetAll withEH cb, (sockets) =>
+    @userState.getAllRooms withEH cb, (rooms) =>
+      @userState.getAllSockets withEH cb, (sockets) =>
         nsockets = sockets.length
         end = =>
-          @chatState.removeSocket @chatState.serverUID, id, withEH cb, =>
+          @state.removeSocket @state.serverUID, id, withEH cb, =>
             for sid in sockets
               @send sid, 'socketDisconnectEcho', id, nsockets
             cb()
@@ -397,7 +397,7 @@ UserCleanups =
           @removeRoomSocket id, sockets, roomName, fn
         , =>
           if nsockets == 0
-            @chatState.setUserOffline @username, end
+            @state.setUserOffline @username, end
           else
             end()
 
@@ -413,13 +413,13 @@ class User extends DirectMessaging
   # @private
   constructor : (@server, @username) ->
     super @server, @username
-    @chatState = @server.chatState
+    @state = @server.state
     @enableUserlistUpdates = @server.enableUserlistUpdates
     @enableAccessListsUpdates = @server.enableAccessListsUpdates
     @enableRoomsManagement = @server.enableRoomsManagement
     @enableDirectMessages = @server.enableDirectMessages
-    state = @server.chatState.userState
-    @userState = new state @server, @username
+    State = @server.state.UserState
+    @userState = new State @server, @username
 
   # @private
   initState : (state, cb) ->
@@ -428,10 +428,10 @@ class User extends DirectMessaging
   # @private
   registerSocket : (socket, cb) ->
     id = socket.id
-    @userState.socketAdd id, withEH cb, =>
+    @userState.addSocket id, withEH cb, =>
       for cmd of ArgumentsValidators
         @bindCommand socket, cmd, @[cmd]
-      @userState.socketsGetAll withEH cb, (sockets) =>
+      @userState.getAllSockets withEH cb, (sockets) =>
         nsockets = sockets.length
         for sid in sockets
           if sid != id
@@ -440,7 +440,7 @@ class User extends DirectMessaging
 
   # @private
   disconnectSockets : (cb) ->
-    @userState.socketsGetAll withEH cb, (sockets) =>
+    @userState.getAllSockets withEH cb, (sockets) =>
       async.eachLimit sockets, asyncLimit
       , (sid, fn) =>
         if @server.nsp.connected[sid]
@@ -467,15 +467,15 @@ class User extends DirectMessaging
     unless @enableDirectMessages
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
-    @chatState.getOnlineUser toUserName, withEH cb, (toUser) =>
-      @chatState.getOnlineUser @username, withEH cb, (fromUser) =>
+    @state.getOnlineUser toUserName, withEH cb, (toUser) =>
+      @state.getOnlineUser @username, withEH cb, (fromUser) =>
         pmsg = processMessage @username, msg
         toUser.message @username, pmsg, withEH cb, =>
-          fromUser.userState.socketsGetAll withEH cb, (sockets) =>
+          fromUser.userState.getAllSockets withEH cb, (sockets) =>
             for sid in sockets
               if sid != id
                 @send sid, 'directMessageEcho', toUserName, pmsg
-            toUser.userState.socketsGetAll withEH cb, (sockets) =>
+            toUser.userState.getAllSockets withEH cb, (sockets) =>
               for sid in sockets
                 @send sid, 'directMessage', @username, pmsg
               cb null, msg
@@ -494,17 +494,17 @@ class User extends DirectMessaging
     endDisconnect = (args...) =>
       @server.endClientDisconnect()
       cb args...
-    @chatState.lockUser @username, withEH endDisconnect, (lock) =>
+    @state.lockUser @username, withEH endDisconnect, (lock) =>
       unlock = bindUnlock lock, endDisconnect
-      @userState.socketRemove id, withEH unlock, =>
+      @userState.removeSocket id, withEH unlock, =>
         @processDisconnect id, unlock
 
   # @private
   listJoinedRooms : (cb) ->
     result = {}
-    @chatState.lockUser @username, withEH cb, (lock) =>
+    @state.lockUser @username, withEH cb, (lock) =>
       unlock = bindUnlock lock, cb
-      @userState.roomsGetAll withEH unlock, (rooms) =>
+      @userState.getAllRooms withEH unlock, (rooms) =>
         async.eachLimit rooms, asyncLimit
         , (roomName, fn) =>
           @userState.getRoomSockets roomName, withEH fn, (sockets) ->
@@ -515,7 +515,7 @@ class User extends DirectMessaging
 
   # @private
   listRooms : (cb) ->
-    @chatState.listRooms cb
+    @state.listRooms cb
 
   # @private
   roomAddToList : (roomName, listName, values, cb) ->
@@ -530,7 +530,7 @@ class User extends DirectMessaging
     unless @enableRoomsManagement
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
-    @chatState.addRoom roomName
+    @state.addRoom roomName
       , { owner : @username, whitelistOnly : whitelistOnly }
       , withoutData cb
 
@@ -543,7 +543,7 @@ class User extends DirectMessaging
       room.checkIsOwner @username, withEH cb, =>
         room.getUsers withEH cb, (usernames) =>
           @removeRoomUsers room, usernames, =>
-            @chatState.removeRoom room.name, ->
+            @state.removeRoom room.name, ->
               room.removeState withoutData cb
 
   # @private
@@ -565,13 +565,13 @@ class User extends DirectMessaging
   roomJoin : (roomName, cb, id) ->
     socket = @getSocketObject id
     @withRoom roomName, withEH cb, (room) =>
-      @chatState.lockUser @username, withEH cb, (lock) =>
+      @state.lockUser @username, withEH cb, (lock) =>
         unlock = bindUnlock lock, cb
         room.join @username, withEH unlock, =>
-          @userState.roomAdd roomName, id, withEH unlock, =>
+          @userState.addSocketToRoom roomName, id, withEH unlock, =>
             socket.join roomName, withEH unlock, =>
-              @userState.socketsGetAll withEH unlock, (sockets) =>
-                @userState.filterRoomSockets sockets, roomName, withEH unlock
+              @userState.getAllSockets withEH unlock, (sockets) =>
+                @userState.getRoomSockets roomName, withEH unlock
                 , (roomSockets) =>
                   njoined = roomSockets?.length
                   for sid in sockets
@@ -586,12 +586,12 @@ class User extends DirectMessaging
   roomLeave : (roomName, cb, id) ->
     socket = @getSocketObject id
     @withRoom roomName, withEH cb, (room) =>
-      @chatState.lockUser @username, withEH cb, (lock) =>
+      @state.lockUser @username, withEH cb, (lock) =>
         unlock = bindUnlock lock, cb
         socket.leave roomName, withEH unlock, =>
-          @userState.roomRemove roomName, id, withEH unlock, =>
-            @userState.socketsGetAll withEH unlock, (sockets) =>
-              @userState.filterRoomSockets sockets, roomName, withEH unlock
+          @userState.removeSocketFromRoom roomName, id, withEH unlock, =>
+            @userState.getAllSockets withEH unlock, (sockets) =>
+              @userState.getRoomSockets roomName, withEH unlock
               , (roomSockets) =>
                 njoined = roomSockets?.length
                 for sid in sockets

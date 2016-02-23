@@ -1,7 +1,7 @@
 
-_ = require 'lodash'
 RedisAdapter = require 'socket.io-redis'
 SocketServer = require 'socket.io'
+_ = require 'lodash'
 uid = require 'uid-safe'
 
 ErrorBuilder = require('./errorbuilder.coffee')
@@ -10,7 +10,6 @@ RedisState = require('./state-redis.coffee')
 Room = require('./room.coffee')
 ServiceAPI = require('./api.coffee')
 User = require('./user.coffee')
-
 extend = require('./utils.coffee').extend
 
 # @note This class describes socket.io outgoing messages, not methods.
@@ -436,8 +435,8 @@ class ChatService
     @enableDirectMessages = @options.enableDirectMessages || false
     @closeTimeout = @options.closeTimeout || 5000
     @socketIoServerOptions = @options.socketIoServerOptions
-    @state = @storageOptions.state
-    @adapter = @storageOptions.adapter
+    @stateConstructor = @storageOptions.state
+    @adapterConstructor = @storageOptions.adapter
     @socketIoAdapterOptions = @storageOptions.socketIoAdapterOptions
     @storageOptions = @options.stateOptions
     @serverUID = uid.sync 18
@@ -445,22 +444,23 @@ class ChatService
   # @private
   # @nodoc
   setServer : ->
+    @errorBuilder = new ErrorBuilder @useRawErrorObjects
     @io = @options.io
     @sharedIO = true if @io
     @http = @options.http unless @io
     @nclosing = 0
     @closeCB = null
     @finished = false
-    State = switch @state
+    State = switch @stateConstructor
       when 'memory' then MemoryState
       when 'redis' then RedisState
-      when typeof @state == 'function' then @state
-      else throw new Error "Invalid state: #{@state}"
-    Adapter = switch @adapter
+      when typeof @stateConstructor == 'function' then @stateConstructor
+      else throw new Error "Invalid state: #{@stateConstructor}"
+    Adapter = switch @adapterConstructor
       when 'memory' then null
       when 'redis' then RedisAdapter
-      when typeof @adapter == 'function' then @adapter
-      else throw new Error "Invalid adapter: #{@adapter}"
+      when typeof @adapterConstructor == 'function' then @adapterConstructor
+      else throw new Error "Invalid adapter: #{@adapterConstructor}"
     unless @io
       if @http
         @io = new SocketServer @http, @socketIoServerOptions
@@ -468,17 +468,16 @@ class ChatService
         port = @socketIoServerOptions?.port || 8000
         @io = new SocketServer port, @socketIoServerOptions
       if Adapter
-        @ioAdapter = new Adapter @socketIoAdapterOptions
-        @io.adapter @ioAdapter
+        @adapter = new Adapter @socketIoAdapterOptions
+        @io.adapter @adapter
     @nsp = @io.of @namespace
+    @state = new State @, @stateOptions
     @userCommands = new UserCommands()
     @serverMessages = new ServerMessages()
     @makeUser = (args...) =>
       new User @, args...
     @makeRoom = (args...) =>
       new Room @, args...
-    @errorBuilder = new ErrorBuilder @useRawErrorObjects
-    @chatState = new State @, @stateOptions
 
   # @private
   # @nodoc
@@ -524,7 +523,7 @@ class ChatService
       unless userName
         error = @errorBuilder.makeError 'noLogin'
         return @rejectLogin socket, error
-    @chatState.loginUser @serverUID, userName, socket, (error) =>
+    @state.loginUser @serverUID, userName, socket, (error) =>
       if error
         @rejectLogin socket, error
       else
@@ -540,11 +539,13 @@ class ChatService
   # @private
   # @nodoc
   startClientDisconnect : () ->
-    unless @closeCB then @nclosing++
+    # console.log 'disconnect start'
+    @nclosing++
 
   # @private
   # @nodoc
   endClientDisconnect : () ->
+    # console.log 'disconnect end'
     @nclosing--
     if @closeCB and @nclosing == 0
       process.nextTick => @finish()
@@ -559,6 +560,7 @@ class ChatService
       if @hooks.onClose
         @hooks.onClose @, error, done
       else
+        # console.log 'done'
         done error
     closeStartingTime = new Date().getTime()
     closingTimeoutChecker = =>
@@ -569,10 +571,11 @@ class ChatService
         @closeCB new Error 'Server closing timeout.'
       else
         setTimeout closingTimeoutChecker, 100
+    npending = 0
     for sid, socket of @nsp.connected
-      @nclosing++
-      socket.disconnect(true)
-    if @nclosing == 0
+      npending++
+      socket.disconnect()
+    if @nclosing == 0 and npending == 0
       process.nextTick => @closeCB()
     else
       closingTimeoutChecker()

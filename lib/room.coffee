@@ -131,8 +131,8 @@ class Room
   # @private
   constructor : (@server, @name) ->
     @errorBuilder = @server.errorBuilder
-    state = @server.chatState.roomState
-    @roomState = new state @server, @name, @server.historyMaxMessages
+    State = @server.state.RoomState
+    @roomState = new State @server, @name, @server.historyMaxMessages
 
   # @private
   initState : (state, cb) ->
