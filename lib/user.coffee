@@ -3,7 +3,7 @@ _ = require 'lodash'
 async = require 'async'
 check = require 'check-types'
 
-{ withEH, bindUnlock, extend, asyncLimit } =
+{ withEH, bindUnlock, extend, asyncLimit, withoutData } =
   require('./utils.coffee')
 
 # @private
@@ -430,7 +430,7 @@ class User extends DirectMessaging
 
   # @private
   directAddToList : (listName, values, cb) ->
-    @addToList @username, listName, values, (error) -> cb error
+    @addToList @username, listName, values, withoutData cb
 
   # @private
   directGetAccessList : (listName, cb) ->
@@ -460,11 +460,11 @@ class User extends DirectMessaging
 
   # @private
   directRemoveFromList : (listName, values, cb) ->
-    @removeFromList @username, listName, values, (error) -> cb error
+    @removeFromList @username, listName, values, withoutData cb
 
   # @private
   directSetWhitelistMode : (mode, cb) ->
-    @changeMode @username, mode, (error) -> cb error
+    @changeMode @username, mode, withoutData cb
 
   # @private
   disconnect : (reason, cb, id) ->
@@ -508,13 +508,9 @@ class User extends DirectMessaging
     unless @enableRoomsManagement
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
-    room = @server.makeRoom roomName
-    @chatState.addRoom room, withEH cb, (nadded) =>
-      if nadded != 1
-        error = @errorBuilder.makeError 'roomExists', roomName
-        return cb error
-      room.initState { owner : @username, whitelistOnly : whitelistOnly }
-      , (error) -> cb error
+    @chatState.addRoom roomName
+      , { owner : @username, whitelistOnly : whitelistOnly }
+      , withoutData cb
 
   # @private
   roomDelete : (roomName, cb) ->
@@ -526,7 +522,7 @@ class User extends DirectMessaging
         room.getUsers withEH cb, (usernames) =>
           @removeRoomUsers room, usernames, =>
             @chatState.removeRoom room.name, ->
-              room.removeState (error) -> cb error
+              room.removeState withoutData cb
 
   # @private
   roomGetAccessList : (roomName, listName, cb) ->

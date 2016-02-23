@@ -1,11 +1,10 @@
 
-async = require 'async'
-_ = require 'lodash'
-FastSet = require 'collections/fast-set'
 Deque = require 'collections/deque'
+FastSet = require 'collections/fast-set'
 Map = require 'collections/map'
-withEH = require('./utils.coffee').withEH
-asyncLimit = require('./utils.coffee').asyncLimit
+_ = require 'lodash'
+async = require 'async'
+{ withEH, asyncLimit } = require('./utils.coffee')
 
 
 # @private
@@ -90,11 +89,11 @@ class RoomStateMemory extends ListsStateMemory
     initState @lastMessages, lastMessages
     @whitelistOnly = if whitelistOnly then true else false
     @owner = if owner then owner else null
-    if cb then process.nextTick -> cb()
+    process.nextTick -> cb()
 
   # @private
   removeState : (cb) ->
-    if cb then process.nextTick -> cb()
+    process.nextTick -> cb()
 
   # @private
   hasList : (listName) ->
@@ -146,7 +145,7 @@ class DirectMessagingStateMemory extends ListsStateMemory
     initState @whitelist, whitelist
     initState @blacklist, blacklist
     @whitelistOnly = if whitelistOnly then true else false
-    if cb then process.nextTick -> cb()
+    process.nextTick -> cb()
 
   # @private
   hasList : (listName) ->
@@ -259,14 +258,17 @@ class MemoryState
     process.nextTick -> cb error, r
 
   # @private
-  addRoom : (room, cb) ->
-    name = room.name
+  addRoom : (name, state, cb) ->
+    room = @server.makeRoom name
     unless @rooms[name]
       @rooms[name] = room
     else
       error = @errorBuilder.makeError 'roomExists', name
-    process.nextTick ->
-      if error then cb error else cb null, 1
+      return process.nextTick -> cb error
+    if state
+      room.initState state, cb
+    else
+      process.nextTick -> cb()
 
   # @private
   removeRoom : (name, cb) ->
@@ -278,7 +280,7 @@ class MemoryState
 
   # @private
   listRooms : (cb) ->
-    process.nextTick => cb null, Object.keys @rooms
+    process.nextTick => cb null, _.keys @rooms
 
   # @private
   getOnlineUser : (name, cb) ->
@@ -338,7 +340,7 @@ class MemoryState
     @users[name] = user
     if state
       user.initState state, cb
-    else if cb
+    else
       process.nextTick -> cb()
 
   # @private
@@ -351,7 +353,7 @@ class MemoryState
       else
         delete @usersOnline[name]
         delete @users[name]
-      cb error if cb
+      cb error
     if user then user.disconnectSockets fn
     else process.nextTick -> fn()
 

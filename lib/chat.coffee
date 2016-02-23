@@ -4,11 +4,14 @@ RedisAdapter = require 'socket.io-redis'
 SocketServer = require 'socket.io'
 uid = require 'uid-safe'
 
-{ ErrorBuilder, extend, withEH } = require('./utils.coffee')
+ErrorBuilder = require('./errorbuilder.coffee')
 MemoryState = require('./state-memory.coffee')
 RedisState = require('./state-redis.coffee')
 Room = require('./room.coffee')
+ServiceAPI = require('./api.coffee')
 User = require('./user.coffee')
+
+extend = require('./utils.coffee').extend
 
 # @note This class describes socket.io outgoing messages, not methods.
 #
@@ -303,74 +306,11 @@ class UserCommands
   roomSetWhitelistMode : (roomName, mode, cb) ->
 
 
-# @mixin
-# User creation/deletion API.
-UserManager =
-  # Remove all user data and closes all connections.
-  #
-  # @param userName [String] User name.
-  # @param cb [Callback] Optional callback.
-  removeUser : (userName, cb = ->) ->
-    @chatState.removeUser userName, cb
-
-  # Adds an user with a state.
-  #
-  # @param userName [String] User name.
-  # @param state [Object] User state.
-  # @param cb [Callback] Optional callback.
-  #
-  # @option state [Array<String>] whitelist User direct messages whitelist.
-  # @option state [Array<String>] blacklist User direct messages blacklist.
-  # @option state [Boolean] whitelistOnly User direct messages
-  #   whitelistOnly mode.
-  addUser : (userName, state, cb = ->) ->
-    @chatState.addUser userName, state, cb
-
-# @mixin
-# Room creation/deletion API.
-RoomManager =
-  # Removes all room data, and removes joined user from the room.
-  #
-  # @param roomName [String] User name.
-  # @param cb [Callback] Optional callback.
-  removeRoom : (roomName, cb = ->) ->
-    user = @makeUser()
-    user.withRoom roomName, withEH cb, (room) =>
-      room.getUsers withEH cb, (usernames) =>
-        user.removeRoomUsers room, usernames, =>
-          @chatState.removeRoom room.name, ->
-            room.removeState cb
-
-  # Adds a room with a state.
-  #
-  # @param roomName [String] Room name.
-  # @param state [Object] Room state.
-  # @param cb [Callback] Optional callback.
-  #
-  # @option state [Array<String>] whitelist Room whitelist.
-  # @option state [Array<String>] blacklist Room blacklist
-  # @option state [Array<String>] adminlist Room adminlist.
-  # @option state [Array<Object>] lastMessages Room lastMessages
-  #   history.
-  # @option state [Boolean] whitelistOnly Room whitelistOnly mode.
-  # @option state [String] owner Room owner.
-  addRoom : (roomName, state, cb = ->) ->
-    room = @makeRoom roomName
-    @chatState.addRoom room, withEH cb, (nadded) =>
-      if nadded != 1
-        error = @errorBuilder.makeError 'roomExists', roomName
-        return cb error
-      if state
-        room.initState state, cb
-      else
-        cb()
-
 # Service object.
-# @extend UserManager
-# @extend RoomManager
+# @extend ServiceAPI
 class ChatService
 
-  extend @, UserManager, RoomManager
+  extend @, ServiceAPI
 
   # Crates an object and starts a new server instance.
   #
@@ -500,6 +440,7 @@ class ChatService
     @http = @options.http unless @io
     @nclosing = 0
     @closeCB = null
+    @finished = false
     State = switch @state
       when 'memory' then MemoryState
       when 'redis' then RedisState
@@ -531,16 +472,25 @@ class ChatService
 
   # @private
   # @nodoc
+  checkShutdown : (socket, next) ->
+    if @closeCB or @finished
+      return socket.disconnect(true)
+    next()
+
+  # @private
+  # @nodoc
   setEvents : ->
     if @hooks.auth
       @nsp.use @hooks.auth
     if @hooks.onConnect
       @nsp.on 'connection', (socket) =>
-        @hooks.onConnect @, socket, (error, userName, authData) =>
-          @addClient error, socket, userName, authData
+        @checkShutdown socket, =>
+          @hooks.onConnect @, socket, (error, userName, authData) =>
+            @addClient error, socket, userName, authData
     else
       @nsp.on 'connection', (socket) =>
-        @addClient null, socket
+        @checkShutdown socket, =>
+          @addClient null, socket
 
   # @private
   # @nodoc

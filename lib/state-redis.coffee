@@ -1,12 +1,9 @@
 
-async = require 'async'
 Redis = require 'ioredis'
 Redlock = require 'redlock'
 _ = require 'lodash'
-withEH = require('./utils.coffee').withEH
-bindTE = require('./utils.coffee').bindTE
-bindUnlock = require('./utils.coffee').bindUnlock
-asyncLimit = require('./utils.coffee').asyncLimit
+async = require 'async'
+{ withEH, bindTE, bindUnlock, asyncLimit } = require('./utils.coffee')
 
 
 # @private
@@ -100,19 +97,19 @@ class RoomStateRedis extends ListsStateRedis
     async.parallel [
       (fn) =>
         initState @redis, @makeDBListName('whitelist'), whitelist, fn
-      , (fn) =>
+      (fn) =>
         initState @redis, @makeDBListName('blacklist'), blacklist, fn
-      , (fn) =>
+      (fn) =>
         initState @redis, @makeDBListName('adminlist'), adminlist, fn
-      , (fn) =>
+      (fn) =>
         unless lastMessages then return fn()
         @redis.ltrim @makeDBListName('history'), 0, 0, withEH fn, =>
           msgs = _.map lastMessages, JSON.stringify
           @redis.lpush @makeDBListName('history'), msgs, fn
-      , (fn) =>
+      (fn) =>
         unless whitelistOnly then return fn()
         @redis.hset @makeDBHashName('whitelistmodes'), @name, whitelistOnly, fn
-      , (fn) =>
+      (fn) =>
         unless owner then return fn()
         @redis.hset @makeDBHashName('owners'), @name, owner, fn
     ] , @withTE cb
@@ -124,9 +121,9 @@ class RoomStateRedis extends ListsStateRedis
         @redis.del @makeDBListName('whitelist'), @makeDBListName('blacklist')
         , @makeDBListName('adminlist'), @makeDBListName('history')
         , fn
-      , (fn) =>
+      (fn) =>
         @redis.hdel @makeDBHashName('whitelistmodes'), @name, fn
-      , (fn) =>
+      (fn) =>
         @redis.hdel @makeDBHashName('owners'), @name, fn
     ] , @withTE cb
 
@@ -182,9 +179,9 @@ class DirectMessagingStateRedis extends ListsStateRedis
     async.parallel [
       (fn) =>
         initState @redis, @makeDBListName('whitelist'), whitelist, fn
-      , (fn) =>
+      (fn) =>
         initState @redis, @makeDBListName('blacklist'), blacklist, fn
-      , (fn) =>
+      (fn) =>
         unless whitelistOnly then return fn()
         @redis.hset @makeDBHashName('whitelistmodes'), @name, whitelistOnly, fn
     ] , @withTE cb
@@ -195,7 +192,7 @@ class DirectMessagingStateRedis extends ListsStateRedis
       (fn) =>
         @redis.del @makeDBListName('whitelist'), @makeDBListName('blacklist')
         , fn
-      , (fn) =>
+      (fn) =>
         @redis.hdel @makeDBHashName('whitelistmodes'), @name, fn
     ] , @withTE cb
 
@@ -318,12 +315,15 @@ class RedisState
       cb null, room
 
   # @private
-  addRoom : (room, cb) ->
-    name = room.name
-    @redis.sismember @makeDBHashName('rooms'), name, @withTE cb, (data) =>
-      if data
+  addRoom : (name, state, cb) ->
+    room = @server.makeRoom name
+    @redis.sadd @makeDBHashName('rooms'), name, @withTE cb, (nadded) =>
+      if nadded != 1
         return cb @errorBuilder.makeError 'roomExists', name
-      @redis.sadd @makeDBHashName('rooms'), name, @withTE cb
+      if state
+        room.initState state, cb
+      else
+        cb()
 
   # @private
   removeRoom : (name, cb) ->

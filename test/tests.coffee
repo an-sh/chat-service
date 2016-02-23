@@ -76,8 +76,6 @@ describe 'Chat service.', ->
 
     describe "State #{state.state} with #{state.adapter} adapter.", ->
 
-      @timeout 6000
-
       afterEach afterEachFn
 
       describe 'Initialization', ->
@@ -127,14 +125,15 @@ describe 'Chat service.', ->
             socket2.on 'loginConfirmed', (u) ->
               expect(u).equal(user1)
               chatServer.removeUser user1
-              async.parallel [ (cb) ->
-                socket1.on 'disconnect', ->
-                  expect(socket1.connected).not.ok
-                  cb()
-              , (cb) ->
-                socket2.on 'disconnect', ->
-                  expect(socket2.connected).not.ok
-                  cb()
+              async.parallel [
+                (cb) ->
+                  socket1.on 'disconnect', ->
+                    expect(socket1.connected).not.ok
+                    cb()
+                (cb) ->
+                  socket2.on 'disconnect', ->
+                    expect(socket2.connected).not.ok
+                    cb()
               ], done
 
         it 'should remove only known users', (done) ->
@@ -158,18 +157,20 @@ describe 'Chat service.', ->
                   expect(error).not.ok
                   expect(wl).true
                   chatServer.removeUser user1, ->
-                    async.parallel [ (cb) ->
-                      chatServer.chatState.getUser user1
-                      , (error, user, isOnline) ->
-                        expect(error).ok
-                        expect(user).not.ok
-                        expect(isOnline).not.ok
-                        cb()
-                    , (cb) ->
-                      chatServer.chatState.getOnlineUser user1, (error, user) ->
-                        expect(error).ok
-                        expect(user).not.ok
-                        cb()
+                    async.parallel [
+                      (cb) ->
+                        chatServer.chatState.getUser user1
+                        , (error, user, isOnline) ->
+                          expect(error).ok
+                          expect(user).not.ok
+                          expect(isOnline).not.ok
+                          cb()
+                      (cb) ->
+                        chatServer.chatState.getOnlineUser user1
+                        , (error, user) ->
+                          expect(error).ok
+                          expect(user).not.ok
+                          cb()
                     ], done
 
         it 'should check existing users before adding new ones', (done) ->
@@ -238,10 +239,11 @@ describe 'Chat service.', ->
           chatServer1 = new ChatService { port : port }, null, state
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed', ->
-            async.parallel [ (cb) ->
-              socket1.on 'disconnect', -> cb()
-            , (cb) ->
-              chatServer1.close cb
+            async.parallel [
+              (cb) ->
+                socket1.on 'disconnect', -> cb()
+              (cb) ->
+                chatServer1.close cb
             ], done
 
 
@@ -438,21 +440,22 @@ describe 'Chat service.', ->
                 socket2.on 'loginConfirmed', ->
                   socket2.emit 'roomJoin', roomName1, ->
                     socket1.emit 'roomMessage', roomName1, message
-                    async.parallel [ (cb) ->
-                      socket1.on 'roomMessage', (room, user, msg) ->
-                        expect(room).equal(roomName1)
-                        expect(user).equal(user1)
-                        expect(msg.textMessage).equal(txt)
-                        expect(msg).ownProperty('timestamp')
-                        cb()
-                    , (cb) ->
-                      socket2.on 'roomMessage', (room, user, msg) ->
-                        expect(room).equal(roomName1)
-                        expect(user).equal(user1)
-                        expect(msg.textMessage).equal(txt)
-                        expect(msg).ownProperty('timestamp')
-                        cb()
-                    ], -> done()
+                    async.parallel [
+                      (cb) ->
+                        socket1.on 'roomMessage', (room, user, msg) ->
+                          expect(room).equal(roomName1)
+                          expect(user).equal(user1)
+                          expect(msg.textMessage).equal(txt)
+                          expect(msg).ownProperty('timestamp')
+                          cb()
+                      (cb) ->
+                        socket2.on 'roomMessage', (room, user, msg) ->
+                          expect(room).equal(roomName1)
+                          expect(user).equal(user1)
+                          expect(msg.textMessage).equal(txt)
+                          expect(msg).ownProperty('timestamp')
+                          cb()
+                    ], done
 
 
       describe 'Room permissions', ->
