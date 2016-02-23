@@ -311,6 +311,8 @@ CommandBinders =
 # @private
 # @mixin
 # @nodoc
+#
+# Helpers for User class.
 UserHelpers =
 
   # @private
@@ -333,6 +335,14 @@ UserHelpers =
   socketsInRoom : (roomName, cb) ->
     @userState.getRoomSockets roomName, withEH cb, (sockets) ->
       cb null, sockets?.length || 0
+
+
+# @private
+# @mixin
+# @nodoc
+#
+# Cleanup functions for User class.
+UserCleanups =
 
   # @private
   removeRoomUsers : (room, userNames, cb) ->
@@ -374,25 +384,31 @@ UserHelpers =
 
   # @private
   processDisconnect : (id, cb) ->
-    @chatState.removeSocket @chatState.serverUID, id, withEH cb, =>
-      @userState.roomsGetAll withEH cb, (rooms) =>
-        @userState.socketsGetAll withEH cb, (sockets) =>
-          nsockets = sockets.length
-          async.eachLimit rooms, asyncLimit
-          , (roomName, fn) =>
-            @removeRoomSocket id, sockets, roomName, fn
-          , =>
-            if nsockets == 0
-              @chatState.setUserOffline @username, cb
-            else
-              cb()
+    @userState.roomsGetAll withEH cb, (rooms) =>
+      @userState.socketsGetAll withEH cb, (sockets) =>
+        nsockets = sockets.length
+        end = =>
+          @chatState.removeSocket @chatState.serverUID, id, withEH cb, =>
+            for sid in sockets
+              @send sid, 'socketDisconnectEcho', id, nsockets
+            cb()
+        async.eachLimit rooms, asyncLimit
+        , (roomName, fn) =>
+          @removeRoomSocket id, sockets, roomName, fn
+        , =>
+          if nsockets == 0
+            @chatState.setUserOffline @username, end
+          else
+            end()
 
 
 # @private
 # @nodoc
+#
+# Client commands implementation.
 class User extends DirectMessaging
 
-  extend @, CommandBinders, UserHelpers
+  extend @, CommandBinders, UserHelpers, UserCleanups
 
   # @private
   constructor : (@server, @username) ->
@@ -411,9 +427,15 @@ class User extends DirectMessaging
 
   # @private
   registerSocket : (socket, cb) ->
-    @userState.socketAdd socket.id, withEH cb, =>
+    id = socket.id
+    @userState.socketAdd id, withEH cb, =>
       for cmd of ArgumentsValidators
         @bindCommand socket, cmd, @[cmd]
+      @userState.socketsGetAll withEH cb, (sockets) =>
+        nsockets = sockets.length
+        for sid in sockets
+          if sid != id
+            @send sid, 'socketConnectEcho', id, nsockets
       cb null, @
 
   # @private

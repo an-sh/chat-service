@@ -113,6 +113,16 @@ class ServerMessages
   # @see UserCommands#roomLeave
   roomUserLeft : (roomName, userName) ->
 
+  # Indicates connection of an another socket with the same user.
+  # @param id [String] Socket id.
+  # @param nconnected [Number] Total number of users's sockets.
+  socketConnectEcho : (id, nconnected) ->
+
+  # Indicates disconnection of an another socket with the same user.
+  # @param id [String] Socket id.
+  # @param nconnected [Number] Total number of users's sockets.
+  socketDisconnectEcho : (id, nconnected) ->
+
 
 # @note This class describes socket.io incoming messages, not methods.
 #

@@ -226,14 +226,27 @@ describe 'Chat service.', ->
         it 'should support multiple sockets per user', (done) ->
           chatServer = new ChatService { port : port }, null, state
           socket1 = clientConnect user1
-          socket1.on 'loginConfirmed', (u) ->
+          socket1.on 'loginConfirmed', ->
             socket2 = clientConnect user1
-            socket2.on 'loginConfirmed', (u) ->
-              chatServer.chatState.getOnlineUser user1, (error, user) ->
-                expect(error).not.ok
-                user.userState.socketsGetAll (error, sockets) ->
-                  expect(sockets).length(2)
-                  done()
+            sid2 = null
+            sid2e = null
+            async.parallel [
+              (cb) ->
+                socket1.on 'socketConnectEcho', (id, nconnected) ->
+                  sid2e = id
+                  expect(nconnected).equal(2)
+                  cb()
+              (cb) ->
+                socket2.on 'loginConfirmed', (u, data) ->
+                  sid2 = data.id
+                  cb()
+            ], ->
+              expect(sid2e).equal(sid2)
+              socket2.disconnect()
+              socket1.on 'socketDisconnectEcho', (id, nconnected) ->
+                expect(id).equal(sid2)
+                expect(nconnected).equal(1)
+                done()
 
         it 'should disconnect all users on a server shutdown', (done) ->
           chatServer1 = new ChatService { port : port }, null, state

@@ -41,6 +41,8 @@ bindUnlock = (lock, cb) ->
     lock.unlock()
     cb args...
 
+# @private
+# @nodoc
 withoutData = (fn) ->
   (error) -> fn error
 
