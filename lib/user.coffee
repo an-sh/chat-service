@@ -262,33 +262,33 @@ CommandBinders =
 
   # @private
   wrapCommand : (name, fn) ->
-    bname = name + 'Before'
-    aname = name + 'After'
+    errorBuilder = @server.errorBuilder
     cmd = (oargs..., cb, id) =>
-      hooks = @server.hooks
-      errorBuilder = @server.errorBuilder
       validator = ArgumentsValidators[name]
-      beforeHook = hooks?[bname]
-      afterHook = hooks?[aname]
-      execCommand = (error, data) =>
-        if error or data then return cb error, data
+      beforeHook = @server.hooks?["#{name}Before"]
+      afterHook = @server.hooks?["#{name}After"]
+      execCommand = (error, data, nargs...) =>
+        if error or data
+          return cb error, data
+        args = if nargs.length then nargs else oargs
+        if args.length != oargs.length
+          return cb errorBuilder.makeError 'serverError', 'hook nargs error.'
         afterCommand = (error, data) =>
           reportResults = (nerror = error, ndata = data) ->
             cb nerror, ndata
           if afterHook
-            afterHook @, id, error, data, oargs, reportResults
+            afterHook @server, @username, id, error, data, args, reportResults
           else
             reportResults()
-        fn.apply @, [ oargs..., afterCommand, id ]
-      process.nextTick =>
-        checkerError = validator oargs...
-        if checkerError
-          error = errorBuilder.makeError checkerError...
-          return cb error
-        unless beforeHook
-          execCommand()
-        else
-          beforeHook @, id, oargs, execCommand
+        fn.apply @, [ args..., afterCommand, id ]
+      checkerError = validator oargs...
+      if checkerError
+        error = errorBuilder.makeError checkerError...
+        return cb error
+      unless beforeHook
+        execCommand()
+      else
+        beforeHook @server, @username, id, oargs, execCommand
     return cmd
 
   # @private

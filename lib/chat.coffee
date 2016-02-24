@@ -580,7 +580,4 @@ class ChatService
       closingTimeoutChecker()
 
 
-module.exports = {
-  ChatService
-  User
-}
+module.exports = ChatService

@@ -1,6 +1,5 @@
 
-ChatService = require('../index.js').ChatService
-User = require('../index.js').User
+ChatService = require('../index.js')
 expect = require('chai').expect
 ioClient = require 'socket.io-client'
 socketIO = require 'socket.io'
@@ -1028,21 +1027,29 @@ describe 'Chat service.', ->
           , { onClose : closeHook }, state
           chatServer1.close done
 
-        it 'should execute before and after messages hooks', (done) ->
+        it 'should execute before and after hooks', (done) ->
           someData = 'data'
           before = null
           after = null
-          beforeHook = (user, id, args, cb) ->
+          sid = null
+          beforeHook = (server, username, id, args, cb) ->
             [ name , mode ] = args
-            expect(user).instanceof(User)
+            expect(server).instanceof(ChatService)
+            expect(username).equal(user1)
+            expect(id).equal(sid)
             expect(name).a('string')
             expect(mode).a('boolean')
             expect(cb).instanceof(Function)
             before = true
             cb()
-          afterHook = (user, id, error, data, args, cb) ->
-            expect(user).instanceof(User)
+          afterHook = (server, username, id, error, data, args, cb) ->
+            [ name , mode ] = args
+            expect(server).instanceof(ChatService)
+            expect(username).equal(user1)
+            expect(id).equal(sid)
             expect(args).instanceof(Array)
+            expect(name).a('string')
+            expect(mode).a('boolean')
             expect(cb).instanceof(Function)
             after = true
             cb null, someData
@@ -1051,7 +1058,8 @@ describe 'Chat service.', ->
           , { 'roomCreateBefore' : beforeHook, 'roomCreateAfter' : afterHook }
           , state
           socket1 = clientConnect user1
-          socket1.on 'loginConfirmed', ->
+          socket1.on 'loginConfirmed', (u, data) ->
+            sid = data.id
             socket1.emit 'roomCreate', roomName1, true, (error, data) ->
               expect(before).true
               expect(after).true
@@ -1059,22 +1067,44 @@ describe 'Chat service.', ->
               expect(data).equal(someData)
               done()
 
-        it 'should execute disconnectAfter hook', (done) ->
-          disconnectAfter = (user, id, error, data, args, cb) ->
-            expect(user).instanceof(User)
-            expect(args).instanceof(Array)
-            expect(cb).instanceof(Function)
-            done()
+        it 'should support changing arguments in before hooks', (done) ->
+          beforeHook = (server, username, id, args, cb) ->
+            [ name , mode ] = args
+            cb(null, null, roomName2, mode)
+          chatServer = new ChatService { port : port
+            , enableRoomsManagement : true}
+          , { 'roomCreateBefore' : beforeHook }
+          , state
+          socket1 = clientConnect user1
+          socket1.on 'loginConfirmed', (u, data) ->
+            sid = data.id
+            socket1.emit 'roomCreate', roomName1, true, ->
+              socket1.emit 'listRooms', (error, data) ->
+                expect(error).not.ok
+                expect(data).lengthOf(1)
+                expect(data[0]).length.equal(roomName2)
+                done()
+
+        it 'should execute disconnect After and Before hooks', (done) ->
+          before = false
+          disconnectBefore = (server, username, id, args, cb) ->
+            before = true
             cb()
+          disconnectAfter = (server, username, id, error, data, args, cb) ->
+            expect(before).true
+            cb()
+            done()
           chatServer1 = new ChatService { port : port }
-          , { disconnectAfter : disconnectAfter }, state
+          , { disconnectAfter : disconnectAfter
+            , disconnectBefore : disconnectBefore }
+          , state
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed', ->
             chatServer1.close()
 
         it 'should stop commands on before hook error or data', (done) ->
           err = 'error'
-          beforeHook = (user, id, args, cb) ->
+          beforeHook = (server, username, id, args, cb) ->
             cb err
           chatServer = new ChatService { port : port }
           , { 'listRoomsBefore' : beforeHook }, state
