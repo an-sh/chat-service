@@ -28,7 +28,7 @@ class ServerMessages
   # @param msg [Object<textMessage:String, timestamp:Number, author:String>]
   #   Message.
   # @see UserCommands#directMessage
-  directMessage : (fromUser, msg) ->
+  directMessage : (msg) ->
 
   # Direct message echo. If an user have several connections from
   # different sockets, and if one client sends
@@ -94,11 +94,10 @@ class ServerMessages
 
   # Room message.
   # @param roomName [String] Rooms name.
-  # @param userName [String] Message author.
   # @param msg [Object<textMessage:String, timestamp:Number, author:String>]
   #   Message.
   # @see UserCommands#roomMessage
-  roomMessage : (roomName, userName, msg) ->
+  roomMessage : (roomName, msg) ->
 
   # Indicates that an another user has joined a room.
   # @param roomName [String] Rooms name.

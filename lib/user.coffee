@@ -477,7 +477,7 @@ class User extends DirectMessaging
                 @send sid, 'directMessageEcho', toUserName, pmsg
             toUser.userState.getAllSockets withEH cb, (sockets) =>
               for sid in sockets
-                @send sid, 'directMessage', @username, pmsg
+                @send sid, 'directMessage', pmsg
               cb null, msg
 
   # @private
@@ -607,7 +607,7 @@ class User extends DirectMessaging
     @withRoom roomName, withEH cb, (room) =>
       pmsg = processMessage @username, msg
       room.message @username, pmsg, withEH cb, =>
-        @send roomName, 'roomMessage', roomName, @username, pmsg
+        @send roomName, 'roomMessage', roomName, pmsg
         cb()
 
   # @private

@@ -439,16 +439,16 @@ describe 'Chat service.', ->
                     socket1.emit 'roomMessage', roomName1, message
                     async.parallel [
                       (cb) ->
-                        socket1.on 'roomMessage', (room, user, msg) ->
+                        socket1.on 'roomMessage', (room, msg) ->
                           expect(room).equal(roomName1)
-                          expect(user).equal(user1)
+                          expect(msg.author).equal(user1)
                           expect(msg.textMessage).equal(txt)
                           expect(msg).ownProperty('timestamp')
                           cb()
                       (cb) ->
-                        socket2.on 'roomMessage', (room, user, msg) ->
+                        socket2.on 'roomMessage', (room, msg) ->
                           expect(room).equal(roomName1)
-                          expect(user).equal(user1)
+                          expect(msg.author).equal(user1)
                           expect(msg.textMessage).equal(txt)
                           expect(msg).ownProperty('timestamp')
                           cb()
@@ -795,11 +795,10 @@ describe 'Chat service.', ->
             socket2 = clientConnect user2
             socket2.on 'loginConfirmed', ->
               socket1.emit 'directMessage', user2, message
-              socket2.on 'directMessage', (u, msg) ->
-                expect(u).equal(user1)
-                expect(msg?.textMessage).equal(txt)
+              socket2.on 'directMessage', (msg) ->
+                expect(msg.textMessage).equal(txt)
+                expect(msg.author).equal(user1)
                 expect(msg).ownProperty('timestamp')
-                expect(msg).ownProperty('author')
                 done()
 
         it 'should not send direct messages when the option is disabled'
