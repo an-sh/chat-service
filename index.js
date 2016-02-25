@@ -1,3 +1,3 @@
 
 require('coffee-script/register');
-module.exports = require('./lib/chat.coffee');
+module.exports = require('./lib/ChatService.coffee');
