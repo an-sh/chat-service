@@ -69,8 +69,10 @@ class ListsStateMemory
 class RoomStateMemory extends ListsStateMemory
 
   # @private
-  constructor : (@server, @name, @historyMaxMessages = 0) ->
+  constructor : (@server, @name) ->
     @errorBuilder = @server.errorBuilder
+    @historyMaxGetMessages = @server.historyMaxGetMessages
+    @historyMaxMessages = @server.historyMaxMessages
     @whitelist = new FastSet
     @blacklist = new FastSet
     @adminlist = new FastSet

@@ -252,7 +252,7 @@ class UserCommands
   roomGetWhitelistMode : (roomName, cb) ->
 
   # Gets latest room messages. The maximum size is set by
-  # {ChatService} `historyMaxMessages` option.
+  # {ChatService} `historyMaxGetMessages` option.
   # @param roomName [String] Room name.
   # @param cb [Function<error, Array<Objects>>] Sends ack with an
   #   error or array of messages.
@@ -328,7 +328,11 @@ class ChatService
   #   io namespace, default is '/chat-service'.
   #
   # @option options [Integer] historyMaxMessages
-  #   room history size, default is 100.
+  #   room history size, default is 10000.
+  #
+  # @option options [Integer] historyMaxGetMessages
+  #   room history size available thought
+  #   {ServerMessages#roomHistory}, default is 100.
   #
   # @option options [Boolean] useRawErrorObjects
   #   Send error objects (see {ErrorBuilder}) instead of strings,
@@ -430,6 +434,7 @@ class ChatService
   setOptions : ->
     @namespace = @options.namespace || '/chat-service'
     @historyMaxMessages = @options.historyMaxMessages || 100
+    @historyMaxGetMessages = @options.historyMaxGetMessages || 10000
     @useRawErrorObjects = @options.useRawErrorObjects || false
     @enableUserlistUpdates = @options.enableUserlistUpdates || false
     @enableAccessListsUpdates = @options.enableAccessListsUpdates || false

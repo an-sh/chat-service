@@ -80,9 +80,11 @@ class ListsStateRedis
 class RoomStateRedis extends ListsStateRedis
 
   # @private
-  constructor : (@server, @name, @historyMaxMessages = 0) ->
+  constructor : (@server, @name) ->
     @errorBuilder = @server.errorBuilder
     bindTE @
+    @historyMaxGetMessages = @server.historyMaxGetMessages
+    @historyMaxMessages = @server.historyMaxMessages
     @redis = @server.state.redis
     @prefix = 'room'
 
@@ -145,7 +147,7 @@ class RoomStateRedis extends ListsStateRedis
 
   # @private
   messagesGet : (cb) ->
-    @redis.lrange @makeDBListName('history'), 0, @historyMaxMessages - 1
+    @redis.lrange @makeDBListName('history'), 0, @historyMaxGetMessages - 1
     , @withTE cb, (data) ->
       messages = _.map data, JSON.parse
       cb null, messages
