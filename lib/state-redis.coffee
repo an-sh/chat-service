@@ -3,7 +3,7 @@ Redis = require 'ioredis'
 Redlock = require 'redlock'
 _ = require 'lodash'
 async = require 'async'
-{ withEH, bindTE, bindUnlock, asyncLimit } = require('./utils.coffee')
+{ withEH, bindTE, bindUnlock, asyncLimit } = require './utils.coffee'
 
 
 # @private

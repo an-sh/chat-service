@@ -14,6 +14,8 @@
 - Changed hooks API.
 - Add socketConnectEcho and socketDisconnectEcho messages.
 - Code and tests cleanups.
+- Commands arguments validation fixes.
+- Allow custom content in message objects.
 - Bug fixes.
 
 ### 0.6.1 (2016/02/01)

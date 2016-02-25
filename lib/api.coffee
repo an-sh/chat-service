@@ -1,5 +1,5 @@
 
-{ withEH, withoutData } = require('./utils.coffee')
+{ withEH, withoutData } = require './utils.coffee'
 
 # @mixin
 # API for server side operations.

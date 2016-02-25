@@ -47,15 +47,12 @@ describe 'Chat service.', ->
 
   afterEachFn = (done) ->
     endcb = -> redis.flushall done
-    if socket1
-      socket1.disconnect()
-      socket1 = null
-    if socket2
-      socket2.disconnect()
-      socket2 = null
-    if socket3
-      socket3.disconnect()
-      socket3 = null
+    socket1?.disconnect()
+    socket1 = null
+    socket2?.disconnect()
+    socket2 = null
+    socket3?.disconnect()
+    socket3 = null
     if cleanup
       cleanup endcb
       cleanup = null
@@ -140,7 +137,7 @@ describe 'Chat service.', ->
         it 'should remove only known users', (done) ->
           chatServer = new ChatService { port : port }, null, state
           socket1 = clientConnect user1
-          socket1.on 'loginConfirmed', (u) ->
+          socket1.on 'loginConfirmed', ->
             chatServer.removeUser user2, (error, data) ->
               expect(error).ok
               expect(data).not.ok
@@ -150,7 +147,7 @@ describe 'Chat service.', ->
           chatServer = new ChatService { port : port }, null, state
           chatServer.addUser user1, { whitelistOnly : true }, ->
             socket1 = clientConnect user1
-            socket1.on 'loginConfirmed', (u) ->
+            socket1.on 'loginConfirmed', ->
               socket1.emit 'directGetWhitelistMode', (error, data) ->
                 expect(error).not.ok
                 expect(data).true

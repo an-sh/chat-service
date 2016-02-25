@@ -11,7 +11,7 @@ class ErrorBuilder
   # server errors
   errorStrings :
     badArgument : 'Bad argument %s value %s'
-    wrongArgumentsCount : 'Expected %s arguments, got %s'
+    noCommand : 'No such command %s'
     noList : 'No such list %s'
     noLogin : 'No login provided'
     noRoom : 'No such room %s'
@@ -22,6 +22,7 @@ class ErrorBuilder
     roomExists : 'Room %s already exists'
     serverError : 'Server error %s'
     userExists : 'User %s already exists'
+    wrongArgumentsCount : 'Expected %s arguments, got %s'
 
   # @private
   # @nodoc

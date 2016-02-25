@@ -1,7 +1,7 @@
 
 async = require 'async'
 { withEH, extend, asyncLimit } =
-  require('./utils.coffee')
+  require './utils.coffee'
 
 # @private
 # @mixin

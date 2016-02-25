@@ -1,149 +1,17 @@
 
 _ = require 'lodash'
 async = require 'async'
-check = require 'check-types'
 
 { withEH, bindUnlock, extend, asyncLimit, withoutData } =
-  require('./utils.coffee')
+  require './utils.coffee'
 
 # @private
 # @nodoc
 processMessage = (author, msg) ->
-  r = {}
-  r.textMessage = msg?.textMessage?.toString() || ''
-  r.timestamp = new Date().getTime()
-  r.author = author
-  return r
+  msg.timestamp = new Date().getTime() unless msg.timestamp?
+  msg.author = author unless msg.author?
+  return msg
 
-# @private
-# @nodoc
-checkMessage = (msg) ->
-  passed = check.object msg
-  unless passed then return false
-  return check.map msg, { textMessage : check.string }
-
-# @private
-# @nodoc
-dataChecker = (args, checkers) ->
-  if args.length != checkers.length
-    return [ 'wrongArgumentsCount', checkers.length, args.length ]
-  for checker, idx in checkers
-    unless checker args[idx]
-      return [ 'badArgument', idx, args[idx] ]
-  return null
-
-# @private
-# @nodoc
-# Commands arguments type and count validation functions.
-ArgumentsValidators =
-  # @private
-  directAddToList : (listName, usernames) ->
-    dataChecker arguments, [
-      check.string
-      check.array.of.string
-    ]
-  # @private
-  directGetAccessList : (listName) ->
-    dataChecker arguments, [
-      check.string
-    ]
-  # @private
-  directGetWhitelistMode : () ->
-    dataChecker arguments, [
-    ]
-  # @private
-  directMessage : (toUser, msg) ->
-    dataChecker arguments, [
-      check.string
-      checkMessage
-    ]
-  # @private
-  directRemoveFromList : (listName, usernames) ->
-    dataChecker arguments, [
-      check.string
-      check.array.of.string
-    ]
-  # @private
-  directSetWhitelistMode : (mode) ->
-    dataChecker arguments, [
-      check.boolean
-    ]
-  # @private
-  disconnect : (reason) ->
-    dataChecker arguments, [
-      check.string
-    ]
-  # @private
-  listJoinedRooms : () ->
-    dataChecker arguments, [
-    ]
-  # @private
-  listRooms : () ->
-    dataChecker arguments, [
-    ]
-  # @private
-  roomAddToList : (roomName, listName, usernames) ->
-    dataChecker arguments, [
-      check.string
-      check.string
-      check.array.of.string
-    ]
-  # @private
-  roomCreate : (roomName, mode) ->
-    dataChecker arguments, [
-      check.string
-      check.boolean
-    ]
-  # @private
-  roomDelete : (roomName) ->
-    dataChecker arguments, [
-      check.string
-    ]
-  # @private
-  roomGetAccessList : (roomName, listName) ->
-    dataChecker arguments, [
-      check.string
-      check.string
-    ]
-  # @private
-  roomGetWhitelistMode : (roomName) ->
-    dataChecker arguments, [
-      check.string
-    ]
-  # @private
-  roomHistory : (roomName)->
-    dataChecker arguments, [
-      check.string
-    ]
-  # @private
-  roomJoin : (roomName) ->
-    dataChecker arguments, [
-      check.string
-    ]
-  # @private
-  roomLeave : (roomName) ->
-    dataChecker arguments, [
-      check.string
-    ]
-  # @private
-  roomMessage : (roomName, msg) ->
-    dataChecker arguments, [
-      check.string
-      checkMessage
-    ]
-  # @private
-  roomRemoveFromList : (roomName, listName, usernames) ->
-    dataChecker arguments, [
-      check.string
-      check.string
-      check.array.of.string
-    ]
-  # @private
-  roomSetWhitelistMode : (roomName, mode) ->
-    dataChecker arguments, [
-      check.string
-      check.boolean
-    ]
 
 # @private
 # @mixin
@@ -264,7 +132,7 @@ CommandBinders =
   wrapCommand : (name, fn) ->
     errorBuilder = @server.errorBuilder
     cmd = (oargs..., cb, id) =>
-      validator = ArgumentsValidators[name]
+      validator = @server.validator
       beforeHook = @server.hooks?["#{name}Before"]
       afterHook = @server.hooks?["#{name}After"]
       execCommand = (error, data, nargs...) =>
@@ -281,14 +149,13 @@ CommandBinders =
           else
             reportResults()
         fn.apply @, [ args..., afterCommand, id ]
-      checkerError = validator oargs...
-      if checkerError
-        error = errorBuilder.makeError checkerError...
-        return cb error
-      unless beforeHook
-        execCommand()
-      else
-        beforeHook @server, @username, id, oargs, execCommand
+      validator.checkArguments name, oargs, (error) =>
+        if error
+          return cb errorBuilder.makeError error...
+        unless beforeHook
+          execCommand()
+        else
+          beforeHook @server, @username, id, oargs, execCommand
     return cmd
 
   # @private
@@ -429,7 +296,7 @@ class User extends DirectMessaging
   registerSocket : (socket, cb) ->
     id = socket.id
     @userState.addSocket id, withEH cb, =>
-      for cmd of ArgumentsValidators
+      for cmd of @server.userCommands
         @bindCommand socket, cmd, @[cmd]
       @userState.getAllSockets withEH cb, (sockets) =>
         nsockets = sockets.length

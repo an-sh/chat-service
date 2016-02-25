@@ -4,13 +4,15 @@ SocketServer = require 'socket.io'
 _ = require 'lodash'
 uid = require 'uid-safe'
 
-ErrorBuilder = require('./errorbuilder.coffee')
-MemoryState = require('./state-memory.coffee')
-RedisState = require('./state-redis.coffee')
-Room = require('./room.coffee')
-ServiceAPI = require('./api.coffee')
-User = require('./user.coffee')
-extend = require('./utils.coffee').extend
+ArgumentsValidator = require './validator.coffee'
+ErrorBuilder = require './errorbuilder.coffee'
+MemoryState = require './state-memory.coffee'
+RedisState = require './state-redis.coffee'
+Room = require './room.coffee'
+ServiceAPI = require './api.coffee'
+User = require './user.coffee'
+
+{ extend } = require './utils.coffee'
 
 # @note This class describes socket.io outgoing messages, not methods.
 #
@@ -414,6 +416,7 @@ class ChatService
   #   redlock TTL option, default is 2000.
   constructor : (@options = {}, @hooks = {}, @storageOptions = {}) ->
     @setOptions()
+    @setLivecycle()
     @setServer()
     if @hooks.onStart
       @hooks.onStart @, (error) =>
@@ -442,14 +445,18 @@ class ChatService
 
   # @private
   # @nodoc
+  setLivecycle : ->
+    @nclosing = 0
+    @closeCB = null
+    @finished = false
+
+  # @private
+  # @nodoc
   setServer : ->
     @errorBuilder = new ErrorBuilder @useRawErrorObjects
     @io = @options.io
     @sharedIO = true if @io
     @http = @options.http unless @io
-    @nclosing = 0
-    @closeCB = null
-    @finished = false
     State = switch @stateConstructor
       when 'memory' then MemoryState
       when 'redis' then RedisState
@@ -469,10 +476,11 @@ class ChatService
       if Adapter
         @adapter = new Adapter @socketIoAdapterOptions
         @io.adapter @adapter
-    @nsp = @io.of @namespace
-    @state = new State @, @stateOptions
     @userCommands = new UserCommands()
     @serverMessages = new ServerMessages()
+    @nsp = @io.of @namespace
+    @state = new State @, @stateOptions
+    @validator = new ArgumentsValidator @
     @makeUser = (args...) =>
       new User @, args...
     @makeRoom = (args...) =>
@@ -509,8 +517,8 @@ class ChatService
   # @private
   # @nodoc
   confirmLogin : (socket, userName, authData) ->
-    if _.isObject(authData) and !authData.id
-      authData.id = socket.id
+    if _.isObject(authData)
+      authData.id = socket.id unless authData.id?
     socket.emit 'loginConfirmed', userName, authData
 
   # @private
@@ -538,13 +546,11 @@ class ChatService
   # @private
   # @nodoc
   startClientDisconnect : () ->
-    # console.log 'disconnect start'
     @nclosing++
 
   # @private
   # @nodoc
   endClientDisconnect : () ->
-    # console.log 'disconnect end'
     @nclosing--
     if @closeCB and @nclosing == 0
       process.nextTick => @finish()
@@ -554,12 +560,11 @@ class ChatService
   close : (done = ->) ->
     @closeCB = (error) =>
       @closeCB = null
-      unless @sharedIO or @http
+      unless @sharedIO
         @io.close()
       if @hooks.onClose
         @hooks.onClose @, error, done
       else
-        # console.log 'done'
         done error
     closeStartingTime = new Date().getTime()
     closingTimeoutChecker = =>

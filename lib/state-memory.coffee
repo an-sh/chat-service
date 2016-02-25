@@ -1,10 +1,10 @@
 
 Deque = require 'collections/deque'
 FastSet = require 'collections/fast-set'
-Map = require 'collections/map'
+Map = require 'collections/fast-map'
 _ = require 'lodash'
 async = require 'async'
-{ withEH, asyncLimit } = require('./utils.coffee')
+{ withEH, asyncLimit } = require './utils.coffee'
 
 
 # @private
