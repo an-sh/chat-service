@@ -12,15 +12,10 @@
 DirectMessagingPermissions =
 
   # @private
-  checkUser : (author, cb) ->
-    process.nextTick -> cb()
-
-  # @private
   checkList : (author, listName, cb) ->
-    @checkUser author, withEH cb, =>
-      unless @directMessagingState.hasList listName
-        error = @errorBuilder.makeError 'noList', listName
-      cb error
+    unless @directMessagingState.hasList listName
+      error = @errorBuilder.makeError 'noList', listName
+    process.nextTick -> cb error
 
   # @private
   checkListValues : (author, listName, values, cb) ->
@@ -99,14 +94,12 @@ class DirectMessaging
 
   # @private
   getMode : (author, cb) ->
-    @checkUser author, withEH cb, =>
-      @directMessagingState.whitelistOnlyGet cb
+    @directMessagingState.whitelistOnlyGet cb
 
   # @private
   changeMode : (author, mode, cb) ->
-    @checkUser author, withEH cb, =>
-      m = if mode then true else false
-      @directMessagingState.whitelistOnlySet m, cb
+    m = if mode then true else false
+    @directMessagingState.whitelistOnlySet m, cb
 
 
 module.exports = DirectMessaging
