@@ -331,8 +331,8 @@ class ChatService
   #   room history size, default is 10000.
   #
   # @option options [Integer] historyMaxGetMessages
-  #   room history size available thought
-  #   {ServerMessages#roomHistory}, default is 100.
+  #   room history size available via
+  #   {UserCommands#roomHistory} , default is 100.
   #
   # @option options [Boolean] useRawErrorObjects
   #   Send error objects (see {ErrorBuilder}) instead of strings,
@@ -358,6 +358,8 @@ class ChatService
   # @option options [Object] http
   #   Use socket.io http server integration.
   #
+  # @param options [Object] Options.
+  #
   # @option hooks [Function] auth Socket.io middleware function to run
   #   on all messages in the namespace. Look in the socket.io
   #   documentation.
@@ -369,21 +371,51 @@ class ChatService
   #   `loginConfirmed` message. Error is sent as `loginRejected`
   #   message.
   #
-  # @option hooks [Function(<ChatService>, <Error>, <Function(<Error>)>)]
-  #   onClose Executes when server is closed. Must call a callback.
-  #
   # @option hooks [Function(<ChatService>, <Function(<Error>)>)] onStart
   #   Executes when server is started. Must call a callback.
   #
-  # @param options [Object] Options.
+  # @option hooks [Function(<ChatService>, <Error>, <Function(<Error>)>)]
+  #   onClose Executes when server is closed. Must call a callback.
+  #
+  # @option hooks [Function(Object, <Function(<Error>)>)]
+  #   directMessageChecker Validator for {UserCommands#directMessage}
+  #   message objects. When is set allow a custom content in direct
+  #   messages.
+  #
+  # @option hooks [Function(Object, <Function(<Error>)>)]
+  #   roomMessageChecker Validator for {UserCommands#roomMessage}
+  #   message objects. When is set allow a custom content in room
+  #   messages.
+  #
+  # @option hooks [Function(ChatService, String, String, Array,
+  #   <Function(<Error, Data, Array...>)>)] {command}Before Before
+  #   hooks are available for all {UserCommands} and all have the same
+  #   arguments: ChatService object, user name, socket id, array of
+  #   command arguments and a callback. Callback may be called without
+  #   arguments to continue command execution, or with non-falsy Error
+  #   or Data to stop execution and return error or result
+  #   respectively to the command issuer, or with falsy Error and Data
+  #   and rest arguments as the new command arguments to continue with
+  #   (Note: new arguments count and types must be the same as the
+  #   original command requires). Also note that before hooks are run
+  #   only after a successful arguments types validation.
+  #
+  # @option hooks [Function(ChatService, String, String, Error, Data,
+  #   Array, <Function(<Error, Data>)>)] {command}After After hooks
+  #   are available for all {UserCommands} and all have the same
+  #   arguments: ChatService object, user name, socket id, Error or
+  #   null, Data or null, Array of command arguments and a
+  #   callback. Error or Data is the command's execution result or
+  #   error respectively. Callback may be without arguments to return
+  #   unchanged result or error to the command issuer, or with new
+  #   Error or Data object to alter the result values.
   #
   # @param hooks [Object] Hooks. Every `UserCommand` is wrapped with
   #   the corresponding Before and After hooks. So a hook name will
   #   look like `roomCreateBefore`. Before hook is ran after arguments
-  #   validation, but before an actual server command processing. After
-  #   hook is executed after a server has finshed command processing.
-  #   Check Hooks unit tests section in the `test` directory for
-  #   more details and hooks usage examples.
+  #   validation, but before an actual server command
+  #   processing. After hook is executed after a server has finshed
+  #   the command processing.
   #
   # @option storageOptions [String or Constructor] state Chat state.
   #   Can be either 'memory' or 'redis' for built-in state storages, or a
@@ -501,6 +533,8 @@ class ChatService
   # @private
   # @nodoc
   setEvents : ->
+    @directMessageChecker = @hooks.directMessageChecker
+    @roomMessageChecker = @hooks.roomMessageChecker
     if @hooks.auth
       @nsp.use @hooks.auth
     if @hooks.onConnect
@@ -567,6 +601,8 @@ class ChatService
       @closeCB = null
       unless @sharedIO
         @io.close()
+      if @http
+        @io.engine.close()
       if @hooks.onClose
         @hooks.onClose @, error, done
       else
