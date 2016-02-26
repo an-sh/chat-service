@@ -4,7 +4,6 @@ expect = require('chai').expect
 ioClient = require 'socket.io-client'
 socketIO = require 'socket.io'
 http = require 'http'
-enableDestroy = require 'server-destroy'
 async = require 'async'
 Redis = require 'ioredis'
 
@@ -16,17 +15,18 @@ describe 'Chat service.', ->
 
   states = [
     { state : 'memory', adapter : 'memory' }
-    , { state : 'redis', adapter : 'redis' }
+    { state : 'redis', adapter : 'redis' }
   ]
 
   makeParams = (userName) ->
-    q = 'query' : "user=#{userName}"
-    , 'multiplex' : false
-    , 'reconnection' : false
-    , 'transports' : [ 'websocket' ]
+    params =
+      'query' : "user=#{userName}"
+      'multiplex' : false
+      'reconnection' : false
+      'transports' : [ 'websocket' ]
     unless userName
-      delete q.query
-    return q
+      delete params.query
+    return params
 
   clientConnect = (name) ->
     ioClient.connect url, makeParams(name)
@@ -46,7 +46,9 @@ describe 'Chat service.', ->
   cleanup = null
 
   afterEachFn = (done) ->
-    endcb = -> redis.flushall done
+    endcb = (error) ->
+      if error then return done error
+      redis.flushall done
     socket1?.disconnect()
     socket1 = null
     socket2?.disconnect()
@@ -80,12 +82,10 @@ describe 'Chat service.', ->
 
         it 'should integrate with a provided http server', (done) ->
           httpInst = http.createServer (req, res) -> res.end()
-          enableDestroy httpInst
           chatServer1 = new ChatService { http : httpInst }, null, state
           httpInst.listen port
           cleanup = (cb) ->
-            chatServer1.close ->
-              httpInst.destroy cb
+            chatServer1.close cb
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed', (u) ->
             expect(u).equal(user1)
@@ -96,7 +96,8 @@ describe 'Chat service.', ->
           chatServer1 = new ChatService { io : io }, null, state
           cleanup = (cb) ->
             chatServer1.close ->
-              chatServer1.close()
+              chatServer1.close (error) ->
+                if error then done error
               io.close()
               cb()
           socket1 = clientConnect user1

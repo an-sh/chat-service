@@ -42,7 +42,6 @@
     "coveralls": "^2.11.3",
     "istanbul": "^0.4.1",
     "mocha": "^2.2.5",
-    "server-destroy": "^1.0.1",
     "socket.io-client": "^1.4.5"
   }
 }
