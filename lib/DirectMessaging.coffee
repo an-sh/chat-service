@@ -40,11 +40,11 @@ DirectMessagingPermissions =
     @directMessagingState.hasInList 'blacklist', userName
     , withEH cb, (blacklisted) =>
       if blacklisted
-        return cb @errorBuilder.makeError 'noUserOnline'
+        return cb @errorBuilder.makeError 'notAllowed'
       @directMessagingState.whitelistOnlyGet withEH cb, (whitelistOnly) =>
         @directMessagingState.hasInList 'whitelist', userName
-        , withEH cb, (hasWhitelist) =>
-          if whitelistOnly and not hasWhitelist
+        , withEH cb, (hasInWhitelist) =>
+          if whitelistOnly and not hasInWhitelist
             return cb @errorBuilder.makeError 'notAllowed'
           cb()
 

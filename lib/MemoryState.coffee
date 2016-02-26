@@ -243,7 +243,6 @@ class MemoryState
   # @private
   constructor : (@server, @options) ->
     @errorBuilder = @server.errorBuilder
-    @usersOnline = {}
     @users = {}
     @rooms = {}
     @socketrooms = new Map
@@ -296,41 +295,20 @@ class MemoryState
 
   # @private
   loginUser : (uid, name, socket, cb) ->
-    currentUser = @usersOnline[name]
-    returnedUser = @users[name] unless currentUser
-    if currentUser
-      currentUser.registerSocket socket, cb
-    else if returnedUser
-      @usersOnline[name] = returnedUser
-      returnedUser.registerSocket socket, cb
+    user = @users[name]
+    if user
+      user.registerSocket socket, cb
     else
       newUser = @server.makeUser name
-      @usersOnline[name] = newUser
       @users[name] = newUser
       newUser.registerSocket socket, cb
 
   # @private
-  setUserOffline : (name, cb) ->
-    unless @usersOnline[name]
-      error = @errorBuilder.makeError 'noUserOnline', name
-    else
-      delete @usersOnline[name]
-    process.nextTick -> cb error
-
-  # @private
   getUser : (name, cb) ->
-    isOnline = if @usersOnline[name] then true else false
     user = @users[name]
     unless user
       error = @errorBuilder.makeError 'noUser', name
-    process.nextTick -> cb error, user, isOnline
-
-  # @private
-  getOnlineUser : (name, cb) ->
-    u = @usersOnline[name]
-    unless u
-      error = @errorBuilder.makeError 'noUserOnline', name
-    process.nextTick -> cb error, u
+    process.nextTick -> cb error, user
 
   # @private
   addUser : (name, state, cb) ->
@@ -347,17 +325,13 @@ class MemoryState
 
   # @private
   removeUser : (name, cb) ->
-    user = @usersOnline[name]
-    fn = =>
-      user = @users[name]
-      unless user
-        error = @errorBuilder.makeError 'noUser', name
-      else
-        delete @usersOnline[name]
-        delete @users[name]
-      cb error
-    if user then user.disconnectSockets fn
-    else process.nextTick -> fn()
+    user = @users[name]
+    unless user
+      error = @errorBuilder.makeError 'noUser', name
+      return process.nextTick -> cb error
+    user.disconnectSockets withEH cb, =>
+      delete @users[name]
+      process.nextTick -> cb()
 
 
 module.exports = MemoryState

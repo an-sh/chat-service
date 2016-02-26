@@ -352,43 +352,16 @@ class RedisState
     @lockUser name, @withTE cb, (lock) =>
       unlock = bindUnlock lock, cb
       @redis.sadd @makeDBSocketsName(uid), socket.id, @withTE unlock, =>
-        @redis.sismember @makeDBListName('usersOnline'), name, @withTE unlock
-        , (data) =>
-          user = @server.makeUser name
-          if data
-            user.registerSocket socket, unlock
-          else
-            user = @server.makeUser name
-            @redis.multi()
-            .sadd @makeDBListName('users'), name
-            .sadd @makeDBListName('usersOnline'), name
-            .exec @withTE unlock, ->
-              user.registerSocket socket, unlock
-
-  # @private
-  setUserOffline : (name, cb) ->
-    @redis.sismember @makeDBListName('usersOnline'), name, @withTE cb
-    , (data) =>
-      unless data
-        return cb @errorBuilder.makeError 'noUserOnline', name
-      @redis.srem @makeDBListName('usersOnline'), name, @withTE cb
+        user = @server.makeUser name
+        @redis.sadd @makeDBListName('users'), name, @withTE unlock, ->
+          user.registerSocket socket, unlock
 
   # @private
   getUser : (name, cb) ->
     user = @server.makeUser name
-    @redis.sismember @makeDBListName('usersOnline'), name, @withTE cb, (data) =>
-      if data then return cb null, user, true
-      @redis.sismember @makeDBListName('users'), name, @withTE cb, (data) =>
-        if data then return cb null, user, false
-        else return cb @errorBuilder.makeError 'noUser', name
-
-  # @private
-  getOnlineUser : (name, cb) ->
-    @redis.sismember @makeDBListName('usersOnline'), name, @withTE cb, (data) =>
-      unless data
-        return cb @errorBuilder.makeError 'noUserOnline', name
-      user = @server.makeUser name
-      cb null, user
+    @redis.sismember @makeDBListName('users'), name, @withTE cb, (data) =>
+      if data then return cb null, user
+      else return cb @errorBuilder.makeError 'noUser', name
 
   # @private
   addUser : (name, state, cb) ->
@@ -410,20 +383,12 @@ class RedisState
     user = @server.makeUser name
     @lockUser name, @withTE cb, (lock) =>
       unlock = bindUnlock lock, cb
-      @redis.sismember @makeDBListName('usersOnline'), name, @withTE unlock
-      , (data) =>
-        removeDBentries = =>
-          @redis.sismember @makeDBListName('users'), name, @withTE unlock
-          , (data) =>
-            unless data
-              return unlock @errorBuilder.makeError 'noUser', name
-            @redis.multi()
-            .srem @makeDBListName('users'), name
-            .srem @makeDBListName('usersOnline'), name
-            .exec @withTE unlock, ->
-              user.removeState unlock
-        if data then user.disconnectSockets removeDBentries
-        else removeDBentries()
+      @redis.sismember @makeDBListName('users'), name, @withTE unlock, (data) =>
+        unless data
+          return unlock @errorBuilder.makeError 'noUser', name
+        user.disconnectSockets @withTE unlock, =>
+          user.removeState @withTE unlock, =>
+            @redis.srem @makeDBListName('users'), name, unlock
 
 
 module.exports = RedisState

@@ -115,7 +115,7 @@ UserCleanups =
       @state.lockUser userName, withEH fn, (lock) =>
         unlock = bindUnlock lock, fn
         room.leave userName, withEH unlock, =>
-          @state.getUser userName, withEH unlock, (user, isOnline) =>
+          @state.getUser userName, withEH unlock, (user) =>
             user.userState.removeAllSocketsFromRoom roomName, withEH unlock, =>
               user.userState.getAllSockets withEH unlock, (sockets) =>
                 for id in sockets
@@ -150,19 +150,13 @@ UserCleanups =
     @userState.getAllRooms withEH cb, (rooms) =>
       @userState.getAllSockets withEH cb, (sockets) =>
         nsockets = sockets.length
-        end = =>
-          @state.removeSocket @state.serverUID, id, withEH cb, =>
-            for sid in sockets
-              @send sid, 'socketDisconnectEcho', id, nsockets
-            cb()
         async.eachLimit rooms, asyncLimit
         , (roomName, fn) =>
           @removeRoomSocket id, sockets, roomName, fn
-        , =>
-          if nsockets == 0
-            @state.setUserOffline @username, end
-          else
-            end()
+        , withEH cb, =>
+          for sid in sockets
+            @send sid, 'socketDisconnectEcho', id, nsockets
+          @state.removeSocket @state.serverUID, id, cb
 
 
 # @private
@@ -230,18 +224,19 @@ class User extends DirectMessaging
     unless @enableDirectMessages
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
-    @state.getOnlineUser toUserName, withEH cb, (toUser) =>
-      @state.getOnlineUser @username, withEH cb, (fromUser) =>
-        pmsg = processMessage @username, msg
-        toUser.message @username, pmsg, withEH cb, =>
-          fromUser.userState.getAllSockets withEH cb, (sockets) =>
-            for sid in sockets
+    @server.state.getUser toUserName, withEH cb, (toUser) =>
+      pmsg = processMessage @username, msg
+      toUser.message @username, pmsg, withEH cb, =>
+        @userState.getAllSockets withEH cb, (fromSockets) =>
+          toUser.userState.getAllSockets withEH cb, (toSockets) =>
+            unless toSockets?.length
+              return cb @errorBuilder.makeError 'noUserOnline', toUser
+            for sid in fromSockets
               if sid != id
                 @send sid, 'directMessageEcho', toUserName, pmsg
-            toUser.userState.getAllSockets withEH cb, (sockets) =>
-              for sid in sockets
-                @send sid, 'directMessage', pmsg
-              cb null, msg
+            for sid in toSockets
+              @send sid, 'directMessage', pmsg
+            cb null, pmsg
 
   # @private
   directRemoveFromList : (listName, values, cb) ->
