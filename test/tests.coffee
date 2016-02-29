@@ -15,7 +15,7 @@ describe 'Chat service.', ->
 
   states = [
     { state : 'memory', adapter : 'memory' }
-    { state : 'redis', adapter : 'redis' }
+    # { state : 'redis', adapter : 'redis' }
   ]
 
   makeParams = (userName) ->
@@ -123,7 +123,7 @@ describe 'Chat service.', ->
             socket2 = clientConnect user1
             socket2.on 'loginConfirmed', (u) ->
               expect(u).equal(user1)
-              chatServer.removeUser user1
+              chatServer.disconnectUserSockets user1
               async.parallel [
                 (cb) ->
                   socket1.on 'disconnect', ->
@@ -135,16 +135,8 @@ describe 'Chat service.', ->
                     cb()
               ], done
 
-        it 'should remove only known users', (done) ->
-          chatServer = new ChatService { port : port }, null, state
-          socket1 = clientConnect user1
-          socket1.on 'loginConfirmed', ->
-            chatServer.removeUser user2, (error, data) ->
-              expect(error).ok
-              expect(data).not.ok
-              done()
 
-        it 'should support adding and removing users', (done) ->
+        it 'should support adding users', (done) ->
           chatServer = new ChatService { port : port }, null, state
           chatServer.addUser user1, { whitelistOnly : true }, ->
             socket1 = clientConnect user1
@@ -152,9 +144,7 @@ describe 'Chat service.', ->
               socket1.emit 'directGetWhitelistMode', (error, data) ->
                 expect(error).not.ok
                 expect(data).true
-                chatServer.removeUser user1
-                socket1.on 'disconnect', ->
-                  done()
+                done()
 
         it 'should check existing users before adding new ones', (done) ->
           chatServer = new ChatService { port : port }, null, state
@@ -705,9 +695,19 @@ describe 'Chat service.', ->
                   socket2.emit 'roomJoin', roomName1, ->
                     socket1.emit 'roomAddToList', roomName1, 'blacklist'
                     , [user2]
-                    socket2.on 'roomAccessRemoved', (r) ->
-                      expect(r).equal(roomName1)
-                      done()
+                    async.parallel [
+                      (cb) ->
+                        socket2.on 'roomAccessRemoved', (r) ->
+                          expect(r).equal(roomName1)
+                          cb()
+                      (cb) ->
+                        cb()
+                        socket1.on 'roomUserLeft', (r, u) ->
+                          expect(r).equal(roomName1)
+                          expect(u).equal(user2)
+                          cb()
+                    ], done
+
 
         it 'should remove affected users on mode changes', (done) ->
           chatServer = new ChatService { port : port }, null, state
@@ -772,13 +772,18 @@ describe 'Chat service.', ->
                     socket2.on 'loginConfirmed', (u, data)->
                       sid2 = data.id
                       socket2.emit 'roomJoin', roomName1, ->
-                        socket2.emit 'listJoinedRooms', (error, data) ->
-                          expect(error).not.ok
-                          expect(data[roomName1]).lengthOf(2)
-                          expect(data[roomName2]).lengthOf(1)
-                          expect(data[roomName1]).include.members([sid1,sid2])
-                          expect(data[roomName2]).include(sid1)
-                          done()
+                        socket3 = clientConnect user1
+                        socket3.on 'loginConfirmed', (u, data)->
+                          sid3 = data.id
+                          socket2.emit 'listJoinedSockets', (error, data) ->
+                            expect(error).not.ok
+                            expect(data[sid1]).lengthOf(2)
+                            expect(data[sid2]).lengthOf(1)
+                            expect(data[sid3]).lengthOf(0)
+                            expect(data[sid1]).include
+                            .members([roomName1, roomName2])
+                            expect(data[sid1]).include(roomName1)
+                            done()
 
 
       describe 'Direct messaging', ->

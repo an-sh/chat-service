@@ -4,9 +4,8 @@
 - Changed chat constructor options.
 - Changed roomJoinedEcho and roomLeftEcho ServerMessages.
 - Include redis socket.io adapter.
-- Use redlock when modifying user to room associations.
 - Changed adminlist to accessList.
-- Add listJoinedRooms command.
+- Add listJoinedSockets command.
 - Changed roomMessage command.
 - Changed roomMessage and directMessage server messages.
 - Changed Redis schema.
@@ -16,7 +15,7 @@
 - Code and tests cleanups.
 - Commands arguments validation fixes.
 - Allow custom content in message objects.
-- Bug fixes.
+- Huge internal APIs changes.
 
 ### 0.6.1 (2016/02/01)
 

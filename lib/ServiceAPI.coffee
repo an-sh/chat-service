@@ -4,12 +4,13 @@
 # @mixin
 # API for server side operations.
 ServiceAPI =
-  # Remove all user data and closes all connections.
+  # TODO
   #
   # @param userName [String] User name.
   # @param cb [Callback] Optional callback.
-  removeUser : (userName, cb = ->) ->
-    @state.removeUser userName, withoutData cb
+  disconnectUserSockets : (userName, cb = ->) ->
+    @state.getUser userName, withEH cb, (user) ->
+      user.disconnectInstanceSockets cb
 
   # Adds an user with a state.
   #
@@ -29,6 +30,7 @@ ServiceAPI =
   # @param roomName [String] User name.
   # @param cb [Callback] Optional callback.
   removeRoom : (roomName, cb = ->) ->
+    #TODO
     user = @makeUser()
     user.withRoom roomName, withEH cb, (room) =>
       room.getUsers withEH cb, (usernames) =>

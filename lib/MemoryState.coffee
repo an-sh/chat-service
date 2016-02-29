@@ -4,6 +4,7 @@ FastSet = require 'collections/fast-set'
 Map = require 'collections/fast-map'
 _ = require 'lodash'
 async = require 'async'
+
 { withEH, asyncLimit } = require './utils.coffee'
 
 
@@ -161,78 +162,105 @@ class UserStateMemory
 
   # @private
   constructor : (@server, @username) ->
-    @roomslist = new FastSet
-    @sockets = new FastSet
-    @socketrooms = @server.state.socketrooms
-    @roomsockets = @server.state.roomsockets
+    @socketsToRooms = new Map
+    @roomsToSockets = new Map
+    @echoChannel = @makeEchoChannelName @username
+
+  # @private
+  makeEchoChannelName : (userName) ->
+    "echo:#{userName}"
 
   # @private
   addSocket : (id, cb) ->
-    @sockets.add id
-    process.nextTick -> cb null
-
-  # @private
-  removeSocket : (id, cb) ->
-    @sockets.remove id
-    process.nextTick -> cb null
+    roomsset = new FastSet
+    @socketsToRooms.set id, roomsset
+    nconnected = @socketsToRooms.length
+    process.nextTick -> cb null, nconnected
 
   # @private
   getAllSockets : (cb) ->
-    sockets = @sockets.toArray()
+    sockets = @socketsToRooms.keys()
     process.nextTick -> cb null, sockets
 
   # @private
   getAllRooms : (cb) ->
-    rooms = @roomslist.toArray()
+    rooms = @roomsToSockets.keys()
     process.nextTick -> cb null, rooms
 
   # @private
-  getRoomSocketsSync : (roomName) ->
-    socketsset = @roomsockets.get roomName
-    s = @sockets.intersection socketsset
-    s.toArray()
+  getSocketsToRooms : (cb) ->
+    result = {}
+    sockets = @socketsToRooms.keys()
+    for id in sockets
+      socketsset = @socketsToRooms.get id
+      result[id] = socketsset.toArray()
+    process.nextTick -> cb null, result
 
   # @private
-  getRoomSockets : (roomName, cb) ->
-    sockets = @getRoomSocketsSync roomName
-    process.nextTick -> cb null, sockets
-
-  # @private
-  addSocketToRoom : (roomName, id, cb) ->
-    roomsset = @socketrooms.get id
-    socketsset = @roomsockets.get roomName
-    unless roomsset
-      roomsset = new FastSet
-      @socketrooms.set id, roomsset
+  addSocketToRoom : (id, roomName, cb) ->
+    roomsset = @socketsToRooms.get id
+    socketsset = @roomsToSockets.get roomName
     unless socketsset
       socketsset = new FastSet
-      @roomsockets.set roomName, socketsset
+      @roomsToSockets.set roomName, socketsset
     roomsset.add roomName
     socketsset.add id
-    @roomslist.add roomName
-    process.nextTick -> cb null
+    njoined = socketsset.length
+    process.nextTick -> cb null, njoined
 
   # @private
-  removeSocketFromRoom : (roomName, id, cb) ->
-    roomsset = @socketrooms.get id
-    socketsset = @roomsockets.get roomName
-    roomsset?.remove roomName
-    socketsset?.remove id
-    unless @getRoomSocketsSync(roomName)?.length
-      @roomslist.remove roomName
-    process.nextTick -> cb null
+  removeSocketFromRoom : (id, roomName, cb) ->
+    roomsset = @socketsToRooms.get id
+    socketsset = @roomsToSockets.get roomName
+    roomsset.delete roomName
+    socketsset.delete id
+    njoined = socketsset?.length || 0
+    process.nextTick -> cb null, njoined
 
   # @private
   removeAllSocketsFromRoom : (roomName, cb) ->
-    sockets = @sockets.toArray()
-    socketsset = @roomsockets.get roomName
-    for id in socketsset?.toArray()
-      roomsset = @socketrooms.get id
-      roomsset?.remove roomName
+    sockets = @socketsToRooms.keys()
+    socketsset = @roomsToSockets.get roomName
+    removedSockets = socketsset?.toArray()
+    for id in removedSockets
+      roomsset = @socketsToRooms.get id
+      roomsset.delete roomName
     socketsset = socketsset?.difference sockets
-    @roomsockets.set roomName, socketsset
-    @roomslist.remove roomName
-    process.nextTick -> cb null
+    @roomsToSockets.set roomName, socketsset
+    process.nextTick -> cb null, removedSockets
+
+  # @private
+  removeSocket : (id, cb) ->
+    rooms = @roomsToSockets.toArray()
+    roomsset = @socketsToRooms.get id
+    removedRooms = roomsset?.toArray()
+    joinedSockets = []
+    for roomName, idx in removedRooms
+      socketsset = @roomsToSockets.get roomName
+      socketsset.delete id
+      njoined = socketsset.length
+      joinedSockets[idx] = njoined
+    roomsset = roomsset?.difference removedRooms
+    @socketsToRooms.delete id
+    nconnected = @socketsToRooms.length
+    process.nextTick -> cb null, removedRooms, joinedSockets, nconnected
+
+  # @private
+  lockSocketRoom : (id, roomName, cb) ->
+    process.nextTick -> cb()
+
+  # @private
+  setRoomAccessRemoved : (roomName, cb) ->
+    process.nextTick -> cb()
+
+  # @private
+  setSocketDisconnecting : (id, cb) ->
+    process.nextTick -> cb()
+
+  # @private
+  bindUnlock : (lock, op, username, id, cb) ->
+    (args...) ->
+      process.nextTick -> cb args...
 
 
 # Implements global state API.
@@ -245,8 +273,6 @@ class MemoryState
     @errorBuilder = @server.errorBuilder
     @users = {}
     @rooms = {}
-    @socketrooms = new Map
-    @roomsockets = new Map
     @RoomState = RoomStateMemory
     @UserState = UserStateMemory
     @DirectMessagingState = DirectMessagingStateMemory
@@ -285,13 +311,7 @@ class MemoryState
 
   # @private
   removeSocket : (uid, id, cb) ->
-    process.nextTick ->
-      cb null
-
-  # @private
-  lockUser : (name, cb) ->
-    process.nextTick ->
-      cb null, { unlock : -> }
+    process.nextTick -> cb()
 
   # @private
   loginUser : (uid, name, socket, cb) ->
@@ -324,14 +344,8 @@ class MemoryState
       process.nextTick -> cb()
 
   # @private
-  removeUser : (name, cb) ->
-    user = @users[name]
-    unless user
-      error = @errorBuilder.makeError 'noUser', name
-      return process.nextTick -> cb error
-    user.disconnectSockets withEH cb, =>
-      delete @users[name]
-      process.nextTick -> cb()
+  removeUserData : (name, cb) ->
+    #TODO
 
 
 module.exports = MemoryState

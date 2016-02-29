@@ -1,7 +1,7 @@
 
 # @private
 # @nodoc
-asyncLimit = 16
+asyncLimit = 32
 
 # @private
 # @nodoc
@@ -20,8 +20,23 @@ withEH = (errorCallback, normallCallback) ->
 
 # @private
 # @nodoc
+withoutData = (fn) ->
+  (error) -> fn error
+
+# @private
+# @nodoc
+withFailLog = (log, data, cb) ->
+  (error, args...) ->
+    log error, data if error and log
+    cb args... if cb
+
+bindFailLog = (obj, errorsLogger) ->
+  obj.withFailLog = (data, cb) -> withFailLog errorsLogger, data, cb
+
+# @private
+# @nodoc
 withTE = (errorBuilder, callback, normallCallback) ->
-  return (error, data) ->
+  (error, data) ->
     if error
       callback errorBuilder.makeError 'serverError', 500
     else if normallCallback
@@ -31,25 +46,14 @@ withTE = (errorBuilder, callback, normallCallback) ->
 
 # @private
 # @nodoc
-bindTE = (obj) ->
-  obj.withTE = (args...) -> withTE obj.errorBuilder, args...
+bindTE = (obj, errorBuilder) ->
+  obj.withTE = (args...) -> withTE errorBuilder, args...
 
-# @private
-# @nodoc
-bindUnlock = (lock, cb) ->
-  return (args...) ->
-    lock.unlock()
-    cb args...
-
-# @private
-# @nodoc
-withoutData = (fn) ->
-  (error) -> fn error
 
 module.exports = {
   asyncLimit
+  bindFailLog
   bindTE
-  bindUnlock
   extend
   withEH
   withoutData

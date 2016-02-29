@@ -195,14 +195,14 @@ class UserCommands
   # @param cb [Function<error, null>] Callback.
   disconnect : (reason, cb) ->
 
-  # Gets a list of all joined rooms with corresponding socket
-  # ids. This returns information about all user's sockets.
+  # Gets a list of all sockets with corresponding joined rooms. This
+  # returns information about all user's sockets.
   # @param cb [Function<error, Object<Hash>>] Sends ack with an error
-  #   or an object, where rooms are keys and array of socket ids are
+  #   or an object, where sockets are keys and arrays of rooms are
   #   values.
   # @see ServerMessages#roomJoinedEcho
   # @see ServerMessages#roomLeftEcho
-  listJoinedRooms : (cb) ->
+  listJoinedSockets : (cb) ->
 
   # Gets a list of all rooms on the server.
   # @param cb [Function<error, Array<String>>] Sends ack with an error
@@ -445,11 +445,8 @@ class ChatService
   # @option stateOptions [Object] redisClusterOptions
   #   ioredis cluster constructor options.
   #
-  # @option stateOptions [Object] redlockOptions
-  #   redlock constructor options.
-  #
-  # @option stateOptions [Integer] redlockTTL
-  #   redlock TTL option, default is 2000.
+  # @option stateOptions [Integer] lockTTL
+  #   lockTTL option, default is 2000.
   constructor : (@options = {}, @hooks = {}, @storageOptions = {}) ->
     @setOptions()
     @setLivecycle()
@@ -569,11 +566,12 @@ class ChatService
       unless userName
         error = @errorBuilder.makeError 'noLogin'
         return @rejectLogin socket, error
-    @state.loginUser @serverUID, userName, socket, (error) =>
+    @state.loginUser @serverUID, userName, socket, (error, user) =>
       if error
         @rejectLogin socket, error
       else
-        @confirmLogin socket, userName, authData
+        socket.join user.echoChannel, =>
+          @confirmLogin socket, userName, authData
 
   # @private
   # @nodoc

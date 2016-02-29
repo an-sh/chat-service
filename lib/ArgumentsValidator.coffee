@@ -23,10 +23,7 @@ class ArgumentsValidator
 
   # @private
   checkArguments : (name, args, cb) ->
-    checkers = @checkers.get(name)?()
-    unless checkers
-      return process.nextTick ->
-        cb [ 'noCommand', name ]
+    checkers = @checkers.get(name)()
     error = @checkTypes checkers, args
     if error
       return process.nextTick -> cb error
@@ -105,7 +102,7 @@ class ArgumentsValidator
     ]
 
   # @private
-  listJoinedRooms : () ->
+  listJoinedSockets : () ->
     []
 
   # @private
