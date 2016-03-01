@@ -175,11 +175,12 @@ describe 'Chat service.', ->
           socket1.on 'loginRejected', ->
             done()
 
-        it 'should execute an auth hook', (done) ->
-          reason = 'some reason'
+        it 'should execute socket.io middleware', (done) ->
+          reason = 'some error'
           auth = (socket, cb) ->
             cb( new Error reason )
-          chatServer = new ChatService { port : port }, { auth : auth }, state
+          chatServer = new ChatService { port : port }
+          , { middleware : auth }, state
           socket1 = clientConnect()
           socket1.on 'error', (e) ->
             expect(e).deep.equal(reason)

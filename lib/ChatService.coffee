@@ -366,9 +366,9 @@ class ChatService
   #
   # @param options [Object] Options.
   #
-  # @option hooks [Function] auth Socket.io middleware function to run
-  #   on all messages in the namespace. Look in the socket.io
-  #   documentation.
+  # @option hooks [Function or Array<Function>] middleware Socket.io
+  #   middleware functions to run on all messages in the
+  #   namespace. Look in the socket.io documentation.
   #
   # @option hooks [Function(<ChatService>, <Socket>,
   #   <Function(<Error>, <String>, <Object>)>)] onConnect Client
@@ -538,8 +538,12 @@ class ChatService
   setEvents : ->
     @directMessageChecker = @hooks.directMessageChecker
     @roomMessageChecker = @hooks.roomMessageChecker
-    if @hooks.auth
-      @nsp.use @hooks.auth
+    if @hooks.middleware
+      if _.isFunction @hooks.middleware
+        @nsp.use @hooks.middleware
+      else
+        for fn in @hooks.middleware
+          @nsp.use fn
     if @hooks.onConnect
       @nsp.on 'connection', (socket) =>
         @checkShutdown socket, =>

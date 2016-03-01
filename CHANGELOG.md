@@ -17,6 +17,7 @@
 - Allow custom content in message objects.
 - Huge internal APIs changes.
 - Added roomGetOwner command.
+- Changed auth hook to middleware.
 
 ### 0.6.1 (2016/02/01)
 
