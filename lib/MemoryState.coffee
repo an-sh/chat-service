@@ -258,7 +258,12 @@ class UserStateMemory
     process.nextTick -> cb()
 
   # @private
-  bindUnlock : (lock, op, username, id, cb) ->
+  bindUnlockSelf : (lock, op, id, cb) ->
+    (args...) ->
+      process.nextTick -> cb args...
+
+  # @private
+  bindUnlockOthers : (lock, op, username, cb) ->
     (args...) ->
       process.nextTick -> cb args...
 

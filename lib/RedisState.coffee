@@ -270,9 +270,13 @@ class UserStateRedis
     #TODO
     process.nextTick -> cb()
 
+   # @private
+  bindUnlockSelf : (lock, op, id, cb) ->
+    (args...) ->
+      process.nextTick -> cb args...
+
   # @private
-  bindUnlock : (lock, op, username, id, cb) ->
-    #TODO
+  bindUnlockOthers : (lock, op, username, cb) ->
     (args...) ->
       process.nextTick -> cb args...
 

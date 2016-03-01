@@ -207,8 +207,7 @@ UserAssociations =
   # @private
   joinSocketToRoom : (id, roomName, cb) ->
     @userState.lockSocketRoom id, roomName, withEH cb, (lock, israce) =>
-      unlock = @userState.bindUnlock lock, 'joinSocketToRoom', @username
-      , id, cb
+      unlock = @userState.bindUnlockSelf lock, 'joinSocketToRoom', id, cb
       if israce
         return unlock @errorBuilder.makeError 'serverError', 500
       @withRoom roomName, withEH unlock, (room) =>
@@ -224,8 +223,7 @@ UserAssociations =
   # @private
   leaveSocketFromRoom : (id, roomName, cb) ->
     @userState.lockSocketRoom id, roomName, withEH cb, (lock, israce) =>
-      unlock = @userState.bindUnlock lock, 'leaveSocketFromRoom', @username
-      , id, cb
+      unlock = @userState.bindUnlockSelf lock, 'leaveSocketFromRoom', id, cb
       if israce
         return unlock @errorBuilder.makeError 'serverError', 500
       @userState.removeSocketFromRoom id, roomName, withEH unlock
@@ -243,8 +241,8 @@ UserAssociations =
   removeUserFromRoom : (userName, roomName, cb) ->
     task = (fn) =>
       @userState.lockSocketRoom null, roomName, withEH fn, (lock) =>
-        unlock = @userState.bindUnlock lock, 'removeUserFromRoom', userName
-        , null, fn
+        unlock = @userState.bindUnlockOthers lock, 'removeUserFromRoom'
+        , userName, fn
         @removeRoomUser userName, roomName, unlock
     data = { username : userName, room : roomName }
     data.op = 'removeUserFromRoom'
