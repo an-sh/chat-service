@@ -1048,8 +1048,9 @@ describe 'Chat service.', ->
             expect(cb).instanceof(Function)
             before = true
             cb()
-          afterHook = (server, username, id, error, data, args, cb) ->
+          afterHook = (server, username, id, args, results, cb) ->
             [ name , mode ] = args
+            [ error, data ] = results
             expect(server).instanceof(ChatService)
             expect(username).equal(user1)
             expect(id).equal(sid)
@@ -1096,7 +1097,7 @@ describe 'Chat service.', ->
           disconnectBefore = (server, username, id, args, cb) ->
             before = true
             cb()
-          disconnectAfter = (server, username, id, error, data, args, cb) ->
+          disconnectAfter = (server, username, id, args, results, cb) ->
             expect(before).true
             cb()
             done()

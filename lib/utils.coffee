@@ -30,6 +30,8 @@ withFailLog = (log, data, cb) ->
     log error, data if error and log
     cb args... if cb
 
+# @private
+# @nodoc
 bindFailLog = (obj, errorsLogger) ->
   obj.withFailLog = (data, cb) -> withFailLog errorsLogger, data, cb
 

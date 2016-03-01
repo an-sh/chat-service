@@ -406,11 +406,11 @@ class ChatService
   #   original command requires). Also note that before hooks are run
   #   only after a successful arguments types validation.
   #
-  # @option hooks [Function(ChatService, String, String, Error, Data,
-  #   Array, <Function(<Error, Data>)>)] {command}After After hooks
-  #   are available for all {UserCommands} and all have the same
-  #   arguments: ChatService object, user name, socket id, Error or
-  #   null, Data or null, Array of command arguments and a
+  # @option hooks [Function(ChatService, String, String, Array, Array,
+  #   <Function(<Error, Data>)>)] {command}After After hooks are
+  #   available for all {UserCommands} and all have the same
+  #   arguments: ChatService object, user name, socket id, Array of
+  #   command arguments, Array of command results and a
   #   callback. Error or Data is the command's execution result or
   #   error respectively. Callback may be without arguments to return
   #   unchanged result or error to the command issuer, or with new

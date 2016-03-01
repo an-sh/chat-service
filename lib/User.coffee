@@ -41,7 +41,8 @@ CommandBinder =
           reportResults = (nerror = error, ndata = data) ->
             cb nerror, ndata
           if afterHook
-            afterHook @server, @username, id, error, data, args, reportResults
+            results = [].slice.call arguments
+            afterHook @server, @username, id, args, results, reportResults
           else
             reportResults()
         fn.apply @, [ args..., afterCommand, id ]
