@@ -14,8 +14,8 @@ describe 'Chat service.', ->
   url = "http://localhost:#{port}/chat-service"
 
   states = [
-    { state : 'memory', adapter : 'memory' }
-    # { state : 'redis', adapter : 'redis' }
+    { state : 'memory', adapter : 'memory', port : port }
+    # { state : 'redis', adapter : 'redis', port : port }
   ]
 
   makeParams = (userName) ->
@@ -80,7 +80,7 @@ describe 'Chat service.', ->
 
       describe 'Initialization', ->
 
-        it 'should integrate with a provided http server', (done) ->
+        it.skip 'should integrate with a provided http server', (done) ->
           httpInst = http.createServer (req, res) -> res.end()
           chatServer1 = new ChatService { http : httpInst }, null, state
           httpInst.listen port
@@ -91,13 +91,13 @@ describe 'Chat service.', ->
             expect(u).equal(user1)
             done()
 
-        it 'should integrate with an existing io', (done) ->
+        it.skip 'should integrate with an existing io', (done) ->
           io = socketIO port
           chatServer1 = new ChatService { io : io }, null, state
           cleanup = (cb) ->
-            chatServer1.close ->
-              chatServer1.close (error) ->
-                if error then done error
+            chatServer1.close (error) ->
+              console.log error
+              if error then cb error
               io.close()
               cb()
           socket1 = clientConnect user1

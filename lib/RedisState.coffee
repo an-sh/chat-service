@@ -346,13 +346,13 @@ class RedisState
     @redis.srem @makeDBSocketsName(uid), id, @withTE cb
 
   # @private
-  loginUser : (uid, name, socket, cb) ->
+  loginUserSocket : (uid, name, id, cb) ->
     user = @server.makeUser name
     @redis.multi()
-    .sadd @makeDBSocketsName(uid), socket.id
+    .sadd @makeDBSocketsName(uid), id
     .sadd @makeDBListName('users'), name
     .exec @withTE cb, ->
-      user.registerSocket socket, cb
+      user.registerSocket id, cb
 
   # @private
   getUser : (name, cb) ->

@@ -1,6 +1,4 @@
 
-RedisAdapter = require 'socket.io-redis'
-SocketServer = require 'socket.io'
 _ = require 'lodash'
 uid = require 'uid-safe'
 
@@ -10,6 +8,7 @@ MemoryState = require './MemoryState.coffee'
 RedisState = require './RedisState.coffee'
 Room = require './Room.coffee'
 ServiceAPI = require './ServiceAPI.coffee'
+SocketIOTransport = require './SocketIOTransport.coffee'
 User = require './User.coffee'
 
 { extend } = require './utils.coffee'
@@ -453,74 +452,43 @@ class ChatService
   #
   # @option stateOptions [Integer] lockTTL
   #   lockTTL option, default is 2000.
-  constructor : (@options = {}, @hooks = {}, @storageOptions = {}) ->
+  constructor : (@serviceOptions = {}, @hooks = {}, @integrationOptions = {}) ->
     @setOptions()
-    @setLivecycle()
     @setServer()
-    if @hooks.onStart
-      @hooks.onStart @, (error) =>
-        if error then throw error
-        else @setEvents()
-    else
-      @setEvents()
+    @startServer()
 
   # @private
   # @nodoc
   setOptions : ->
-    @namespace = @options.namespace || '/chat-service'
-    @historyMaxMessages = @options.historyMaxMessages || 100
-    @historyMaxGetMessages = @options.historyMaxGetMessages || 10000
-    @useRawErrorObjects = @options.useRawErrorObjects || false
-    @enableUserlistUpdates = @options.enableUserlistUpdates || false
-    @enableAccessListsUpdates = @options.enableAccessListsUpdates || false
-    @enableRoomsManagement = @options.enableRoomsManagement || false
-    @enableDirectMessages = @options.enableDirectMessages || false
-    @closeTimeout = @options.closeTimeout || 5000
-    @socketIoServerOptions = @options.socketIoServerOptions
-    @stateConstructor = @storageOptions.state
-    @adapterConstructor = @storageOptions.adapter
-    @socketIoAdapterOptions = @storageOptions.socketIoAdapterOptions
-    @storageOptions = @options.stateOptions
     @serverUID = uid.sync 18
-
-  # @private
-  # @nodoc
-  setLivecycle : ->
-    @nclosing = 0
-    @closeCB = null
-    @finished = false
+    @historyMaxMessages = @serviceOptions.historyMaxMessages || 100
+    @historyMaxGetMessages = @serviceOptions.historyMaxGetMessages || 10000
+    @useRawErrorObjects = @serviceOptions.useRawErrorObjects || false
+    @enableUserlistUpdates = @serviceOptions.enableUserlistUpdates || false
+    @enableAccessListsUpdates= @serviceOptions.enableAccessListsUpdates || false
+    @enableRoomsManagement = @serviceOptions.enableRoomsManagement || false
+    @enableDirectMessages = @serviceOptions.enableDirectMessages || false
+    @closeTimeout = @serviceOptions.closeTimeout || 5000
+    @stateConstructor = @integrationOptions.state
+    @stateOptions = @integrationOptions.stateOptions
+    @transportConstructor = @integrationOptions.transport
+    @transportOptions = @integrationOptions.transportOptions
 
   # @private
   # @nodoc
   setServer : ->
-    @errorBuilder = new ErrorBuilder @useRawErrorObjects
-    @io = @options.io
-    @sharedIO = true if @io
-    @http = @options.http unless @io
     State = switch @stateConstructor
       when 'memory' then MemoryState
       when 'redis' then RedisState
-      when typeof @stateConstructor == 'function' then @stateConstructor
+      when _.isFunction @stateConstructor then @stateConstructor
       else throw new Error "Invalid state: #{@stateConstructor}"
-    Adapter = switch @adapterConstructor
-      when 'memory' then null
-      when 'redis' then RedisAdapter
-      when typeof @adapterConstructor == 'function' then @adapterConstructor
-      else throw new Error "Invalid adapter: #{@adapterConstructor}"
-    unless @io
-      if @http
-        @io = new SocketServer @http, @socketIoServerOptions
-      else
-        port = @socketIoServerOptions?.port || 8000
-        @io = new SocketServer port, @socketIoServerOptions
-      if Adapter
-        @adapter = new Adapter @socketIoAdapterOptions
-        @io.adapter @adapter
+    Transport = @transportConstructor || SocketIOTransport
+    @errorBuilder = new ErrorBuilder @useRawErrorObjects
     @userCommands = new UserCommands()
     @serverMessages = new ServerMessages()
-    @nsp = @io.of @namespace
-    @state = new State @, @stateOptions
     @validator = new ArgumentsValidator @
+    @state = new State @, @stateOptions
+    @transport = new Transport @, @transportOptions, @hooks
     @makeUser = (args...) =>
       new User @, args...
     @makeRoom = (args...) =>
@@ -528,110 +496,23 @@ class ChatService
 
   # @private
   # @nodoc
-  checkShutdown : (socket, next) ->
-    if @closeCB or @finished
-      return socket.disconnect(true)
-    next()
-
-  # @private
-  # @nodoc
-  setEvents : ->
-    @directMessageChecker = @hooks.directMessageChecker
-    @roomMessageChecker = @hooks.roomMessageChecker
-    if @hooks.middleware
-      if _.isFunction @hooks.middleware
-        @nsp.use @hooks.middleware
-      else
-        for fn in @hooks.middleware
-          @nsp.use fn
-    if @hooks.onConnect
-      @nsp.on 'connection', (socket) =>
-        @checkShutdown socket, =>
-          @hooks.onConnect @, socket, (error, userName, authData) =>
-            @addClient error, socket, userName, authData
+  startServer : ->
+    if @hooks.onStart
+      @hooks.onStart @, (error) =>
+        if error then throw error
+        else @transport.setEvents()
     else
-      @nsp.on 'connection', (socket) =>
-        @checkShutdown socket, =>
-          @addClient null, socket
-
-  # @private
-  # @nodoc
-  rejectLogin : (socket, error) ->
-    socket.emit 'loginRejected', error
-    socket.disconnect(true)
-
-  # @private
-  # @nodoc
-  confirmLogin : (socket, userName, authData) ->
-    if _.isObject(authData)
-      authData.id = socket.id unless authData.id?
-    socket.emit 'loginConfirmed', userName, authData
-
-  # @private
-  # @nodoc
-  addClient : (error, socket, userName, authData = {}) ->
-    if error then return @rejectLogin socket, error
-    unless userName
-      userName = socket.handshake.query?.user
-      unless userName
-        error = @errorBuilder.makeError 'noLogin'
-        return @rejectLogin socket, error
-    @state.loginUser @serverUID, userName, socket, (error, user) =>
-      if error
-        @rejectLogin socket, error
-      else
-        socket.join user.echoChannel, =>
-          @confirmLogin socket, userName, authData
-
-  # @private
-  # @nodoc
-  finish : () ->
-    if @closeCB and !@finished
-      @finished = true
-      @closeCB()
-
-  # @private
-  # @nodoc
-  startClientDisconnect : () ->
-    @nclosing++
-
-  # @private
-  # @nodoc
-  endClientDisconnect : () ->
-    @nclosing--
-    if @closeCB and @nclosing == 0
-      process.nextTick => @finish()
+      @transport.setEvents()
 
   # Closes server.
   # @param done [callback] Optional callback.
   close : (done = ->) ->
-    @closeCB = (error) =>
-      @closeCB = null
-      unless @sharedIO
-        @io.close()
-      if @http
-        @io.engine.close()
-      if @hooks.onClose
-        @hooks.onClose @, error, done
-      else
+    @transport.close (error) =>
+      if error
+        @state.close()
         done error
-    closeStartingTime = new Date().getTime()
-    closingTimeoutChecker = =>
-      if @finished then return
-      timeCurrent = new Date().getTime()
-      if timeCurrent > closeStartingTime + @closeTimeout
-        @finished = true
-        @closeCB new Error 'Server closing timeout.'
       else
-        setTimeout closingTimeoutChecker, 100
-    npending = 0
-    for sid, socket of @nsp.connected
-      npending++
-      socket.disconnect()
-    if @nclosing == 0 and npending == 0
-      process.nextTick => @closeCB()
-    else
-      closingTimeoutChecker()
+        @state.close done
 
 
 module.exports = ChatService

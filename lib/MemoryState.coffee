@@ -283,6 +283,10 @@ class MemoryState
     @DirectMessagingState = DirectMessagingStateMemory
 
   # @private
+  close : (cb) ->
+    process.nextTick -> cb()
+
+  # @private
   getRoom : (name, cb) ->
     r = @rooms[name]
     unless r
@@ -312,21 +316,24 @@ class MemoryState
 
   # @private
   listRooms : (cb) ->
-    process.nextTick => cb null, _.keys @rooms
+    rooms = _.keys @rooms
+    process.nextTick > cb null, rooms
 
   # @private
   removeSocket : (uid, id, cb) ->
     process.nextTick -> cb()
 
   # @private
-  loginUser : (uid, name, socket, cb) ->
+  loginUserSocket : (uid, name, id, cb) ->
     user = @users[name]
     if user
-      user.registerSocket socket, cb
+      process.nextTick ->
+        user.registerSocket id, cb
     else
       newUser = @server.makeUser name
       @users[name] = newUser
-      newUser.registerSocket socket, cb
+      process.nextTick ->
+        newUser.registerSocket id, cb
 
   # @private
   getUser : (name, cb) ->
