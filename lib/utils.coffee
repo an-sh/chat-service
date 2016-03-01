@@ -25,18 +25,6 @@ withoutData = (fn) ->
 
 # @private
 # @nodoc
-withFailLog = (log, data, cb) ->
-  (error, args...) ->
-    log error, data if error and log
-    cb args... if cb
-
-# @private
-# @nodoc
-bindFailLog = (obj, errorsLogger) ->
-  obj.withFailLog = (data, cb) -> withFailLog errorsLogger, data, cb
-
-# @private
-# @nodoc
 withTE = (errorBuilder, callback, normallCallback) ->
   (error, data) ->
     if error
@@ -54,7 +42,6 @@ bindTE = (obj, errorBuilder) ->
 
 module.exports = {
   asyncLimit
-  bindFailLog
   bindTE
   extend
   withEH

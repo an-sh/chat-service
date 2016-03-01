@@ -4,7 +4,7 @@ async = require 'async'
 
 DirectMessaging = require './DirectMessaging'
 
-{withEH, bindFailLog, extend, asyncLimit, withoutData} =
+{withEH, extend, asyncLimit, withoutData} =
   require './utils.coffee'
 
 
@@ -152,7 +152,7 @@ UserAssociations =
 
   # @private
   leaveChannelWithLog : (id, channel, cb) ->
-    data = { username : @username, room : channel, id : id }
+    data = { room : channel, id : id }
     data.op = 'socketLeaveChannel'
     @leaveChannel id, channel, @withFailLog data, cb
 
@@ -169,25 +169,22 @@ UserAssociations =
     , cb
 
   # @private
-  rollbackRoomJoin : (error, room, cb) ->
-    data = { username : @username, room : room.name }
+  makeRollbackRoomJoin : (id, room, isNewJoin, cb) ->
+    data = { room : room.name, id : id }
     data.op = 'joinSocketToRoom'
-    @errorsLogger error, data
-    async.parallel [
-      (fn) =>
-        d = _.clone data
-        d.op = 'RollbackUserJoinRoom'
-        room.leave @username, @withFailLog d, fn
-      (fn) =>
-        d = _.clone data
-        d.op = 'RollbackSocketJoinRoom'
-        @userState.removeSocketFromRoom id, roomName, @withFailLog d, fn
-      (fn) =>
-        d = _.clone data
-        d.op 'RollbackSocketJoinChannel'
-        @leaveChannel id, roomName, @withFailLog d, fn
-      ] , =>
-        cb @errorBuilder.makeError 'serverError', 500
+    @withFailLog data, =>
+      async.parallel [
+        (fn) =>
+          unless isNewJoin then return fn()
+          d = _.clone data
+          d.op = 'RollbackUserJoinRoom'
+          room.leave @username, @withFailLog d, fn
+        (fn) =>
+          d = _.clone data
+          d.op = 'RollbackSocketJoinRoom'
+          @userState.removeSocketFromRoom id, roomName, @withFailLog d, fn
+        ] , =>
+          cb @errorBuilder.makeError 'serverError', 500
 
   # @private
   leaveRoom : (roomName, cb) ->
@@ -210,14 +207,13 @@ UserAssociations =
   # @private
   joinSocketToRoom : (id, roomName, cb) ->
     @userState.lockSocketRoom id, roomName, withEH cb, (lock, israce) =>
-      unlock = @userState.bindUnlock lock
-      , 'joinSocketToRoom', @username, id, cb
+      unlock = @userState.bindUnlock lock, 'joinSocketToRoom', @username
+      , id, cb
       if israce
         return unlock @errorBuilder.makeError 'serverError', 500
       @withRoom roomName, withEH unlock, (room) =>
-        room.join @username, withEH unlock, =>
-          rollback = (error) =>
-            @rollbackRoomJoin error, room, unlock
+        room.join @username, withEH unlock, (isNewJoin) =>
+          rollback = @makeRollbackRoomJoin id, room, isNewJoin, unlock
           @userState.addSocketToRoom id, roomName, withEH rollback, (njoined) =>
             @joinChannel id, roomName, withEH rollback, =>
               if njoined == 1
@@ -228,8 +224,8 @@ UserAssociations =
   # @private
   leaveSocketFromRoom : (id, roomName, cb) ->
     @userState.lockSocketRoom id, roomName, withEH cb, (lock, israce) =>
-      unlock = @userState.bindUnlock lock
-      , 'leaveSocketFromRoom', @username, id, cb
+      unlock = @userState.bindUnlock lock, 'leaveSocketFromRoom', @username
+      , id, cb
       if israce
         return unlock @errorBuilder.makeError 'serverError', 500
       @userState.removeSocketFromRoom id, roomName, withEH unlock
@@ -247,8 +243,8 @@ UserAssociations =
   removeUserFromRoom : (userName, roomName, cb) ->
     task = (fn) =>
       @userState.lockSocketRoom null, roomName, withEH fn, (lock) =>
-        unlock = @userState.bindUnlock lock
-        , 'removeUserFromRoom', userName, null, fn
+        unlock = @userState.bindUnlock lock, 'removeUserFromRoom', userName
+        , null, fn
         @removeRoomUser userName, roomName, unlock
     data = { username : userName, room : roomName }
     data.op = 'removeUserFromRoom'
@@ -300,7 +296,11 @@ class User extends DirectMessaging
     @errorsLogger = @server.errorsLogger
     @lockTTL = @userState.lockTTL
     @echoChannel = @userState.echoChannel
-    bindFailLog @, @errorsLogger
+    @withFailLog = (data, cb) =>
+      (error, args...) =>
+        data.username = @username unless data.username
+        @errorsLogger error, data if error and @errorsLogger
+        cb args...
 
   # @private
   registerSocket : (socket, cb) ->
