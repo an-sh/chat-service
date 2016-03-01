@@ -415,6 +415,11 @@ class User extends DirectMessaging
       room.getList @username, listName, cb
 
   # @private
+  roomGetOwner : (roomName, cb) ->
+    @withRoom roomName, withEH cb, (room) =>
+      room.getOwner @username, roomName
+
+  # @private
   roomGetWhitelistMode : (roomName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       room.getMode @username, cb

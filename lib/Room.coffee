@@ -57,7 +57,7 @@ RoomPermissions =
       @roomState.getCommonUsers cb
 
   # @private
-  checkList : (author, listName, cb) ->
+  checkJoinedUser : (author, cb) ->
     @roomState.hasInList 'userlist', author, withEH cb, (hasAuthor) =>
       unless hasAuthor
         return cb @errorBuilder.makeError 'notJoined', @name
@@ -65,7 +65,7 @@ RoomPermissions =
 
   # @private
   checkListChanges : (author, listName, values, cb) ->
-    @checkList author, listName, withEH cb, =>
+    @checkJoinedUser author, withEH cb, =>
       @roomState.ownerGet withEH cb, (owner) =>
         if listName == 'userlist'
           return cb @errorBuilder.makeError 'notAllowed'
@@ -164,14 +164,12 @@ class Room
 
   # @private
   getList : (author, listName, cb) ->
-    @checkList author, listName, withEH cb, =>
+    @checkJoinedUser author, withEH cb, =>
       @roomState.getList listName, cb
 
   # @private
   getLastMessages : (author, cb) ->
-    @roomState.hasInList 'userlist', author, withEH cb, (hasAuthor) =>
-      unless hasAuthor
-        return cb @errorBuilder.makeError 'notJoined', @name
+    @checkJoinedUser author, withEH cb, =>
       @roomState.messagesGet cb
 
   # @private
@@ -201,6 +199,11 @@ class Room
   # @private
   getMode : (author, cb) ->
     @roomState.whitelistOnlyGet cb
+
+  # @private
+  getOwner : (author, cb) ->
+    @checkJoinedUser author, withEH cb, =>
+      @roomState.ownerGet cb
 
   # @private
   changeMode : (author, mode, cb) ->

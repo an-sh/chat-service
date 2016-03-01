@@ -242,7 +242,13 @@ class UserCommands
   #   or the requested list.
   roomGetAccessList : (roomName, listName, cb) ->
 
-  # Gets a room messaging whitelist only mode. If it is true, then
+  # Gets the room owner.
+  # @param roomName [String] Room name.
+  # @param cb [Function<error, String>] Sends ack with an error or
+  #   the room owner.
+  roomGetOwner : (roomName, cb) ->
+
+  # Gets the room messaging whitelist only mode. If it is true, then
   # join is allowed only for users that are in the
   # whitelist. Otherwise all users that are not in the blacklist can
   # join.

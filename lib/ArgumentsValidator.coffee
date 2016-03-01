@@ -138,6 +138,12 @@ class ArgumentsValidator
     ]
 
   # @private
+  roomGetOwner : (roomName) ->
+    [
+      check.string
+    ]
+
+  # @private
   roomGetWhitelistMode : (roomName) ->
     [
       check.string
