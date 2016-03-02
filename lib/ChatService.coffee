@@ -504,15 +504,32 @@ class ChatService
     else
       @transport.setEvents()
 
+  # Returns messaging transport.
+  # @return [Object] Transport.
+  # @see SocketIOTransport
+  getTransport : ->
+    @transport
+
+  # Returns ErrorBuilder.
+  # @return [Object] ErrorBuilder.
+  # @see ErrorBuilder
+  getErrorBuilder : ->
+    @errorBuilder
+
   # Closes server.
   # @param done [callback] Optional callback.
   close : (done = ->) ->
     @transport.close (error) =>
-      if error
-        @state.close()
-        done error
+      closeDB = (error) =>
+        if error
+          @state.close()
+          done error
+        else
+          @state.close done
+      if @hooks.onClose
+        @hooks.onClose @, error, closeDB
       else
-        @state.close done
+        closeDB error
 
 
 module.exports = ChatService

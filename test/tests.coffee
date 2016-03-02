@@ -188,7 +188,9 @@ describe 'Chat service.', ->
 
         it 'should reject login if onConnect hook passes error', (done) ->
           err = { someField : 'some reason' }
-          onConnect = (server, socket, cb) ->
+          onConnect = (server, id, cb) ->
+            expect(server).instanceof(ChatService)
+            expect(id).a('string')
             cb err
           chatServer = new ChatService { port : port }
             , { onConnect : onConnect }, state

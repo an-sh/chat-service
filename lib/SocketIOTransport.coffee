@@ -3,16 +3,15 @@ _ = require 'lodash'
 SocketServer = require 'socket.io'
 
 
-# @private
-# @nodoc
-#
-# Implements message transport.
+# Socket.io objects accessors.
 class SocketIOTransport
 
   # @private
+  # @nodoc
   constructor : (@server, @options = {}, @hooks = {}) ->
     @errorBuilder = @server.errorBuilder
-
+    @io = @options.io
+    @type = 'socket.io'
     @namespace = @options.namespace || '/chat-service'
     @sharedIO = true if @io
     @http = @options.http unless @io
@@ -36,33 +35,34 @@ class SocketIOTransport
     @setLivecycle()
 
   # @private
+  # @nodoc
   setLivecycle : ->
     @nclosing = 0
     @closeCB = null
     @finished = false
 
   # @private
-  getSocketObject : (id) ->
-    @nsp.connected[id]
-
-  # @private
+  # @nodoc
   bind : (id, name, fn) ->
     socket = @getSocketObject id
     if socket
       socket.on name, fn
 
   # @private
+  # @nodoc
   rejectLogin : (socket, error) ->
     socket.emit 'loginRejected', error
     socket.disconnect(true)
 
   # @private
+  # @nodoc
   confirmLogin : (socket, userName, authData) ->
     if _.isObject(authData)
       authData.id = socket.id unless authData.id?
     socket.emit 'loginConfirmed', userName, authData
 
   # @private
+  # @nodoc
   addClient : (error, socket, userName, authData = {}) ->
     if error then return @rejectLogin socket, error
     unless userName
@@ -81,18 +81,14 @@ class SocketIOTransport
           @confirmLogin socket, userName, authData
 
   # @private
-  disconnectClient : (id) ->
-    socket = @getSocketObject id
-    if socket
-      socket.disconnect()
-
-  # @private
+  # @nodoc
   checkShutdown : (socket, next) ->
     if @closeCB or @finished
       return socket.disconnect(true)
     next()
 
   # @private
+  # @nodoc
   setEvents : ->
     @directMessageChecker = @hooks.directMessageChecker
     @roomMessageChecker = @hooks.roomMessageChecker
@@ -105,7 +101,7 @@ class SocketIOTransport
     if @hooks.onConnect
       @nsp.on 'connection', (socket) =>
         @checkShutdown socket, =>
-          @hooks.onConnect @, socket.id, (error, userName, authData) =>
+          @hooks.onConnect @server, socket.id, (error, userName, authData) =>
             @addClient error, socket, userName, authData
     else
       @nsp.on 'connection', (socket) =>
@@ -113,22 +109,26 @@ class SocketIOTransport
           @addClient null, socket
 
   # @private
+  # @nodoc
   finish : () ->
     if @closeCB and !@finished
       @finished = true
       @closeCB()
 
   # @private
+  # @nodoc
   startClientDisconnect : () ->
     unless @closeCB then @nclosing++
 
   # @private
+  # @nodoc
   endClientDisconnect : () ->
     @nclosing--
     if @closeCB and @nclosing == 0
       process.nextTick => @finish()
 
   # @private
+  # @nodoc
   close : (done = ->) ->
     @closeCB = (error) =>
       @closeCB = null
@@ -136,10 +136,7 @@ class SocketIOTransport
         @io.close()
       if @http
         @io.engine.close()
-      if @hooks.onClose
-        @hooks.onClose @server, error, done
-      else
-        done error
+      done error
     closeStartingTime = new Date().getTime()
     closingTimeoutChecker = =>
       if @finished then return
@@ -157,11 +154,37 @@ class SocketIOTransport
     else
       closingTimeoutChecker()
 
+  # Returns transport type string.
+  # @return [String] 'socket.io'
+  getTransportType : ->
+    @type
+
+  # @note 'socket.io' transport type only.
+  # Returns socket.io server.
+  # @return [Object] Socket.io server.
+  getSockeIOServer : ->
+    @io
+
+  # @note 'socket.io' transport type only.
+  # Returns socket.io server namespace.
+  # @return [Object] Socket.io server server namespace.
+  getSocketIONamespace : ->
+    @nsp
+
+  # @note 'socket.io' transport type only.
+  # Returns socket.io client socket.
+  # @param id [String] Socket id.
+  # @return [Object] Socket.
+  getSocketObject : (id) ->
+    @nsp.connected[id]
+
   # @private
+  # @nodoc
   sendToChannel : (channel, args...) ->
     @nsp.to(channel).emit args...
 
   # @private
+  # @nodoc
   sendToOthers : (id, channel, args...) ->
     socket = @getSocketObject id
     unless socket
@@ -170,12 +193,14 @@ class SocketIOTransport
       socket.to(channel).emit args...
 
   # @private
+  # @nodoc
   sendToClient : (id, args...) ->
     socket = @getSocketObject id
     unless socket then return
     socket.emit args...
 
   # @private
+  # @nodoc
   joinChannel : (id, channel, cb) ->
     socket = @getSocketObject id
     unless socket
@@ -183,10 +208,18 @@ class SocketIOTransport
     socket.join channel, cb
 
   # @private
+  # @nodoc
   leaveChannel : (id, channel, cb) ->
     socket = @getSocketObject id
     unless socket then return cb()
     socket.leave channel, cb
+
+  # @private
+  # @nodoc
+  disconnectClient : (id) ->
+    socket = @getSocketObject id
+    if socket
+      socket.disconnect()
 
 
 module.exports = SocketIOTransport
