@@ -1,7 +1,10 @@
 
 Redis = require 'ioredis'
+Room = require './Room.coffee'
+User = require './User.coffee'
 _ = require 'lodash'
 async = require 'async'
+
 { withEH, bindTE, asyncLimit } = require './utils.coffee'
 
 
@@ -316,12 +319,12 @@ class RedisState
       unless data
         error = @errorBuilder.makeError 'noRoom', name
         return cb error
-      room = @server.makeRoom name
+      room = new Room @server, name
       cb null, room
 
   # @private
   addRoom : (name, state, cb) ->
-    room = @server.makeRoom name
+    room = new Room @server, name
     @redis.sadd @makeDBListName('rooms'), name, @withTE cb, (nadded) =>
       if nadded != 1
         return cb @errorBuilder.makeError 'roomExists', name
@@ -347,7 +350,7 @@ class RedisState
 
   # @private
   loginUserSocket : (uid, name, id, cb) ->
-    user = @server.makeUser name
+    user = new User @server, name
     @redis.multi()
     .sadd @makeDBSocketsName(uid), id
     .sadd @makeDBListName('users'), name
@@ -356,7 +359,7 @@ class RedisState
 
   # @private
   getUser : (name, cb) ->
-    user = @server.makeUser name
+    user = new User @server, name
     @redis.sismember @makeDBListName('users'), name, @withTE cb, (data) =>
       if data then return cb null, user
       else return cb @errorBuilder.makeError 'noUser', name
@@ -367,7 +370,7 @@ class RedisState
       if nadded == 0
         return cb @errorBuilder.makeError 'userExists', name
       if state
-        user = @server.makeUser name
+        user = new User @server, name
         user.initState state, cb
       else
         cb()

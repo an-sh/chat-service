@@ -1,5 +1,6 @@
 
 { withEH, withoutData } = require './utils.coffee'
+User = require './User'
 
 # @mixin
 # API for server side operations.
@@ -31,7 +32,7 @@ ServiceAPI =
   # @param cb [Callback] Optional callback.
   removeRoom : (roomName, cb = ->) ->
     #TODO
-    user = @makeUser()
+    user = new User @
     user.withRoom roomName, withEH cb, (room) =>
       room.getUsers withEH cb, (usernames) =>
         user.removeRoomUsers room, usernames, =>

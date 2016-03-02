@@ -6,10 +6,8 @@ ArgumentsValidator = require './ArgumentsValidator.coffee'
 ErrorBuilder = require './ErrorBuilder.coffee'
 MemoryState = require './MemoryState.coffee'
 RedisState = require './RedisState.coffee'
-Room = require './Room.coffee'
 ServiceAPI = require './ServiceAPI.coffee'
 SocketIOTransport = require './SocketIOTransport.coffee'
-User = require './User.coffee'
 
 { extend } = require './utils.coffee'
 
@@ -489,10 +487,6 @@ class ChatService
     @validator = new ArgumentsValidator @
     @state = new State @, @stateOptions
     @transport = new Transport @, @transportOptions, @hooks
-    @makeUser = (args...) =>
-      new User @, args...
-    @makeRoom = (args...) =>
-      new Room @, args...
 
   # @private
   # @nodoc

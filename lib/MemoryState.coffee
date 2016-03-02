@@ -2,6 +2,8 @@
 Deque = require 'collections/deque'
 FastSet = require 'collections/fast-set'
 Map = require 'collections/fast-map'
+Room = require './Room.coffee'
+User = require './User.coffee'
 _ = require 'lodash'
 async = require 'async'
 
@@ -295,7 +297,7 @@ class MemoryState
 
   # @private
   addRoom : (name, state, cb) ->
-    room = @server.makeRoom name
+    room = new Room @server, name
     unless @rooms[name]
       @rooms[name] = room
     else
@@ -330,7 +332,7 @@ class MemoryState
       process.nextTick ->
         user.registerSocket id, cb
     else
-      newUser = @server.makeUser name
+      newUser = new User @server, name
       @users[name] = newUser
       process.nextTick ->
         newUser.registerSocket id, cb
@@ -348,7 +350,7 @@ class MemoryState
     if user
       error = @errorBuilder.makeError 'userExists', name
       return process.nextTick -> cb error
-    user = @server.makeUser name
+    user = new User @server, name
     @users[name] = user
     if state
       user.initState state, cb
