@@ -132,10 +132,8 @@ class SocketIOTransport
   close : (done = ->) ->
     @closeCB = (error) =>
       @closeCB = null
-      unless @sharedIO
+      unless @sharedIO or @http
         @io.close()
-      if @http
-        @io.engine.close()
       done error
     closeStartingTime = new Date().getTime()
     closingTimeoutChecker = =>

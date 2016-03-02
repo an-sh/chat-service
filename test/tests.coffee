@@ -6,7 +6,7 @@ socketIO = require 'socket.io'
 http = require 'http'
 async = require 'async'
 Redis = require 'ioredis'
-
+_ = require 'lodash'
 
 describe 'Chat service.', ->
 
@@ -80,23 +80,30 @@ describe 'Chat service.', ->
 
       describe 'Initialization', ->
 
-        it.skip 'should integrate with a provided http server', (done) ->
+        it 'should integrate with a provided http server', (done) ->
           httpInst = http.createServer (req, res) -> res.end()
-          chatServer1 = new ChatService { http : httpInst }, null, state
+          s = _.clone state
+          s.transportOptions = {}
+          s.transportOptions.http = httpInst
+          chatServer1 = new ChatService null, null, s
           httpInst.listen port
           cleanup = (cb) ->
-            chatServer1.close cb
+            chatServer1.close (error) ->
+              if error then cb error
+              httpInst.close cb
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed', (u) ->
             expect(u).equal(user1)
             done()
 
-        it.skip 'should integrate with an existing io', (done) ->
+        it 'should integrate with an existing io', (done) ->
           io = socketIO port
-          chatServer1 = new ChatService { io : io }, null, state
+          s = _.clone state
+          s.transportOptions = {}
+          s.transportOptions.io = io
+          chatServer1 = new ChatService null, null, s
           cleanup = (cb) ->
             chatServer1.close (error) ->
-              console.log error
               if error then cb error
               io.close()
               cb()
