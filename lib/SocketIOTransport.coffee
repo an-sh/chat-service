@@ -8,29 +8,30 @@ class SocketIOTransport
 
   # @private
   # @nodoc
-  constructor : (@server, @options = {}, @hooks = {}) ->
+  constructor : (@server, @options, @hooks
+  , @adapterConstructor, @adapterOptions) ->
     @errorBuilder = @server.errorBuilder
-    @io = @options.io
     @type = 'socket.io'
+    @io = @options.io
     @namespace = @options.namespace || '/chat-service'
-    @sharedIO = true if @io
-    @http = @options.http unless @io
-    @adapterConstructor = @options.adapter || 'memory'
-    @adapterOptions = @options.adapterOptions
     Adapter = switch @adapterConstructor
       when 'memory' then null
       when 'redis' then RedisAdapter
       when _.isFunction @adapterConstructor then @adapterConstructor
-      else throw new Error "Invalid adapter: #{@adapterConstructor}"
+      else throw new Error "Invalid transport adapter: #{@adapterConstructor}"
     unless @io
+      @ioOptions = @options.ioOptions
+      @http = @options.http
       if @http
-        @io = new SocketServer @http, @socketIoServerOptions
+        @dontCloseIO = true
+        @io = new SocketServer @options.http
       else
-        @port = @options.port || 8000
-        @io = new SocketServer @port, @socketIoServerOptions
+        @io = new SocketServer @server.port, @ioOptions
       if Adapter
-        @adapter = new Adapter @adapterOptions
+        @adapter = new Adapter @adapterOptions...
         @io.adapter @adapter
+    else
+      @dontCloseIO = true
     @nsp = @io.of @namespace
     @setLivecycle()
 
@@ -111,7 +112,7 @@ class SocketIOTransport
   # @private
   # @nodoc
   finish : () ->
-    if @closeCB and !@finished
+    if @closeCB and not @finished
       @finished = true
       @closeCB()
 
@@ -132,8 +133,10 @@ class SocketIOTransport
   close : (done = ->) ->
     @closeCB = (error) =>
       @closeCB = null
-      unless @sharedIO or @http
+      unless @dontCloseIO
         @io.close()
+      if @http
+        @io.engine.close()
       done error
     closeStartingTime = new Date().getTime()
     closingTimeoutChecker = =>

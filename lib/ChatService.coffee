@@ -457,6 +457,7 @@ class ChatService
   # @nodoc
   setOptions : ->
     @serverUID = uid.sync 18
+    @port = @serviceOptions.port || 8000
     @historyMaxMessages = @serviceOptions.historyMaxMessages || 100
     @historyMaxGetMessages = @serviceOptions.historyMaxGetMessages || 10000
     @useRawErrorObjects = @serviceOptions.useRawErrorObjects || false
@@ -465,10 +466,13 @@ class ChatService
     @enableRoomsManagement = @serviceOptions.enableRoomsManagement || false
     @enableDirectMessages = @serviceOptions.enableDirectMessages || false
     @closeTimeout = @serviceOptions.closeTimeout || 5000
-    @stateConstructor = @integrationOptions.state
-    @stateOptions = @integrationOptions.stateOptions
-    @transportConstructor = @integrationOptions.transport
-    @transportOptions = @integrationOptions.transportOptions
+    @stateConstructor = @integrationOptions.state || 'memory'
+    @stateOptions = @integrationOptions.stateOptions || {}
+    @transportConstructor = @integrationOptions.transport || 'socket.io'
+    @transportOptions = @integrationOptions.transportOptions || {}
+    @adapterConstructor = @integrationOptions.adapter || 'memory'
+    @adapterOptions = _.castArray @integrationOptions.adapterOptions
+
 
   # @private
   # @nodoc
@@ -478,13 +482,17 @@ class ChatService
       when 'redis' then RedisState
       when _.isFunction @stateConstructor then @stateConstructor
       else throw new Error "Invalid state: #{@stateConstructor}"
-    Transport = @transportConstructor || SocketIOTransport
+    Transport = switch @transportConstructor
+      when 'socket.io' then SocketIOTransport
+      when _.isFunction @transportConstructor then @transportConstructor
+      else throw new Error "Invalid transport: #{@stateConstructor}"
     @errorBuilder = new ErrorBuilder @useRawErrorObjects
     @userCommands = new UserCommands()
     @serverMessages = new ServerMessages()
     @validator = new ArgumentsValidator @
     @state = new State @, @stateOptions
     @transport = new Transport @, @transportOptions, @hooks
+    , @adapterConstructor, @adapterOptions
 
   # @private
   # @nodoc

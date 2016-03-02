@@ -276,7 +276,7 @@ class UserStateMemory
 class MemoryState
 
   # @private
-  constructor : (@server, @options) ->
+  constructor : (@server, @options = {}) ->
     @errorBuilder = @server.errorBuilder
     @users = {}
     @rooms = {}

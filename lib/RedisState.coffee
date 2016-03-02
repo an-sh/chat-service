@@ -293,15 +293,15 @@ class RedisState
   constructor : (@server, @options = {}) ->
     @errorBuilder = @server.errorBuilder
     bindTE @, @errorBuilder
-    if @options.redisClusterHosts
-      @redis = new Redis.Cluster @options.redisClusterHosts
-      , @options.redisClusterOptions
+    redisOptions = _.castArray @options.redisOptions
+    if @options.isCluster
+      @redis = new Redis.Cluster redisOptions...
     else
-      @redis = new Redis @options.redisOptions
+      @redis = new Redis redisOptions...
     @RoomState = RoomStateRedis
     @UserState = UserStateRedis
     @DirectMessagingState = DirectMessagingStateRedis
-    @lockTTL = @options?.lockTTL || 2000
+    @lockTTL = @options.lockTTL || 2000
 
   # @private
   makeDBListName : (hashName) ->
