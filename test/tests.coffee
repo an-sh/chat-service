@@ -718,7 +718,6 @@ describe 'Chat service.', ->
                           cb()
                     ], done
 
-
         it 'should remove affected users on mode changes', (done) ->
           chatServer = new ChatService { port : port }, null, state
           chatServer.addRoom roomName1, { adminlist : [user1] }, ->

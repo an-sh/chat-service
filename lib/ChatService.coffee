@@ -404,14 +404,12 @@ class ChatService
   #   only after a successful arguments types validation.
   #
   # @option hooks [Function(ChatService, String, String, Array, Array,
-  #   <Function(<Error, Data>)>)] {command}After After hooks are
-  #   available for all {UserCommands} and all have the same
-  #   arguments: ChatService object, user name, socket id, Array of
-  #   command arguments, Array of command results and a
-  #   callback. Error or Data is the command's execution result or
-  #   error respectively. Callback may be without arguments to return
-  #   unchanged result or error to the command issuer, or with new
-  #   Error or Data object to alter the result values.
+  #   <Function(Array...)>)] {command}After After hooks are available
+  #   for all {UserCommands} and all have the same arguments:
+  #   ChatService object, user name, socket id, Array of command
+  #   arguments, Array of command results and a callback. Callback may
+  #   be called without arguments to return unchanged result or error
+  #   to the command issuer, or with new values to alter the results.
   #
   # @param hooks [Object] Hooks. Every `UserCommand` is wrapped with
   #   the corresponding Before and After hooks. So a hook name will
@@ -498,13 +496,13 @@ class ChatService
     else
       @transport.setEvents()
 
-  # Returns messaging transport.
+  # Returns messaging transport instance.
   # @return [Object] Transport.
   # @see SocketIOTransport
   getTransport : ->
     @transport
 
-  # Returns ErrorBuilder.
+  # Returns ErrorBuilder instance.
   # @return [Object] ErrorBuilder.
   # @see ErrorBuilder
   getErrorBuilder : ->

@@ -39,13 +39,13 @@ CommandBinder =
         if args.length != oargs.length
           return cb errorBuilder.makeError 'serverError', 'hook nargs error.'
         afterCommand = (error, data) =>
-          reportResults = (nerror = error, ndata = data) ->
+          reportResults = (nerror = error, ndata = data, moredata...) ->
             if name == 'disconnect'
               transport.endClientDisconnect()
             else
-              cb nerror, ndata
+              cb nerror, ndata, moredata...
           if afterHook
-            results = [].slice.call arguments
+            results = _.slice arguments
             afterHook @server, @username, id, args, results, reportResults
           else
             reportResults()
