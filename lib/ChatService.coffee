@@ -327,74 +327,72 @@ class ChatService
 
   # Crates an object and starts a new server instance.
   #
-  # @option options [String] namespace
-  #   io namespace, default is '/chat-service'.
   #
-  # @option options [Integer] historyMaxMessages
-  #   room history size, default is 10000.
+  # @option serviceOptions [Integer] closeTimeout Maximum time to wait
+  #   before a server disconnects all clients in ms, default is
+  #   `5000`.
   #
-  # @option options [Integer] historyMaxGetMessages
-  #   room history size available via
-  #   {UserCommands#roomHistory} , default is 100.
+  # @option serviceOptions [Boolean] enableAccessListsUpdates Enables
+  #   {ServerMessages#roomAccessListAdded} and
+  #   {ServerMessages#roomAccessListRemoved} messages, default is
+  #   `false`.
   #
-  # @option options [Boolean] useRawErrorObjects
-  #   Send error objects (see {ErrorBuilder}) instead of strings,
-  #   default is false.
+  # @option serviceOptions [Boolean] enableDirectMessages Enables user
+  #   to user {UserCommands#directMessage} communication, default is
+  #   `false`.
   #
-  # @option options [Boolean] enableUserlistUpdates
-  #   Enables {ServerMessages#roomUserJoined} and
-  #   {ServerMessages#roomUserLeft} messages, default is false.
+  # @option serviceOptions [Boolean] enableRoomsManagement Allows to
+  #   use {UserCommands#roomCreate} and {UserCommands#roomDelete},
+  #   dafault is `false`.
   #
-  # @option options [Boolean] enableAccessListsUpdates
-  #   Enables {ServerMessages#roomAccessListAdded} and
-  #   {ServerMessages#roomAccessListRemoved} messages, default is false.
+  # @option serviceOptions [Boolean] enableUserlistUpdates Enables
+  #   {ServerMessages#roomUserJoined} and
+  #   {ServerMessages#roomUserLeft} messages, default is `false`.
   #
-  # @option options [Boolean] enableDirectMessages
-  #   Enables user to user {UserCommands#directMessage}, default is false.
+  # @option serviceOptions [Integer] historyMaxGetMessages Room
+  #   history size available via {UserCommands#roomHistory} , default
+  #   is `100`.
   #
-  # @option options [Object] socketIoServerOptions
-  #   Options that are passed to socket.io if server creation is required.
+  # @option serviceOptions [Integer] historyMaxMessages Room history
+  #   DB size, default is `10000`.
   #
-  # @option options [Object] io
-  #   Socket.io instance that should be used by ChatService.
+  # @option serviceOptions [Integer] port Server port, default is
+  #   `8000`.
   #
-  # @option options [Object] http
-  #   Use socket.io http server integration.
+  # @option serviceOptions [Boolean] useRawErrorObjects Send error
+  #   objects (see {ErrorBuilder}) instead of strings, default is
+  #   `false`.
   #
-  # @param options [Object] Options.
-  #
-  # @option hooks [Function or Array<Function>] middleware Socket.io
-  #   middleware functions to run on all messages in the
-  #   namespace. Look in the socket.io documentation.
   #
   # @option hooks [Function(<ChatService>, <Socket>,
-  #   <Function(<Error>, <String>, <Object>)>)] onConnect Client
+  #   <Callback(<Error>, <String>, <Object>)>)] onConnect Client
   #   connection hook. Must call a callback with either error or user
   #   name and auth data. User name and auth data are send back with
   #   `loginConfirmed` message. Error is sent as `loginRejected`
   #   message.
   #
-  # @option hooks [Function(<ChatService>, <Function(<Error>)>)] onStart
-  #   Executes when server is started. Must call a callback.
+  # @option hooks [Function(<ChatService>, <Callback(<Error>)>)]
+  #   onStart Executes when server is started. Must call a callback.
   #
-  # @option hooks [Function(<ChatService>, <Error>, <Function(<Error>)>)]
-  #   onClose Executes when server is closed. Must call a callback.
+  # @option hooks [Function(<ChatService>, <Error>,
+  #   <Callback(<Error>)>)] onClose Executes when server is
+  #   closed. Must call a callback.
   #
-  # @option hooks [Function(Object, <Function(<Error>)>)]
+  # @option hooks [Function(Object, <Callback(<Error>)>)]
   #   directMessageChecker Validator for {UserCommands#directMessage}
   #   message objects. When is set allow a custom content in direct
   #   messages.
   #
-  # @option hooks [Function(Object, <Function(<Error>)>)]
+  # @option hooks [Function(Object, <Callback(<Error>)>)]
   #   roomMessageChecker Validator for {UserCommands#roomMessage}
   #   message objects. When is set allow a custom content in room
   #   messages.
   #
   # @option hooks [Function(ChatService, String, String, Array,
-  #   <Function(<Error, Data, Array...>)>)] {command}Before Before
+  #   <Callback(<Error, Data, Array...>)>)] {command}Before Before
   #   hooks are available for all {UserCommands} and all have the same
-  #   arguments: ChatService object, user name, socket id, array of
-  #   command arguments and a callback. Callback may be called without
+  #   arguments: ChatService, username, socket id, array of command
+  #   arguments and a callback. Callback may be called without
   #   arguments to continue command execution, or with non-falsy Error
   #   or Data to stop execution and return error or result
   #   respectively to the command issuer, or with falsy Error and Data
@@ -404,50 +402,64 @@ class ChatService
   #   only after a successful arguments types validation.
   #
   # @option hooks [Function(ChatService, String, String, Array, Array,
-  #   <Function(Array...)>)] {command}After After hooks are available
+  #   <Callback(Array...)>)] {command}After After hooks are available
   #   for all {UserCommands} and all have the same arguments:
-  #   ChatService object, user name, socket id, Array of command
-  #   arguments, Array of command results and a callback. Callback may
-  #   be called without arguments to return unchanged result or error
-  #   to the command issuer, or with new values to alter the results.
+  #   ChatService, username, socket id, Array of command arguments,
+  #   Array of command results and a callback. Callback may be called
+  #   without arguments to return unchanged result or error to the
+  #   command issuer, or with new values to alter the results.
   #
-  # @param hooks [Object] Hooks. Every `UserCommand` is wrapped with
-  #   the corresponding Before and After hooks. So a hook name will
-  #   look like `roomCreateBefore`. Before hook is ran after arguments
-  #   validation, but before an actual server command
-  #   processing. After hook is executed after a server has finshed
-  #   the command processing.
   #
-  # @option storageOptions [String or Constructor] state Chat state.
-  #   Can be either 'memory' or 'redis' for built-in state storages, or a
-  #   custom state constructor function that implements the same API.
+  # @option integrationOptions [String or Constructor] state Chat
+  #   state.  Can be either `'memory'` or `'redis'` for built-in state
+  #   storages, or a custom state constructor function that implements
+  #   the same API. Default is `'memory'`.
   #
-  # @option storageOptions [String or Constructor] adapter Socket.io
-  #   adapter, used if no io object is passed.  Can be either 'memory'
-  #   or 'redis' for built-in state storages, or a custom state
-  #   constructor function that implements the Socket.io adapter API.
+  # @option integrationOptions [String or Constructor] transport
+  #   Transport. Default is `'socket.io'`.
   #
-  # @option storageOptions [Object] socketIoAdapterOptions
-  #   Options that are passed to socket.io adapter if adapter creation
-  #   is required.
+  # @option integrationOptions [String or Constructor] adapter
+  #   Socket.io adapter, used if no `io` object is passed in
+  #   `transportOptions`.  Can be either `'memory'` or `'redis`' for
+  #   built-in state storages, or a custom state constructor function
+  #   that implements the Socket.io adapter API. Default is
+  #   `'memory'`.
   #
-  # @option storageOptions [Object] stateOptions Options that are
-  #   passed to a service state. 'memory' state has no options,
-  #   'redis' state options are listed below.
+  # @option integrationOptions [Object] stateOptions Options for a
+  #   redis state.
   #
-  # @param storageOptions [Object] Selects state and socket.io adapter.
+  # @option integrationOptions [Object] transportOptions Options for a
+  #   socket.io transport.
   #
-  # @option stateOptions [Object] redisOptions
-  #   ioredis constructor options.
+  # @option integrationOptions [Object or Array<Object] adapterOptions
+  #   Socket.io adapter construnctor arguments, used only when no `io`
+  #   object is passed in `transportOptions`.
   #
-  # @option stateOptions [Object] redisClusterHosts
-  #   ioredis cluster constructor hosts, overrides `redisOptions`.
   #
-  # @option stateOptions [Object] redisClusterOptions
-  #   ioredis cluster constructor options.
+  # @option transportOptions [String] namespace Socket.io namespace,
+  #   default is `'/chat-service'`.
   #
-  # @option stateOptions [Integer] lockTTL
-  #   lockTTL option, default is 2000.
+  # @option transportOptions [Object] io Socket.io instance that
+  #   should be used by ChatService.
+  #
+  # @option transportOptions [Object] http Use socket.io http server
+  #   integration.
+  #
+  # @option transportOptions [Object] ioOptions Socket.io additional
+  #   options.
+  #
+  #
+  # @option stateOptions [Boolean] useCluster Enable Redis cluster,
+  #   default is `false`.
+  #
+  # @option stateOptions [Integer] lockTTL Locks timeout in ms,
+  #   default is `5000`.
+  #
+  # @option stateOptions [Object or Array<Object>] redisOptions
+  #   ioredis client constructor arguments. If useCluster is set, used
+  #   as arguments for a Cluster client.
+  #
+  #
   constructor : (@serviceOptions = {}, @hooks = {}, @integrationOptions = {}) ->
     @setOptions()
     @setServer()
@@ -457,21 +469,23 @@ class ChatService
   # @nodoc
   setOptions : ->
     @serverUID = uid.sync 18
-    @port = @serviceOptions.port || 8000
-    @historyMaxMessages = @serviceOptions.historyMaxMessages || 100
-    @historyMaxGetMessages = @serviceOptions.historyMaxGetMessages || 10000
-    @useRawErrorObjects = @serviceOptions.useRawErrorObjects || false
-    @enableUserlistUpdates = @serviceOptions.enableUserlistUpdates || false
-    @enableAccessListsUpdates= @serviceOptions.enableAccessListsUpdates || false
-    @enableRoomsManagement = @serviceOptions.enableRoomsManagement || false
-    @enableDirectMessages = @serviceOptions.enableDirectMessages || false
+
     @closeTimeout = @serviceOptions.closeTimeout || 5000
+    @enableAccessListsUpdates= @serviceOptions.enableAccessListsUpdates || false
+    @enableDirectMessages = @serviceOptions.enableDirectMessages || false
+    @enableRoomsManagement = @serviceOptions.enableRoomsManagement || false
+    @enableUserlistUpdates = @serviceOptions.enableUserlistUpdates || false
+    @historyMaxGetMessages = @serviceOptions.historyMaxGetMessages || 10000
+    @historyMaxMessages = @serviceOptions.historyMaxMessages || 100
+    @port = @serviceOptions.port || 8000
+    @useRawErrorObjects = @serviceOptions.useRawErrorObjects || false
+
+    @adapterConstructor = @integrationOptions.adapter || 'memory'
+    @adapterOptions = _.castArray @integrationOptions.adapterOptions
     @stateConstructor = @integrationOptions.state || 'memory'
     @stateOptions = @integrationOptions.stateOptions || {}
     @transportConstructor = @integrationOptions.transport || 'socket.io'
     @transportOptions = @integrationOptions.transportOptions || {}
-    @adapterConstructor = @integrationOptions.adapter || 'memory'
-    @adapterOptions = _.castArray @integrationOptions.adapterOptions
 
 
   # @private
@@ -491,7 +505,7 @@ class ChatService
     @serverMessages = new ServerMessages()
     @validator = new ArgumentsValidator @
     @state = new State @, @stateOptions
-    @transport = new Transport @, @transportOptions, @hooks
+    @transport = new Transport @, @transportOptions
     , @adapterConstructor, @adapterOptions
 
   # @private

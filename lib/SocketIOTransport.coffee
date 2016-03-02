@@ -8,8 +8,8 @@ class SocketIOTransport
 
   # @private
   # @nodoc
-  constructor : (@server, @options, @hooks
-  , @adapterConstructor, @adapterOptions) ->
+  constructor : (@server, @options, @adapterConstructor, @adapterOptions) ->
+    @hooks = @server.hooks
     @errorBuilder = @server.errorBuilder
     @type = 'socket.io'
     @io = @options.io
