@@ -123,7 +123,7 @@ class RoomStateMemory extends ListsStateMemory
   messageAdd : (msg, cb) ->
     if @historyMaxMessages <= 0 then return process.nextTick -> cb()
     @messagesHistory.unshift msg
-    timestamp =  new Date().getTime()
+    timestamp = _.now()
     @messagesTimestamps.unshift timestamp
     @lastMessageID++
     id = @lastMessageID

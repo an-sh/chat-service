@@ -271,7 +271,7 @@ class User extends DirectMessaging
   # @nodoc
   processMessage : (msg, setTimestamp = false) ->
     if setTimestamp
-      msg.timestamp = new Date().getTime() unless msg.timestamp?
+      msg.timestamp = _.now() unless msg.timestamp?
     msg.author = @username unless msg.author?
     return msg
 

@@ -138,10 +138,10 @@ class SocketIOTransport
       if @http
         @io.engine.close()
       done error
-    closeStartingTime = new Date().getTime()
+    closeStartingTime = _.now()
     closingTimeoutChecker = =>
       if @finished then return
-      timeCurrent = new Date().getTime()
+      timeCurrent = _.now()
       if timeCurrent > closeStartingTime + @closeTimeout
         @finished = true
         @closeCB new Error 'Transport closing timeout.'
