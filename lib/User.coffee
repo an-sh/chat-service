@@ -9,14 +9,6 @@ DirectMessaging = require './DirectMessaging'
 
 
 # @private
-# @nodoc
-processMessage = (author, msg) ->
-  msg.timestamp = new Date().getTime() unless msg.timestamp?
-  msg.author = author unless msg.author?
-  return msg
-
-
-# @private
 # @mixin
 # @nodoc
 #
@@ -276,6 +268,14 @@ class User extends DirectMessaging
         cb args...
 
   # @private
+  # @nodoc
+  processMessage : (msg, setTimestamp = false) ->
+    if setTimestamp
+      msg.timestamp = new Date().getTime() unless msg.timestamp?
+    msg.author = @username unless msg.author?
+    return msg
+
+  # @private
   registerSocket : (id, cb) ->
     @userState.addSocket id, withEH cb, (nconnected) =>
       for cmd of @server.userCommands
@@ -308,16 +308,16 @@ class User extends DirectMessaging
     unless @enableDirectMessages
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
-    pmsg = processMessage @username, msg
+    @processMessage msg, true
     @server.state.getUser toUserName, withEH cb, (toUser) =>
-      toUser.message @username, pmsg, withEH cb, =>
+      toUser.message @username, msg, withEH cb, =>
         toUser.userState.getAllSockets withEH cb, (toSockets) =>
           unless toSockets?.length
             return cb @errorBuilder.makeError 'noUserOnline', toUser
-          @transport.sendToChannel toUser.echoChannel, 'directMessage', pmsg
+          @transport.sendToChannel toUser.echoChannel, 'directMessage', msg
           @transport.sendToOthers id, @echoChannel, 'directMessageEcho'
-          , toUserName, pmsg
-          cb null, pmsg
+          , toUserName, msg
+          cb null, msg
 
   # @private
   directRemoveFromList : (listName, values, cb) ->
@@ -377,7 +377,7 @@ class User extends DirectMessaging
   # @private
   roomGetOwner : (roomName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.getOwner @username, roomName
+      room.getOwner @username, cb
 
   # @private
   roomGetWhitelistMode : (roomName, cb) ->
@@ -402,8 +402,8 @@ class User extends DirectMessaging
   # @private
   roomMessage : (roomName, msg, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      pmsg = processMessage @username, msg
-      room.message @username, pmsg, withEH cb, =>
+      @processMessage msg
+      room.message @username, msg, withEH cb, (pmsg) =>
         @transport.sendToChannel roomName, 'roomMessage', roomName, pmsg
         cb()
 

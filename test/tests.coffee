@@ -1006,7 +1006,6 @@ describe 'Chat service.', ->
       describe 'Hooks', ->
 
         it 'should restore a room state from onStart hook', (done) ->
-          msg1 = { author : user1, textMessage : "message", timestamp : 0 }
           fn = ->
             socket1 = clientConnect user1
             socket1.on 'loginConfirmed', ->
@@ -1014,16 +1013,19 @@ describe 'Chat service.', ->
                 socket1.emit 'roomHistory', roomName1, (error, data) ->
                   expect(error).not.ok
                   expect(data).instanceof(Array)
-                  expect(data[0]).deep.equal(msg1)
+                  expect(data).empty
                   socket1.emit 'roomGetAccessList', roomName1, 'whitelist'
                   , (error, list) ->
                     expect(error).not.ok
                     expect(list).include(user1)
-                    done()
+                    socket1.emit 'roomGetOwner', roomName1, (error, data) ->
+                      expect(error).not.ok
+                      expect(data).equal(user2)
+                      done()
           onStart = (server, cb) ->
             expect(server).instanceof(ChatService)
             server.addRoom roomName1
-            , { whitelist : [ user1 ], lastMessages : [ msg1 ] }
+            , { whitelist : [ user1 ], owner : user2 }
             , ->
               cb()
               fn()

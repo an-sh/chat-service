@@ -80,18 +80,23 @@ class RoomStateMemory extends ListsStateMemory
     @blacklist = new FastSet
     @adminlist = new FastSet
     @userlist = new FastSet
-    @lastMessages = new Deque
+    @messagesHistory = new Deque
+    @messagesTimestamps = new Deque
+    @messagesIDs = new Deque
+    @lastMessageID = 0
     @whitelistOnly = false
     @owner = null
 
   # @private
   initState : (state = {}, cb) ->
     { whitelist, blacklist, adminlist
-    , lastMessages, whitelistOnly, owner } = state
+    , whitelistOnly, owner } = state
     initState @whitelist, whitelist
     initState @blacklist, blacklist
     initState @adminlist, adminlist
-    initState @lastMessages, lastMessages
+    initState @messagesHistory
+    initState @messagesTimestamps
+    initState @messagesIDs
     @whitelistOnly = if whitelistOnly then true else false
     @owner = if owner then owner else null
     process.nextTick -> cb()
@@ -117,14 +122,26 @@ class RoomStateMemory extends ListsStateMemory
   # @private
   messageAdd : (msg, cb) ->
     if @historyMaxMessages <= 0 then return process.nextTick -> cb()
-    @lastMessages.unshift msg
-    if @lastMessages.length > @historyMaxMessages
-      @lastMessages.pop()
-    process.nextTick -> cb()
+    @messagesHistory.unshift msg
+    timestamp =  new Date().getTime()
+    @messagesTimestamps.unshift timestamp
+    @lastMessageID++
+    id = @lastMessageID
+    @messagesIDs.unshift id
+    if @messagesHistory.length > @historyMaxMessages
+      @messagesHistory.pop()
+      @messagesTimestamps.pop()
+      @messagesIDs.pop()
+    msg.timestamp = timestamp
+    msg.id = id
+    process.nextTick -> cb null, msg
 
   # @private
   messagesGet : (cb) ->
-    data = @lastMessages.toArray()
+    data = @messagesHistory.toArray()
+    for msg, idx in data
+      msg.timestamp = @messagesTimestamps[idx]
+      msg.id = @messagesIDs[idx]
     process.nextTick -> cb null, data
 
   # @private
