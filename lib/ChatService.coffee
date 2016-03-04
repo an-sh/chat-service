@@ -135,9 +135,9 @@ class ServerMessages
 #   socket = ioClient.connect url, params
 #   socket.on 'loginConfirmed', (username, authData) ->
 #     socket.emit 'roomJoin', roomName, (error, data) ->
-#       # this is a socket.io ack waiting callback.
-#       # socket is joined the room, or an error occurred. we get here
-#       # only when the server has finished message processing.
+#       # this is a socket.io ack waiting callback.  socket is joined
+#       # the room, or an error occurred. we get here only when the
+#       # server has finished a message processing.
 #
 class UserCommands
   # Adds usernames to user's direct messaging blacklist or whitelist.
@@ -186,7 +186,7 @@ class UserCommands
   directSetWhitelistMode : (mode, cb) ->
 
   # Emitted when a socket disconnects from the server.
-  # @note Can't be send by client as a socket.io message, use
+  # @note Can't be send by a client as a Socket.io message, use
   #   socket.disconnect() instead.
   # @param reason [String] Reason.
   # @param cb [Function<error, null>] Callback.
@@ -262,10 +262,11 @@ class UserCommands
   # @see UserCommands#roomMessage
   roomHistory : (roomName, cb)->
 
-  # Gets room the latest message id.
+  # Gets the latest room message id.
   # @param roomName [String] Room name.
   # @param cb [Function<error, Integer>] Sends ack with an
   #   error or the latest message id.
+  # @see UserCommands#roomHistorySync
   roomHistoryLastId : (roomName, cb) ->
 
   # Returns messages that were sent after a message with the specified
@@ -276,6 +277,7 @@ class UserCommands
   # @param id [Integer] Message id,
   # @param cb [Function<error, Array<Objects>>] Sends ack with an
   #   error or array of messages.
+  # @see UserCommands#roomHistoryLastId
   # @see UserCommands#roomMessage
   roomHistorySync : (roomName, id, cb) ->
 
@@ -377,8 +379,8 @@ class ChatService
   #   `8000`.
   #
   # @option serviceOptions [Boolean] useRawErrorObjects Send error
-  #   objects (see {ErrorBuilder}) instead of strings, default is
-  #   `false`.
+  #   objects instead of strings, default is `false`. See
+  #   {ErrorBuilder}.
   #
   #
   # @option hooks [Function(<ChatService>, <Socket>,
@@ -482,6 +484,16 @@ class ChatService
     @setServer()
     @startServer()
 
+
+  # @property [Object] {ErrorBuilder} instance.
+  errorBuilder: null
+
+  # @property [Object] Socket.io server.
+  io: null
+
+  # @property [Object] Socket.io server namespace.
+  nsp: null
+
   # @private
   # @nodoc
   setOptions : ->
@@ -535,18 +547,6 @@ class ChatService
     else
       @transport.setEvents()
 
-  # Returns messaging transport instance.
-  # @return [Object] Transport.
-  # @see SocketIOTransport
-  getTransport : ->
-    @transport
-
-  # Returns ErrorBuilder instance.
-  # @return [Object] ErrorBuilder.
-  # @see ErrorBuilder
-  getErrorBuilder : ->
-    @errorBuilder
-
   # Closes server.
   # @param done [callback] Optional callback.
   close : (done = ->) ->
@@ -561,6 +561,7 @@ class ChatService
         @hooks.onClose @, error, closeDB
       else
         closeDB error
+
 
 
 module.exports = ChatService

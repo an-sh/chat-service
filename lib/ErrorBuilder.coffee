@@ -1,15 +1,14 @@
 
 util = require 'util'
 
-# Implements error formatting.
+# Implements errors formatting.
 class ErrorBuilder
 
   # @private
   # @nodoc
   constructor : (@useRawErrorObjects) ->
 
-  # server errors
-  errorStrings :
+  errorStrings:
     badArgument : 'Bad argument %s value %s'
     invalidName : 'String %s contains invalid characters'
     noCommand : 'No such command %s'
@@ -26,20 +25,17 @@ class ErrorBuilder
     userExists : 'User %s already exists'
     wrongArgumentsCount : 'Expected %s arguments, got %s'
 
-  # @private
-  # @nodoc
-  getErrorString : (code) ->
-    return @errorStrings[code] || "Unknown error: #{code}"
-
-  # Error formatting.
+  # Errors formatting.
   # @param error [String] Error key in {ErrorBuilder.errorStrings} object.
   # @param args [Arguments<Object>] Error data arguments.
-  # @return [String or Object] Formatted error, according to a
-  #   {ChatService} `useRawErrorObjects` option.
+  # @return [String or Object] Formatted error string or an object
+  #   with an error as key and the description string as a value,
+  #   according to a {ChatService} `useRawErrorObjects` option.
   makeError : (error, args...) ->
     if @useRawErrorObjects
       return { name : error, args : args }
-    return util.format @getErrorString(error), args...
+    str = @errorStrings[error] || "Unknown error: #{error}"
+    return util.format error, args...
 
 
 module.exports = ErrorBuilder

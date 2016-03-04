@@ -3,8 +3,9 @@ _ = require 'lodash'
 SocketServer = require 'socket.io'
 checkNameSymbols = require('./utils.coffee').checkNameSymbols
 
-
-# Socket.io objects accessors.
+# @private
+# @nodoc
+# Socket.io transport.
 class SocketIOTransport
 
   # @private
@@ -12,7 +13,6 @@ class SocketIOTransport
   constructor : (@server, @options, @adapterConstructor, @adapterOptions) ->
     @hooks = @server.hooks
     @errorBuilder = @server.errorBuilder
-    @type = 'socket.io'
     @io = @options.io
     @namespace = @options.namespace || '/chat-service'
     Adapter = switch @adapterConstructor
@@ -159,27 +159,8 @@ class SocketIOTransport
     else
       closingTimeoutChecker()
 
-  # Returns transport type string.
-  # @return [String] 'socket.io'
-  getTransportType : ->
-    @type
-
-  # @note 'socket.io' transport type only.
-  # Returns socket.io server.
-  # @return [Object] Socket.io server.
-  getSocketIOServer : ->
-    @io
-
-  # @note 'socket.io' transport type only.
-  # Returns socket.io server namespace.
-  # @return [Object] Socket.io server namespace.
-  getSocketIONamespace : ->
-    @nsp
-
-  # @note 'socket.io' transport type only.
-  # Returns socket.io client socket.
-  # @param id [String] Socket id.
-  # @return [Object] Socket.
+  # @private
+  # @nodoc
   getSocketObject : (id) ->
     @nsp.connected[id]
 
@@ -212,7 +193,7 @@ class SocketIOTransport
       return cb @errorBuilder.makeError 'serverError', 500
     socket.join channel, cb
 
-  # @private
+  # @private1
   # @nodoc
   leaveChannel : (id, channel, cb) ->
     socket = @getSocketObject id
