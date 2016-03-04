@@ -15,6 +15,7 @@ class ErrorBuilder
     noList : 'No such list %s'
     noLogin : 'No login provided'
     noRoom : 'No such room %s'
+    noSocket : 'Command %s requires a valid socket'
     noUser : 'No such user %s'
     noUserOnline : 'No such user online %s'
     notAllowed : 'Action is not allowed'

@@ -5,13 +5,38 @@ User = require './User'
 # @mixin
 # API for server side operations.
 ServiceAPI =
-  # TODO
+  # Disconnects all user sockets for this instance.
   #
   # @param userName [String] User name.
   # @param cb [Callback] Optional callback.
   disconnectUserSockets : (userName, cb = ->) ->
     @state.getUser userName, withEH cb, (user) ->
       user.disconnectInstanceSockets cb
+
+  # Executes command as user.
+  #
+  # @param params [String or Object] Is either a user name or an
+  #   options hash.
+  # @param name [String] Command name.
+  # @param args [Rest] Command arguments.
+  # @param cb [Callback] Optional callback.
+  #
+  # @option params [String] username User name.
+  # @option params [String] id Socket id, it is required for
+  #   'disconnect', 'roomJoin', 'roomLeave' commands.
+  # @option params [Boolean] useHooks If `true` executes command with
+  #   before and after hooks, default is `false`
+  execCommand : (params, name, args..., cb = ->) ->
+    if _.isObject params
+      id = params.id || null
+      useHooks = params.useHooks || false
+      username = params.username
+    else
+      id = null
+      useHooks = false
+      username = params
+    user = new User @, username
+    user.exec name, useHooks, id, args..., cb
 
   # Adds an user with a state.
   #
@@ -48,8 +73,6 @@ ServiceAPI =
   # @option state [Array<String>] whitelist Room whitelist.
   # @option state [Array<String>] blacklist Room blacklist
   # @option state [Array<String>] adminlist Room adminlist.
-  # @option state [Array<Object>] lastMessages Room lastMessages
-  #   history.
   # @option state [Boolean] whitelistOnly Room whitelistOnly mode.
   # @option state [String] owner Room owner.
   addRoom : (roomName, state, cb = ->) ->

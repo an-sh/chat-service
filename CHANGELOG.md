@@ -18,6 +18,7 @@
 - Huge internal APIs changes.
 - Added roomGetOwner command.
 - Changed auth hook to middleware.
+- Added ServiceAPI.
 
 ### 0.6.1 (2016/02/01)
 

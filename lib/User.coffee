@@ -268,12 +268,26 @@ class User extends DirectMessaging
         cb args...
 
   # @private
-  # @nodoc
   processMessage : (msg, setTimestamp = false) ->
     if setTimestamp
       msg.timestamp = _.now() unless msg.timestamp?
     msg.author = @username unless msg.author?
     return msg
+
+  # @private
+  exec : (command, useHooks, id, args..., cb) ->
+    unless command in @server.userCommands
+      return process.nextTick =>
+        @errorBuilder.makeError 'noCommand', command
+    if not id and command in [ 'disconnect', 'roomJoin' ,'roomLeave' ]
+      return process.nextTick =>
+        @errorBuilder.makeError 'noSocket', command
+    if useHooks
+      cmd = @server.userCommands[command]
+      fn = @wrapCommand command, cmd
+      fn args..., cb, id
+    else
+      @[command] args..., cb, id
 
   # @private
   registerSocket : (id, cb) ->
@@ -304,7 +318,7 @@ class User extends DirectMessaging
     @getMode @username, cb
 
   # @private
-  directMessage : (toUserName, msg, cb, id) ->
+  directMessage : (toUserName, msg, cb, id = null) ->
     unless @enableDirectMessages
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
