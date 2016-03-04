@@ -5,7 +5,7 @@ User = require './User.coffee'
 _ = require 'lodash'
 async = require 'async'
 
-{ withEH, bindTE, asyncLimit } = require './utils.coffee'
+{ withEH, asyncLimit } = require './utils.coffee'
 
 
 # @private
@@ -19,6 +19,18 @@ initState = (redis, state, values, cb) ->
     return process.nextTick -> cb()
   redis.del state, withEH cb, ->
     redis.sadd state, values, cb
+
+# @private
+# @nodoc
+bindTE = (obj) ->
+  obj.withTE = (callback, normallCallback) ->
+    (error, data) ->
+      if error
+        callback obj.errorBuilder.makeError 'serverError', 500
+      else if normallCallback
+        normallCallback data
+      else
+        callback error, data
 
 
 # Implements state API lists management.
@@ -84,7 +96,7 @@ class RoomStateRedis extends ListsStateRedis
   # @private
   constructor : (@server, @name) ->
     @errorBuilder = @server.errorBuilder
-    bindTE @, @errorBuilder
+    bindTE @
     @historyMaxGetMessages = @server.historyMaxGetMessages
     @historyMaxMessages = @server.historyMaxMessages
     @redis = @server.state.redis
@@ -105,11 +117,6 @@ class RoomStateRedis extends ListsStateRedis
         initState @redis, @makeDBListName('blacklist'), blacklist, fn
       (fn) =>
         initState @redis, @makeDBListName('adminlist'), adminlist, fn
-      (fn) =>
-        unless lastMessages then return fn()
-        @redis.ltrim @makeDBListName('history'), 0, 0, withEH fn, =>
-          msgs = _.map lastMessages, JSON.stringify
-          @redis.lpush @makeDBListName('history'), msgs, fn
       (fn) =>
         unless whitelistOnly then return fn()
         @redis.hset @makeDBHashName('whitelistmodes'), @name, whitelistOnly, fn
@@ -171,7 +178,7 @@ class DirectMessagingStateRedis extends ListsStateRedis
     @prefix = 'direct'
     @redis = @server.state.redis
     @errorBuilder = @server.errorBuilder
-    bindTE @, @errorBuilder
+    bindTE @
 
   # @private
   hasList : (listName) ->
@@ -212,7 +219,7 @@ class UserStateRedis
     @prefix = 'user'
     @redis = @server.state.redis
     @errorBuilder = @server.errorBuilder
-    bindTE @, @errorBuilder
+    bindTE @
 
   # @private
   makeDBListName : (listName) ->
@@ -292,7 +299,7 @@ class RedisState
   # @private
   constructor : (@server, @options = {}) ->
     @errorBuilder = @server.errorBuilder
-    bindTE @, @errorBuilder
+    bindTE @
     redisOptions = _.castArray @options.redisOptions
     if @options.useCluster
       @redis = new Redis.Cluster redisOptions...

@@ -11,6 +11,7 @@ class ErrorBuilder
   # server errors
   errorStrings :
     badArgument : 'Bad argument %s value %s'
+    invalidName : 'String %s contains invalid characters'
     noCommand : 'No such command %s'
     noList : 'No such list %s'
     noLogin : 'No login provided'

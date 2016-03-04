@@ -1,5 +1,9 @@
 
-{ withEH, withoutData } = require './utils.coffee'
+{ checkNameSymbols
+  withEH
+  withoutData
+} = require './utils.coffee'
+
 User = require './User'
 
 # @mixin
@@ -76,6 +80,9 @@ ServiceAPI =
   # @option state [Boolean] whitelistOnly Room whitelistOnly mode.
   # @option state [String] owner Room owner.
   addRoom : (roomName, state, cb = ->) ->
+    if checkNameSymbols roomName
+      error = @errorBuilder.makeError 'invalidName', roomName
+      return cb error
     @state.addRoom roomName, state, withoutData cb
 
 module.exports = ServiceAPI

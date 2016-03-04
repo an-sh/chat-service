@@ -1,6 +1,7 @@
 
 _ = require 'lodash'
 SocketServer = require 'socket.io'
+checkNameSymbols = require('./utils.coffee').checkNameSymbols
 
 
 # Socket.io objects accessors.
@@ -71,6 +72,9 @@ class SocketIOTransport
       unless userName
         error = @errorBuilder.makeError 'noLogin'
         return @rejectLogin socket, error
+    if checkNameSymbols userName
+      error = @errorBuilder.makeError 'invalidName', userName
+      return @rejectLogin socket, error
     # TODO watch for disconnect
     @server.state.loginUserSocket @server.serverUID, userName, socket.id
     , (error, user) =>

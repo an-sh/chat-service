@@ -4,8 +4,12 @@ async = require 'async'
 
 DirectMessaging = require './DirectMessaging'
 
-{withEH, extend, asyncLimit, withoutData} =
-  require './utils.coffee'
+{ asyncLimit
+  checkNameSymbols
+  extend
+  withEH
+  withoutData
+} = require './utils.coffee'
 
 
 # @private
@@ -366,6 +370,9 @@ class User extends DirectMessaging
   roomCreate : (roomName, whitelistOnly, cb) ->
     unless @enableRoomsManagement
       error = @errorBuilder.makeError 'notAllowed'
+      return cb error
+    if checkNameSymbols roomName
+      error = @errorBuilder.makeError 'invalidName', roomName
       return cb error
     @state.addRoom roomName
       , { owner : @username, whitelistOnly : whitelistOnly }
