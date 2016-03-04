@@ -168,9 +168,19 @@ class Room
       @roomState.getList listName, cb
 
   # @private
-  getLastMessages : (author, cb) ->
+  getRecentMessages : (author, cb) ->
     @checkJoinedUser author, withEH cb, =>
-      @roomState.messagesGet cb
+      @roomState.messagesGetRecent cb
+
+  # @private
+  getMessagesLastId : (author, cb) ->
+    @checkJoinedUser author, withEH cb, =>
+      @roomState.messagesGetLastId cb
+
+  # @private
+  getMessagesAfterId : (author, id, cb) ->
+    @checkJoinedUser author, withEH cb, =>
+      @roomState.messagesGetAfterId id, cb
 
   # @private
   addToList : (author, listName, values, cb) ->

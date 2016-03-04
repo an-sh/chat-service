@@ -155,7 +155,7 @@ class RoomStateRedis extends ListsStateRedis
       , @withTE cb
 
   # @private
-  messagesGet : (cb) ->
+  messagesGetRecent : (cb) ->
     @redis.lrange @makeDBListName('history'), 0, @historyMaxGetMessages - 1
     , @withTE cb, (data) ->
       messages = _.map data, JSON.parse

@@ -19,6 +19,7 @@
 - Added roomGetOwner command.
 - Changed auth hook to middleware.
 - Added ServiceAPI.
+- Added roomHistorySync and roomHistoryLastId.
 
 ### 0.6.1 (2016/02/01)
 

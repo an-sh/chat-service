@@ -408,7 +408,17 @@ class User extends DirectMessaging
   # @private
   roomHistory : (roomName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.getLastMessages @username, cb
+      room.getRecentMessages @username, cb
+
+  # @private
+  roomHistoryLastId : (roomName, cb) ->
+    @withRoom roomName, withEH cb, (room) =>
+      room.getMessagesLastId @username, cb
+
+  # @private
+  roomHistorySync : (roomName, id, cb) ->
+    @withRoom roomName, withEH cb, (room) =>
+      room.getMessagesAfterId @username, id, cb
 
   # @private
   roomJoin : (roomName, cb, id) ->

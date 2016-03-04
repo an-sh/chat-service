@@ -156,6 +156,19 @@ class ArgumentsValidator
     ]
 
   # @private
+  roomHistoryLastId : (roomName)->
+    [
+      check.string
+    ]
+
+  # @private
+  roomHistorySync : (roomName, id)->
+    [
+      check.string
+      (str) -> check.isInt str { min : 0 }
+    ]
+
+  # @private
   roomJoin : (roomName) ->
     [
       check.string

@@ -1,6 +1,6 @@
 
-Deque = require 'collections/deque'
 FastSet = require 'collections/fast-set'
+List = require 'collections/list'
 Map = require 'collections/fast-map'
 Room = require './Room.coffee'
 User = require './User.coffee'
@@ -80,9 +80,9 @@ class RoomStateMemory extends ListsStateMemory
     @blacklist = new FastSet
     @adminlist = new FastSet
     @userlist = new FastSet
-    @messagesHistory = new Deque
-    @messagesTimestamps = new Deque
-    @messagesIDs = new Deque
+    @messagesHistory = new List
+    @messagesTimestamps = new List
+    @messagesIDs = new List
     @lastMessageID = 0
     @whitelistOnly = false
     @owner = null
@@ -137,12 +137,43 @@ class RoomStateMemory extends ListsStateMemory
     process.nextTick -> cb null, msg
 
   # @private
-  messagesGet : (cb) ->
-    data = @messagesHistory.toArray()
-    for msg, idx in data
-      msg.timestamp = @messagesTimestamps[idx]
-      msg.id = @messagesIDs[idx]
+  messagesGetRecent : (cb) ->
+    msgs = @messagesHistory.slice 0, @historyMaxGetMessages
+    tss = @messagesTimestamps.slice 0, @historyMaxGetMessages
+    ids = @messagesIDs.slice 0, @historyMaxGetMessages
+    data = []
+    for msg, idx in msgs
+      obj = _.cloneDeep msg
+      obj.timestamp = @messagesTimestamps[idx]
+      obj.id = @messagesIDs[idx]
+      data[idx] = obj
     process.nextTick -> cb null, data
+
+  # @private
+  messagesGetLastId : (cb) ->
+    id = @messagesIDs.peek()
+    process.nextTick -> cb null, data
+
+  # @private
+  messagesGetAfterId : (id, cb) ->
+    nmessages = @messageIDS.length
+    maxlen = @historyMaxGetMessages
+    lastid = @messagesIDs.peek()
+    id = _.min [ id, lastid ]
+    end = _.min [ maxlen, lastid - id ]
+    start = _.min [ 0, end - maxlen ]
+    if start == end
+      return process.nextTick -> cb null, []
+    msgs = @messagesHistory.slice start, end
+    tss = @messagesTimestamps.slice start, end
+    ids = @messagesIDs.slice start, end
+    data = []
+    for msg, idx in msgs
+      obj = _.cloneDeep msg
+      msg.timestamp = tss[idx]
+      msg.id = ids[idx]
+      data[idx] = obj
+    process.nextTick -> cb null, msgs
 
   # @private
   getCommonUsers : (cb) ->
