@@ -167,12 +167,12 @@ class SocketIOTransport
   # @note 'socket.io' transport type only.
   # Returns socket.io server.
   # @return [Object] Socket.io server.
-  getSockeIOServer : ->
+  getSocketIOServer : ->
     @io
 
   # @note 'socket.io' transport type only.
   # Returns socket.io server namespace.
-  # @return [Object] Socket.io server server namespace.
+  # @return [Object] Socket.io server namespace.
   getSocketIONamespace : ->
     @nsp
 
