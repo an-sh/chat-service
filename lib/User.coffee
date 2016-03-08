@@ -38,8 +38,7 @@ CommandBinder =
           reportResults = (nerror = error, ndata = data, moredata...) ->
             if name == 'disconnect'
               transport.endClientDisconnect()
-            else
-              cb nerror, ndata, moredata...
+            cb nerror, ndata, moredata...
           if afterHook
             results = _.slice arguments
             afterHook @server, @username, id, args, results, reportResults
@@ -294,12 +293,20 @@ class User extends DirectMessaging
       @[command] args..., cb, id
 
   # @private
+  revertRegisterSocket : (id) ->
+    @userState.removeSocket id, ->
+
+  # @private
   registerSocket : (id, cb) ->
     @userState.addSocket id, withEH cb, (nconnected) =>
+      # Client disconnected before callbacks have been set.
+      unless @transport.getSocketObject id
+        @revertRegisterSocket id
+        cb()
       for cmd of @server.userCommands
         @bindCommand id, cmd, @[cmd]
-      @socketConnectEcho id, nconnected
-      cb null, @
+      @bindCommand id, 'disconnect', => @transport.startClientDisconnect()
+      cb null, @, nconnected
 
   # @private
   disconnectInstanceSockets : (cb) ->

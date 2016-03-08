@@ -77,13 +77,13 @@ class SocketIOTransport
       return @rejectLogin socket, error
     # TODO watch for disconnect
     @server.state.loginUserSocket @server.serverUID, userName, socket.id
-    , (error, user) =>
-      if error
-        @rejectLogin socket, error
-      else
-        socket.join user.echoChannel, =>
-          socket.on 'disconnect', => @startClientDisconnect()
-          @confirmLogin socket, userName, authData
+    , (error, user, nconnected) =>
+      unless user then return
+      if error then return @rejectLogin socket, error
+      socket.join user.echoChannel, (error) =>
+        if error then return @rejectLogin socket, error
+        user.socketConnectEcho socket.id, nconnected
+        @confirmLogin socket, userName, authData
 
   # @private
   # @nodoc

@@ -264,18 +264,18 @@ class UserStateMemory
     socketsset = @roomsToSockets.get roomName
     roomsset.delete roomName
     socketsset.delete id
-    njoined = socketsset?.length || 0
+    njoined = socketsset.length || 0
     process.nextTick -> cb null, njoined
 
   # @private
   removeAllSocketsFromRoom : (roomName, cb) ->
     sockets = @socketsToRooms.keys()
     socketsset = @roomsToSockets.get roomName
-    removedSockets = socketsset?.toArray()
+    removedSockets = socketsset.toArray()
     for id in removedSockets
       roomsset = @socketsToRooms.get id
       roomsset.delete roomName
-    socketsset = socketsset?.difference sockets
+    socketsset = socketsset.difference sockets
     @roomsToSockets.set roomName, socketsset
     process.nextTick -> cb null, removedSockets
 
@@ -283,14 +283,14 @@ class UserStateMemory
   removeSocket : (id, cb) ->
     rooms = @roomsToSockets.toArray()
     roomsset = @socketsToRooms.get id
-    removedRooms = roomsset?.toArray()
+    removedRooms = roomsset.toArray()
     joinedSockets = []
     for roomName, idx in removedRooms
       socketsset = @roomsToSockets.get roomName
       socketsset.delete id
       njoined = socketsset.length
       joinedSockets[idx] = njoined
-    roomsset = roomsset?.difference removedRooms
+    roomsset = roomsset.difference removedRooms
     @socketsToRooms.delete id
     nconnected = @socketsToRooms.length
     process.nextTick -> cb null, removedRooms, joinedSockets, nconnected
