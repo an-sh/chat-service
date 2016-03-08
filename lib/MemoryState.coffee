@@ -390,7 +390,9 @@ class MemoryState
     user = @users[name]
     unless user
       error = @errorBuilder.makeError 'noUser', name
-    process.nextTick -> cb error, user
+    else
+      sockets = user.userState.socketsToRooms.keys()
+    process.nextTick -> cb error, user, sockets
 
   # @private
   addUser : (name, state, cb) ->

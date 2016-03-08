@@ -120,6 +120,10 @@ class ServerMessages
   # @param nconnected [Number] Total number of users's sockets.
   socketDisconnectEcho : (id, nconnected) ->
 
+  # Custom message from a server or an users's socket.
+  # @param [Object] Arbitrary data.
+  systemMessage : (data) ->
+
 
 # @note This class describes socket.io incoming messages, not methods.
 #
@@ -336,6 +340,14 @@ class UserCommands
   # @param cb [Function<error, null>] Sends ack with an error or an
   #   empty data.
   roomSetWhitelistMode : (roomName, mode, cb) ->
+
+  # Send data to other connected users's sockets. Or can be used with
+  # execCommand and the null id to send data from a server to all
+  # users's sockets.
+  # @param [Object] Arbitrary data.
+  # @param cb [Function<error, null>] Sends ack with an error or an
+  #   empty data.
+  systemMessage : (data, cb) ->
 
 
 # Service object.

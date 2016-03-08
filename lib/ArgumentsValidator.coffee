@@ -202,5 +202,11 @@ class ArgumentsValidator
       check.boolean
     ]
 
+  # @private
+  systemMessage : (data) ->
+    [
+      -> return true
+    ]
+
 
 module.exports = ArgumentsValidator

@@ -334,15 +334,14 @@ class User extends DirectMessaging
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
     @processMessage msg, true
-    @server.state.getUser toUserName, withEH cb, (toUser) =>
+    @server.state.getUser toUserName, withEH cb, (toUser, toSockets) =>
       toUser.message @username, msg, withEH cb, =>
-        toUser.userState.getAllSockets withEH cb, (toSockets) =>
-          unless toSockets?.length
-            return cb @errorBuilder.makeError 'noUserOnline', toUser
-          @transport.sendToChannel toUser.echoChannel, 'directMessage', msg
-          @transport.sendToOthers id, @echoChannel, 'directMessageEcho'
-          , toUserName, msg
-          cb null, msg
+        unless toSockets?.length
+          return cb @errorBuilder.makeError 'noUserOnline', toUser
+        @transport.sendToChannel toUser.echoChannel, 'directMessage', msg
+        @transport.sendToOthers id, @echoChannel, 'directMessageEcho'
+        , toUserName, msg
+        cb null, msg
 
   # @private
   directRemoveFromList : (listName, values, cb) ->
@@ -460,5 +459,9 @@ class User extends DirectMessaging
       room.changeMode @username, mode, withEH cb, (usernames) =>
         @removeRoomUsers room, usernames, cb
 
+  # @private
+  systemMessage : (data, cb, id = null) ->
+    @transport.sendToOthers id, @echoChannel, 'systemMessage', data
+    cb()
 
 module.exports = User

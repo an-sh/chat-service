@@ -1,25 +1,26 @@
 
 ### 0.7.0 (unreleased)
 
-- Changed chat constructor options.
-- Changed roomJoinedEcho and roomLeftEcho ServerMessages.
-- Include redis socket.io adapter.
-- Changed adminlist to accessList.
+- Added ServiceAPI for scripting.
 - Added listJoinedSockets command.
-- Changed roomMessage command.
-- Changed roomMessage and directMessage server messages.
-- Changed Redis schema.
-- Changed module export.
-- Changed hooks API.
+- Added roomGetOwner command.
+- Added roomHistorySync and roomHistoryLastId commands.
 - Added socketConnectEcho and socketDisconnectEcho messages.
+- Added systemMessage command.
+- Allow custom content in message objects.
+- Changed Redis schema.
+- Changed adminlist to accessList.
+- Changed auth hook to middleware.
+- Changed chat constructor options.
+- Changed hooks API.
+- Changed module export.
+- Changed roomJoinedEcho and roomLeftEcho ServerMessages.
+- Changed roomMessage and directMessage server messages.
+- Changed roomMessage command.
 - Code and tests cleanups.
 - Commands arguments validation fixes.
-- Allow custom content in message objects.
 - Huge internal APIs changes.
-- Added roomGetOwner command.
-- Changed auth hook to middleware.
-- Added ServiceAPI.
-- Added roomHistorySync and roomHistoryLastId commands.
+- Include redis socket.io adapter.
 
 ### 0.6.1 (2016/02/01)
 
