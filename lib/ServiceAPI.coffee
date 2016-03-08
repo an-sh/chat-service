@@ -17,7 +17,7 @@ ServiceAPI =
     @state.getUser userName, withEH cb, (user) ->
       user.disconnectInstanceSockets cb
 
-  # Executes command as user.
+  # Executes command as an user.
   #
   # @param params [String or Object] Is either a user name or an
   #   options hash.
@@ -29,7 +29,7 @@ ServiceAPI =
   # @option params [String] id Socket id, it is required for
   #   'disconnect', 'roomJoin', 'roomLeave' commands.
   # @option params [Boolean] useHooks If `true` executes command with
-  #   before and after hooks, default is `false`
+  #   before and after hooks, default is `false`.
   execCommand : (params, name, args..., cb = ->) ->
     if _.isObject params
       id = params.id || null
@@ -60,7 +60,6 @@ ServiceAPI =
   # @param roomName [String] User name.
   # @param cb [Callback] Optional callback.
   removeRoom : (roomName, cb = ->) ->
-    #TODO
     user = new User @
     user.withRoom roomName, withEH cb, (room) =>
       room.getUsers withEH cb, (usernames) =>

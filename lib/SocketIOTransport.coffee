@@ -38,6 +38,8 @@ class SocketIOTransport
     else
       @dontCloseIO = true
     @nsp = @io.of @namespace
+    @server.io = @io
+    @server.nsp = @nsp
     @setLivecycle()
 
   # @private
@@ -79,7 +81,6 @@ class SocketIOTransport
     if checkNameSymbols userName
       error = @errorBuilder.makeError 'invalidName', userName
       return @rejectLogin socket, error
-    # TODO watch for disconnect
     @server.state.loginUserSocket @server.serverUID, userName, socket.id
     , (error, user, nconnected) =>
       unless user then return

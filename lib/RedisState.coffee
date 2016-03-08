@@ -296,6 +296,7 @@ class RedisState
     @UserState = UserStateRedis
     @DirectMessagingState = DirectMessagingStateRedis
     @lockTTL = @options.lockTTL || 5000
+    @server.redis = @redis
 
   # @private
   makeDBListName : (hashName) ->

@@ -121,7 +121,7 @@ class ServerMessages
   socketDisconnectEcho : (id, nconnected) ->
 
   # Custom message from a server or an users's socket.
-  # @param [Object] Arbitrary data.
+  # @param data [Object] Arbitrary data.
   systemMessage : (data) ->
 
 
@@ -311,7 +311,7 @@ class UserCommands
   # @see ServerMessages#roomMessage
   # @param roomName [String] Room name.
   # @param msg [Object<textMessage : String>] Message.
-  # @param cb [Function<error, null>] Sends ack with an error or
+  # @param cb [Function<error, null>] Sends ack with an error or an
   #   empty data.
   roomMessage : (roomName, msg, cb) ->
 
@@ -344,7 +344,7 @@ class UserCommands
   # Send data to other connected users's sockets. Or can be used with
   # execCommand and the null id to send data from a server to all
   # users's sockets.
-  # @param [Object] Arbitrary data.
+  # @param data [Object] Arbitrary data.
   # @param cb [Function<error, null>] Sends ack with an error or an
   #   empty data.
   systemMessage : (data, cb) ->
@@ -381,8 +381,8 @@ class ChatService
   #   {ServerMessages#roomUserLeft} messages, default is `false`.
   #
   # @option serviceOptions [Integer] historyMaxGetMessages Room
-  #   history size available via {UserCommands#roomHistory} , default
-  #   is `100`.
+  #   history size available via {UserCommands#roomHistory} or
+  #   {UserCommands#roomHistorySync}, default is `100`.
   #
   # @option serviceOptions [Integer] historyMaxMessages Room history
   #   DB size, default is `10000`.
@@ -399,8 +399,8 @@ class ChatService
   #   <Callback(<Error>, <String>, <Object>)>)] onConnect Client
   #   connection hook. Must call a callback with either error or user
   #   name and auth data. User name and auth data are send back with
-  #   `loginConfirmed` message. Error is sent as `loginRejected`
-  #   message.
+  #   {ServerMessages#loginConfirmed} message. Error is sent as
+  #   {ServerMessages#loginRejected} message.
   #
   # @option hooks [Function(<ChatService>, <Callback(<Error>)>)]
   #   onStart Executes when server is started. Must call a callback.
@@ -452,9 +452,12 @@ class ChatService
   # @option integrationOptions [String or Constructor] adapter
   #   Socket.io adapter, used if no `io` object is passed in
   #   `transportOptions`.  Can be either `'memory'` or `'redis`' for
-  #   built-in state storages, or a custom state constructor function
-  #   that implements the Socket.io adapter API. Default is
-  #   `'memory'`.
+  #   built-in adapter, or a custom state constructor function that
+  #   implements the Socket.io adapter API. Default is
+  #   `'memory'`. __Note:__ `'redis'` state and `'redis'` adapter and
+  #   theirs options are NOT related, two separate clients are used
+  #   with two different configurations, which can be set to use a
+  #   common Redis server.
   #
   # @option integrationOptions [Object] stateOptions Options for a
   #   redis state.
@@ -500,11 +503,14 @@ class ChatService
   # @property [Object] {ErrorBuilder} instance.
   errorBuilder: null
 
-  # @property [Object] Socket.io server.
+  # @property [Object or null] Socket.io server.
   io: null
 
-  # @property [Object] Socket.io server namespace.
+  # @property [Object or null] Socket.io server namespace.
   nsp: null
+
+  # @property [Object or null] State ioredis instance.
+  redis: null
 
   # @private
   # @nodoc
