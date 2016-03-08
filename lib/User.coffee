@@ -139,9 +139,9 @@ UserAssociations =
 
   # @private
   makeRollbackRoomJoin : (id, room, isNewJoin, cb) ->
-    data = { room : room.name, id : id }
-    data.op = 'joinSocketToRoom'
-    @withFailLog data, =>
+    roomName = room.name
+    data = { room : roomName, id : id }
+    (error) =>
       async.parallel [
         (fn) =>
           unless isNewJoin then return fn()
@@ -153,7 +153,7 @@ UserAssociations =
           d.op = 'RollbackSocketJoinRoom'
           @userState.removeSocketFromRoom id, roomName, @withFailLog d, fn
         ] , =>
-          cb @errorBuilder.makeError 'serverError', 500
+          cb @errorBuilder.makeError 'serverError', error
 
   # @private
   leaveRoom : (roomName, cb) ->
@@ -178,7 +178,7 @@ UserAssociations =
     @userState.lockSocketRoom id, roomName, withEH cb, (lock, israce) =>
       unlock = @userState.bindUnlockSelf lock, 'joinSocketToRoom', id, cb
       if israce
-        return unlock @errorBuilder.makeError 'serverError', 500
+        return unlock @errorBuilder.makeError 'serverBusy'
       @withRoom roomName, withEH unlock, (room) =>
         room.join @username, withEH unlock, (isNewJoin) =>
           rollback = @makeRollbackRoomJoin id, room, isNewJoin, unlock
@@ -194,7 +194,7 @@ UserAssociations =
     @userState.lockSocketRoom id, roomName, withEH cb, (lock, israce) =>
       unlock = @userState.bindUnlockSelf lock, 'leaveSocketFromRoom', id, cb
       if israce
-        return unlock @errorBuilder.makeError 'serverError', 500
+        return unlock @errorBuilder.makeError 'serverBusy'
       @userState.removeSocketFromRoom id, roomName, withEH unlock
       , (njoined) =>
         @leaveChannel id, roomName, =>

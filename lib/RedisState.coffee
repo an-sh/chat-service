@@ -5,7 +5,7 @@ User = require './User.coffee'
 _ = require 'lodash'
 async = require 'async'
 
-{ withEH, asyncLimit } = require './utils.coffee'
+{ bindTE, withEH, asyncLimit } = require './utils.coffee'
 
 
 # @private
@@ -19,19 +19,6 @@ initState = (redis, state, values, cb) ->
     return process.nextTick -> cb()
   redis.del state, withEH cb, ->
     redis.sadd state, values, cb
-
-# @private
-# @nodoc
-bindTE = (obj) ->
-  obj.withTE = (callback, normallCallback) ->
-    (error, data) ->
-      if error
-        callback obj.errorBuilder.makeError 'serverError', 500
-      else if normallCallback
-        normallCallback data
-      else
-        callback error, data
-
 
 # Implements state API lists management.
 # @private

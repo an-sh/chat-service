@@ -1,7 +1,10 @@
 
 _ = require 'lodash'
 SocketServer = require 'socket.io'
-checkNameSymbols = require('./utils.coffee').checkNameSymbols
+
+{ checkNameSymbols
+  bindTE
+} = require './utils.coffee'
 
 # @private
 # @nodoc
@@ -13,6 +16,7 @@ class SocketIOTransport
   constructor : (@server, @options, @adapterConstructor, @adapterOptions) ->
     @hooks = @server.hooks
     @errorBuilder = @server.errorBuilder
+    bindTE @
     @io = @options.io
     @namespace = @options.namespace || '/chat-service'
     Adapter = switch @adapterConstructor
@@ -80,7 +84,7 @@ class SocketIOTransport
     , (error, user, nconnected) =>
       unless user then return
       if error then return @rejectLogin socket, error
-      socket.join user.echoChannel, (error) =>
+      socket.join user.echoChannel, @withTE (error) =>
         if error then return @rejectLogin socket, error
         user.socketConnectEcho socket.id, nconnected
         @confirmLogin socket, userName, authData
@@ -191,14 +195,14 @@ class SocketIOTransport
     socket = @getSocketObject id
     unless socket
       return cb @errorBuilder.makeError 'serverError', 500
-    socket.join channel, cb
+    socket.join channel, @withTE cb
 
   # @private1
   # @nodoc
   leaveChannel : (id, channel, cb) ->
     socket = @getSocketObject id
     unless socket then return cb()
-    socket.leave channel, cb
+    socket.leave channel, @withTE cb
 
   # @private
   # @nodoc

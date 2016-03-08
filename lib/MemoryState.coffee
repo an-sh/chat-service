@@ -263,8 +263,8 @@ class UserStateMemory
     roomsset = @socketsToRooms.get id
     socketsset = @roomsToSockets.get roomName
     roomsset.delete roomName
-    socketsset.delete id
-    njoined = socketsset.length || 0
+    socketsset?.delete id
+    njoined = socketsset?.length || 0
     process.nextTick -> cb null, njoined
 
   # @private

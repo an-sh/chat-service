@@ -22,6 +22,18 @@ withEH = (errorCallback, normallCallback) ->
 
 # @private
 # @nodoc
+bindTE = (obj) ->
+  obj.withTE = (callback, normallCallback) ->
+    (error, data) ->
+      if error
+        callback obj.errorBuilder.makeError 'serverError', 500
+      else if normallCallback
+        normallCallback data
+      else
+        callback error, data
+
+# @private
+# @nodoc
 withoutData = (fn) ->
   (error) -> fn error
 
@@ -36,6 +48,7 @@ checkNameSymbols = (name) ->
 
 module.exports = {
   asyncLimit
+  bindTE
   checkNameSymbols
   extend
   withEH
