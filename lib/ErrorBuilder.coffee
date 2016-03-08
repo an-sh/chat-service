@@ -22,6 +22,7 @@ class ErrorBuilder
     notJoined : 'Not joined to room %s'
     roomExists : 'Room %s already exists'
     serverError : 'Server error %s'
+    unknownError : 'Unknown error %s occurred'
     userExists : 'User %s already exists'
     wrongArgumentsCount : 'Expected %s arguments, got %s'
 
@@ -34,7 +35,7 @@ class ErrorBuilder
   makeError : (error, args...) ->
     if @useRawErrorObjects
       return { name : error, args : args }
-    str = @errorStrings[error] || "Unknown error: #{error}"
+    str = @errorStrings[error] || @errorStrings.unknownError
     return util.format error, args...
 
 
