@@ -720,27 +720,30 @@ describe 'Chat service.', ->
 
         it 'should remove users on permissions changes', (done) ->
           chatServer = new ChatService { port : port }, null, state
-          chatServer.addRoom roomName1, { adminlist: [user1] }, ->
+          chatServer.addRoom roomName1, { adminlist: [user1, user3] }, ->
             socket1 = clientConnect user1
             socket1.on 'loginConfirmed', ->
               socket1.emit 'roomJoin', roomName1, ->
                 socket2 = clientConnect user2
                 socket2.on 'loginConfirmed', ->
                   socket2.emit 'roomJoin', roomName1, ->
-                    socket1.emit 'roomAddToList', roomName1, 'blacklist'
-                    , [user2]
-                    async.parallel [
-                      (cb) ->
-                        socket2.on 'roomAccessRemoved', (r) ->
-                          expect(r).equal(roomName1)
-                          cb()
-                      (cb) ->
-                        cb()
-                        socket1.on 'roomUserLeft', (r, u) ->
-                          expect(r).equal(roomName1)
-                          expect(u).equal(user2)
-                          cb()
-                    ], done
+                    socket3 = clientConnect user3
+                    socket3.on 'loginConfirmed', ->
+                      socket3.emit 'roomJoin', roomName1, ->
+                        socket1.emit 'roomAddToList', roomName1, 'blacklist'
+                        , [user2, user3, 'nouser']
+                        async.parallel [
+                          (cb) ->
+                            socket2.on 'roomAccessRemoved', (r) ->
+                              expect(r).equal(roomName1)
+                              cb()
+                          (cb) ->
+                            cb()
+                            socket1.on 'roomUserLeft', (r, u) ->
+                              expect(r).equal(roomName1)
+                              expect(u).equal(user2)
+                              cb()
+                        ], done
 
         it 'should remove affected users on mode changes', (done) ->
           chatServer = new ChatService { port : port }, null, state
@@ -760,7 +763,7 @@ describe 'Chat service.', ->
         , (done) ->
           chatServer = new ChatService { port : port }, null, state
           chatServer.addRoom roomName1
-          , { adminlist : [user1] , whitelist : [user2]
+          , { adminlist : [user1, user3] , whitelist : [user2]
             , whitelistOnly: true }
           , ->
             socket1 = clientConnect user1
@@ -769,11 +772,14 @@ describe 'Chat service.', ->
                 socket2 = clientConnect user2
                 socket2.on 'loginConfirmed', ->
                   socket2.emit 'roomJoin', roomName1, ->
-                    socket1.emit 'roomRemoveFromList', roomName1
-                    , 'whitelist', [user2]
-                    socket2.on 'roomAccessRemoved', (r) ->
-                      expect(r).equal(roomName1)
-                      done()
+                    socket3 = clientConnect user3
+                    socket3.on 'loginConfirmed', ->
+                      socket3.emit 'roomJoin', roomName1, ->
+                        socket1.emit 'roomRemoveFromList', roomName1
+                        , 'whitelist', [user2, user3, 'nouser']
+                        socket2.on 'roomAccessRemoved', (r) ->
+                          expect(r).equal(roomName1)
+                          done()
 
         it 'should remove disconnected users' , (done) ->
           chatServer = new ChatService { port : port
