@@ -853,8 +853,7 @@ describe 'Chat service.', ->
                 expect(data).not.ok
                 done()
 
-        it 'should not send self-direct messages'
-        , (done) ->
+        it 'should not send self-direct messages', (done) ->
           txt = 'Test message.'
           message = { textMessage : txt }
           chatServer = new ChatService { port : port
@@ -866,6 +865,22 @@ describe 'Chat service.', ->
               expect(error).ok
               expect(data).not.ok
               done()
+
+        it 'should not send direct messages to offline users', (done) ->
+          txt = 'Test message.'
+          message = { textMessage : txt }
+          chatServer = new ChatService { port : port
+            , enableDirectMessages : true }
+          , null, state
+          socket2 = clientConnect user2
+          socket2.on 'loginConfirmed', ->
+            socket2.disconnect()
+            socket1 = clientConnect user1
+            socket1.on 'loginConfirmed', ->
+              socket1.emit 'directMessage', user2, message, (error, data) ->
+                expect(error).ok
+                expect(data).not.ok
+                done()
 
         it 'should echo direct messges to user\'s sockets', (done) ->
           txt = 'Test message.'
