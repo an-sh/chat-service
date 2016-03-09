@@ -1111,20 +1111,33 @@ describe 'Chat service.', ->
         it 'should support changing arguments in before hooks', (done) ->
           beforeHook = (server, username, id, args, cb) ->
             [ name , mode ] = args
-            cb(null, null, roomName2, mode)
+            cb null, null, roomName2, mode
           chatServer = new ChatService { port : port
             , enableRoomsManagement : true}
           , { 'roomCreateBefore' : beforeHook }
           , state
           socket1 = clientConnect user1
-          socket1.on 'loginConfirmed', (u, data) ->
-            sid = data.id
+          socket1.on 'loginConfirmed',  ->
             socket1.emit 'roomCreate', roomName1, true, ->
               socket1.emit 'listRooms', (error, data) ->
                 expect(error).not.ok
                 expect(data).lengthOf(1)
                 expect(data[0]).length.equal(roomName2)
                 done()
+
+        it 'should send errors if new arguments have a different length'
+        , (done) ->
+          beforeHook = (server, username, id, args, cb) ->
+            cb null, null, roomName2
+          chatServer = new ChatService { port : port
+            , enableRoomsManagement : true}
+          , { 'roomCreateBefore' : beforeHook }
+          , state
+          socket1 = clientConnect user1
+          socket1.on 'loginConfirmed', ->
+            socket1.emit 'roomCreate', roomName1, true, (error) ->
+              expect(error).ok
+              done()
 
         it 'should execute disconnect After and Before hooks', (done) ->
           before = false
