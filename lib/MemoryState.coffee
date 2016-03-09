@@ -144,8 +144,8 @@ class RoomStateMemory extends ListsStateMemory
     data = []
     for msg, idx in msgs
       obj = _.cloneDeep msg
-      obj.timestamp = @messagesTimestamps[idx]
-      obj.id = @messagesIDs[idx]
+      obj.timestamp = tss[idx]
+      obj.id = ids[idx]
       data[idx] = obj
     process.nextTick -> cb null, data
 

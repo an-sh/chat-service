@@ -522,8 +522,12 @@ class ChatService
     @enableDirectMessages = @serviceOptions.enableDirectMessages || false
     @enableRoomsManagement = @serviceOptions.enableRoomsManagement || false
     @enableUserlistUpdates = @serviceOptions.enableUserlistUpdates || false
-    @historyMaxGetMessages = @serviceOptions.historyMaxGetMessages || 10000
-    @historyMaxMessages = @serviceOptions.historyMaxMessages || 100
+    @historyMaxGetMessages = @serviceOptions.historyMaxGetMessages
+    if not _.isNumber(@historyMaxGetMessages) or @historyMaxGetMessages < 0
+      @historyMaxGetMessages = 100
+    @historyMaxMessages = @serviceOptions.historyMaxMessages
+    if not _.isNumber(@historyMaxMessages) or @historyMaxGetMessages < 0
+      @historyMaxMessages = 10000
     @port = @serviceOptions.port || 8000
     @useRawErrorObjects = @serviceOptions.useRawErrorObjects || false
 

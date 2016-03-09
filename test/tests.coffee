@@ -445,7 +445,14 @@ describe 'Chat service.', ->
               socket1.emit 'roomJoin', roomName1, (error, data) ->
                 socket1.emit 'roomMessage', roomName1, message, (error, data) ->
                   socket1.emit 'roomHistory', roomName1, (error, data) ->
-                    expect(data?[0].textMessage).equal(txt)
+                    expect(error).not.ok
+                    expect(data).length(1)
+                    expect(data[0]).include.keys 'textMessage', 'author'
+                    , 'timestamp', 'id'
+                    expect(data[0].textMessage).equal(txt)
+                    expect(data[0].author).equal(user1)
+                    expect(data[0].timestamp).a('Number')
+                    expect(data[0].id).equal(1)
                     done()
 
         it 'should send room messages to all joined users', (done) ->
@@ -476,6 +483,64 @@ describe 'Chat service.', ->
                           expect(msg).ownProperty('timestamp')
                           cb()
                     ], done
+
+        it 'should drop history if limit is zero', (done) ->
+          txt = 'Test message.'
+          message = { textMessage : txt }
+          chatServer = new ChatService { port : port, historyMaxMessages : 0 }
+          , null, state
+          chatServer.addRoom roomName1, null, ->
+            socket1 = clientConnect user1
+            socket1.on 'loginConfirmed', ->
+              socket1.emit 'roomJoin', roomName1, (error, data) ->
+                socket1.emit 'roomMessage', roomName1, message, (error, data) ->
+                  socket1.emit 'roomHistory', roomName1, (error, data) ->
+                    expect(error).not.ok
+                    expect(data).empty
+                    done()
+
+        it 'should not send history if get limit is zero', (done) ->
+          txt = 'Test message.'
+          message = { textMessage : txt }
+          chatServer = new ChatService { port : port
+            , historyMaxGetMessages : 0 }
+          , null, state
+          chatServer.addRoom roomName1, null, ->
+            socket1 = clientConnect user1
+            socket1.on 'loginConfirmed', ->
+              socket1.emit 'roomJoin', roomName1, (error, data) ->
+                socket1.emit 'roomMessage', roomName1, message, (error, data) ->
+                  socket1.emit 'roomHistory', roomName1, (error, data) ->
+                    expect(error).not.ok
+                    expect(data).empty
+                    done()
+
+        it 'should truncate long history', (done) ->
+          txt1 = 'Test message 1.'
+          message1 = { textMessage : txt1 }
+          txt2 = 'Test message 2.'
+          message2 = { textMessage : txt2 }
+          chatServer = new ChatService { port : port
+            , historyMaxMessages : 1 }
+          , null, state
+          chatServer.addRoom roomName1, null, ->
+            socket1 = clientConnect user1
+            socket1.on 'loginConfirmed', ->
+              socket1.emit 'roomJoin', roomName1, (error, data) ->
+                socket1.emit 'roomMessage', roomName1, message1
+                , (error, data) ->
+                  socket1.emit 'roomMessage', roomName1, message2
+                  , (error, data) ->
+                    socket1.emit 'roomHistory', roomName1, (error, data) ->
+                      expect(error).not.ok
+                      expect(data).length(1)
+                      expect(data[0]).include.keys 'textMessage', 'author'
+                      , 'timestamp', 'id'
+                      expect(data[0].textMessage).equal(txt2)
+                      expect(data[0].author).equal(user1)
+                      expect(data[0].timestamp).a('Number')
+                      expect(data[0].id).equal(2)
+                      done()
 
 
       describe 'Room permissions', ->
@@ -839,9 +904,10 @@ describe 'Chat service.', ->
             socket2.on 'loginConfirmed', ->
               socket1.emit 'directMessage', user2, message
               socket2.on 'directMessage', (msg) ->
+                expect(msg).include.keys 'textMessage', 'author', 'timestamp'
                 expect(msg.textMessage).equal(txt)
                 expect(msg.author).equal(user1)
-                expect(msg).ownProperty('timestamp')
+                expect(msg.timestamp).a('Number')
                 done()
 
         it 'should not send direct messages when the option is disabled'
@@ -903,7 +969,10 @@ describe 'Chat service.', ->
                 socket1.emit 'directMessage', user2, message
                 socket3.on 'directMessageEcho', (u, msg) ->
                   expect(u).equal(user2)
-                  expect(msg?.textMessage).equal(txt)
+                  expect(msg).include.keys 'textMessage', 'author', 'timestamp'
+                  expect(msg.textMessage).equal(txt)
+                  expect(msg.author).equal(user1)
+                  expect(msg.timestamp).a('Number')
                   done()
 
 
