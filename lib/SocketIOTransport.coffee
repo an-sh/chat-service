@@ -1,6 +1,7 @@
 
 _ = require 'lodash'
 SocketServer = require 'socket.io'
+RedisAdapter = require 'socket.io-redis'
 
 { checkNameSymbols
   bindTE
@@ -19,9 +20,9 @@ class SocketIOTransport
     bindTE @
     @io = @options.io
     @namespace = @options.namespace || '/chat-service'
-    Adapter = switch @adapterConstructor
-      when 'memory' then null
-      when 'redis' then RedisAdapter
+    Adapter = switch true
+      when @adapterConstructor == 'memory' then null
+      when @adapterConstructor == 'redis' then RedisAdapter
       when _.isFunction @adapterConstructor then @adapterConstructor
       else throw new Error "Invalid transport adapter: #{@adapterConstructor}"
     unless @io

@@ -538,13 +538,13 @@ class ChatService
   # @private
   # @nodoc
   setServer : ->
-    State = switch @stateConstructor
-      when 'memory' then MemoryState
-      when 'redis' then RedisState
+    State = switch true
+      when @stateConstructor == 'memory' then MemoryState
+      when @stateConstructor == 'redis' then RedisState
       when _.isFunction @stateConstructor then @stateConstructor
       else throw new Error "Invalid state: #{@stateConstructor}"
-    Transport = switch @transportConstructor
-      when 'socket.io' then SocketIOTransport
+    Transport = switch true
+      when @transportConstructor == 'socket.io' then SocketIOTransport
       when _.isFunction @transportConstructor then @transportConstructor
       else throw new Error "Invalid transport: #{@stateConstructor}"
     @errorBuilder = new ErrorBuilder @useRawErrorObjects

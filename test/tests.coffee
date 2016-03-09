@@ -117,6 +117,33 @@ describe 'Chat service.', ->
             expect(u).equal(user1)
             done()
 
+        it 'should use a custom state constructor', (done) ->
+          MemoryState = require '../lib/MemoryState.coffee'
+          chatServer = new ChatService { port : port }, null
+          , { state : MemoryState }
+          socket1 = clientConnect user1
+          socket1.on 'loginConfirmed', (u) ->
+            expect(u).equal(user1)
+            done()
+
+        it 'should use a custom transport constructor', (done) ->
+          Transport = require '../lib/SocketIOTransport.coffee'
+          chatServer = new ChatService { port : port }, null
+          , { transport : Transport }
+          socket1 = clientConnect user1
+          socket1.on 'loginConfirmed', (u) ->
+            expect(u).equal(user1)
+            done()
+
+        it 'should use a custom adapter constructor', (done) ->
+          Adapter = require 'socket.io-redis'
+          chatServer = new ChatService { port : port }, null
+          , { adapter : Adapter, adapterOptions : "localhost:6379" }
+          socket1 = clientConnect user1
+          socket1.on 'loginConfirmed', (u) ->
+            expect(u).equal(user1)
+            done()
+
 
       describe 'User management', ->
 
@@ -139,7 +166,6 @@ describe 'Chat service.', ->
                     expect(socket2.connected).not.ok
                     cb()
               ], done
-
 
         it 'should support adding users', (done) ->
           chatServer = new ChatService { port : port }, null, state
