@@ -342,7 +342,7 @@ class UserCommands
   roomSetWhitelistMode : (roomName, mode, cb) ->
 
   # Send data to other connected users's sockets. Or can be used with
-  # execCommand and the null id to send data from a server to all
+  # execUserCommand and the null id to send data from a server to all
   # users's sockets.
   # @param data [Object] Arbitrary data.
   # @param cb [Function<error, null>] Sends ack with an error or an

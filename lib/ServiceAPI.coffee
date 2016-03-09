@@ -30,7 +30,7 @@ ServiceAPI =
   #   'disconnect', 'roomJoin', 'roomLeave' commands.
   # @option params [Boolean] useHooks If `true` executes command with
   #   before and after hooks, default is `false`.
-  execCommand : (params, name, args..., cb = ->) ->
+  execUserCommand : (params, name, args..., cb = ->) ->
     if _.isObject params
       id = params.id || null
       useHooks = params.useHooks || false
