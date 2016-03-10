@@ -160,8 +160,8 @@ class RoomStateRedis extends ListsStateRedis
 class DirectMessagingStateRedis extends ListsStateRedis
 
   # @private
-  constructor : (@server, @username) ->
-    @name = @username
+  constructor : (@server, @userName) ->
+    @name = @userName
     @prefix = 'direct'
     @redis = @server.state.redis
     @errorBuilder = @server.errorBuilder
@@ -201,8 +201,8 @@ class DirectMessagingStateRedis extends ListsStateRedis
 class UserStateRedis
 
   # @private
-  constructor : (@server, @username) ->
-    @name = @username
+  constructor : (@server, @userName) ->
+    @name = @userName
     @prefix = 'user'
     @redis = @server.state.redis
     @errorBuilder = @server.errorBuilder
@@ -273,7 +273,7 @@ class UserStateRedis
       process.nextTick -> cb args...
 
   # @private
-  bindUnlockOthers : (lock, op, username, cb) ->
+  bindUnlockOthers : (lock, op, userName, cb) ->
     (args...) ->
       process.nextTick -> cb args...
 

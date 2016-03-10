@@ -59,7 +59,7 @@ class ArgumentsValidator
     return null
 
   # @private
-  directAddToList : (listName, usernames) ->
+  directAddToList : (listName, userNames) ->
     [
       check.string
       check.array.of.string
@@ -83,7 +83,7 @@ class ArgumentsValidator
     ]
 
   # @private
-  directRemoveFromList : (listName, usernames) ->
+  directRemoveFromList : (listName, userNames) ->
     [
       check.string
       check.array.of.string
@@ -110,7 +110,7 @@ class ArgumentsValidator
     []
 
   # @private
-  roomAddToList : (roomName, listName, usernames) ->
+  roomAddToList : (roomName, listName, userNames) ->
     [
       check.string
       check.string
@@ -188,7 +188,7 @@ class ArgumentsValidator
     ]
 
   # @private
-  roomRemoveFromList : (roomName, listName, usernames) ->
+  roomRemoveFromList : (roomName, listName, userNames) ->
     [
       check.string
       check.string

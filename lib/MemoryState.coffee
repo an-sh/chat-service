@@ -189,7 +189,7 @@ class RoomStateMemory extends ListsStateMemory
 class DirectMessagingStateMemory extends ListsStateMemory
 
   # @private
-  constructor : (@server, @username) ->
+  constructor : (@server, @userName) ->
     @whitelistOnly
     @whitelist = new FastSet
     @blacklist = new FastSet
@@ -212,10 +212,10 @@ class DirectMessagingStateMemory extends ListsStateMemory
 class UserStateMemory
 
   # @private
-  constructor : (@server, @username) ->
+  constructor : (@server, @userName) ->
     @socketsToRooms = new Map
     @roomsToSockets = new Map
-    @echoChannel = @makeEchoChannelName @username
+    @echoChannel = @makeEchoChannelName @userName
 
   # @private
   makeEchoChannelName : (userName) ->
@@ -314,7 +314,7 @@ class UserStateMemory
       process.nextTick -> cb args...
 
   # @private
-  bindUnlockOthers : (lock, op, username, cb) ->
+  bindUnlockOthers : (lock, op, userName, cb) ->
     (args...) ->
       process.nextTick -> cb args...
 

@@ -7,7 +7,7 @@
 # @nodoc
 #
 # Implements direct messaging permissions checks.
-# Required existence of username, directMessagingState and
+# Required existence of userName, directMessagingState and
 # errorBuilder in extented classes.
 DirectMessagingPermissions =
 
@@ -21,7 +21,7 @@ DirectMessagingPermissions =
   checkListValues : (author, listName, values, cb) ->
     @checkList author, listName, withEH cb, =>
       for name in values
-        if name == @username
+        if name == @userName
           return cb @errorBuilder.makeError 'notAllowed'
       cb()
 
@@ -35,7 +35,7 @@ DirectMessagingPermissions =
 
   # @private
   checkAcess : (userName, cb) ->
-    if userName == @username
+    if userName == @userName
       return process.nextTick => cb @errorBuilder.makeError 'notAllowed'
     @directMessagingState.hasInList 'blacklist', userName
     , withEH cb, (blacklisted) =>
@@ -60,10 +60,10 @@ class DirectMessaging
   extend @, DirectMessagingPermissions
 
   # @private
-  constructor : (@server, @username) ->
+  constructor : (@server, @userName) ->
     @errorBuilder = @server.errorBuilder
     State = @server.state.DirectMessagingState
-    @directMessagingState = new State @server, @username
+    @directMessagingState = new State @server, @userName
 
   # @private
   initState : (state, cb) ->

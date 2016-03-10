@@ -1081,7 +1081,7 @@ describe 'Chat service.', ->
                   expect(msg.timestamp).a('Number')
                   done()
 
-        it.only 'should echo system messages to user\'s sockets', (done) ->
+        it 'should echo system messages to user\'s sockets', (done) ->
           data = 'some data.'
           chatServer = new ChatService { port : port }, null, state
           socket1 = clientConnect user1
@@ -1280,21 +1280,21 @@ describe 'Chat service.', ->
           before = null
           after = null
           sid = null
-          beforeHook = (server, username, id, args, cb) ->
+          beforeHook = (server, userName, id, args, cb) ->
             [ name , mode ] = args
             expect(server).instanceof(ChatService)
-            expect(username).equal(user1)
+            expect(userName).equal(user1)
             expect(id).equal(sid)
             expect(name).a('string')
             expect(mode).a('boolean')
             expect(cb).instanceof(Function)
             before = true
             cb()
-          afterHook = (server, username, id, args, results, cb) ->
+          afterHook = (server, userName, id, args, results, cb) ->
             [ name , mode ] = args
             [ error, data ] = results
             expect(server).instanceof(ChatService)
-            expect(username).equal(user1)
+            expect(userName).equal(user1)
             expect(id).equal(sid)
             expect(args).instanceof(Array)
             expect(name).a('string')
@@ -1317,7 +1317,7 @@ describe 'Chat service.', ->
               done()
 
         it 'should support changing arguments in before hooks', (done) ->
-          beforeHook = (server, username, id, args, cb) ->
+          beforeHook = (server, userName, id, args, cb) ->
             [ name , mode ] = args
             cb null, null, roomName2, mode
           chatServer = new ChatService { port : port
@@ -1335,7 +1335,7 @@ describe 'Chat service.', ->
 
         it 'should send errors if new arguments have a different length'
         , (done) ->
-          beforeHook = (server, username, id, args, cb) ->
+          beforeHook = (server, userName, id, args, cb) ->
             cb null, null, roomName2
           chatServer = new ChatService { port : port
             , enableRoomsManagement : true}
@@ -1349,10 +1349,10 @@ describe 'Chat service.', ->
 
         it 'should execute disconnect After and Before hooks', (done) ->
           before = false
-          disconnectBefore = (server, username, id, args, cb) ->
+          disconnectBefore = (server, userName, id, args, cb) ->
             before = true
             cb()
-          disconnectAfter = (server, username, id, args, results, cb) ->
+          disconnectAfter = (server, userName, id, args, results, cb) ->
             expect(before).true
             cb()
             done()
@@ -1366,7 +1366,7 @@ describe 'Chat service.', ->
 
         it 'should stop commands on before hook error or data', (done) ->
           err = 'error'
-          beforeHook = (server, username, id, args, cb) ->
+          beforeHook = (server, userName, id, args, cb) ->
             cb err
           chatServer = new ChatService { port : port }
           , { 'listRoomsBefore' : beforeHook }, state
@@ -1489,7 +1489,7 @@ describe 'Chat service.', ->
                       expect(data).equal(user2)
                       done()
 
-        it.only 'should send system messages to all user sockets.', (done) ->
+        it 'should send system messages to all user sockets.', (done) ->
           data = 'some data.'
           chatServer = new ChatService { port : port }, null, state
           socket1 = clientConnect user1

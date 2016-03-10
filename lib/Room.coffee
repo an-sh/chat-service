@@ -8,7 +8,7 @@ async = require 'async'
 # @nodoc
 #
 # Implements room messaging permissions checks.
-# Required existence of username, roomState and errorBuilder in
+# Required existence of userName, roomState and errorBuilder in
 # extented classes.
 RoomPermissions =
 

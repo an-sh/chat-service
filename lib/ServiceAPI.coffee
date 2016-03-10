@@ -1,4 +1,6 @@
 
+_ = require 'lodash'
+
 { checkNameSymbols
   withEH
   withoutData
@@ -21,26 +23,30 @@ ServiceAPI =
   #
   # @param params [String or Object] Is either a user name or an
   #   options hash.
-  # @param name [String] Command name.
-  # @param args [Rest] Command arguments.
-  # @param cb [Callback] Optional callback.
+  # @param command [String] Command name.
+  # @param args [Rest] Command arguments with an optional callback.
   #
   # @option params [String] username User name.
   # @option params [String] id Socket id, it is required for
   #   'disconnect', 'roomJoin', 'roomLeave' commands.
   # @option params [Boolean] useHooks If `true` executes command with
   #   before and after hooks, default is `false`.
-  execUserCommand : (params, name, args..., cb = ->) ->
+  execUserCommand : (params, command, args...) ->
     if _.isObject params
       id = params.id || null
       useHooks = params.useHooks || false
-      username = params.username
+      userName = params.username
     else
       id = null
       useHooks = false
-      username = params
-    user = new User @, username
-    user.exec name, useHooks, id, args..., cb
+      userName = params
+    cb = _.last args
+    if _.isFunction cb
+      args = _.slice args, 0, -1
+    else
+      cb = ->
+    @state.getUser userName, withEH cb, (user) ->
+      user.exec command, useHooks, id, args..., cb
 
   # Adds an user with a state.
   #

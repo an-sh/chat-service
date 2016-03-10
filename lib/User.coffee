@@ -41,7 +41,7 @@ CommandBinder =
             cb nerror, ndata, moredata...
           if afterHook
             results = _.slice arguments
-            afterHook @server, @username, id, args, results, reportResults
+            afterHook @server, @userName, id, args, results, reportResults
           else
             reportResults()
         fn.apply @, [ args..., afterCommand, id ]
@@ -51,7 +51,7 @@ CommandBinder =
         unless beforeHook
           execCommand()
         else
-          beforeHook @server, @username, id, oargs, execCommand
+          beforeHook @server, @userName, id, oargs, execCommand
     return cmd
 
   # @private
@@ -59,7 +59,7 @@ CommandBinder =
     cmd = @wrapCommand name, fn
     @transport.bind id, name, ->
       cb = _.last arguments
-      if typeof cb == 'function'
+      if _.isFunction cb
         args = _.slice arguments, 0, -1
       else
         cb = null
@@ -147,7 +147,7 @@ UserAssociations =
           unless isNewJoin then return fn()
           d = _.clone data
           d.op = 'RollbackUserJoinRoom'
-          room.leave @username, @withFailLog d, fn
+          room.leave @userName, @withFailLog d, fn
         (fn) =>
           d = _.clone data
           d.op = 'RollbackSocketJoinRoom'
@@ -157,10 +157,10 @@ UserAssociations =
 
   # @private
   leaveRoom : (roomName, cb) ->
-    data = { username : @username, room : roomName }
+    data = { userName : @userName, room : roomName }
     data.op = 'UserLeaveRoom'
     @withRoom roomName, @withFailLog data, (room) =>
-      room.leave @username, @withFailLog data, cb
+      room.leave @userName, @withFailLog data, cb
 
   # @private
   joinSocketToRoom : (id, roomName, cb) ->
@@ -169,12 +169,12 @@ UserAssociations =
       if israce
         return unlock @errorBuilder.makeError 'serverBusy'
       @withRoom roomName, withEH unlock, (room) =>
-        room.join @username, withEH unlock, (isNewJoin) =>
+        room.join @userName, withEH unlock, (isNewJoin) =>
           rollback = @makeRollbackRoomJoin id, room, isNewJoin, unlock
           @userState.addSocketToRoom id, roomName, withEH rollback, (njoined) =>
             @transport.joinChannel id, roomName, withEH rollback, =>
               if njoined == 1
-                @userJoinRoomReport @username, roomName
+                @userJoinRoomReport @userName, roomName
               @socketJoinEcho id, roomName, njoined
               cb null, njoined
 
@@ -190,7 +190,7 @@ UserAssociations =
           @socketLeftEcho id, roomName, njoined
           unless njoined
             @leaveRoom roomName, =>
-              @userLeftRoomReport @username, roomName
+              @userLeftRoomReport @userName, roomName
               unlock null, 0
           else
             unlock null, njoined
@@ -205,7 +205,7 @@ UserAssociations =
             for roomName, idx in roomsRemoved
               njoined = joinedSockets[idx]
               @socketLeftEcho id, roomName, njoined
-              unless njoined then @userLeftRoomReport @username, roomName
+              unless njoined then @userLeftRoomReport @userName, roomName
             @socketDisconnectEcho id, nconnected
             cb null, nconnected
         else
@@ -216,12 +216,12 @@ UserAssociations =
   removeFromRoom : (roomName, cb) ->
     @userState.lockSocketRoom null, roomName, withEH cb, (lock) =>
       unlock = @userState.bindUnlockOthers lock, 'removeUserFromRoom'
-      , @username, cb
+      , @userName, cb
       @userState.removeAllSocketsFromRoom roomName, withEH unlock
       , (removedSockets) =>
         if removedSockets?.length
           @channelLeaveSockets roomName, removedSockets, =>
-            @userRemovedReport @username, roomName
+            @userRemovedReport @userName, roomName
             @leaveRoom roomName, unlock
         else
           @leaveRoom roomName, unlock
@@ -231,14 +231,14 @@ UserAssociations =
     task = (fn) =>
       @state.getUser userName, withEH fn, (user) ->
         user.removeFromRoom roomName, fn
-    data = { username : userName, room : roomName }
+    data = { userName : userName, room : roomName }
     data.op = 'removeUserFromRoom'
     async.retry { times : 2, interval : @lockTTL }, task, @withFailLog data, cb
 
   # @private
-  removeRoomUsers : (room, usernames, cb) ->
+  removeRoomUsers : (room, userNames, cb) ->
     roomName = room.name
-    async.eachLimit usernames, asyncLimit, (userName, fn) =>
+    async.eachLimit userNames, asyncLimit, (userName, fn) =>
       @removeUserFromRoom userName, roomName, fn
     , -> cb()
 
@@ -252,8 +252,8 @@ class User extends DirectMessaging
   extend @, CommandBinder, UserAssociations
 
   # @private
-  constructor : (@server, @username) ->
-    super @server, @username
+  constructor : (@server, @userName) ->
+    super @server, @userName
     @state = @server.state
     @transport = @server.transport
     @enableUserlistUpdates = @server.enableUserlistUpdates
@@ -261,13 +261,13 @@ class User extends DirectMessaging
     @enableRoomsManagement = @server.enableRoomsManagement
     @enableDirectMessages = @server.enableDirectMessages
     State = @server.state.UserState
-    @userState = new State @server, @username
+    @userState = new State @server, @userName
     @lockTTL = @userState.lockTTL
     @echoChannel = @userState.echoChannel
     @errorsLogger = @server.errorsLogger
     @withFailLog = (data, cb) =>
       (error, args...) =>
-        data.username = @username unless data.username
+        data.userName = @userName unless data.userName
         @errorsLogger error, data if error and @errorsLogger
         cb args...
 
@@ -275,12 +275,12 @@ class User extends DirectMessaging
   processMessage : (msg, setTimestamp = false) ->
     if setTimestamp
       msg.timestamp = _.now() unless msg.timestamp?
-    msg.author = @username unless msg.author?
+    msg.author = @userName unless msg.author?
     return msg
 
   # @private
   exec : (command, useHooks, id, args..., cb) ->
-    unless command in @server.userCommands
+    unless @server.userCommands[command]
       return process.nextTick =>
         @errorBuilder.makeError 'noCommand', command
     if not id and command in [ 'disconnect', 'roomJoin' ,'roomLeave' ]
@@ -319,15 +319,15 @@ class User extends DirectMessaging
 
   # @private
   directAddToList : (listName, values, cb) ->
-    @addToList @username, listName, values, withoutData cb
+    @addToList @userName, listName, values, withoutData cb
 
   # @private
   directGetAccessList : (listName, cb) ->
-    @getList @username, listName, cb
+    @getList @userName, listName, cb
 
   # @private
   directGetWhitelistMode: (cb) ->
-    @getMode @username, cb
+    @getMode @userName, cb
 
   # @private
   directMessage : (toUserName, msg, cb, id = null) ->
@@ -336,7 +336,7 @@ class User extends DirectMessaging
       return cb error
     @processMessage msg, true
     @server.state.getUser toUserName, withEH cb, (toUser, toSockets) =>
-      toUser.message @username, msg, withEH cb, =>
+      toUser.message @userName, msg, withEH cb, =>
         unless toSockets?.length
           return cb @errorBuilder.makeError 'noUserOnline', toUser
         @transport.sendToChannel toUser.echoChannel, 'directMessage', msg
@@ -346,11 +346,11 @@ class User extends DirectMessaging
 
   # @private
   directRemoveFromList : (listName, values, cb) ->
-    @removeFromList @username, listName, values, withoutData cb
+    @removeFromList @userName, listName, values, withoutData cb
 
   # @private
   directSetWhitelistMode : (mode, cb) ->
-    @changeMode @username, mode, withoutData cb
+    @changeMode @userName, mode, withoutData cb
 
   # @private
   disconnect : (reason, cb, id) ->
@@ -367,11 +367,11 @@ class User extends DirectMessaging
   # @private
   roomAddToList : (roomName, listName, values, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.addToList @username, listName, values, withEH cb, (usernames) =>
+      room.addToList @userName, listName, values, withEH cb, (userNames) =>
         if @enableAccessListsUpdates
           @transport.sendToChannel roomName, 'roomAccessListAdded'
           , roomName, listName , values
-        @removeRoomUsers room, usernames, cb
+        @removeRoomUsers room, userNames, cb
 
   # @private
   roomCreate : (roomName, whitelistOnly, cb) ->
@@ -382,7 +382,7 @@ class User extends DirectMessaging
       error = @errorBuilder.makeError 'invalidName', roomName
       return cb error
     @state.addRoom roomName
-      , { owner : @username, whitelistOnly : whitelistOnly }
+      , { owner : @userName, whitelistOnly : whitelistOnly }
       , withoutData cb
 
   # @private
@@ -391,41 +391,41 @@ class User extends DirectMessaging
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
     @withRoom roomName, withEH cb, (room) =>
-      room.checkIsOwner @username, withEH cb, =>
-        room.getUsers withEH cb, (usernames) =>
-          @removeRoomUsers room, usernames, =>
+      room.checkIsOwner @userName, withEH cb, =>
+        room.getUsers withEH cb, (userNames) =>
+          @removeRoomUsers room, userNames, =>
             @state.removeRoom room.name, ->
               room.removeState withoutData cb
 
   # @private
   roomGetAccessList : (roomName, listName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.getList @username, listName, cb
+      room.getList @userName, listName, cb
 
   # @private
   roomGetOwner : (roomName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.getOwner @username, cb
+      room.getOwner @userName, cb
 
   # @private
   roomGetWhitelistMode : (roomName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.getMode @username, cb
+      room.getMode @userName, cb
 
   # @private
   roomHistory : (roomName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.getRecentMessages @username, cb
+      room.getRecentMessages @userName, cb
 
   # @private
   roomHistoryLastId : (roomName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.getMessagesLastId @username, cb
+      room.getMessagesLastId @userName, cb
 
   # @private
   roomHistorySync : (roomName, id, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.getMessagesAfterId @username, id, cb
+      room.getMessagesAfterId @userName, id, cb
 
   # @private
   roomJoin : (roomName, cb, id) ->
@@ -441,24 +441,24 @@ class User extends DirectMessaging
   roomMessage : (roomName, msg, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       @processMessage msg
-      room.message @username, msg, withEH cb, (pmsg) =>
+      room.message @userName, msg, withEH cb, (pmsg) =>
         @transport.sendToChannel roomName, 'roomMessage', roomName, pmsg
         cb null, pmsg.id
 
   # @private
   roomRemoveFromList : (roomName, listName, values, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.removeFromList @username, listName, values, withEH cb, (usernames) =>
+      room.removeFromList @userName, listName, values, withEH cb, (userNames) =>
         if @enableAccessListsUpdates
           @transport.sendToChannel roomName, 'roomAccessListRemoved',
           roomName, listName, values
-        @removeRoomUsers room, usernames, cb
+        @removeRoomUsers room, userNames, cb
 
   # @private
   roomSetWhitelistMode : (roomName, mode, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.changeMode @username, mode, withEH cb, (usernames) =>
-        @removeRoomUsers room, usernames, cb
+      room.changeMode @userName, mode, withEH cb, (userNames) =>
+        @removeRoomUsers room, userNames, cb
 
   # @private
   systemMessage : (data, cb, id = null) ->

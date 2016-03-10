@@ -17,7 +17,7 @@ SocketIOTransport = require './SocketIOTransport.coffee'
 #
 # @example Socket.io client example
 #   socket = ioClient.connect url, params
-#   socket.on 'loginConfirmed', (username) ->
+#   socket.on 'loginConfirmed', (userName) ->
 #     socket.on 'directMessage', (fromUser, msg) ->
 #       # just the same as any event. no reply is required.
 #
@@ -48,10 +48,10 @@ class ServerMessages
   error : (error) ->
 
   # Indicates a successful login.
-  # @param username [String] Username.
+  # @param userName [String] UserName.
   # @param data [Object] Additional login data with an id of the socket.
   # @option data [String] id Socket id.
-  loginConfirmed : (username, data) ->
+  loginConfirmed : (userName, data) ->
 
   # Indicates a login error.
   # @param error [Object] Error.
@@ -66,26 +66,26 @@ class ServerMessages
   # Indicates room access list add.
   # @param roomName [String] Rooms name.
   # @param listName [String] 'blacklist', 'adminlist' or 'whitelist'.
-  # @param usernames [Array<String>] Usernames removed from the list.
+  # @param userNames [Array<String>] UserNames removed from the list.
   # @see UserCommands#roomAddToList
-  roomAccessListAdded : (roomName, listName, usernames) ->
+  roomAccessListAdded : (roomName, listName, userNames) ->
 
   # Indicates room access list remove.
   # @param roomName [String] Rooms name.
   # @param listName [String] 'blacklist', 'adminlist' or 'whitelist'.
-  # @param usernames [Array<String>] Usernames added to the list.
+  # @param userNames [Array<String>] UserNames added to the list.
   # @see UserCommands#roomRemoveFromList
-  roomAccessListRemoved : (roomName, listName, usernames) ->
+  roomAccessListRemoved : (roomName, listName, userNames) ->
 
   # Echoes room join from other user's connections.
-  # @param roomName [String] Username.
+  # @param roomName [String] UserName.
   # @param id [String] Socket id.
   # @param njoined [Number] Number of sockets that are still joined.
   # @see UserCommands#roomJoin
   roomJoinedEcho : (roomName, id, njoined) ->
 
   # Echoes room leave from other user's connections.
-  # @param roomName [String] Username.
+  # @param roomName [String] UserName.
   # @param id [String] Socket id.
   # @param njoined [Number] Number of sockets that are still joined.
   # @see UserCommands#roomLeave
@@ -100,13 +100,13 @@ class ServerMessages
 
   # Indicates that an another user has joined a room.
   # @param roomName [String] Rooms name.
-  # @param userName [String] Username.
+  # @param userName [String] UserName.
   # @see UserCommands#roomJoin
   roomUserJoined : (roomName, userName) ->
 
   # Indicates that an another user has left a room.
   # @param roomName [String] Rooms name.
-  # @param userName [String] Username.
+  # @param userName [String] UserName.
   # @see UserCommands#roomLeave
   roomUserLeft : (roomName, userName) ->
 
@@ -137,19 +137,19 @@ class ServerMessages
 #
 # @example Socket.io client example
 #   socket = ioClient.connect url, params
-#   socket.on 'loginConfirmed', (username, authData) ->
+#   socket.on 'loginConfirmed', (userName, authData) ->
 #     socket.emit 'roomJoin', roomName, (error, data) ->
 #       # this is a socket.io ack waiting callback.  socket is joined
 #       # the room, or an error occurred. we get here only when the
 #       # server has finished a message processing.
 #
 class UserCommands
-  # Adds usernames to user's direct messaging blacklist or whitelist.
+  # Adds userNames to user's direct messaging blacklist or whitelist.
   # @param listName [String] 'blacklist' or 'whitelist'.
-  # @param usernames [Array<String>] Usernames to add to the list.
+  # @param userNames [Array<String>] UserNames to add to the list.
   # @param cb [Function<error, null>] Send ack with an error or an
   #   empty data.
-  directAddToList : (listName, usernames, cb) ->
+  directAddToList : (listName, userNames, cb) ->
 
   # Gets direct messaging blacklist or whitelist.
   # @param listName [String] 'blacklist' or 'whitelist'.
@@ -177,11 +177,11 @@ class UserCommands
   #   a processed message.
   directMessage : (toUser, msg, cb) ->
 
-  # Removes usernames from user's direct messaging blacklist or whitelist.
+  # Removes userNames from user's direct messaging blacklist or whitelist.
   # @param listName [String] 'blacklist' or 'whitelist'.
-  # @param usernames [Array<String>] User names to remove from the list.
+  # @param userNames [Array<String>] User names to remove from the list.
   # @param cb [Function<error, null>] Sends ack with an error or an empty data.
-  directRemoveFromList : (listName, usernames, cb) ->
+  directRemoveFromList : (listName, userNames, cb) ->
 
   # Sets direct messaging whitelist only mode.
   # @see UserCommands#directGetWhitelistMode
@@ -210,18 +210,18 @@ class UserCommands
   #   or a list of rooms.
   listRooms : (cb) ->
 
-  # Adds usernames to room's blacklist, adminlist and whitelist. Also
+  # Adds userNames to room's blacklist, adminlist and whitelist. Also
   # removes users that have lost an access permission in the result of
   # an operation, sending {ServerMessages#roomAccessRemoved}. Also
   # sends {ServerMessages#roomAccessListAdded} to all room users if
   # {ChatService} `enableAccessListsUpdates` option is true.
   # @param roomName [String] Room name.
   # @param listName [String] 'blacklist', 'adminlist' or 'whitelist'.
-  # @param usernames [Array<String>] User names to add to the list.
+  # @param userNames [Array<String>] User names to add to the list.
   # @param cb [Function<error, null>] Sends ack with an error or an empty data.
   # @see ServerMessages#roomAccessRemoved
   # @see ServerMessages#roomAccessListAdded
-  roomAddToList : (roomName, listName, usernames, cb) ->
+  roomAddToList : (roomName, listName, userNames, cb) ->
 
   # Creates a room if {ChatService} `enableRoomsManagement` option is true.
   # @param roomName [String] Rooms name.
@@ -315,7 +315,7 @@ class UserCommands
   #   message id.
   roomMessage : (roomName, msg, cb) ->
 
-  # Removes usernames from room's blacklist, adminlist and
+  # Removes userNames from room's blacklist, adminlist and
   # whitelist. Also removes users that have lost an access permission
   # in the result of an operation, sending
   # {ServerMessages#roomAccessRemoved}. Also sends
@@ -323,12 +323,12 @@ class UserCommands
   # {ChatService} `enableAccessListsUpdates` option is true.
   # @param roomName [String] Room name.
   # @param listName [String] 'blacklist', 'adminlist' or 'whitelist'.
-  # @param usernames [Array<String>] Usernames to remove from the list.
+  # @param userNames [Array<String>] UserNames to remove from the list.
   # @param cb [Function<error, null>] Sends ack with an error or an
   #   empty data.
   # @see ServerMessages#roomAccessRemoved
   # @see ServerMessages#roomAccessListRemoved
-  roomRemoveFromList : (roomName, listName, usernames, cb) ->
+  roomRemoveFromList : (roomName, listName, userNames, cb) ->
 
   # Sets room messaging whitelist only mode. Also removes users that
   # have lost an access permission in the result of an operation, sending
@@ -422,7 +422,7 @@ class ChatService
   # @option hooks [Function(ChatService, String, String, Array,
   #   <Callback(<Error, Data, Array...>)>)] {command}Before Before
   #   hooks are available for all {UserCommands} and all have the same
-  #   arguments: ChatService, username, socket id, array of command
+  #   arguments: ChatService, userName, socket id, array of command
   #   arguments and a callback. Callback may be called without
   #   arguments to continue command execution, or with non-falsy Error
   #   or Data to stop execution and return error or result
@@ -435,7 +435,7 @@ class ChatService
   # @option hooks [Function(ChatService, String, String, Array, Array,
   #   <Callback(Array...)>)] {command}After After hooks are available
   #   for all {UserCommands} and all have the same arguments:
-  #   ChatService, username, socket id, Array of command arguments,
+  #   ChatService, userName, socket id, Array of command arguments,
   #   Array of command results and a callback. Callback may be called
   #   without arguments to return unchanged result or error to the
   #   command issuer, or with new values to alter the results.
