@@ -15,11 +15,11 @@ class ArgumentsValidator
     @checkers = new Map
     for name, fn of @server.userCommands
       @checkers.set name, _.bind @[name], @
-    @directMessageChecker = @server.directMessageChecker
-    @roomMessageChecker = @server.roomMessageChecker
+    @directMessagesChecker = @server.directMessagesChecker
+    @roomMessagesChecker = @server.roomMessagesChecker
     @customCheckers =
-      directMessage : [ null, @directMessageChecker ]
-      roomMessage : [ null, @roomMessageChecker ]
+      directMessage : [ null, @directMessagesChecker ]
+      roomMessage : [ null, @roomMessagesChecker ]
 
   # @private
   checkArguments : (name, args, cb) ->
@@ -79,7 +79,7 @@ class ArgumentsValidator
   directMessage : (toUser, msg) ->
     [
       check.string
-      if @directMessageChecker then @checkObject else @checkMessage
+      if @directMessagesChecker then @checkObject else @checkMessage
     ]
 
   # @private
@@ -184,7 +184,7 @@ class ArgumentsValidator
   roomMessage : (roomName, msg) ->
     [
       check.string
-      if @roomMessageChecker then @checkObject else @checkMessage
+      if @roomMessagesChecker then @checkObject else @checkMessage
     ]
 
   # @private

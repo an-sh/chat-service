@@ -101,8 +101,6 @@ class SocketIOTransport
   # @private
   # @nodoc
   setEvents : ->
-    @directMessageChecker = @hooks.directMessageChecker
-    @roomMessageChecker = @hooks.roomMessageChecker
     if @hooks.middleware
       if _.isFunction @hooks.middleware
         @nsp.use @hooks.middleware

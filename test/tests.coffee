@@ -1377,6 +1377,50 @@ describe 'Chat service.', ->
               expect(data).not.ok
               done()
 
+        it 'should accept custom direct messages with a hook', (done) ->
+          html = '<b>HTML message.</b>'
+          message = { htmlMessage : html }
+          directMessagesChecker = (msg, cb) ->
+            cb()
+          chatServer =
+            new ChatService { port : port, enableDirectMessages : true }
+              , { directMessagesChecker : directMessagesChecker }
+              , state
+          socket1 = clientConnect user1
+          socket1.on 'loginConfirmed', ->
+            socket2 = clientConnect user2
+            socket2.on 'loginConfirmed', ->
+              socket1.emit 'directMessage', user2, message
+              socket2.on 'directMessage', (msg) ->
+                expect(msg).include.keys 'htmlMessage', 'author', 'timestamp'
+                expect(msg.htmlMessage).equal(html)
+                expect(msg.author).equal(user1)
+                expect(msg.timestamp).a('Number')
+                done()
+
+        it 'should accept custom room messages with a hook', (done) ->
+          html = '<b>HTML message.</b>'
+          message = { htmlMessage : html }
+          roomMessagesChecker = (msg, cb) ->
+            cb()
+          chatServer = new ChatService { port : port }
+          , { roomMessagesChecker : roomMessagesChecker }
+          , state
+          chatServer.addRoom roomName1, null, ->
+            socket1 = clientConnect user1
+            socket1.on 'loginConfirmed', ->
+              socket1.emit 'roomJoin', roomName1, ->
+                socket1.emit 'roomMessage', roomName1, message
+                socket1.on 'roomMessage', (room, msg) ->
+                  expect(room).equal(roomName1)
+                  expect(msg).include.keys 'htmlMessage', 'author'
+                  , 'timestamp', 'id'
+                  expect(msg.htmlMessage).equal(html)
+                  expect(msg.author).equal(user1)
+                  expect(msg.timestamp).a('Number')
+                  expect(msg.id).equal(1)
+                  done()
+
 
       describe 'API', ->
 

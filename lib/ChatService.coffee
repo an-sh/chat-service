@@ -410,12 +410,12 @@ class ChatService
   #   closed. Must call a callback.
   #
   # @option hooks [Function(Object, <Callback(<Error>)>)]
-  #   directMessageChecker Validator for {UserCommands#directMessage}
+  #   directMessagesChecker Validator for {UserCommands#directMessage}
   #   message objects. When is set allow a custom content in direct
   #   messages.
   #
   # @option hooks [Function(Object, <Callback(<Error>)>)]
-  #   roomMessageChecker Validator for {UserCommands#roomMessage}
+  #   roomMessagesChecker Validator for {UserCommands#roomMessage}
   #   message objects. When is set allow a custom content in room
   #   messages.
   #
@@ -537,6 +537,9 @@ class ChatService
     @stateOptions = @integrationOptions.stateOptions || {}
     @transportConstructor = @integrationOptions.transport || 'socket.io'
     @transportOptions = @integrationOptions.transportOptions || {}
+
+    @directMessagesChecker = @hooks.directMessagesChecker
+    @roomMessagesChecker = @hooks.roomMessagesChecker
 
 
   # @private
