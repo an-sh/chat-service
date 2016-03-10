@@ -53,6 +53,9 @@ ServiceAPI =
   # @option state [Boolean] whitelistOnly User direct messages
   #   whitelistOnly mode.
   addUser : (userName, state, cb = ->) ->
+    if checkNameSymbols userName
+      error = @errorBuilder.makeError 'invalidName', userName
+      return process.nextTick -> cb error
     @state.addUser userName, state, withoutData cb
 
   # Removes all room data, and removes joined user from the room.
@@ -81,7 +84,7 @@ ServiceAPI =
   addRoom : (roomName, state, cb = ->) ->
     if checkNameSymbols roomName
       error = @errorBuilder.makeError 'invalidName', roomName
-      return cb error
+      return process.nextTick -> cb error
     @state.addRoom roomName, state, withoutData cb
 
 module.exports = ServiceAPI

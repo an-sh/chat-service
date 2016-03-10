@@ -145,64 +145,25 @@ describe 'Chat service.', ->
             done()
 
 
-      describe 'User management', ->
-
-        it 'should support a server side user disconnection', (done) ->
-          chatServer = new ChatService { port : port }, null, state
-          socket1 = clientConnect user1
-          socket1.on 'loginConfirmed', (u) ->
-            expect(u).equal(user1)
-            socket2 = clientConnect user1
-            socket2.on 'loginConfirmed', (u) ->
-              expect(u).equal(user1)
-              chatServer.disconnectUserSockets user1
-              async.parallel [
-                (cb) ->
-                  socket1.on 'disconnect', ->
-                    expect(socket1.connected).not.ok
-                    cb()
-                (cb) ->
-                  socket2.on 'disconnect', ->
-                    expect(socket2.connected).not.ok
-                    cb()
-              ], done
-
-        it 'should support adding users', (done) ->
-          chatServer = new ChatService { port : port }, null, state
-          chatServer.addUser user1, { whitelistOnly : true }, ->
-            socket1 = clientConnect user1
-            socket1.on 'loginConfirmed', ->
-              socket1.emit 'directGetWhitelistMode', (error, data) ->
-                expect(error).not.ok
-                expect(data).true
-                done()
-
-        it 'should check existing users before adding new ones', (done) ->
-          chatServer = new ChatService { port : port }, null, state
-          chatServer.addUser user1, null, ->
-            socket1 = clientConnect user1
-            socket1.on 'loginConfirmed', (u) ->
-              expect(u).equal(user1)
-              chatServer.addUser user1, null, (error, data) ->
-                expect(error).ok
-                expect(data).not.ok
-                done()
-
-
       describe 'Connection', ->
 
         it 'should send auth data with id', (done) ->
           chatServer = new ChatService { port : port }, null, state
-          chatServer.addUser user1, null, ->
-            socket1 = clientConnect user1
-            socket1.on 'loginConfirmed', (u, data) ->
-              expect(u).equal(user1)
-              expect(data).include.keys('id')
-              done()
+          socket1 = clientConnect user1
+          socket1.on 'loginConfirmed', (u, data) ->
+            expect(u).equal(user1)
+            expect(data).include.keys('id')
+            done()
 
         it 'should reject an empty user query', (done) ->
           chatServer = new ChatService { port : port }, null, state
           socket1 = clientConnect()
+          socket1.on 'loginRejected', ->
+            done()
+
+        it 'should reject user names with illegal characters', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          socket1 = clientConnect 'user}1'
           socket1.on 'loginRejected', ->
             done()
 
@@ -291,22 +252,16 @@ describe 'Chat service.', ->
                       expect(data).empty
                       done()
 
-        it 'should check existing rooms before adding new ones', (done) ->
-          chatServer = new ChatService { port : port }, null, state
-          chatServer.addRoom roomName1, null, (error, data) ->
-            expect(error).not.ok
-            expect(data).not.ok
-            chatServer.addRoom roomName1, null, (error, data) ->
+        it 'should check for invalid room names', (done) ->
+          chatServer = new ChatService { port : port
+            , enableRoomsManagement : true }
+          , null, state
+          socket1 = clientConnect user1
+          socket1.on 'loginConfirmed', (u) ->
+            socket1.emit 'roomCreate', 'room}1', false, (error, data) ->
               expect(error).ok
               expect(data).not.ok
               done()
-
-        it 'should check existing rooms before removing a room', (done) ->
-          chatServer = new ChatService { port : port }, null, state
-          chatServer.removeRoom roomName1, (error, data) ->
-            expect(error).ok
-            expect(data).not.ok
-            done()
 
         it 'should reject room management when the option is disabled'
         , (done) ->
@@ -1014,7 +969,7 @@ describe 'Chat service.', ->
                       expect(u).equal(user2)
                       done()
 
-        it 'should list own rooms and sockets', (done) ->
+        it 'should list own sockets with rooms', (done) ->
           chatServer = new ChatService { port : port }, null, state
           chatServer.addRoom roomName1, null, ->
             chatServer.addRoom roomName2, null, ->
@@ -1409,6 +1364,102 @@ describe 'Chat service.', ->
               expect(error).equal(err)
               expect(data).not.ok
               done()
+
+
+      describe 'API', ->
+
+        it 'should support a server side user disconnection', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          socket1 = clientConnect user1
+          socket1.on 'loginConfirmed', (u) ->
+            expect(u).equal(user1)
+            socket2 = clientConnect user1
+            socket2.on 'loginConfirmed', (u) ->
+              expect(u).equal(user1)
+              chatServer.disconnectUserSockets user1
+              async.parallel [
+                (cb) ->
+                  socket1.on 'disconnect', ->
+                    expect(socket1.connected).not.ok
+                    cb()
+                (cb) ->
+                  socket2.on 'disconnect', ->
+                    expect(socket2.connected).not.ok
+                    cb()
+              ], done
+
+        it 'should support adding users', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.addUser user1, { whitelistOnly : true }, ->
+            socket1 = clientConnect user1
+            socket1.on 'loginConfirmed', ->
+              socket1.emit 'directGetWhitelistMode', (error, data) ->
+                expect(error).not.ok
+                expect(data).true
+                done()
+
+        it 'should check user names, before adding', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.addUser 'user:1', null, (error, data) ->
+            expect(error).ok
+            expect(data).not.ok
+            done()
+
+        it 'should check existing users before adding new ones', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.addUser user1, null, ->
+            chatServer.addUser user1, null, (error, data) ->
+              expect(error).ok
+              expect(data).not.ok
+              done()
+
+        it 'should check room names, before adding', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.addRoom 'room:1', null, (error, data) ->
+            expect(error).ok
+            expect(data).not.ok
+            done()
+
+        it 'should support removing rooms with users', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.addRoom roomName1, null, ->
+            socket1 = clientConnect user1
+            socket1.on 'loginConfirmed', ->
+              socket1.emit 'roomJoin', roomName1, ->
+                socket2 = clientConnect user2
+                socket2.on 'loginConfirmed', ->
+                  socket2.emit 'roomJoin', roomName1, ->
+                    async.parallel [
+                      (cb) ->
+                        chatServer.removeRoom roomName1, (error, data) ->
+                          expect(error).not.ok
+                          cb()
+                      (cb) ->
+                        socket1.on 'roomAccessRemoved', (r) ->
+                          expect(r).equal(roomName1)
+                          cb()
+                      (cb) ->
+                        socket2.on 'roomAccessRemoved', (r) ->
+                          expect(r).equal(roomName1)
+                          cb()
+                    ], done
+
+        it 'should check existing rooms before adding new ones', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.addRoom roomName1, null, (error, data) ->
+            expect(error).not.ok
+            expect(data).not.ok
+            chatServer.addRoom roomName1, null, (error, data) ->
+              expect(error).ok
+              expect(data).not.ok
+              done()
+
+        it 'should check existing rooms before removing a room', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.removeRoom roomName1, (error, data) ->
+            expect(error).ok
+            expect(data).not.ok
+            done()
 
 
       describe 'Validation and errors', ->
