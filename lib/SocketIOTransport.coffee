@@ -102,11 +102,9 @@ class SocketIOTransport
   # @nodoc
   setEvents : ->
     if @hooks.middleware
-      if _.isFunction @hooks.middleware
-        @nsp.use @hooks.middleware
-      else
-        for fn in @hooks.middleware
-          @nsp.use fn
+      middleware = _.castArray @hooks.middleware
+      for fn in middleware
+        @nsp.use fn
     if @hooks.onConnect
       @nsp.on 'connection', (socket) =>
         @checkShutdown socket, =>
