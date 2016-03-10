@@ -1060,7 +1060,7 @@ describe 'Chat service.', ->
                 expect(data).not.ok
                 done()
 
-        it 'should echo direct messges to user\'s sockets', (done) ->
+        it 'should echo direct messages to user\'s sockets', (done) ->
           txt = 'Test message.'
           message = { textMessage : txt }
           chatServer = new ChatService { port : port
@@ -1080,6 +1080,18 @@ describe 'Chat service.', ->
                   expect(msg.author).equal(user1)
                   expect(msg.timestamp).a('Number')
                   done()
+
+        it.only 'should echo system messages to user\'s sockets', (done) ->
+          data = 'some data.'
+          chatServer = new ChatService { port : port }, null, state
+          socket1 = clientConnect user1
+          socket1.on 'loginConfirmed', ->
+            socket2 = clientConnect user1
+            socket2.on 'loginConfirmed', ->
+              socket1.emit 'systemMessage', data
+              socket2.on 'systemMessage', (d) ->
+                expect(d).equal(data)
+                done()
 
 
       describe 'Direct permissions', ->
@@ -1476,6 +1488,25 @@ describe 'Chat service.', ->
                       expect(error).not.ok
                       expect(data).equal(user2)
                       done()
+
+        it.only 'should send system messages to all user sockets.', (done) ->
+          data = 'some data.'
+          chatServer = new ChatService { port : port }, null, state
+          socket1 = clientConnect user1
+          socket1.on 'loginConfirmed', ->
+            socket2 = clientConnect user1
+            socket2.on 'loginConfirmed', ->
+              chatServer.execUserCommand user1, 'systemMessage', data
+              async.parallel [
+                (cb) ->
+                  socket1.on 'systemMessage', (d) ->
+                    expect(d).equal(data)
+                    cb()
+                (cb) ->
+                  socket2.on 'systemMessage', (d) ->
+                    expect(d).equal(data)
+                    cb()
+              ], done
 
 
       describe 'Validation and errors', ->

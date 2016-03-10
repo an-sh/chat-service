@@ -205,7 +205,7 @@ class ArgumentsValidator
   # @private
   systemMessage : (data) ->
     [
-      -> return true
+      -> true
     ]
 
 
