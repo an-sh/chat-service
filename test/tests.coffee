@@ -382,11 +382,7 @@ describe 'Chat service.', ->
                     expect(room).equal(roomName1)
                     expect(id).equal(sid1)
                     expect(njoined).equal(1)
-                    socket1.emit 'roomMessage', roomName1, message
-                    , (error, data) ->
-                      expect(error).not.ok
-                      expect(data).not.ok
-                      done()
+                    done()
 
         it 'should emit leave echo on disconnect', (done) ->
           chatServer = new ChatService { port : port }, null, state
@@ -452,8 +448,10 @@ describe 'Chat service.', ->
           chatServer.addRoom roomName1, null, ->
             socket1 = clientConnect user1
             socket1.on 'loginConfirmed', ->
-              socket1.emit 'roomJoin', roomName1, (error, data) ->
+              socket1.emit 'roomJoin', roomName1, ->
                 socket1.emit 'roomMessage', roomName1, message, (error, data) ->
+                  expect(error).not.ok
+                  expect(data).a('Number')
                   socket1.emit 'roomHistory', roomName1, (error, data) ->
                     expect(error).not.ok
                     expect(data).length(1)
@@ -502,8 +500,8 @@ describe 'Chat service.', ->
           chatServer.addRoom roomName1, null, ->
             socket1 = clientConnect user1
             socket1.on 'loginConfirmed', ->
-              socket1.emit 'roomJoin', roomName1, (error, data) ->
-                socket1.emit 'roomMessage', roomName1, message, (error, data) ->
+              socket1.emit 'roomJoin', roomName1, ->
+                socket1.emit 'roomMessage', roomName1, message, ->
                   socket1.emit 'roomHistory', roomName1, (error, data) ->
                     expect(error).not.ok
                     expect(data).empty
@@ -518,7 +516,7 @@ describe 'Chat service.', ->
           chatServer.addRoom roomName1, null, ->
             socket1 = clientConnect user1
             socket1.on 'loginConfirmed', ->
-              socket1.emit 'roomJoin', roomName1, (error, data) ->
+              socket1.emit 'roomJoin', roomName1, ->
                 socket1.emit 'roomMessage', roomName1, message, (error, data) ->
                   socket1.emit 'roomHistory', roomName1, (error, data) ->
                     expect(error).not.ok
@@ -536,7 +534,7 @@ describe 'Chat service.', ->
           chatServer.addRoom roomName1, null, ->
             socket1 = clientConnect user1
             socket1.on 'loginConfirmed', ->
-              socket1.emit 'roomJoin', roomName1, (error, data) ->
+              socket1.emit 'roomJoin', roomName1, ->
                 socket1.emit 'roomMessage', roomName1, message1
                 , (error, data) ->
                   socket1.emit 'roomMessage', roomName1, message2
@@ -550,6 +548,149 @@ describe 'Chat service.', ->
                       expect(data[0].author).equal(user1)
                       expect(data[0].timestamp).a('Number')
                       expect(data[0].id).equal(2)
+                      done()
+
+        it 'should sync history', (done) ->
+          txt = 'Test message.'
+          message = { textMessage : txt }
+          chatServer = new ChatService { port : port } , null, state
+          chatServer.addRoom roomName1, null, ->
+            socket1 = clientConnect user1
+            socket1.on 'loginConfirmed', ->
+              socket1.emit 'roomJoin', roomName1, ->
+                socket1.emit 'roomMessage', roomName1, message, ->
+                  socket1.emit 'roomMessage', roomName1, message, ->
+                    async.parallel [
+                      (cb) ->
+                        socket1.emit 'roomHistorySync', roomName1, 0
+                        , (error, data) ->
+                          expect(error).not.ok
+                          expect(data).lengthOf(2)
+                          expect(data[0]).include.keys 'textMessage', 'author'
+                          , 'timestamp', 'id'
+                          expect(data[0].textMessage).equal(txt)
+                          expect(data[0].author).equal(user1)
+                          expect(data[0].timestamp).a('Number')
+                          expect(data[0].id).equal(2)
+                          cb()
+                      (cb) ->
+                        socket1.emit 'roomHistorySync', roomName1, 1
+                        , (error, data) ->
+                          expect(error).not.ok
+                          expect(data).lengthOf(1)
+                          expect(data[0].id).equal(2)
+                          cb()
+                      (cb) ->
+                        socket1.emit 'roomHistorySync', roomName1, 2
+                        , (error, data) ->
+                          expect(error).not.ok
+                          expect(data).empty
+                          cb()
+                    ], done
+
+        it 'should sync history with respect to the max get', (done) ->
+          txt = 'Test message.'
+          message = { textMessage : txt }
+          chatServer = new ChatService { port : port
+            , historyMaxGetMessages : 2 }
+          , null, state
+          chatServer.addRoom roomName1, null, ->
+            socket1 = clientConnect user1
+            socket1.on 'loginConfirmed', ->
+              socket1.emit 'roomJoin', roomName1, ->
+                socket1.emit 'roomMessage', roomName1, message, ->
+                  socket1.emit 'roomMessage', roomName1, message, ->
+                    socket1.emit 'roomMessage', roomName1, message, ->
+                      async.parallel [
+                        (cb) ->
+                          socket1.emit 'roomHistorySync', roomName1, 0
+                          , (error, data) ->
+                            expect(error).not.ok
+                            expect(data).lengthOf(2)
+                            expect(data[0].id).equal(2)
+                            cb()
+                        (cb) ->
+                          socket1.emit 'roomHistorySync', roomName1, 1
+                          , (error, data) ->
+                            expect(error).not.ok
+                            expect(data).lengthOf(2)
+                            expect(data[0].id).equal(3)
+                            cb()
+                        (cb) ->
+                          socket1.emit 'roomHistorySync', roomName1, 2
+                          , (error, data) ->
+                            expect(error).not.ok
+                            expect(data).lengthOf(1)
+                            expect(data[0].id).equal(3)
+                            cb()
+                        (cb) ->
+                          socket1.emit 'roomHistorySync', roomName1, 3
+                          , (error, data) ->
+                            expect(error).not.ok
+                            expect(data).empty
+                            cb()
+                      ], done
+
+        it 'should sync history with respect to a history size', (done) ->
+          txt = 'Test message.'
+          message = { textMessage : txt }
+          chatServer = new ChatService { port : port
+            , historyMaxMessages : 2 }
+          , null, state
+          chatServer.addRoom roomName1, null, ->
+            socket1 = clientConnect user1
+            socket1.on 'loginConfirmed', ->
+              socket1.emit 'roomJoin', roomName1, ->
+                socket1.emit 'roomMessage', roomName1, message, ->
+                  socket1.emit 'roomMessage', roomName1, message, ->
+                    socket1.emit 'roomMessage', roomName1, message, ->
+                      async.parallel [
+                        (cb) ->
+                          socket1.emit 'roomHistorySync', roomName1, 0
+                          , (error, data) ->
+                            expect(error).not.ok
+                            expect(data).lengthOf(2)
+                            expect(data[0].id).equal(3)
+                            cb()
+                        (cb) ->
+                          socket1.emit 'roomHistorySync', roomName1, 1
+                          , (error, data) ->
+                            expect(error).not.ok
+                            expect(data).lengthOf(2)
+                            expect(data[0].id).equal(3)
+                            cb()
+                        (cb) ->
+                          socket1.emit 'roomHistorySync', roomName1, 2
+                          , (error, data) ->
+                            expect(error).not.ok
+                            expect(data).lengthOf(1)
+                            expect(data[0].id).equal(3)
+                            cb()
+                        (cb) ->
+                          socket1.emit 'roomHistorySync', roomName1, 3
+                          , (error, data) ->
+                            expect(error).not.ok
+                            expect(data).empty
+                            cb()
+                      ], done
+
+        it 'should return the latest room history id', (done) ->
+          txt = 'Test message.'
+          message = { textMessage : txt }
+          chatServer = new ChatService { port : port }
+          , null, state
+          chatServer.addRoom roomName1, null, ->
+            socket1 = clientConnect user1
+            socket1.on 'loginConfirmed', ->
+              socket1.emit 'roomJoin', roomName1, ->
+                socket1.emit 'roomHistoryLastId', roomName1, (error, data) ->
+                  expect(error).not.ok
+                  expect(data).equal(0)
+                  socket1.emit 'roomMessage', roomName1, message, ->
+                    socket1.emit 'roomHistoryLastId', roomName1
+                    , (error, data) ->
+                      expect(error).not.ok
+                      expect(data).equal(1)
                       done()
 
 

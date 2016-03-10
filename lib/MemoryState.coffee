@@ -121,20 +121,22 @@ class RoomStateMemory extends ListsStateMemory
 
   # @private
   messageAdd : (msg, cb) ->
-    if @historyMaxMessages <= 0 then return process.nextTick -> cb()
-    @messagesHistory.unshift msg
     timestamp = _.now()
-    @messagesTimestamps.unshift timestamp
     @lastMessageID++
-    id = @lastMessageID
-    @messagesIDs.unshift id
+    makeResult = =>
+      msg.timestamp = timestamp
+      msg.id = @lastMessageID
+      return process.nextTick -> cb null, msg
+    if @historyMaxMessages <= 0
+      return makeResult()
+    @messagesHistory.unshift msg
+    @messagesTimestamps.unshift timestamp
+    @messagesIDs.unshift @lastMessageID
     if @messagesHistory.length > @historyMaxMessages
       @messagesHistory.pop()
       @messagesTimestamps.pop()
       @messagesIDs.pop()
-    msg.timestamp = timestamp
-    msg.id = id
-    process.nextTick -> cb null, msg
+    makeResult()
 
   # @private
   messagesGetRecent : (cb) ->
@@ -151,19 +153,18 @@ class RoomStateMemory extends ListsStateMemory
 
   # @private
   messagesGetLastId : (cb) ->
-    id = @messagesIDs.peek()
-    process.nextTick -> cb null, data
+    id = @messagesIDs.peek() || 0
+    process.nextTick -> cb null, id
 
   # @private
   messagesGetAfterId : (id, cb) ->
-    nmessages = @messageIDS.length
+    nmessages = @messagesIDs.length
     maxlen = @historyMaxGetMessages
     lastid = @messagesIDs.peek()
     id = _.min [ id, lastid ]
-    end = _.min [ maxlen, lastid - id ]
-    start = _.min [ 0, end - maxlen ]
-    if start == end
-      return process.nextTick -> cb null, []
+    end = lastid - id
+    len = _.min [ maxlen, lastid - id ]
+    start = _.max [ 0, end - len ]
     msgs = @messagesHistory.slice start, end
     tss = @messagesTimestamps.slice start, end
     ids = @messagesIDs.slice start, end

@@ -165,7 +165,7 @@ class ArgumentsValidator
   roomHistorySync : (roomName, id)->
     [
       check.string
-      (str) -> check.isInt str { min : 0 }
+      (str) -> check.greaterOrEqual str, 0
     ]
 
   # @private

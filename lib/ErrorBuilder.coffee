@@ -37,7 +37,7 @@ class ErrorBuilder
     if @useRawErrorObjects
       return { name : error, args : args }
     str = @errorStrings[error] || @errorStrings.unknownError
-    return util.format error, args...
+    return util.format str, args...
 
 
 module.exports = ErrorBuilder

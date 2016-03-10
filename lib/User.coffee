@@ -443,7 +443,7 @@ class User extends DirectMessaging
       @processMessage msg
       room.message @username, msg, withEH cb, (pmsg) =>
         @transport.sendToChannel roomName, 'roomMessage', roomName, pmsg
-        cb()
+        cb null, pmsg.id
 
   # @private
   roomRemoveFromList : (roomName, listName, values, cb) ->

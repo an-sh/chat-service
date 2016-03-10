@@ -93,8 +93,8 @@ class ServerMessages
 
   # Room message.
   # @param roomName [String] Rooms name.
-  # @param msg [Object<textMessage:String, timestamp:Number, author:String>]
-  #   Message.
+  # @param msg [Object<textMessage:String, timestamp:Number,
+  #   author:String, id:Number>] Message.
   # @see UserCommands#roomMessage
   roomMessage : (roomName, msg) ->
 
@@ -173,7 +173,7 @@ class UserCommands
   # @param toUser [String] Message receiver.
   # @param msg [Object<textMessage : String>] Message.
   # @param cb [Function<error, Object<textMessage:String,
-  #   timestamp:Number, author:String>>>] Sends ack with an error or
+  #   timestamp:Number, author:String>>] Sends ack with an error or
   #   a processed message.
   directMessage : (toUser, msg, cb) ->
 
@@ -311,8 +311,8 @@ class UserCommands
   # @see ServerMessages#roomMessage
   # @param roomName [String] Room name.
   # @param msg [Object<textMessage : String>] Message.
-  # @param cb [Function<error, null>] Sends ack with an error or an
-  #   empty data.
+  # @param cb [Function<error, Number>] Sends ack with an error or the
+  #   message id.
   roomMessage : (roomName, msg, cb) ->
 
   # Removes usernames from room's blacklist, adminlist and
