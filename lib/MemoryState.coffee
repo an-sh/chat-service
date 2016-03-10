@@ -408,9 +408,5 @@ class MemoryState
     else
       process.nextTick -> cb()
 
-  # @private
-  removeUserData : (name, cb) ->
-    #TODO
-
 
 module.exports = MemoryState

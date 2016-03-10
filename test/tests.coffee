@@ -1461,6 +1461,22 @@ describe 'Chat service.', ->
             expect(data).not.ok
             done()
 
+        it 'should support changing room owner', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.addRoom roomName1, {owner : user1}, (error, data) ->
+            socket1 = clientConnect user1
+            socket1.on 'loginConfirmed', ->
+              socket1.emit 'roomJoin', roomName1, ->
+                socket1.emit 'roomGetOwner', roomName1, (error, data) ->
+                  expect(error).not.ok
+                  expect(data).equal(user1)
+                  chatServer.changeRoomOwner roomName1, user2, (error, data) ->
+                    expect(error).not.ok
+                    socket1.emit 'roomGetOwner', roomName1, (error, data) ->
+                      expect(error).not.ok
+                      expect(data).equal(user2)
+                      done()
+
 
       describe 'Validation and errors', ->
 
