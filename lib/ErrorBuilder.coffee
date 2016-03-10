@@ -21,7 +21,6 @@ class ErrorBuilder
     notAllowed : 'Action is not allowed'
     notJoined : 'Not joined to room %s'
     roomExists : 'Room %s already exists'
-    serverBusy : 'Server is busy with processing a concurrent command'
     serverError : 'Server error %s'
     unknownError : 'Unknown error %s occurred'
     userExists : 'User %s already exists'

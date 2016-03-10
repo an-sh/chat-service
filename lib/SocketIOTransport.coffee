@@ -184,13 +184,6 @@ class SocketIOTransport
 
   # @private
   # @nodoc
-  sendToClient : (id, args...) ->
-    socket = @getSocketObject id
-    unless socket then return
-    socket.emit args...
-
-  # @private
-  # @nodoc
   joinChannel : (id, channel, cb) ->
     socket = @getSocketObject id
     unless socket

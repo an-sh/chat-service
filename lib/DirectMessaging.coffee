@@ -70,10 +70,6 @@ class DirectMessaging
     @directMessagingState.initState state, cb
 
   # @private
-  removeState : (cb) ->
-    @directMessagingState.removeState cb
-
-  # @private
   message : (author, msg, cb) ->
     @checkAcess author, cb
 

@@ -164,10 +164,8 @@ UserAssociations =
 
   # @private
   joinSocketToRoom : (id, roomName, cb) ->
-    @userState.lockSocketRoom id, roomName, withEH cb, (lock, israce) =>
+    @userState.lockSocketRoom id, roomName, withEH cb, (lock) =>
       unlock = @userState.bindUnlockSelf lock, 'joinSocketToRoom', id, cb
-      if israce
-        return unlock @errorBuilder.makeError 'serverBusy'
       @withRoom roomName, withEH unlock, (room) =>
         room.join @userName, withEH unlock, (isNewJoin) =>
           rollback = @makeRollbackRoomJoin id, room, isNewJoin, unlock
@@ -180,10 +178,8 @@ UserAssociations =
 
   # @private
   leaveSocketFromRoom : (id, roomName, cb) ->
-    @userState.lockSocketRoom id, roomName, withEH cb, (lock, israce) =>
+    @userState.lockSocketRoom id, roomName, withEH cb, (lock) =>
       unlock = @userState.bindUnlockSelf lock, 'leaveSocketFromRoom', id, cb
-      if israce
-        return unlock @errorBuilder.makeError 'serverBusy'
       @userState.removeSocketFromRoom id, roomName, withEH unlock
       , (njoined) =>
         @leaveChannel id, roomName, =>

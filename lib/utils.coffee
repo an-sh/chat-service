@@ -23,12 +23,10 @@ withEH = (errorCallback, normallCallback) ->
 # @private
 # @nodoc
 bindTE = (obj) ->
-  obj.withTE = (callback, normallCallback) ->
+  obj.withTE = (callback) ->
     (error, data) ->
       if error
         callback obj.errorBuilder.makeError 'serverError', 500
-      else if normallCallback
-        normallCallback data
       else
         callback error, data
 
