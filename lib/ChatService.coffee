@@ -268,7 +268,7 @@ class UserCommands
 
   # Gets the latest room message id.
   # @param roomName [String] Room name.
-  # @param cb [Function<error, Integer>] Sends ack with an
+  # @param cb [Function<error, Number>] Sends ack with an
   #   error or the latest message id.
   # @see UserCommands#roomHistorySync
   roomHistoryLastId : (roomName, cb) ->
@@ -278,7 +278,7 @@ class UserCommands
   # `historyMaxGetMessages` option. May be called several times to
   # fill gaps larger then the value of `historyMaxGetMessages`.
   # @param roomName [String] Room name.
-  # @param id [Integer] Message id,
+  # @param id [Number] Message id,
   # @param cb [Function<error, Array<Objects>>] Sends ack with an
   #   error or array of messages.
   # @see UserCommands#roomHistoryLastId
@@ -359,7 +359,7 @@ class ChatService
   # Crates an object and starts a new server instance.
   #
   #
-  # @option serviceOptions [Integer] closeTimeout Maximum time to wait
+  # @option serviceOptions [Number] closeTimeout Maximum time to wait
   #   before a server disconnects all clients in ms, default is
   #   `5000`.
   #
@@ -380,14 +380,14 @@ class ChatService
   #   {ServerMessages#roomUserJoined} and
   #   {ServerMessages#roomUserLeft} messages, default is `false`.
   #
-  # @option serviceOptions [Integer] historyMaxGetMessages Room
+  # @option serviceOptions [Number] historyMaxGetMessages Room
   #   history size available via {UserCommands#roomHistory} or
   #   {UserCommands#roomHistorySync}, default is `100`.
   #
-  # @option serviceOptions [Integer] historyMaxMessages Room history
+  # @option serviceOptions [Number] historyMaxMessages Room history
   #   DB size, default is `10000`.
   #
-  # @option serviceOptions [Integer] port Server port, default is
+  # @option serviceOptions [Number] port Server port, default is
   #   `8000`.
   #
   # @option serviceOptions [Boolean] useRawErrorObjects Send error
@@ -486,7 +486,7 @@ class ChatService
   # @option stateOptions [Boolean] useCluster Enable Redis cluster,
   #   default is `false`.
   #
-  # @option stateOptions [Integer] lockTTL Locks timeout in ms,
+  # @option stateOptions [Number] lockTTL Locks timeout in ms,
   #   default is `5000`.
   #
   # @option stateOptions [Object or Array<Object>] redisOptions
