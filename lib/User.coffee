@@ -163,17 +163,6 @@ UserAssociations =
       room.leave @username, @withFailLog data, cb
 
   # @private
-  removeRoomUser : (userName, roomName, cb) ->
-    @userState.removeAllSocketsFromRoom roomName, withEH cb
-    , (removedSockets) =>
-      if removedSockets?.length
-        @channelLeaveSockets roomName, removedSockets, =>
-          @userRemovedReport userName, roomName
-          @leaveRoom roomName, cb
-      else
-        @leaveRoom roomName, cb
-
-  # @private
   joinSocketToRoom : (id, roomName, cb) ->
     @userState.lockSocketRoom id, roomName, withEH cb, (lock, israce) =>
       unlock = @userState.bindUnlockSelf lock, 'joinSocketToRoom', id, cb
@@ -207,17 +196,6 @@ UserAssociations =
             unlock null, njoined
 
   # @private
-  removeUserFromRoom : (userName, roomName, cb) ->
-    task = (fn) =>
-      @userState.lockSocketRoom null, roomName, withEH fn, (lock) =>
-        unlock = @userState.bindUnlockOthers lock, 'removeUserFromRoom'
-        , userName, fn
-        @removeRoomUser userName, roomName, unlock
-    data = { username : userName, room : roomName }
-    data.op = 'removeUserFromRoom'
-    async.retry { times : 2, interval : @lockTTL }, task, @withFailLog data, cb
-
-  # @private
   removeSocketFromServer : (id, cb) ->
     @userState.setSocketDisconnecting id, withEH cb, =>
       @userState.removeSocket id, withEH cb
@@ -233,6 +211,29 @@ UserAssociations =
         else
           @socketDisconnectEcho id, nconnected
           cb null, nconnected
+
+  # @private
+  removeFromRoom : (roomName, cb) ->
+    @userState.lockSocketRoom null, roomName, withEH cb, (lock) =>
+      unlock = @userState.bindUnlockOthers lock, 'removeUserFromRoom'
+      , @username, cb
+      @userState.removeAllSocketsFromRoom roomName, withEH unlock
+      , (removedSockets) =>
+        if removedSockets?.length
+          @channelLeaveSockets roomName, removedSockets, =>
+            @userRemovedReport @username, roomName
+            @leaveRoom roomName, unlock
+        else
+          @leaveRoom roomName, unlock
+
+  # @private
+  removeUserFromRoom : (userName, roomName, cb) ->
+    task = (fn) =>
+      @state.getUser userName, withEH fn, (user) ->
+        user.removeFromRoom roomName, fn
+    data = { username : userName, room : roomName }
+    data.op = 'removeUserFromRoom'
+    async.retry { times : 2, interval : @lockTTL }, task, @withFailLog data, cb
 
   # @private
   removeRoomUsers : (room, usernames, cb) ->

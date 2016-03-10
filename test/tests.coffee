@@ -343,10 +343,20 @@ describe 'Chat service.', ->
             socket1 = clientConnect user1
             socket1.on 'loginConfirmed', ->
               socket1.emit 'roomJoin', roomName1, ->
-                socket1.emit 'roomDelete', roomName1
-                socket1.once 'roomAccessRemoved', (r) ->
-                  expect(r).equal(roomName1)
-                  done()
+                socket2 = clientConnect user2
+                socket2.on 'loginConfirmed', ->
+                  socket2.emit 'roomJoin', roomName1, ->
+                    socket1.emit 'roomDelete', roomName1
+                    async.parallel [
+                      (cb) ->
+                        socket1.on 'roomAccessRemoved', (r) ->
+                          expect(r).equal(roomName1)
+                          cb()
+                      (cb) ->
+                        socket2.on 'roomAccessRemoved', (r) ->
+                          expect(r).equal(roomName1)
+                          cb()
+                    ], done
 
 
       describe 'Room messaging', ->
@@ -407,7 +417,7 @@ describe 'Chat service.', ->
                             cb()
                       ] , ->
                         socket1.disconnect()
-                        socket3.once 'roomLeftEcho', (room, id, njoined) ->
+                        socket3.on 'roomLeftEcho', (room, id, njoined) ->
                           expect(room).equal(roomName1)
                           expect(id).equal(sid1)
                           expect(njoined).equal(0)
