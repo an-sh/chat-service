@@ -11,13 +11,6 @@ User = require './User'
 # @mixin
 # API for server side operations.
 ServiceAPI =
-  # Disconnects all user sockets for this instance.
-  #
-  # @param userName [String] User name.
-  # @param cb [Callback] Optional callback.
-  disconnectUserSockets : (userName, cb = ->) ->
-    @state.getUser userName, withEH cb, (user) ->
-      user.disconnectInstanceSockets cb
 
   # Executes command as an user.
   #
@@ -64,17 +57,13 @@ ServiceAPI =
       return process.nextTick -> cb error
     @state.addUser userName, state, withoutData cb
 
-  # Removes all room data, and removes joined user from the room.
+  # Disconnects all user sockets for this instance.
   #
-  # @param roomName [String] User name.
+  # @param userName [String] User name.
   # @param cb [Callback] Optional callback.
-  removeRoom : (roomName, cb = ->) ->
-    user = new User @
-    user.withRoom roomName, withEH cb, (room) =>
-      room.getUsers withEH cb, (usernames) =>
-        user.removeRoomUsers room, usernames, =>
-          @state.removeRoom room.name, ->
-            room.removeState withoutData cb
+  disconnectUserSockets : (userName, cb = ->) ->
+    @state.getUser userName, withEH cb, (user) ->
+      user.disconnectInstanceSockets cb
 
   # Adds a room with a state.
   #
@@ -92,6 +81,18 @@ ServiceAPI =
       error = @errorBuilder.makeError 'invalidName', roomName
       return process.nextTick -> cb error
     @state.addRoom roomName, state, withoutData cb
+
+  # Removes all room data, and removes joined user from the room.
+  #
+  # @param roomName [String] User name.
+  # @param cb [Callback] Optional callback.
+  removeRoom : (roomName, cb = ->) ->
+    user = new User @
+    user.withRoom roomName, withEH cb, (room) =>
+      room.getUsers withEH cb, (usernames) =>
+        user.removeRoomUsers room, usernames, =>
+          @state.removeRoom room.name, ->
+            room.removeState withoutData cb
 
   # Gets room owner.
   #

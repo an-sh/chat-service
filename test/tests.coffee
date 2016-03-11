@@ -1582,6 +1582,20 @@ describe 'Chat service.', ->
                     expect(data).null
                     done()
 
+        it 'should check commands names.', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.addUser user1, null, ->
+            chatServer.execUserCommand user1, 'nocmd', (error) ->
+              expect(error).ok
+              done()
+
+        it 'should check for socket ids if required.', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.addUser user1, null, ->
+            chatServer.execUserCommand user1, 'roomJoin', (error) ->
+              expect(error).ok
+              done()
+
         it 'should check commands arguments.', (done) ->
           chatServer = new ChatService { port : port }, null, state
           chatServer.addRoom roomName1, {owner : user1}, ->

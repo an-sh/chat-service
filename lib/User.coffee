@@ -280,13 +280,13 @@ class User extends DirectMessaging
 
   # @private
   exec : (command, useHooks, id, args..., cb) ->
+    ack = @bindAck cb
     unless @server.userCommands[command]
       return process.nextTick =>
-        @errorBuilder.makeError 'noCommand', command
+        ack @errorBuilder.makeError 'noCommand', command
     if not id and command in [ 'disconnect', 'roomJoin' ,'roomLeave' ]
       return process.nextTick =>
-        @errorBuilder.makeError 'noSocket', command
-    ack = @bindAck cb
+        ack @errorBuilder.makeError 'noSocket', command
     if useHooks
       cmd = @[command]
       fn = @wrapCommand command, cmd
