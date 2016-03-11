@@ -35,7 +35,7 @@ ServiceAPI =
     if _.isObject params
       id = params.id || null
       useHooks = params.useHooks || false
-      userName = params.username
+      userName = params.userName
     else
       id = null
       useHooks = false

@@ -243,10 +243,10 @@ describe 'Chat service.', ->
                 expect(data[0]).equal(roomName1)
                 socket1.emit 'roomCreate', roomName1, false, (error, data) ->
                   expect(error).ok
-                  expect(data).not.ok
+                  expect(data).null
                   socket1.emit 'roomDelete', roomName1, (error, data) ->
                     expect(error).not.ok
-                    expect(data).not.ok
+                    expect(data).null
                     socket1.emit 'listRooms', (error, data) ->
                       expect(error).not.ok
                       expect(data).empty
@@ -260,7 +260,7 @@ describe 'Chat service.', ->
           socket1.on 'loginConfirmed', (u) ->
             socket1.emit 'roomCreate', 'room}1', false, (error, data) ->
               expect(error).ok
-              expect(data).not.ok
+              expect(data).null
               done()
 
         it 'should reject room management when the option is disabled'
@@ -271,10 +271,10 @@ describe 'Chat service.', ->
             socket1.on 'loginConfirmed', (u) ->
               socket1.emit 'roomCreate', roomName1, false, (error, data) ->
                 expect(error).ok
-                expect(data).not.ok
+                expect(data).null
                 socket1.emit 'roomDelete', roomName2, (error, data) ->
                   expect(error).ok
-                  expect(data).not.ok
+                  expect(data).null
                   done()
 
         it 'should list all rooms', (done) ->
@@ -660,10 +660,10 @@ describe 'Chat service.', ->
             socket1.on 'loginConfirmed', ->
               socket1.emit 'roomMessage', roomName1, message, (error, data) ->
                 expect(error).ok
-                expect(data).not.ok
+                expect(data).null
                 socket1.emit 'roomHistory', roomName1, (error, data) ->
                   expect(error).ok
-                  expect(data).not.ok
+                  expect(data).null
                   done()
 
         it 'should send a whitelistonly mode', (done) ->
@@ -697,7 +697,7 @@ describe 'Chat service.', ->
               socket1.emit 'roomGetAccessList', roomName1, 'userlist'
               , (error, data) ->
                 expect(error).ok
-                expect(data).not.ok
+                expect(data).null
                 done()
 
         it 'should ckeck room list names', (done) ->
@@ -709,7 +709,7 @@ describe 'Chat service.', ->
                 socket1.emit 'roomGetAccessList', roomName1, 'nolist'
                 , (error, data) ->
                   expect(error).ok
-                  expect(data).not.ok
+                  expect(data).null
                   done()
 
         it 'should allow duplicate adding to lists', (done) ->
@@ -723,11 +723,11 @@ describe 'Chat service.', ->
                 socket1.emit 'roomAddToList', roomName1, 'adminlist', [user2]
                 , (error, data) ->
                   expect(error).not.ok
-                  expect(data).not.ok
+                  expect(data).null
                   socket1.emit 'roomAddToList', roomName1, 'adminlist', [user2]
                   , (error, data) ->
                     expect(error).not.ok
-                    expect(data).not.ok
+                    expect(data).null
                     done()
 
         it 'should allow not existing deleting from lists', (done) ->
@@ -741,7 +741,7 @@ describe 'Chat service.', ->
                 socket1.emit 'roomRemoveFromList', roomName1, 'adminlist'
                 , [user2], (error, data) ->
                   expect(error).not.ok
-                  expect(data).not.ok
+                  expect(data).null
                   done()
 
         it 'should send access list changed messages', (done) ->
@@ -774,7 +774,7 @@ describe 'Chat service.', ->
                 socket1.emit 'roomAddToList', roomName1, 'whitelist', [user2]
                 , (error, data) ->
                   expect(error).not.ok
-                  expect(data).not.ok
+                  expect(data).null
                   socket1.emit 'roomGetAccessList', roomName1, 'whitelist'
                   , (error, data) ->
                     expect(error).not.ok
@@ -782,7 +782,7 @@ describe 'Chat service.', ->
                     socket1.emit 'roomRemoveFromList', roomName1, 'whitelist'
                     , [user2], (error, data) ->
                       expect(error).not.ok
-                      expect(data).not.ok
+                      expect(data).null
                       socket1.emit 'roomGetAccessList', roomName1, 'whitelist'
                       , (error, data) ->
                         expect(error).not.ok
@@ -801,7 +801,7 @@ describe 'Chat service.', ->
                     socket1.emit 'roomRemoveFromList', roomName1, 'adminlist'
                     , [user2] , (error, data) ->
                       expect(error).ok
-                      expect(data).not.ok
+                      expect(data).null
                       done()
 
         it 'should reject list modifications with owner for admins'
@@ -816,14 +816,14 @@ describe 'Chat service.', ->
                 socket1.emit 'roomAddToList', roomName1, 'adminlist', [user2],
                 (error, data) ->
                   expect(error).not.ok
-                  expect(data).not.ok
+                  expect(data).null
                   socket2 = clientConnect user2
                   socket2.on 'loginConfirmed', ->
                     socket2.emit 'roomJoin',  roomName1, ->
                       socket2.emit 'roomAddToList', roomName1, 'whitelist'
                       , [user1], (error, data) ->
                         expect(error).ok
-                        expect(data).not.ok
+                        expect(data).null
                         done()
 
         it 'should reject direct userlist modifications', (done) ->
@@ -835,7 +835,7 @@ describe 'Chat service.', ->
                 socket1.emit 'roomAddToList', roomName1, 'userlist', [user2]
                 , (error, data) ->
                   expect(error).ok
-                  expect(data).not.ok
+                  expect(data).null
                   done()
 
         it 'should reject any lists modifications for non-admins', (done) ->
@@ -847,7 +847,7 @@ describe 'Chat service.', ->
                 socket1.emit 'roomAddToList', roomName1, 'whitelist', [user2]
                 , (error, data) ->
                   expect(error).ok
-                  expect(data).not.ok
+                  expect(data).null
                   done()
 
         it 'should reject mode changes for non-admins', (done) ->
@@ -859,7 +859,7 @@ describe 'Chat service.', ->
                 socket1.emit 'roomSetWhitelistMode', roomName1, true
                 , (error, data) ->
                   expect(error).ok
-                  expect(data).not.ok
+                  expect(data).null
                   done()
 
         it 'should check room permissions', (done) ->
@@ -869,7 +869,7 @@ describe 'Chat service.', ->
             socket1.on 'loginConfirmed', ->
               socket1.emit 'roomJoin', roomName1, (error, data) ->
                 expect(error).ok
-                expect(data).not.ok
+                expect(data).null
                 done()
 
         it 'should check room permissions in whitelist mode', (done) ->
@@ -881,7 +881,7 @@ describe 'Chat service.', ->
             socket1.on 'loginConfirmed', ->
               socket1.emit 'roomJoin', roomName1, (error, data) ->
                 expect(error).ok
-                expect(data).not.ok
+                expect(data).null
                 socket2 = clientConnect user2
                 socket2.on 'loginConfirmed', ->
                   socket2.emit 'roomJoin', roomName1, (error, data) ->
@@ -1028,7 +1028,7 @@ describe 'Chat service.', ->
             socket2.on 'loginConfirmed', ->
               socket1.emit 'directMessage', user2, message, (error, data) ->
                 expect(error).ok
-                expect(data).not.ok
+                expect(data).null
                 done()
 
         it 'should not send self-direct messages', (done) ->
@@ -1041,7 +1041,7 @@ describe 'Chat service.', ->
           socket1.on 'loginConfirmed', ->
             socket1.emit 'directMessage', user1, message, (error, data) ->
               expect(error).ok
-              expect(data).not.ok
+              expect(data).null
               done()
 
         it 'should not send direct messages to offline users', (done) ->
@@ -1057,7 +1057,7 @@ describe 'Chat service.', ->
             socket1.on 'loginConfirmed', ->
               socket1.emit 'directMessage', user2, message, (error, data) ->
                 expect(error).ok
-                expect(data).not.ok
+                expect(data).null
                 done()
 
         it 'should echo direct messages to user\'s sockets', (done) ->
@@ -1109,11 +1109,11 @@ describe 'Chat service.', ->
               socket2.emit 'directAddToList', 'blacklist', [user1]
               , (error, data) ->
                 expect(error).not.ok
-                expect(data).not.ok
+                expect(data).null
                 socket1.emit 'directMessage', user2, message
                 , (error, data) ->
                   expect(error).ok
-                  expect(data).not.ok
+                  expect(data).null
                   done()
 
         it 'should check user permissions in whitelist mode', (done) ->
@@ -1129,10 +1129,10 @@ describe 'Chat service.', ->
               socket2.emit 'directAddToList', 'whitelist', [user1]
               , (error, data) ->
                 expect(error).not.ok
-                expect(data).not.ok
+                expect(data).null
                 socket2.emit 'directSetWhitelistMode', true, (error, data) ->
                   expect(error).not.ok
-                  expect(data).not.ok
+                  expect(data).null
                   socket1.emit 'directMessage', user2, message
                   , (error, data) ->
                     expect(error).not.ok
@@ -1140,11 +1140,11 @@ describe 'Chat service.', ->
                     socket2.emit 'directRemoveFromList', 'whitelist', [user1]
                     , (error, data) ->
                       expect(error).not.ok
-                      expect(data).not.ok
+                      expect(data).null
                       socket1.emit 'directMessage', user2, message
                       , (error, data) ->
                         expect(error).ok
-                        expect(data).not.ok
+                        expect(data).null
                         done()
 
         it 'should allow an user to modify own lists', (done) ->
@@ -1156,7 +1156,7 @@ describe 'Chat service.', ->
             socket1.emit 'directAddToList', 'blacklist', [user2]
             , (error, data) ->
               expect(error).not.ok
-              expect(data).not.ok
+              expect(data).null
               socket1.emit 'directGetAccessList', 'blacklist'
               , (error, data) ->
                 expect(error).not.ok
@@ -1164,7 +1164,7 @@ describe 'Chat service.', ->
                 socket1.emit 'directRemoveFromList', 'blacklist', [user2]
                 , (error, data) ->
                   expect(error).not.ok
-                  expect(data).not.ok
+                  expect(data).null
                   socket1.emit 'directGetAccessList', 'blacklist'
                   , (error, data) ->
                     expect(error).not.ok
@@ -1180,7 +1180,7 @@ describe 'Chat service.', ->
             socket1.emit 'directAddToList', 'blacklist', [user1]
             , (error, data) ->
               expect(error).ok
-              expect(data).not.ok
+              expect(data).null
               done()
 
         it 'should check user list names', (done) ->
@@ -1192,7 +1192,7 @@ describe 'Chat service.', ->
             socket1.emit 'directAddToList', 'nolist', [user2]
             , (error, data) ->
               expect(error).ok
-              expect(data).not.ok
+              expect(data).null
               done()
 
         it 'should allow duplicate adding to lists' , (done) ->
@@ -1204,11 +1204,11 @@ describe 'Chat service.', ->
             socket1.emit 'directAddToList', 'blacklist', [user2]
             , (error, data) ->
               expect(error).not.ok
-              expect(data).not.ok
+              expect(data).null
               socket1.emit 'directAddToList', 'blacklist', [user2]
               , (error, data) ->
                 expect(error).not.ok
-                expect(data).not.ok
+                expect(data).null
                 done()
 
         it 'should allow not existing deleting from lists' , (done) ->
@@ -1220,7 +1220,7 @@ describe 'Chat service.', ->
             socket1.emit 'directRemoveFromList', 'blacklist', [user2]
             , (error, data) ->
               expect(error).not.ok
-              expect(data).not.ok
+              expect(data).null
               done()
 
         it 'should allow an user to modify own mode', (done) ->
@@ -1231,7 +1231,7 @@ describe 'Chat service.', ->
           socket1.on 'loginConfirmed', ->
             socket1.emit 'directSetWhitelistMode', true, (error, data) ->
               expect(error).not.ok
-              expect(data).not.ok
+              expect(data).null
               socket1.emit 'directGetWhitelistMode', (error, data) ->
                 expect(error).not.ok
                 expect(data).true
@@ -1374,7 +1374,7 @@ describe 'Chat service.', ->
           socket1.on 'loginConfirmed', ->
             socket1.emit 'listRooms', (error, data) ->
               expect(error).equal(err)
-              expect(data).not.ok
+              expect(data).null
               done()
 
         it 'should accept custom direct messages with a hook', (done) ->
@@ -1489,6 +1489,7 @@ describe 'Chat service.', ->
                       (cb) ->
                         chatServer.removeRoom roomName1, (error, data) ->
                           expect(error).not.ok
+                          expect(data).not.ok
                           cb()
                       (cb) ->
                         socket1.on 'roomAccessRemoved', (r) ->
@@ -1519,7 +1520,7 @@ describe 'Chat service.', ->
 
         it 'should support changing room owner', (done) ->
           chatServer = new ChatService { port : port }, null, state
-          chatServer.addRoom roomName1, {owner : user1}, (error, data) ->
+          chatServer.addRoom roomName1, {owner : user1}, ->
             socket1 = clientConnect user1
             socket1.on 'loginConfirmed', ->
               socket1.emit 'roomJoin', roomName1, ->
@@ -1528,6 +1529,7 @@ describe 'Chat service.', ->
                   expect(data).equal(user1)
                   chatServer.changeRoomOwner roomName1, user2, (error, data) ->
                     expect(error).not.ok
+                    expect(data).not.ok
                     socket1.emit 'roomGetOwner', roomName1, (error, data) ->
                       expect(error).not.ok
                       expect(data).equal(user2)
@@ -1551,6 +1553,39 @@ describe 'Chat service.', ->
                     expect(d).equal(data)
                     cb()
               ], done
+
+        it 'should execute commands with hooks.', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.addRoom roomName1, {owner : user1}, ->
+            chatServer.addUser user2, null, ->
+              socket1 = clientConnect user1
+              socket1.on 'loginConfirmed', ->
+                socket1.emit 'roomJoin', roomName1, ->
+                  chatServer.execUserCommand {userName : user1, useHooks : true}
+                  , 'roomAddToList', roomName1, 'whitelist', [user1]
+                  , (error, data) ->
+                    expect(error).not.ok
+                    expect(data).not.ok
+                    done()
+
+        it 'should check commands arguments.', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.addRoom roomName1, {owner : user1}, ->
+            chatServer.addUser user2, null, ->
+              socket1 = clientConnect user1
+              socket1.on 'loginConfirmed', ->
+                socket1.emit 'roomJoin', roomName1, ->
+                  chatServer.execUserCommand user1
+                  , 'roomAddToList', 'whitelist', [user1]
+                  , (error, data) ->
+                    expect(error).ok
+                    expect(data).not.ok
+                    chatServer.execUserCommand user1
+                    , 'roomAddToList', roomName1, 1, [user1]
+                    , (error, data) ->
+                      expect(error).ok
+                      expect(data).not.ok
+                      done()
 
 
       describe 'Validation and errors', ->

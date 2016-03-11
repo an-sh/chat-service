@@ -45,9 +45,9 @@ CommandBinder =
           else
             reportResults()
         fn.apply @, [ args..., afterCommand, id ]
-      validator.checkArguments name, oargs, (error) =>
-        if error
-          return cb errorBuilder.makeError error...
+      validator.checkArguments name, oargs, (errors) =>
+        if errors
+          return cb errorBuilder.makeError errors...
         unless beforeHook
           execCommand()
         else
@@ -283,11 +283,14 @@ class User extends DirectMessaging
       return process.nextTick =>
         @errorBuilder.makeError 'noSocket', command
     if useHooks
-      cmd = @server.userCommands[command]
+      cmd = @[command]
       fn = @wrapCommand command, cmd
       fn args..., cb, id
     else
-      @[command] args..., cb, id
+      validator = @server.validator
+      validator.checkArguments command, args, (errors) =>
+        if errors then return cb @errorBuilder.makeError errors...
+        @[command] args..., cb, id
 
   # @private
   revertRegisterSocket : (id) ->
