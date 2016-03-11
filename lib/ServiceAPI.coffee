@@ -93,6 +93,15 @@ ServiceAPI =
       return process.nextTick -> cb error
     @state.addRoom roomName, state, withoutData cb
 
+  # Gets room owner.
+  #
+  # @param roomName [String] Room name.
+  # @param cb [Callback] Optional callback.
+  getRoomOwner : (roomName, cb = ->) ->
+    user = new User @
+    user.withRoom roomName, withEH cb, (room) ->
+      room.roomState.ownerGet cb
+
   # Changes room owner.
   #
   # @param roomName [String] Room name.
@@ -102,5 +111,6 @@ ServiceAPI =
     user = new User @
     user.withRoom roomName, withEH cb, (room) ->
       room.roomState.ownerSet owner, cb
+
 
 module.exports = ServiceAPI

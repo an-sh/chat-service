@@ -1538,13 +1538,13 @@ describe 'Chat service.', ->
             socket1 = clientConnect user1
             socket1.on 'loginConfirmed', ->
               socket1.emit 'roomJoin', roomName1, ->
-                socket1.emit 'roomGetOwner', roomName1, (error, data) ->
+                chatServer.changeRoomOwner roomName1, user2, (error, data) ->
                   expect(error).not.ok
-                  expect(data).equal(user1)
-                  chatServer.changeRoomOwner roomName1, user2, (error, data) ->
+                  expect(data).not.ok
+                  socket1.emit 'roomGetOwner', roomName1, (error, data) ->
                     expect(error).not.ok
-                    expect(data).not.ok
-                    socket1.emit 'roomGetOwner', roomName1, (error, data) ->
+                    expect(data).equal(user2)
+                    chatServer.getRoomOwner roomName1, (error, data) ->
                       expect(error).not.ok
                       expect(data).equal(user2)
                       done()
