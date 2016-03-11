@@ -1239,23 +1239,19 @@ describe 'Chat service.', ->
 
       describe 'Hooks', ->
 
-        it 'should restore a room state from onStart hook', (done) ->
+        it 'should execute onStart hook', (done) ->
           fn = ->
             socket1 = clientConnect user1
             socket1.on 'loginConfirmed', ->
               socket1.emit 'roomJoin', roomName1, ->
-                socket1.emit 'roomHistory', roomName1, (error, data) ->
+                socket1.emit 'roomGetAccessList', roomName1, 'whitelist'
+                , (error, list) ->
                   expect(error).not.ok
-                  expect(data).instanceof(Array)
-                  expect(data).empty
-                  socket1.emit 'roomGetAccessList', roomName1, 'whitelist'
-                  , (error, list) ->
+                  expect(list).include(user1)
+                  socket1.emit 'roomGetOwner', roomName1, (error, data) ->
                     expect(error).not.ok
-                    expect(list).include(user1)
-                    socket1.emit 'roomGetOwner', roomName1, (error, data) ->
-                      expect(error).not.ok
-                      expect(data).equal(user2)
-                      done()
+                    expect(data).equal(user2)
+                    done()
           onStart = (server, cb) ->
             expect(server).instanceof(ChatService)
             server.addRoom roomName1
@@ -1331,6 +1327,24 @@ describe 'Chat service.', ->
                 expect(error).not.ok
                 expect(data).lengthOf(1)
                 expect(data[0]).length.equal(roomName2)
+                done()
+
+        it 'should support more arguments in after hooks', (done) ->
+          afterHook = (server, userName, id, args, results, cb) ->
+            [ name , mode ] = args
+            cb null, null, true
+          chatServer = new ChatService { port : port
+            , enableRoomsManagement : true}
+          , { 'listRoomsAfter' : afterHook }
+          , state
+          socket1 = clientConnect user1
+          socket1.on 'loginConfirmed',  ->
+            socket1.emit 'roomCreate', roomName1, true, ->
+              socket1.emit 'listRooms', (error, data, moredata) ->
+                expect(error).not.ok
+                expect(data).lengthOf(1)
+                expect(data[0]).length.equal(roomName1)
+                expect(moredata).true
                 done()
 
         it 'should send errors if new arguments have a different length'
@@ -1565,7 +1579,7 @@ describe 'Chat service.', ->
                   , 'roomAddToList', roomName1, 'whitelist', [user1]
                   , (error, data) ->
                     expect(error).not.ok
-                    expect(data).not.ok
+                    expect(data).null
                     done()
 
         it 'should check commands arguments.', (done) ->
@@ -1579,12 +1593,12 @@ describe 'Chat service.', ->
                   , 'roomAddToList', 'whitelist', [user1]
                   , (error, data) ->
                     expect(error).ok
-                    expect(data).not.ok
+                    expect(data).null
                     chatServer.execUserCommand user1
                     , 'roomAddToList', roomName1, 1, [user1]
                     , (error, data) ->
                       expect(error).ok
-                      expect(data).not.ok
+                      expect(data).null
                       done()
 
 

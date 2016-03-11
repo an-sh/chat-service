@@ -55,19 +55,23 @@ CommandBinder =
     return cmd
 
   # @private
+  bindAck : (cb) ->
+    (error, data, rest...) ->
+      error = null unless error?
+      data = null unless data?
+      cb error, data, rest... if cb
+
+  # @private
   bindCommand : (id, name, fn) ->
     cmd = @wrapCommand name, fn
-    @transport.bind id, name, ->
+    @transport.bind id, name, =>
       cb = _.last arguments
       if _.isFunction cb
         args = _.slice arguments, 0, -1
       else
         cb = null
         args = arguments
-      ack = (error, data) ->
-        error = null unless error?
-        data = null unless data?
-        cb error, data if cb
+      ack = @bindAck cb
       cmd args..., ack, id
 
 
@@ -282,15 +286,16 @@ class User extends DirectMessaging
     if not id and command in [ 'disconnect', 'roomJoin' ,'roomLeave' ]
       return process.nextTick =>
         @errorBuilder.makeError 'noSocket', command
+    ack = @bindAck cb
     if useHooks
       cmd = @[command]
       fn = @wrapCommand command, cmd
-      fn args..., cb, id
+      fn args..., ack, id
     else
       validator = @server.validator
       validator.checkArguments command, args, (errors) =>
-        if errors then return cb @errorBuilder.makeError errors...
-        @[command] args..., cb, id
+        if errors then return ack @errorBuilder.makeError errors...
+        @[command] args..., ack, id
 
   # @private
   revertRegisterSocket : (id) ->
