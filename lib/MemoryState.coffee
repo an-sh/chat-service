@@ -234,11 +234,6 @@ class UserStateMemory
     process.nextTick -> cb null, sockets
 
   # @private
-  getAllRooms : (cb) ->
-    rooms = @roomsToSockets.keys()
-    process.nextTick -> cb null, rooms
-
-  # @private
   getSocketsToRooms : (cb) ->
     result = {}
     sockets = @socketsToRooms.keys()
@@ -297,11 +292,7 @@ class UserStateMemory
     process.nextTick -> cb null, removedRooms, joinedSockets, nconnected
 
   # @private
-  lockSocketRoom : (id, roomName, cb) ->
-    process.nextTick -> cb()
-
-  # @private
-  setRoomAccessRemoved : (roomName, cb) ->
+  lockToRoom : (id, roomName, cb) ->
     process.nextTick -> cb()
 
   # @private
@@ -309,12 +300,7 @@ class UserStateMemory
     process.nextTick -> cb()
 
   # @private
-  bindUnlockSelf : (lock, op, id, cb) ->
-    (args...) ->
-      process.nextTick -> cb args...
-
-  # @private
-  bindUnlockOthers : (lock, op, userName, cb) ->
+  bindUnlock : (lock, op, id, cb) ->
     (args...) ->
       process.nextTick -> cb args...
 

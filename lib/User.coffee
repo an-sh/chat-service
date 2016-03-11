@@ -168,8 +168,8 @@ UserAssociations =
 
   # @private
   joinSocketToRoom : (id, roomName, cb) ->
-    @userState.lockSocketRoom id, roomName, withEH cb, (lock) =>
-      unlock = @userState.bindUnlockSelf lock, 'joinSocketToRoom', id, cb
+    @userState.lockToRoom id, roomName, withEH cb, (lock) =>
+      unlock = @userState.bindUnlock lock, 'joinSocketToRoom', id, cb
       @withRoom roomName, withEH unlock, (room) =>
         room.join @userName, withEH unlock, (isNewJoin) =>
           rollback = @makeRollbackRoomJoin id, room, isNewJoin, unlock
@@ -182,8 +182,8 @@ UserAssociations =
 
   # @private
   leaveSocketFromRoom : (id, roomName, cb) ->
-    @userState.lockSocketRoom id, roomName, withEH cb, (lock) =>
-      unlock = @userState.bindUnlockSelf lock, 'leaveSocketFromRoom', id, cb
+    @userState.lockToRoom id, roomName, withEH cb, (lock) =>
+      unlock = @userState.bindUnlock lock, 'leaveSocketFromRoom', id, cb
       @userState.removeSocketFromRoom id, roomName, withEH unlock
       , (njoined) =>
         @leaveChannel id, roomName, =>
@@ -214,9 +214,8 @@ UserAssociations =
 
   # @private
   removeFromRoom : (roomName, cb) ->
-    @userState.lockSocketRoom null, roomName, withEH cb, (lock) =>
-      unlock = @userState.bindUnlockOthers lock, 'removeUserFromRoom'
-      , @userName, cb
+    @userState.lockToRoom null, roomName, withEH cb, (lock) =>
+      unlock = @userState.bindUnlock lock, 'removeUserFromRoom', null, cb
       @userState.removeAllSocketsFromRoom roomName, withEH unlock
       , (removedSockets) =>
         if removedSockets?.length
@@ -231,9 +230,7 @@ UserAssociations =
     task = (fn) =>
       @state.getUser userName, withEH fn, (user) ->
         user.removeFromRoom roomName, fn
-    data = { userName : userName, room : roomName }
-    data.op = 'removeUserFromRoom'
-    async.retry { times : 2, interval : @lockTTL }, task, @withFailLog data, cb
+    async.retry { times : 2, interval : @lockTTL }, task, cb
 
   # @private
   removeRoomUsers : (room, userNames, cb) ->

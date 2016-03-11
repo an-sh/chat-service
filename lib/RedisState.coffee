@@ -20,6 +20,7 @@ initState = (redis, state, values, cb) ->
   redis.del state, withEH cb, ->
     redis.sadd state, values, cb
 
+
 # Implements state API lists management.
 # @private
 # @nodoc
@@ -27,10 +28,12 @@ class ListsStateRedis
 
   # @private
   makeDBListName : (listName) ->
+    #TODO
     "#{namespace}:#{@prefix}:#{listName}:#{@name}"
 
   # @private
   makeDBHashName : (hashName) ->
+    #TODO
     "#{namespace}:#{@prefix}:#{hashName}"
 
   # @private
@@ -95,6 +98,7 @@ class RoomStateRedis extends ListsStateRedis
 
   # @private
   initState : (state = {}, cb) ->
+    #TODO
     { whitelist, blacklist, adminlist
     , lastMessages, whitelistOnly, owner } = state
     async.parallel [
@@ -114,6 +118,7 @@ class RoomStateRedis extends ListsStateRedis
 
   # @private
   removeState : (cb) ->
+    #TODO
     async.parallel [
       (fn) =>
         @redis.del @makeDBListName('whitelist'), @makeDBListName('blacklist')
@@ -127,14 +132,17 @@ class RoomStateRedis extends ListsStateRedis
 
   # @private
   ownerGet : (cb) ->
+    #TODO
     @redis.hget @makeDBHashName('owners'), @name, @withTE cb
 
   # @private
   ownerSet : (owner, cb) ->
+    #TODO
     @redis.hset @makeDBHashName('owners'), @name, owner, @withTE cb
 
   # @private
   messageAdd : (msg, cb) ->
+    #TODO
     if @historyMaxMessages <= 0 then return process.nextTick -> cb()
     val = JSON.stringify msg
     @redis.lpush @makeDBListName('history'), val, @withTE cb, =>
@@ -143,6 +151,7 @@ class RoomStateRedis extends ListsStateRedis
 
   # @private
   messagesGetRecent : (cb) ->
+    #TODO
     @redis.lrange @makeDBListName('history'), 0, @historyMaxGetMessages - 1
     , @withTE cb, (data) ->
       messages = _.map data, JSON.parse
@@ -173,6 +182,7 @@ class DirectMessagingStateRedis extends ListsStateRedis
 
   # @private
   initState : (state = {}, cb) ->
+    #TODO
     { whitelist, blacklist, whitelistOnly } = state
     async.parallel [
       (fn) =>
@@ -186,6 +196,7 @@ class DirectMessagingStateRedis extends ListsStateRedis
 
   # @private
   removeState : (cb) ->
+    #TODO
     async.parallel [
       (fn) =>
         @redis.del @makeDBListName('whitelist'), @makeDBListName('blacklist')
@@ -206,6 +217,7 @@ class UserStateRedis
     @prefix = 'user'
     @redis = @server.state.redis
     @errorBuilder = @server.errorBuilder
+    @echoChannel = @makeEchoChannelName @userName
     bindTE @
 
   # @private
@@ -221,15 +233,15 @@ class UserStateRedis
     "#{namespace}:#{@prefix}:roomsockets:#{id}"
 
   # @private
+  makeEchoChannelName : (userName) ->
+    "echo:#{userName}"
+
+  # @private
   addSocket : (id, cb) ->
     #TODO
 
   # @private
   getAllSockets : (cb) ->
-    #TODO
-
-  # @private
-  getAllRooms : (cb) ->
     #TODO
 
   # @private
@@ -253,12 +265,7 @@ class UserStateRedis
     #TODO
 
   # @private
-  lockSocketRoom : (id, roomName, cb) ->
-    #TODO
-    process.nextTick -> cb()
-
-  # @private
-  setRoomAccessRemoved : (roomName, cb) ->
+  lockToRoom : (id, roomName, cb) ->
     #TODO
     process.nextTick -> cb()
 
@@ -268,12 +275,8 @@ class UserStateRedis
     process.nextTick -> cb()
 
    # @private
-  bindUnlockSelf : (lock, op, id, cb) ->
-    (args...) ->
-      process.nextTick -> cb args...
-
-  # @private
-  bindUnlockOthers : (lock, op, userName, cb) ->
+  bindUnlock : (lock, op, id, cb) ->
+    #TODO
     (args...) ->
       process.nextTick -> cb args...
 
@@ -309,6 +312,11 @@ class RedisState
     "#{namespace}:instancesockets:#{inst}"
 
   # @private
+  close : (cb) ->
+    @redis.disconnect()
+    process.nextTick -> cb()
+
+  # @private
   getRoom : (name, cb) ->
     @redis.sismember @makeDBListName('rooms'), name, @withTE cb, (data) =>
       unless data
@@ -341,19 +349,18 @@ class RedisState
 
   # @private
   removeSocket : (uid, id, cb) ->
+    #TODO
     @redis.srem @makeDBSocketsName(uid), id, @withTE cb
 
   # @private
   loginUserSocket : (uid, name, id, cb) ->
     user = new User @server, name
-    @redis.multi()
-    .sadd @makeDBSocketsName(uid), id
-    .sadd @makeDBListName('users'), name
-    .exec @withTE cb, ->
+    @redis.sadd @makeDBListName('users'), name, @withTE cb, ->
       user.registerSocket id, cb
 
   # @private
   getUser : (name, cb) ->
+    #TODO sockets
     user = new User @server, name
     @redis.sismember @makeDBListName('users'), name, @withTE cb, (data) =>
       if data then return cb null, user
@@ -369,10 +376,6 @@ class RedisState
         user.initState state, cb
       else
         cb()
-
-  # @private
-  removeUserData : (name, cb) ->
-    #TODO
 
 
 module.exports = RedisState
