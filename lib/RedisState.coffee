@@ -5,7 +5,11 @@ User = require './User.coffee'
 _ = require 'lodash'
 async = require 'async'
 
-{ bindTE, withEH, asyncLimit } = require './utils.coffee'
+{ asyncLimit
+  bindTE
+  extend
+  withEH
+} = require './utils.coffee'
 
 
 # @private
@@ -14,11 +18,30 @@ namespace = 'chatservice'
 
 # @private
 # @nodoc
-initState = (redis, state, values, cb) ->
-  unless values
-    return process.nextTick -> cb()
-  redis.del state, withEH cb, ->
-    redis.sadd state, values, cb
+initSet = (redis, set, values, cb) ->
+  redis.del set, withEH cb, ->
+    unless values
+      return process.nextTick -> cb()
+    redis.sadd set, values, cb
+
+
+# State init/remove operations.
+# @mixin
+# @private
+# @nodoc
+stateOperations =
+
+  # @private
+  initState : (state, cb) ->
+    @redis.setnx @makeKeyName('exists'), 1, @withTE cb, (exists) =>
+      if exists then return cb @errorBuilder.makeError @exitsErrorName, name
+      @stateReset state, @withTE cb, =>
+        @redis.set @makeKeyName('exists'), 1, @withTE cb
+
+  # @private
+  removeState : (cb) ->
+    @initState null, @withTE cb, =>
+      @redis.set @makeKeyName('exists'), 0, @withTE cb
 
 
 # Implements state API lists management.
@@ -27,14 +50,8 @@ initState = (redis, state, values, cb) ->
 class ListsStateRedis
 
   # @private
-  makeDBListName : (listName) ->
-    #TODO
-    "#{namespace}:#{@prefix}:#{listName}:#{@name}"
-
-  # @private
-  makeDBHashName : (hashName) ->
-    #TODO
-    "#{namespace}:#{@prefix}:#{hashName}"
+  makeKeyName : (keyName) ->
+    "#{namespace}:#{@prefix}:{#{@name}}:#{keyName}"
 
   # @private
   checkList : (listName, cb) ->
@@ -45,37 +62,38 @@ class ListsStateRedis
   # @private
   addToList : (listName, elems, cb) ->
     @checkList listName, withEH cb, =>
-      @redis.sadd @makeDBListName(listName), elems, @withTE cb
+      @redis.sadd @makeKeyName(listName), elems, @withTE cb
 
   # @private
   removeFromList : (listName, elems, cb) ->
     @checkList listName, withEH cb, =>
-      @redis.srem @makeDBListName(listName), elems, @withTE cb
+      @redis.srem @makeKeyName(listName), elems, @withTE cb
 
   # @private
   getList : (listName, cb) ->
     @checkList listName, withEH cb, =>
-      @redis.smembers @makeDBListName(listName), @withTE cb, (data) ->
+      @redis.smembers @makeKeyName(listName), @withTE cb, (data) ->
         cb null, data
 
   # @private
   hasInList : (listName, elem, cb) ->
     @checkList listName, withEH cb, =>
-      @redis.sismember @makeDBListName(listName), elem, @withTE cb, (data) ->
+      @redis.sismember @makeKeyName(listName), elem, @withTE cb, (data) ->
         data = if data then true else false
         cb null, data
 
   # @private
   whitelistOnlySet : (mode, cb) ->
-    whitelistOnly = if mode then true else false
-    @redis.hset @makeDBHashName('whitelistmodes'), @name, whitelistOnly
+    whitelistOnly = if mode then 1 else 0
+    @redis.set @makeKeyName('whitelistMode'), whitelistOnly
     , @withTE cb
 
   # @private
   whitelistOnlyGet : (cb) ->
-    @redis.hget @makeDBHashName('whitelistmodes'), @name, @withTE cb
+    @redis.get @makeKeyName('whitelistMode'), @name, @withTE cb
     , (data) ->
-      cb null, JSON.parse data
+      result = if data then true else false
+      cb null, result
 
 
 # Implements room state API.
@@ -83,84 +101,77 @@ class ListsStateRedis
 # @nodoc
 class RoomStateRedis extends ListsStateRedis
 
+  extend @, stateOperations
+
   # @private
   constructor : (@server, @name) ->
     @errorBuilder = @server.errorBuilder
     bindTE @
     @historyMaxGetMessages = @server.historyMaxGetMessages
     @historyMaxMessages = @server.historyMaxMessages
-    @redis = @server.state.redis
-    @prefix = 'room'
+    @redis = @server.redis
+    @exitsErrorName = 'roomExists'
+    @prefix = 'rooms'
 
   # @private
   hasList : (listName) ->
     return listName in [ 'adminlist', 'whitelist', 'blacklist', 'userlist' ]
 
   # @private
-  initState : (state = {}, cb) ->
-    #TODO
+  stateReset : (state = {}, cb) ->
     { whitelist, blacklist, adminlist
     , lastMessages, whitelistOnly, owner } = state
     async.parallel [
       (fn) =>
-        initState @redis, @makeDBListName('whitelist'), whitelist, fn
+        initSet @redis, @makeKeyName('whitelist'), whitelist, fn
       (fn) =>
-        initState @redis, @makeDBListName('blacklist'), blacklist, fn
+        initSet @redis, @makeKeyName('blacklist'), blacklist, fn
       (fn) =>
-        initState @redis, @makeDBListName('adminlist'), adminlist, fn
+        initSet @redis, @makeKeyName('adminlist'), adminlist, fn
       (fn) =>
-        unless whitelistOnly then return fn()
-        @redis.hset @makeDBHashName('whitelistmodes'), @name, whitelistOnly, fn
+        initSet @redis, @makeKeyName('userlist'), null, fn
       (fn) =>
-        unless owner then return fn()
-        @redis.hset @makeDBHashName('owners'), @name, owner, fn
-    ] , @withTE cb
-
-  # @private
-  removeState : (cb) ->
-    #TODO
-    async.parallel [
+        redis.del @makeKeyName('messagesHistory'), fn
       (fn) =>
-        @redis.del @makeDBListName('whitelist'), @makeDBListName('blacklist')
-        , @makeDBListName('adminlist'), @makeDBListName('history')
-        , fn
+        redis.del @makeKeyName('messagesTimestamps'), fn
       (fn) =>
-        @redis.hdel @makeDBHashName('whitelistmodes'), @name, fn
+        redis.del @makeKeyName('messagesIDs'), fn
       (fn) =>
-        @redis.hdel @makeDBHashName('owners'), @name, fn
-    ] , @withTE cb
+        redis.set @makeKeyName('lastMessageID'), 0, fn
+      (fn) =>
+        whitelistOnly = if whitelistOnly then 1 else 0
+        @redis.set @makeKeyName('whitelistMode'), whitelistOnly, fn
+      (fn) =>
+        owner = '' unless owner
+        @redis.set @makeKeyName('owner'), owner, fn
+    ] , cb
 
   # @private
   ownerGet : (cb) ->
-    #TODO
-    @redis.hget @makeDBHashName('owners'), @name, @withTE cb
+    @redis.get @makeKeyName('owner'), @withTE cb
 
   # @private
   ownerSet : (owner, cb) ->
-    #TODO
-    @redis.hset @makeDBHashName('owners'), @name, owner, @withTE cb
+    @redis.set @makeKeyName('owner'), owner, @withTE cb
 
   # @private
   messageAdd : (msg, cb) ->
     #TODO
-    if @historyMaxMessages <= 0 then return process.nextTick -> cb()
-    val = JSON.stringify msg
-    @redis.lpush @makeDBListName('history'), val, @withTE cb, =>
-      @redis.ltrim @makeDBListName('history'), 0, @historyMaxMessages - 1
-      , @withTE cb
 
   # @private
   messagesGetRecent : (cb) ->
     #TODO
-    @redis.lrange @makeDBListName('history'), 0, @historyMaxGetMessages - 1
-    , @withTE cb, (data) ->
-      messages = _.map data, JSON.parse
-      cb null, messages
+
+  messagesGetLastId : (cb) ->
+    @redis.get @makeKeyName('lastMessageID'), @withTE cb
+
+  messagesGetAfterId : (id, cb) ->
+    #TODO
 
   # @private
   getCommonUsers : (cb) ->
-    @redis.sdiff @makeDBListName('userlist'), @makeDBListName('whitelist')
-    , @makeDBListName('adminlist'), @withTE cb
+    @redis.sdiff @makeKeyName('userlist'), @makeKeyName('whitelist')
+    , @makeKeyName('adminlist'), @withTE cb
 
 
 # Implements direct messaging state API.
@@ -168,42 +179,33 @@ class RoomStateRedis extends ListsStateRedis
 # @nodoc
 class DirectMessagingStateRedis extends ListsStateRedis
 
+  extend @, stateOperations
+
   # @private
   constructor : (@server, @userName) ->
-    @name = @userName
-    @prefix = 'direct'
-    @redis = @server.state.redis
     @errorBuilder = @server.errorBuilder
     bindTE @
+    @name = @userName
+    @prefix = 'user'
+    @exitsErrorName = 'userExists'
+    @redis = @server.redis
 
   # @private
   hasList : (listName) ->
     return listName in [ 'whitelist', 'blacklist' ]
 
   # @private
-  initState : (state = {}, cb) ->
-    #TODO
+  resetState : (state = {}, cb) ->
     { whitelist, blacklist, whitelistOnly } = state
     async.parallel [
       (fn) =>
-        initState @redis, @makeDBListName('whitelist'), whitelist, fn
+        initSet @redis, @makeKeyName('whitelist'), whitelist, fn
       (fn) =>
-        initState @redis, @makeDBListName('blacklist'), blacklist, fn
+        initSet @redis, @makeKeyName('blacklist'), blacklist, fn
       (fn) =>
-        unless whitelistOnly then return fn()
-        @redis.hset @makeDBHashName('whitelistmodes'), @name, whitelistOnly, fn
-    ] , @withTE cb
-
-  # @private
-  removeState : (cb) ->
-    #TODO
-    async.parallel [
-      (fn) =>
-        @redis.del @makeDBListName('whitelist'), @makeDBListName('blacklist')
-        , fn
-      (fn) =>
-        @redis.hdel @makeDBHashName('whitelistmodes'), @name, fn
-    ] , @withTE cb
+        whitelistOnly = if whitelistOnly then 1 else 0
+        @redis.set @makeKeyName('whitelistMode'), whitelistOnly, fn
+    ] , cb
 
 
 # Implements user state API.
@@ -215,22 +217,22 @@ class UserStateRedis
   constructor : (@server, @userName) ->
     @name = @userName
     @prefix = 'user'
-    @redis = @server.state.redis
+    @redis = @server.redis
     @errorBuilder = @server.errorBuilder
     @echoChannel = @makeEchoChannelName @userName
     bindTE @
 
   # @private
-  makeDBListName : (listName) ->
-    "#{namespace}:#{@prefix}:#{listName}:#{@name}"
+  makeKeyName : (keyName) ->
+    "#{namespace}:#{@prefix}:{#{@name}}:#{keyName}"
 
   # @private
   makeSocketToRoomsName : (id) ->
-    "#{namespace}:#{@prefix}:socketrooms:#{id}"
+    "#{namespace}:#{@prefix}:{#{@name}}:socketsToRooms:#{id}"
 
   # @private
   makeRoomToSocketsName : (id) ->
-    "#{namespace}:#{@prefix}:roomsockets:#{id}"
+    "#{namespace}:#{@prefix}:{#{@name}}:roomsToSockets:#{id}"
 
   # @private
   makeEchoChannelName : (userName) ->
@@ -302,14 +304,16 @@ class RedisState
     @server.redis = @redis
 
   # @private
-  makeDBListName : (hashName) ->
-    "#{namespace}:#{hashName}"
+  makeKeyName : (prefix, name, keyName) ->
+    "#{namespace}:#{prefix}:{#{name}}:#{keyName}"
 
-  makeLockName : (name) ->
-    "#{namespace}:locks:#{name}"
+  # @private
+  hasRoom : (name, cb) ->
+    @redis.get @makeKeyName('rooms', name, 'exists'), @withTE cb
 
-  makeDBSocketsName : (inst) ->
-    "#{namespace}:instancesockets:#{inst}"
+  # @private
+  hasUser : (name, cb) ->
+    @redis.get @makeKeyName('user', name, 'exists'), @withTE cb
 
   # @private
   close : (cb) ->
@@ -318,64 +322,49 @@ class RedisState
 
   # @private
   getRoom : (name, cb) ->
-    @redis.sismember @makeDBListName('rooms'), name, @withTE cb, (data) =>
-      unless data
-        error = @errorBuilder.makeError 'noRoom', name
-        return cb error
+    @hasRoom name, withEH cb, (exists) =>
+      unless exists then return cb @errorBuilder.makeError 'noRoom', name
       room = new Room @server, name
       cb null, room
 
   # @private
   addRoom : (name, state, cb) ->
     room = new Room @server, name
-    @redis.sadd @makeDBListName('rooms'), name, @withTE cb, (nadded) =>
-      if nadded != 1
-        return cb @errorBuilder.makeError 'roomExists', name
-      if state
-        room.initState state, cb
-      else
-        cb()
+    room.initState state, cb
 
   # @private
   removeRoom : (name, cb) ->
-    @redis.sismember @makeDBListName('rooms'), name, @withTE cb, (data) =>
-      unless data
-        return cb @errorBuilder.makeError 'noRoom', name
-      @redis.srem @makeDBListName('rooms'), name, @withTE cb
+    @hasRoom name, withEH cb, (exists) =>
+      unless exists then return cb @errorBuilder.makeError 'noRoom', name
+      room = new Room @server, name
+      room.removeState cb
 
   # @private
   listRooms : (cb) ->
-    @redis.smembers @makeDBListName('rooms'), @withTE cb
+    #TODO
 
   # @private
   removeSocket : (uid, id, cb) ->
     #TODO
-    @redis.srem @makeDBSocketsName(uid), id, @withTE cb
 
   # @private
   loginUserSocket : (uid, name, id, cb) ->
     user = new User @server, name
-    @redis.sadd @makeDBListName('users'), name, @withTE cb, ->
+    user.initState null, ->
       user.registerSocket id, cb
 
   # @private
   getUser : (name, cb) ->
-    #TODO sockets
     user = new User @server, name
-    @redis.sismember @makeDBListName('users'), name, @withTE cb, (data) =>
-      if data then return cb null, user
-      else return cb @errorBuilder.makeError 'noUser', name
+    @hasUser name, withEH cb, (exists) =>
+      user.getAllSockets name, withEH cb, (sockets) =>
+        unless exists then return cb @errorBuilder.makeError 'noUser', name
+        cb null, user, sockets
 
   # @private
   addUser : (name, state, cb) ->
-    @redis.sadd @makeDBListName('users'), name, @withTE cb, (nadded) ->
-      if nadded == 0
-        return cb @errorBuilder.makeError 'userExists', name
-      if state
-        user = new User @server, name
-        user.initState state, cb
-      else
-        cb()
+    user = new User @server, name
+    user.initState state, cb
 
 
 module.exports = RedisState
