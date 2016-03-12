@@ -6,7 +6,10 @@
   "scripts": {
     "start": "bin/www"
   },
-  "author": "",
+  "author": {
+    "name": "Andrey Sharapov",
+    "email": "an.sh.1@yandex.ru"
+  },
   "license": "MIT",
   "dependencies": {
     "browserify": "^10.2.0",
