@@ -237,19 +237,18 @@ describe 'Chat service.', ->
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed', (u) ->
             socket1.emit 'roomCreate', roomName1, false, ->
-              socket1.emit 'listRooms', (error, data) ->
+              socket1.emit 'roomJoin', roomName1, (error, data) ->
                 expect(error).not.ok
-                expect(data).length(1)
-                expect(data[0]).equal(roomName1)
+                expect(data).equal(1)
                 socket1.emit 'roomCreate', roomName1, false, (error, data) ->
                   expect(error).ok
                   expect(data).null
-                  socket1.emit 'roomDelete', roomName1, (error, data) ->
-                    expect(error).not.ok
-                    expect(data).null
-                    socket1.emit 'listRooms', (error, data) ->
-                      expect(error).not.ok
-                      expect(data).empty
+                  socket1.emit 'roomDelete', roomName1
+                  socket1.on 'roomAccessRemoved', (r) ->
+                    expect(r).equal(roomName1)
+                    socket1.emit 'roomJoin', roomName1, (error, data) ->
+                      expect(error).ok
+                      expect(data).null
                       done()
 
         it 'should check for invalid room names', (done) ->
@@ -275,19 +274,6 @@ describe 'Chat service.', ->
                 socket1.emit 'roomDelete', roomName2, (error, data) ->
                   expect(error).ok
                   expect(data).null
-                  done()
-
-        it 'should list all rooms', (done) ->
-          chatServer = new ChatService { port : port }, null, state
-          chatServer.addRoom roomName1, { whitelistOnly : true }, ->
-            chatServer.addRoom roomName2, null, ->
-              socket1 = clientConnect user1
-              socket1.on 'loginConfirmed', ->
-                socket1.emit 'listRooms', (error, data) ->
-                  expect(error).not.ok
-                  expect(data).an('array')
-                  expect(data).include(roomName2)
-                  expect(data).include(roomName1)
                   done()
 
         it 'should send access removed on a room deletion', (done) ->
@@ -985,7 +971,7 @@ describe 'Chat service.', ->
                         socket3 = clientConnect user1
                         socket3.on 'loginConfirmed', (u, data)->
                           sid3 = data.id
-                          socket2.emit 'listJoinedSockets', (error, data) ->
+                          socket2.emit 'listOwnSockets', (error, data) ->
                             expect(error).not.ok
                             expect(data[sid1]).lengthOf(2)
                             expect(data[sid2]).lengthOf(1)
@@ -1314,38 +1300,35 @@ describe 'Chat service.', ->
 
         it 'should support changing arguments in before hooks', (done) ->
           beforeHook = (server, userName, id, args, cb) ->
-            [ name , mode ] = args
-            cb null, null, roomName2, mode
+            cb null, null, roomName2
           chatServer = new ChatService { port : port
             , enableRoomsManagement : true}
-          , { 'roomCreateBefore' : beforeHook }
+          , { 'roomGetWhitelistModeBefore' : beforeHook }
           , state
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed',  ->
-            socket1.emit 'roomCreate', roomName1, true, ->
-              socket1.emit 'listRooms', (error, data) ->
-                expect(error).not.ok
-                expect(data).lengthOf(1)
-                expect(data[0]).length.equal(roomName2)
-                done()
+            socket1.emit 'roomCreate', roomName2, false, ->
+              socket1.emit 'roomCreate', roomName1, true, ->
+                socket1.emit 'roomGetWhitelistMode', roomName1, (error, data) ->
+                  expect(error).not.ok
+                  expect(data).false
+                  done()
 
         it 'should support more arguments in after hooks', (done) ->
           afterHook = (server, userName, id, args, results, cb) ->
-            [ name , mode ] = args
             cb null, null, true
-          chatServer = new ChatService { port : port
-            , enableRoomsManagement : true}
-          , { 'listRoomsAfter' : afterHook }
+          chatServer = new ChatService { port : port }
+          , { 'listOwnSocketsAfter' : afterHook }
           , state
           socket1 = clientConnect user1
-          socket1.on 'loginConfirmed',  ->
-            socket1.emit 'roomCreate', roomName1, true, ->
-              socket1.emit 'listRooms', (error, data, moredata) ->
-                expect(error).not.ok
-                expect(data).lengthOf(1)
-                expect(data[0]).length.equal(roomName1)
-                expect(moredata).true
-                done()
+          socket1.on 'loginConfirmed', (u, data) ->
+            sid = data.id
+            socket1.emit 'listOwnSockets', (error, data, moredata) ->
+              expect(error).not.ok
+              expect(data[sid]).exits
+              expect(data[sid]).empty
+              expect(moredata).true
+              done()
 
         it 'should send errors if new arguments have a different length'
         , (done) ->
@@ -1383,10 +1366,10 @@ describe 'Chat service.', ->
           beforeHook = (server, userName, id, args, cb) ->
             cb err
           chatServer = new ChatService { port : port }
-          , { 'listRoomsBefore' : beforeHook }, state
+          , { 'listOwnSocketsBefore' : beforeHook }, state
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed', ->
-            socket1.emit 'listRooms', (error, data) ->
+            socket1.emit 'listOwnSockets', (error, data) ->
               expect(error).equal(err)
               expect(data).null
               done()
@@ -1544,9 +1527,10 @@ describe 'Chat service.', ->
                   socket1.emit 'roomGetOwner', roomName1, (error, data) ->
                     expect(error).not.ok
                     expect(data).equal(user2)
-                    chatServer.getRoomOwner roomName1, (error, data) ->
+                    chatServer.getRoomInfo roomName1, (error, mode, owner) ->
                       expect(error).not.ok
-                      expect(data).equal(user2)
+                      expect(owner).equal(user2)
+                      expect(mode).equal(false)
                       done()
 
         it 'should send system messages to all user sockets.', (done) ->

@@ -102,11 +102,7 @@ class ArgumentsValidator
     ]
 
   # @private
-  listJoinedSockets : () ->
-    []
-
-  # @private
-  listRooms : () ->
+  listOwnSockets : () ->
     []
 
   # @private

@@ -340,10 +340,6 @@ class RedisState
       room.removeState cb
 
   # @private
-  listRooms : (cb) ->
-    #TODO
-
-  # @private
   removeSocket : (uid, id, cb) ->
     #TODO
 

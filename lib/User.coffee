@@ -358,12 +358,8 @@ class User extends DirectMessaging
     @removeSocketFromServer id, cb
 
   # @private
-  listJoinedSockets : (cb) ->
+  listOwnSockets : (cb) ->
     @userState.getSocketsToRooms cb
-
-  # @private
-  listRooms : (cb) ->
-    @state.listRooms cb
 
   # @private
   roomAddToList : (roomName, listName, values, cb) ->

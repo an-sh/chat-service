@@ -57,6 +57,17 @@ ServiceAPI =
       return process.nextTick -> cb error
     @state.addUser userName, state, withoutData cb
 
+  # TODO
+  getUserInfo : (userName, cb = ->) ->
+    @state.getUser userName, withEH cb, (user, sockets) ->
+      user.getMode withEH cb, (mode) ->
+        cb null, mode, sockets
+
+  # TODO
+  getUserList : (userName, listName, cb = ->)  ->
+    @state.getUser userName, withEH cb, (user) ->
+      user.directGetAccessList listName, cb
+
   # Disconnects all user sockets for this instance.
   #
   # @param userName [String] User name.
@@ -94,14 +105,20 @@ ServiceAPI =
           @state.removeRoom room.name, ->
             room.removeState withoutData cb
 
-  # Gets room owner.
-  #
-  # @param roomName [String] Room name.
-  # @param cb [Callback] Optional callback.
-  getRoomOwner : (roomName, cb = ->) ->
+  # TODO
+  getRoomInfo : (roomName, cb = ->) ->
     user = new User @
     user.withRoom roomName, withEH cb, (room) ->
-      room.roomState.ownerGet cb
+      room.roomState.whitelistOnlyGet withEH cb, (mode) ->
+        room.roomState.ownerGet withEH cb, (owner) ->
+          cb null, mode, owner
+
+  # TODO
+  getRoomList : (roomName, listName, cb) ->
+    user = new User @
+    user.withRoom roomName, withEH cb, (room) ->
+      room.roomState.getList withEH cb, (list) ->
+        cb null, list
 
   # Changes room owner.
   #

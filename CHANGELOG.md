@@ -2,7 +2,7 @@
 ### 0.7.0 (unreleased)
 
 - Added ServiceAPI for scripting.
-- Added listJoinedSockets command.
+- Added listOwnSockets command.
 - Added roomGetOwner command.
 - Added roomHistorySync and roomHistoryLastId commands.
 - Added socketConnectEcho and socketDisconnectEcho messages.
@@ -21,6 +21,7 @@
 - Commands arguments validation fixes.
 - Huge internal APIs changes.
 - Include redis socket.io adapter.
+- Remove listRooms command.
 
 ### 0.6.1 (2016/02/01)
 

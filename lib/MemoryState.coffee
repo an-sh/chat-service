@@ -352,11 +352,6 @@ class MemoryState
     process.nextTick -> cb error
 
   # @private
-  listRooms : (cb) ->
-    rooms = _.keys @rooms
-    process.nextTick > cb null, rooms
-
-  # @private
   removeSocket : (uid, id, cb) ->
     process.nextTick -> cb()
 

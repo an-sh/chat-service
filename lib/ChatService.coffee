@@ -203,12 +203,7 @@ class UserCommands
   #   values.
   # @see ServerMessages#roomJoinedEcho
   # @see ServerMessages#roomLeftEcho
-  listJoinedSockets : (cb) ->
-
-  # Gets a list of all rooms on the server.
-  # @param cb [Function<error, Array<String>>] Sends ack with an error
-  #   or a list of rooms.
-  listRooms : (cb) ->
+  listOwnSockets : (cb) ->
 
   # Adds userNames to room's blacklist, adminlist and whitelist. Also
   # removes users that have lost an access permission in the result of
