@@ -84,7 +84,6 @@ class SocketIOTransport
       return @rejectLogin socket, error
     @server.state.loginUserSocket @server.serverUID, userName, socket.id
     , (error, user, nconnected) =>
-      unless user then return
       if error then return @rejectLogin socket, error
       socket.join user.echoChannel, @withTE (error) =>
         if error then return @rejectLogin socket, error
@@ -188,7 +187,7 @@ class SocketIOTransport
       return cb @errorBuilder.makeError 'serverError', 500
     socket.join channel, @withTE cb
 
-  # @private1
+  # @private
   # @nodoc
   leaveChannel : (id, channel, cb) ->
     socket = @getSocketObject id

@@ -1658,6 +1658,19 @@ describe 'Chat service.', ->
               expect(data).not.ok
               done()
 
+        it 'should have a message validator instance', (done) ->
+          chatServer = new ChatService {port : port}, null, state
+          chatServer.validator.checkArguments 'roomGetAccessList'
+            , roomName1, 'userlist', (error) ->
+              expect(error).not.ok
+              done()
+
+        it 'should check for unknown commands', (done) ->
+          chatServer = new ChatService {port : port}, null, state
+          chatServer.validator.checkArguments 'cmd', (error) ->
+            expect(error).ok
+            done()
+
         it 'should validate a message argument count', (done) ->
           chatServer = new ChatService {port : port
             , enableRoomsManagement : true},

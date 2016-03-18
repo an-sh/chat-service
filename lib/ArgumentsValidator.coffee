@@ -5,26 +5,33 @@ async = require 'async'
 check = require 'check-types'
 { asyncLimit } = require './utils.coffee'
 
-
-# @private
-# @nodoc
-# Commands arguments type and count validation functions.
+# Commands arguments type and count validation.
 class ArgumentsValidator
 
+  # @private
+  # @nodoc
   constructor : (@server) ->
     @checkers = new Map
     for name, fn of @server.userCommands
       @checkers.set name, _.bind @[name], @
     @directMessagesChecker = @server.directMessagesChecker
     @roomMessagesChecker = @server.roomMessagesChecker
+    @errorBuilder = @server.errorBuilder
     @customCheckers =
       directMessage : [ null, @directMessagesChecker ]
       roomMessage : [ null, @roomMessagesChecker ]
 
-  # @private
-  checkArguments : (name, args, cb) ->
-    checkers = @checkers.get(name)()
-    error = @checkTypes checkers, args
+  # Check command arguments.
+  #
+  # @param name [String] Command name.
+  # @param args [Rest...] Command arguments.
+  # @param cb [Callback] Callback.
+  checkArguments : (name, args..., cb) ->
+    checkfn = @checkers.get name
+    unless checkfn
+      return process.nextTick =>
+        cb @errorBuilder.makeError 'noCommand', name
+    error = @checkTypes checkfn, args
     if error
       return process.nextTick -> cb error
     customCheckers = @customCheckers[name]
@@ -38,6 +45,7 @@ class ArgumentsValidator
       process.nextTick -> cb()
 
   # @private
+  # @nodoc
   checkMessage : (msg) ->
     passed = check.object msg
     unless passed then return false
@@ -46,12 +54,15 @@ class ArgumentsValidator
     _.keys(msg).length == 1
 
   # @private
+  # @nodoc
   checkObject : (obj) ->
     check.object obj
 
   # @private
-  checkTypes : (checkers, args) ->
-    if args.length != checkers.length
+  # @nodoc
+  checkTypes : (checkfn, args) ->
+    checkers = checkfn()
+    if args?.length != checkers.length
       return [ 'wrongArgumentsCount', checkers.length, args.length ]
     for checker, idx in checkers
       unless checker args[idx]
@@ -59,6 +70,7 @@ class ArgumentsValidator
     return null
 
   # @private
+  # @nodoc
   directAddToList : (listName, userNames) ->
     [
       check.string
@@ -66,16 +78,19 @@ class ArgumentsValidator
     ]
 
   # @private
+  # @nodoc
   directGetAccessList : (listName) ->
     [
       check.string
     ]
 
   # @private
+  # @nodoc
   directGetWhitelistMode : () ->
     []
 
   # @private
+  # @nodoc
   directMessage : (toUser, msg) ->
     [
       check.string
@@ -83,6 +98,7 @@ class ArgumentsValidator
     ]
 
   # @private
+  # @nodoc
   directRemoveFromList : (listName, userNames) ->
     [
       check.string
@@ -90,22 +106,26 @@ class ArgumentsValidator
     ]
 
   # @private
+  # @nodoc
   directSetWhitelistMode : (mode) ->
     [
       check.boolean
     ]
 
   # @private
+  # @nodoc
   disconnect : (reason) ->
     [
       check.string
     ]
 
   # @private
+  # @nodoc
   listOwnSockets : () ->
     []
 
   # @private
+  # @nodoc
   roomAddToList : (roomName, listName, userNames) ->
     [
       check.string
@@ -114,6 +134,7 @@ class ArgumentsValidator
     ]
 
   # @private
+  # @nodoc
   roomCreate : (roomName, mode) ->
     [
       check.string
@@ -121,12 +142,14 @@ class ArgumentsValidator
     ]
 
   # @private
+  # @nodoc
   roomDelete : (roomName) ->
     [
       check.string
     ]
 
   # @private
+  # @nodoc
   roomGetAccessList : (roomName, listName) ->
     [
       check.string
@@ -134,30 +157,35 @@ class ArgumentsValidator
     ]
 
   # @private
+  # @nodoc
   roomGetOwner : (roomName) ->
     [
       check.string
     ]
 
   # @private
+  # @nodoc
   roomGetWhitelistMode : (roomName) ->
     [
       check.string
     ]
 
   # @private
+  # @nodoc
   roomHistory : (roomName)->
     [
       check.string
     ]
 
   # @private
+  # @nodoc
   roomHistoryLastId : (roomName)->
     [
       check.string
     ]
 
   # @private
+  # @nodoc
   roomHistorySync : (roomName, id)->
     [
       check.string
@@ -165,18 +193,21 @@ class ArgumentsValidator
     ]
 
   # @private
+  # @nodoc
   roomJoin : (roomName) ->
     [
       check.string
     ]
 
   # @private
+  # @nodoc
   roomLeave : (roomName) ->
     [
       check.string
     ]
 
   # @private
+  # @nodoc
   roomMessage : (roomName, msg) ->
     [
       check.string
@@ -184,6 +215,7 @@ class ArgumentsValidator
     ]
 
   # @private
+  # @nodoc
   roomRemoveFromList : (roomName, listName, userNames) ->
     [
       check.string
@@ -192,6 +224,7 @@ class ArgumentsValidator
     ]
 
   # @private
+  # @nodoc
   roomSetWhitelistMode : (roomName, mode) ->
     [
       check.string
@@ -199,6 +232,7 @@ class ArgumentsValidator
     ]
 
   # @private
+  # @nodoc
   systemMessage : (data) ->
     [
       -> true

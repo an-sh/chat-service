@@ -140,7 +140,7 @@ class ServerMessages
 #   socket = ioClient.connect url, params
 #   socket.on 'loginConfirmed', (userName, authData) ->
 #     socket.emit 'roomJoin', roomName, (error, data) ->
-#       # this is a socket.io ack waiting callback.  socket is joined
+#       # this is a socket.io ack waiting callback. socket is joined
 #       # the room, or an error occurred. we get here only when the
 #       # server has finished a message processing.
 #
@@ -498,6 +498,9 @@ class ChatService
 
   # @property [Object] {ErrorBuilder} instance.
   errorBuilder: null
+
+  # @property [Object] {ArgumentsValidator} instance.
+  validator: null
 
   # @property [Object or null] Socket.io server.
   io: null

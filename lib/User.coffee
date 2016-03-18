@@ -45,7 +45,7 @@ CommandBinder =
           else
             reportResults()
         fn.apply @, [ args..., afterCommand, id ]
-      validator.checkArguments name, oargs, (errors) =>
+      validator.checkArguments name, oargs..., (errors) =>
         if errors
           return cb errorBuilder.makeError errors...
         unless beforeHook
@@ -290,7 +290,7 @@ class User extends DirectMessaging
       fn args..., ack, id
     else
       validator = @server.validator
-      validator.checkArguments command, args, (errors) =>
+      validator.checkArguments command, args..., (errors) =>
         if errors then return ack @errorBuilder.makeError errors...
         @[command] args..., ack, id
 

@@ -17,7 +17,7 @@ ServiceAPI =
   # @param params [String or Object] Is either a user name or an
   #   options hash.
   # @param command [String] Command name.
-  # @param args [Rest] Command arguments with an optional callback.
+  # @param args [Rest...] Command arguments with an optional callback.
   #
   # @option params [String] username User name.
   # @option params [String] id Socket id, it is required for
