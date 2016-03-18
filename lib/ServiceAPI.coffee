@@ -57,16 +57,24 @@ ServiceAPI =
       return process.nextTick -> cb error
     @state.addUser userName, state, withoutData cb
 
-  # TODO
-  getUserInfo : (userName, cb = ->) ->
-    @state.getUser userName, withEH cb, (user, sockets) ->
-      user.getMode withEH cb, (mode) ->
-        cb null, mode, sockets
+  # Gets user direct messaging mode.
+  #
+  # @param userName [String] User name.
+  # @param cb [Callback<error, Boolean>] Calls callback with an error
+  #   or the user mode.
+  getUserMode : (userName, cb = ->) ->
+    @state.getUser userName, withEH cb, (user) ->
+      user.directMessagingState.whitelistOnlyGet cb
 
-  # TODO
+  # Gets an user list.
+  #
+  # @param userName [String] User name.
+  # @param listName [String] List name.
+  # @param cb [Callback<error, Array<String>>] Calls callback with an
+  #   error or the requested user list.
   getUserList : (userName, listName, cb = ->)  ->
     @state.getUser userName, withEH cb, (user) ->
-      user.directGetAccessList listName, cb
+      user.directMessagingState.getList listName, cb
 
   # Disconnects all user sockets for this instance.
   #
@@ -105,22 +113,38 @@ ServiceAPI =
           @state.removeRoom room.name, ->
             room.removeState withoutData cb
 
-  # TODO
-  getRoomInfo : (roomName, cb = ->) ->
+  # Gets a room owner.
+  #
+  # @param roomName [String] Room name.
+  # @param cb [Callback<error, String>] Calls callback with an error
+  #   or the room owner.
+  getRoomOwner : (roomName, cb = ->) ->
     user = new User @
     user.withRoom roomName, withEH cb, (room) ->
-      room.roomState.whitelistOnlyGet withEH cb, (mode) ->
-        room.roomState.ownerGet withEH cb, (owner) ->
-          cb null, mode, owner
+      room.roomState.ownerGet cb
 
-  # TODO
+  # Gets a room mode.
+  #
+  # @param roomName [String] Room mode.
+  # @param cb [Callback<error, Boolean>] Calls callback with an error
+  #   or the room mode.
+  getRoomMode : (roomName, cb = ->) ->
+    user = new User @
+    user.withRoom roomName, withEH cb, (room) ->
+      room.roomState.whitelistOnlyGet cb
+
+  # Gets a room list.
+  #
+  # @param roomName [String] Room name.
+  # @param listName [String] List name.
+  # @param cb [Callback<error, Array<String>>] Calls callback with an
+  #   error or the requested room list.
   getRoomList : (roomName, listName, cb) ->
     user = new User @
     user.withRoom roomName, withEH cb, (room) ->
-      room.roomState.getList withEH cb, (list) ->
-        cb null, list
+      room.roomState.getList listName, cb
 
-  # Changes room owner.
+  # Changes a room owner.
   #
   # @param roomName [String] Room name.
   # @param owner [String] Owner user name.

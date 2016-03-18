@@ -1466,6 +1466,23 @@ describe 'Chat service.', ->
               expect(data).not.ok
               done()
 
+        it 'should get a user mode', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.addUser user1, { whitelistOnly : true }, ->
+            chatServer.getUserMode user1, (error, data) ->
+              expect(error).not.ok
+              expect(data).true
+              done()
+
+        it 'should get a user list', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.addUser user1, { whitelist : [user2] }, ->
+            chatServer.getUserList user1, 'whitelist', (error, data) ->
+              expect(error).not.ok
+              expect(data).lengthOf(1)
+              expect(data[0]).equal(user2)
+              done()
+
         it 'should check room names, before adding', (done) ->
           chatServer = new ChatService { port : port }, null, state
           chatServer.addRoom 'room:1', null, (error, data) ->
@@ -1527,11 +1544,27 @@ describe 'Chat service.', ->
                   socket1.emit 'roomGetOwner', roomName1, (error, data) ->
                     expect(error).not.ok
                     expect(data).equal(user2)
-                    chatServer.getRoomInfo roomName1, (error, mode, owner) ->
+                    chatServer.getRoomOwner roomName1, (error, owner) ->
                       expect(error).not.ok
                       expect(owner).equal(user2)
-                      expect(mode).equal(false)
                       done()
+
+        it 'should get a room mode', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.addRoom roomName1, { whitelistOnly : true }, ->
+            chatServer.getRoomMode roomName1, (error, data) ->
+              expect(error).not.ok
+              expect(data).true
+              done()
+
+        it 'should get a room list', (done) ->
+          chatServer = new ChatService { port : port }, null, state
+          chatServer.addRoom roomName1, { whitelist : [user2] }, ->
+            chatServer.getRoomList roomName1, 'whitelist', (error, data) ->
+              expect(error).not.ok
+              expect(data).lengthOf(1)
+              expect(data[0]).equal(user2)
+              done()
 
         it 'should send system messages to all user sockets.', (done) ->
           data = 'some data.'

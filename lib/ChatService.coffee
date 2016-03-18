@@ -44,6 +44,7 @@ class ServerMessages
   disconnect : (reason) ->
 
   # Error events, like socket.io middleware error.
+  # @note Socket.io system event.
   # @param error [Object]
   error : (error) ->
 
@@ -127,8 +128,8 @@ class ServerMessages
 
 # @note This class describes socket.io incoming messages, not methods.
 #
-# List of server messages that are sent from a client. Result is sent
-# back as a socket.io ack with in the standard (error, data) callback
+# List of commands that are sent from a client. Result is sent back as
+# a socket.io ack with in the standard (error, data) callback
 # parameters format. Error is ether a string or an object, depending
 # on {ChatService} `useRawErrorObjects` option. See {ErrorBuilder} for
 # an error object format description. Some messages will echo
@@ -273,7 +274,7 @@ class UserCommands
   # `historyMaxGetMessages` option. May be called several times to
   # fill gaps larger then the value of `historyMaxGetMessages`.
   # @param roomName [String] Room name.
-  # @param id [Number] Message id,
+  # @param id [Number] Message id.
   # @param cb [Function<error, Array<Objects>>] Sends ack with an
   #   error or array of messages.
   # @see UserCommands#roomHistoryLastId
