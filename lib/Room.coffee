@@ -220,7 +220,9 @@ class Room
     @checkModeChange author, mode, withEH cb, =>
       whitelistOnly = if mode then true else false
       @roomState.whitelistOnlySet whitelistOnly, withEH cb, =>
-        @getModeChangedCurrentAccess whitelistOnly, cb
+        @getModeChangedCurrentAccess whitelistOnly, withEH cb
+        , (userNames) ->
+          cb null, userNames, mode
 
 
 module.exports = Room

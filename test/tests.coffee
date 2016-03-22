@@ -751,6 +751,21 @@ describe 'Chat service.', ->
                     expect(us[0]).equal(user3)
                     done()
 
+        it 'should send mode changed messages', (done) ->
+          chatServer = new ChatService { port : port
+            , enableAccessListsUpdates : true }
+          , null, state
+          chatServer.addRoom roomName1
+          , { owner : user1, whitelistOnly : true }
+          , ->
+            socket1 = clientConnect user1
+            socket1.emit 'roomJoin',  roomName1, ->
+              socket1.emit 'roomSetWhitelistMode', roomName1, false
+              socket1.on 'roomModeChanged', (roomName, mode) ->
+                expect(roomName).equal(roomName1)
+                expect(mode).false
+                done()
+
         it 'should allow wl and bl modifications for admins', (done) ->
           chatServer = new ChatService { port : port }, null, state
           chatServer.addRoom roomName1, { adminlist : [user1] }, ->

@@ -454,7 +454,9 @@ class User extends DirectMessaging
   # @private
   roomSetWhitelistMode : (roomName, mode, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.changeMode @userName, mode, withEH cb, (userNames) =>
+      room.changeMode @userName, mode, withEH cb, (userNames, mode) =>
+        if @enableAccessListsUpdates
+          @transport.sendToChannel roomName, 'roomModeChanged', roomName, mode
         @removeRoomUsers room, userNames, cb
 
   # @private

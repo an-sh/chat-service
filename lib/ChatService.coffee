@@ -64,14 +64,14 @@ class ServerMessages
   # @see UserCommands#roomRemoveFromList
   roomAccessRemoved : (roomName) ->
 
-  # Indicates room access list add.
+  # Indicates a room access list add.
   # @param roomName [String] Rooms name.
   # @param listName [String] 'blacklist', 'adminlist' or 'whitelist'.
   # @param userNames [Array<String>] UserNames removed from the list.
   # @see UserCommands#roomAddToList
   roomAccessListAdded : (roomName, listName, userNames) ->
 
-  # Indicates room access list remove.
+  # Indicates a room access list remove.
   # @param roomName [String] Rooms name.
   # @param listName [String] 'blacklist', 'adminlist' or 'whitelist'.
   # @param userNames [Array<String>] UserNames added to the list.
@@ -98,6 +98,12 @@ class ServerMessages
   #   author:String, id:Number>] Message.
   # @see UserCommands#roomMessage
   roomMessage : (roomName, msg) ->
+
+  # Indicates a room mode change.
+  # @param roomName [String] Rooms name.
+  # @param mode [Boolean]
+  # @see UserCommands#roomSetWhitelistMode
+  roomModeChanged : (roomName, mode) ->
 
   # Indicates that an another user has joined a room.
   # @param roomName [String] Rooms name.
@@ -360,6 +366,7 @@ class ChatService
   #   `5000`.
   #
   # @option serviceOptions [Boolean] enableAccessListsUpdates Enables
+  #   {ServerMessages#roomModeChanged},
   #   {ServerMessages#roomAccessListAdded} and
   #   {ServerMessages#roomAccessListRemoved} messages, default is
   #   `false`.
