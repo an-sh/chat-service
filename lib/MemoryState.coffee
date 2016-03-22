@@ -2,6 +2,7 @@
 FastSet = require 'collections/fast-set'
 List = require 'collections/list'
 Map = require 'collections/fast-map'
+Promise = require 'bluebird'
 Room = require './Room.coffee'
 User = require './User.coffee'
 _ = require 'lodash'
@@ -25,45 +26,50 @@ initState = (state, values) ->
 class ListsStateMemory
 
   # @private
-  checkList : (listName, cb) ->
+  checkList : (listName) ->
     unless @hasList listName
       error = @errorBuilder.makeError 'noList', listName
-    process.nextTick -> cb error
+      Promise.reject error
+    else
+      Promise.resolve()
 
   # @private
-  addToList : (listName, elems, cb) ->
-    @checkList listName, withEH cb, =>
+  addToList : (listName, elems) ->
+    @checkList listName
+    .then =>
       @[listName].addEach elems
-      cb()
+      Promise.resolve()
 
   # @private
-  removeFromList : (listName, elems, cb) ->
-    @checkList listName, withEH cb, =>
+  removeFromList : (listName, elems) ->
+    @checkList listName
+    .then =>
       @[listName].deleteEach elems
-      cb()
+      Promise.resolve()
 
   # @private
-  getList : (listName, cb) ->
-    @checkList listName, withEH cb, =>
+  getList : (listName) ->
+    @checkList listName
+    .then =>
       data = @[listName].toArray()
-      cb null, data
+      Promise.resolve data
 
   # @private
-  hasInList : (listName, elem, cb) ->
-    @checkList listName, withEH cb, =>
+  hasInList : (listName, elem) ->
+    @checkList listName
+    .then =>
       data = @[listName].has elem
       data = if data then true else false
-      cb null, data
+      Promise.resolve data
 
   # @private
-  whitelistOnlySet : (mode, cb) ->
+  whitelistOnlySet : (mode) ->
     @whitelistOnly = if mode then true else false
-    process.nextTick -> cb()
+    Promise.resolve()
 
   # @private
-  whitelistOnlyGet : (cb) ->
-    m = @whitelistOnly
-    process.nextTick -> cb null, m
+  whitelistOnlyGet : () ->
+    Promise.resolve @whitelistOnly
 
 
 # Implements room state API.
@@ -190,6 +196,7 @@ class DirectMessagingStateMemory extends ListsStateMemory
 
   # @private
   constructor : (@server, @userName) ->
+    @errorBuilder = @server.errorBuilder
     @whitelistOnly
     @whitelist = new FastSet
     @blacklist = new FastSet

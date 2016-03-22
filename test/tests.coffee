@@ -74,7 +74,7 @@ describe 'Chat service.', ->
 
     describe "State #{state.state} with #{state.adapter} adapter.", ->
 
-      @timeout 6000
+      @timeout 1000
 
       afterEach afterEachFn
 

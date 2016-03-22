@@ -13,9 +13,10 @@ DirectMessagingPermissions =
 
   # @private
   checkList : (author, listName, cb) ->
-    unless @directMessagingState.hasList listName
-      error = @errorBuilder.makeError 'noList', listName
-    process.nextTick -> cb error
+    @directMessagingState.checkList listName
+    .then (data) ->
+      cb null, data
+    , cb
 
   # @private
   checkListValues : (author, listName, values, cb) ->
@@ -38,15 +39,19 @@ DirectMessagingPermissions =
     if userName == @userName
       return process.nextTick => cb @errorBuilder.makeError 'notAllowed'
     @directMessagingState.hasInList 'blacklist', userName
-    , withEH cb, (blacklisted) =>
+    .then (blacklisted) =>
       if blacklisted
         return cb @errorBuilder.makeError 'notAllowed'
-      @directMessagingState.whitelistOnlyGet withEH cb, (whitelistOnly) =>
+      @directMessagingState.whitelistOnlyGet()
+      .then (whitelistOnly) =>
         @directMessagingState.hasInList 'whitelist', userName
-        , withEH cb, (hasInWhitelist) =>
+        .then (hasInWhitelist) =>
           if whitelistOnly and not hasInWhitelist
             return cb @errorBuilder.makeError 'notAllowed'
           cb()
+        , cb
+      , cb
+    , cb
 
 
 # @private
@@ -76,26 +81,41 @@ class DirectMessaging
   # @private
   getList : (author, listName, cb) ->
     @checkList author, listName, withEH cb, =>
-      @directMessagingState.getList listName, cb
+      @directMessagingState.getList listName
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   addToList : (author, listName, values, cb) ->
     @checkListAdd author, listName, values, withEH cb, =>
-      @directMessagingState.addToList listName, values, cb
+      @directMessagingState.addToList listName, values
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   removeFromList : (author, listName, values, cb) ->
     @checkListRemove author, listName, values, withEH cb, =>
-      @directMessagingState.removeFromList listName, values, cb
+      @directMessagingState.removeFromList listName, values
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   getMode : (author, cb) ->
-    @directMessagingState.whitelistOnlyGet cb
+    @directMessagingState.whitelistOnlyGet()
+    .then (data) ->
+      cb null, data
+    , cb
 
   # @private
   changeMode : (author, mode, cb) ->
     m = if mode then true else false
-    @directMessagingState.whitelistOnlySet m, cb
+    @directMessagingState.whitelistOnlySet m
+    .then (data) ->
+      cb null, data
+    , cb
 
 
 module.exports = DirectMessaging

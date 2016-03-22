@@ -29,6 +29,7 @@
   "license": "MIT",
   "dependencies": {
     "async": "^1.5.2",
+    "bluebird": "^3.3.4",
     "check-types": "^6.0.0",
     "coffee-script": "^1.10.0",
     "collections": "^3.0.0",

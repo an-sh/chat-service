@@ -17,28 +17,35 @@ RoomPermissions =
     @roomState.ownerGet withEH cb, (owner) =>
       if owner == userName
         return cb null, true
-      @roomState.hasInList 'adminlist', userName, withEH cb, (hasName) ->
+      @roomState.hasInList 'adminlist', userName
+      .then (hasName) ->
         if hasName
           return cb null, true
         cb null, false
+      , cb
 
   # @private
   hasRemoveChangedCurrentAccess : (userName, listName, cb) ->
-    @roomState.hasInList 'userlist', userName, withEH cb, (hasUser) =>
+    @roomState.hasInList 'userlist', userName
+    .then (hasUser) =>
       unless hasUser
         return cb null, false
       @isAdmin userName, withEH cb, (admin) =>
         if admin
           cb null, false
         else if listName == 'whitelist'
-          @roomState.whitelistOnlyGet withEH cb, (whitelistOnly) ->
+          @roomState.whitelistOnlyGet()
+          .then (whitelistOnly) ->
             cb null, whitelistOnly
+          , cb
         else
           cb null, false
+    , cb
 
   # @private
   hasAddChangedCurrentAccess : (userName, listName, cb) ->
-    @roomState.hasInList 'userlist', userName, withEH cb, (hasUser) =>
+    @roomState.hasInList 'userlist', userName
+    .then (hasUser) =>
       unless hasUser
         return cb null, false
       @isAdmin userName, withEH cb, (admin) ->
@@ -48,6 +55,7 @@ RoomPermissions =
           cb null, true
         else
           cb null, false
+    , cb
 
   # @private
   getModeChangedCurrentAccess : (value, cb) ->
@@ -58,10 +66,12 @@ RoomPermissions =
 
   # @private
   checkJoinedUser : (author, cb) ->
-    @roomState.hasInList 'userlist', author, withEH cb, (hasAuthor) =>
+    @roomState.hasInList 'userlist', author
+    .then (hasAuthor) =>
       unless hasAuthor
         return cb @errorBuilder.makeError 'notJoined', @name
       cb()
+    , cb
 
   # @private
   checkListChanges : (author, listName, values, cb) ->
@@ -73,13 +83,15 @@ RoomPermissions =
           return cb()
         if listName == 'adminlist'
           return cb @errorBuilder.makeError 'notAllowed'
-        @roomState.hasInList 'adminlist', author, withEH cb, (hasAuthor) =>
+        @roomState.hasInList 'adminlist', author
+        .then (hasAuthor) =>
           unless hasAuthor
             return cb @errorBuilder.makeError 'notAllowed'
           for name in values
             if name == owner
               return cb @errorBuilder.makeError 'notAllowed'
           cb()
+        , cb
 
   # @private
   checkListAdd : (author, listName, values, cb) ->
@@ -101,15 +113,20 @@ RoomPermissions =
     @isAdmin userName, withEH cb, (admin) =>
       if admin
         return cb()
-      @roomState.hasInList 'blacklist', userName, withEH cb, (inBlacklist) =>
-        if inBlacklist
+      @roomState.hasInList 'blacklist', userName
+      .then (blacklisted) =>
+        if blacklisted
           return cb @errorBuilder.makeError 'notAllowed'
-        @roomState.whitelistOnlyGet withEH cb, (whitelistOnly) =>
+        @roomState.whitelistOnlyGet()
+        .then (whitelistOnly) =>
           @roomState.hasInList 'whitelist', userName
-          , withEH cb, (inWhitelist) =>
+          .then (inWhitelist) =>
             if whitelistOnly and not inWhitelist
               return cb @errorBuilder.makeError 'notAllowed'
             cb()
+          , cb
+        , cb
+      , cb
 
   # @private
   checkIsOwner : (author, cb) ->
@@ -144,28 +161,42 @@ class Room
 
   # @private
   getUsers: (cb) ->
-    @roomState.getList 'userlist', cb
+    @roomState.getList 'userlist'
+    .then (data) ->
+      cb null, data
+    , cb
 
   # @private
   leave : (userName, cb) ->
-    @roomState.removeFromList 'userlist', [userName], cb
+    @roomState.removeFromList 'userlist', [userName]
+    .then (data) ->
+      cb null, data
+    , cb
 
   # @private
   join : (userName, cb) ->
     @checkAcess userName, withEH cb, =>
-      @roomState.addToList 'userlist', [userName], cb
+      @roomState.addToList 'userlist', [userName]
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   message : (author, msg, cb) ->
-    @roomState.hasInList 'userlist', author, withEH cb, (hasAuthor) =>
+    @roomState.hasInList 'userlist', author
+    .then (hasAuthor) =>
       unless hasAuthor
         return cb @errorBuilder.makeError 'notJoined', @name
       @roomState.messageAdd msg, cb
+    , cb
 
   # @private
   getList : (author, listName, cb) ->
     @checkJoinedUser author, withEH cb, =>
-      @roomState.getList listName, cb
+      @roomState.getList listName
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   getRecentMessages : (author, cb) ->
@@ -185,7 +216,8 @@ class Room
   # @private
   addToList : (author, listName, values, cb) ->
     @checkListAdd author, listName, values, withEH cb, =>
-      @roomState.addToList listName, values, withEH cb, =>
+      @roomState.addToList listName, values
+      .then =>
         data = []
         async.eachLimit values, asyncLimit
         , (val, fn) =>
@@ -193,11 +225,13 @@ class Room
             if changed then data.push val
             fn()
         , (error) -> cb error, data
+      , cb
 
   # @private
   removeFromList : (author, listName, values, cb) ->
     @checkListRemove author, listName, values, withEH cb, =>
-      @roomState.removeFromList listName, values, withEH cb, =>
+      @roomState.removeFromList listName, values
+      .then =>
         data = []
         async.eachLimit values, asyncLimit
         , (val, fn) =>
@@ -205,10 +239,14 @@ class Room
             if changed then data.push val
             fn()
         , (error) -> cb error, data
+      , cb
 
   # @private
   getMode : (author, cb) ->
-    @roomState.whitelistOnlyGet cb
+    @roomState.whitelistOnlyGet()
+    .then (data) ->
+      cb null, data
+    , cb
 
   # @private
   getOwner : (author, cb) ->
@@ -219,10 +257,12 @@ class Room
   changeMode : (author, mode, cb) ->
     @checkModeChange author, mode, withEH cb, =>
       whitelistOnly = if mode then true else false
-      @roomState.whitelistOnlySet whitelistOnly, withEH cb, =>
+      @roomState.whitelistOnlySet whitelistOnly
+      .then =>
         @getModeChangedCurrentAccess whitelistOnly, withEH cb
         , (userNames) ->
           cb null, userNames, mode
+      , cb
 
 
 module.exports = Room

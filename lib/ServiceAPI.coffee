@@ -64,7 +64,10 @@ ServiceAPI =
   #   or the user mode.
   getUserMode : (userName, cb = ->) ->
     @state.getUser userName, withEH cb, (user) ->
-      user.directMessagingState.whitelistOnlyGet cb
+      user.directMessagingState.whitelistOnlyGet()
+      .then (data) ->
+        cb null, data
+      , cb
 
   # Gets an user list.
   #
@@ -74,7 +77,10 @@ ServiceAPI =
   #   error or the requested user list.
   getUserList : (userName, listName, cb = ->)  ->
     @state.getUser userName, withEH cb, (user) ->
-      user.directMessagingState.getList listName, cb
+      user.directMessagingState.getList listName
+      .then (data) ->
+        cb null, data
+      , cb
 
   # Disconnects all user sockets for this instance.
   #
@@ -131,7 +137,10 @@ ServiceAPI =
   getRoomMode : (roomName, cb = ->) ->
     user = new User @
     user.withRoom roomName, withEH cb, (room) ->
-      room.roomState.whitelistOnlyGet cb
+      room.roomState.whitelistOnlyGet()
+      .then (data) ->
+        cb null, data
+      , cb
 
   # Gets a room list.
   #
@@ -142,7 +151,10 @@ ServiceAPI =
   getRoomList : (roomName, listName, cb) ->
     user = new User @
     user.withRoom roomName, withEH cb, (room) ->
-      room.roomState.getList listName, cb
+      room.roomState.getList listName
+      .then (data) ->
+        cb null, data
+      , cb
 
   # Changes a room owner.
   #
