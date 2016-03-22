@@ -83,10 +83,6 @@ CommandBinder =
 UserAssociations =
 
   # @private
-  withRoom : (roomName, fn) ->
-    @state.getRoom roomName, fn
-
-  # @private
   userJoinRoomReport : (userName, roomName) ->
     @transport.sendToChannel roomName, 'roomUserJoined', roomName, userName
 
@@ -267,6 +263,10 @@ class User extends DirectMessaging
         data.userName = @userName unless data.userName
         @errorsLogger error, data if error and @errorsLogger
         cb args...
+
+  # @private
+  withRoom : (roomName, fn) ->
+    @state.getRoom roomName, fn
 
   # @private
   processMessage : (msg, setTimestamp = false) ->

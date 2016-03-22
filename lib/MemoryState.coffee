@@ -94,7 +94,7 @@ class RoomStateMemory extends ListsStateMemory
     @owner = null
 
   # @private
-  initState : (state = {}, cb) ->
+  initState : (state = {}) ->
     { whitelist, blacklist, adminlist
     , whitelistOnly, owner } = state
     initState @whitelist, whitelist
@@ -105,34 +105,33 @@ class RoomStateMemory extends ListsStateMemory
     initState @messagesIDs
     @whitelistOnly = if whitelistOnly then true else false
     @owner = if owner then owner else null
-    process.nextTick -> cb()
+    Promise.resolve()
 
   # @private
-  removeState : (cb) ->
-    process.nextTick -> cb()
+  removeState : () ->
+    Promise.resolve()
 
   # @private
   hasList : (listName) ->
     return listName in [ 'adminlist', 'whitelist', 'blacklist', 'userlist' ]
 
   # @private
-  ownerGet : (cb) ->
-    owner = @owner
-    process.nextTick -> cb null, owner
+  ownerGet : () ->
+    Promise.resolve @owner
 
   # @private
-  ownerSet : (owner, cb) ->
+  ownerSet : (owner) ->
     @owner = owner
-    process.nextTick -> cb()
+    Promise.resolve()
 
   # @private
-  messageAdd : (msg, cb) ->
+  messageAdd : (msg) ->
     timestamp = _.now()
     @lastMessageID++
     makeResult = =>
       msg.timestamp = timestamp
       msg.id = @lastMessageID
-      return process.nextTick -> cb null, msg
+      Promise.resolve msg
     if @historyMaxMessages <= 0
       return makeResult()
     @messagesHistory.unshift msg
@@ -145,7 +144,7 @@ class RoomStateMemory extends ListsStateMemory
     makeResult()
 
   # @private
-  messagesGetRecent : (cb) ->
+  messagesGetRecent : () ->
     msgs = @messagesHistory.slice 0, @historyMaxGetMessages
     tss = @messagesTimestamps.slice 0, @historyMaxGetMessages
     ids = @messagesIDs.slice 0, @historyMaxGetMessages
@@ -155,15 +154,15 @@ class RoomStateMemory extends ListsStateMemory
       obj.timestamp = tss[idx]
       obj.id = ids[idx]
       data[idx] = obj
-    process.nextTick -> cb null, data
+    Promise.resolve data
 
   # @private
-  messagesGetLastId : (cb) ->
+  messagesGetLastId : () ->
     id = @messagesIDs.peek() || 0
-    process.nextTick -> cb null, id
+    Promise.resolve id
 
   # @private
-  messagesGetAfterId : (id, cb) ->
+  messagesGetAfterId : (id) ->
     nmessages = @messagesIDs.length
     maxlen = @historyMaxGetMessages
     lastid = @messagesIDs.peek()
@@ -180,13 +179,13 @@ class RoomStateMemory extends ListsStateMemory
       msg.timestamp = tss[idx]
       msg.id = ids[idx]
       data[idx] = obj
-    process.nextTick -> cb null, msgs
+    Promise.resolve msgs
 
   # @private
-  getCommonUsers : (cb) ->
+  getCommonUsers : () ->
     diff = (@userlist.difference @whitelist).difference @adminlist
     data = diff.toArray()
-    process.nextTick -> cb null, data
+    Promise.resolve data
 
 
 # Implements direct messaging state API.

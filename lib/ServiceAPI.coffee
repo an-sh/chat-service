@@ -127,7 +127,10 @@ ServiceAPI =
   getRoomOwner : (roomName, cb = ->) ->
     user = new User @
     user.withRoom roomName, withEH cb, (room) ->
-      room.roomState.ownerGet cb
+      room.roomState.ownerGet()
+      .then (data) ->
+        cb null, data
+      , cb
 
   # Gets a room mode.
   #
@@ -164,7 +167,10 @@ ServiceAPI =
   changeRoomOwner : (roomName, owner, cb = ->) ->
     user = new User @
     user.withRoom roomName, withEH cb, (room) ->
-      room.roomState.ownerSet owner, cb
+      room.roomState.ownerSet owner
+      .then (data) ->
+        cb null, data
+      , cb
 
 
 module.exports = ServiceAPI

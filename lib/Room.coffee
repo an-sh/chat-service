@@ -14,7 +14,8 @@ RoomPermissions =
 
   # @private
   isAdmin : (userName, cb) ->
-    @roomState.ownerGet withEH cb, (owner) =>
+    @roomState.ownerGet()
+    .then (owner) =>
       if owner == userName
         return cb null, true
       @roomState.hasInList 'adminlist', userName
@@ -23,6 +24,7 @@ RoomPermissions =
           return cb null, true
         cb null, false
       , cb
+    , cb
 
   # @private
   hasRemoveChangedCurrentAccess : (userName, listName, cb) ->
@@ -62,7 +64,10 @@ RoomPermissions =
     unless value
       process.nextTick -> cb null, false
     else
-      @roomState.getCommonUsers cb
+      @roomState.getCommonUsers()
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   checkJoinedUser : (author, cb) ->
@@ -76,7 +81,8 @@ RoomPermissions =
   # @private
   checkListChanges : (author, listName, values, cb) ->
     @checkJoinedUser author, withEH cb, =>
-      @roomState.ownerGet withEH cb, (owner) =>
+      @roomState.ownerGet()
+      .then (owner) =>
         if listName == 'userlist'
           return cb @errorBuilder.makeError 'notAllowed'
         if author == owner
@@ -92,6 +98,7 @@ RoomPermissions =
               return cb @errorBuilder.makeError 'notAllowed'
           cb()
         , cb
+      , cb
 
   # @private
   checkListAdd : (author, listName, values, cb) ->
@@ -130,10 +137,12 @@ RoomPermissions =
 
   # @private
   checkIsOwner : (author, cb) ->
-    @roomState.ownerGet withEH cb, (owner) =>
+    @roomState.ownerGet()
+    .then (owner) =>
       unless owner == author
         return cb @errorBuilder.makeError 'notAllowed'
       cb()
+    , cb
 
 # @private
 # @nodoc
@@ -153,11 +162,17 @@ class Room
 
   # @private
   initState : (state, cb) ->
-    @roomState.initState state, cb
+    @roomState.initState state
+    .then (data) ->
+      cb null, data
+    , cb
 
   # @private
   removeState : (cb) ->
-    @roomState.removeState cb
+    @roomState.removeState()
+    .then (data) ->
+      cb null, data
+    , cb
 
   # @private
   getUsers: (cb) ->
@@ -187,7 +202,10 @@ class Room
     .then (hasAuthor) =>
       unless hasAuthor
         return cb @errorBuilder.makeError 'notJoined', @name
-      @roomState.messageAdd msg, cb
+      @roomState.messageAdd msg
+      .then (data) ->
+        cb null, data
+      , cb
     , cb
 
   # @private
@@ -201,17 +219,26 @@ class Room
   # @private
   getRecentMessages : (author, cb) ->
     @checkJoinedUser author, withEH cb, =>
-      @roomState.messagesGetRecent cb
+      @roomState.messagesGetRecent()
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   getMessagesLastId : (author, cb) ->
     @checkJoinedUser author, withEH cb, =>
-      @roomState.messagesGetLastId cb
+      @roomState.messagesGetLastId()
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   getMessagesAfterId : (author, id, cb) ->
     @checkJoinedUser author, withEH cb, =>
-      @roomState.messagesGetAfterId id, cb
+      @roomState.messagesGetAfterId id
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   addToList : (author, listName, values, cb) ->
@@ -251,7 +278,10 @@ class Room
   # @private
   getOwner : (author, cb) ->
     @checkJoinedUser author, withEH cb, =>
-      @roomState.ownerGet cb
+      @roomState.ownerGet()
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   changeMode : (author, mode, cb) ->
