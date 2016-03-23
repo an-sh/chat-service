@@ -344,42 +344,64 @@ class User extends DirectMessaging
 
   # @private
   directAddToList : (listName, values, cb) ->
-    @addToList @userName, listName, values, withoutData cb
+    @addToList @userName, listName, values
+    .then ->
+      cb()
+    , cb
 
   # @private
   directGetAccessList : (listName, cb) ->
-    @getList @userName, listName, cb
+    @getList @userName, listName
+    .then (data) ->
+      cb null, data
+    , cb
 
   # @private
   directGetWhitelistMode: (cb) ->
-    @getMode @userName, cb
+    @getMode @userName
+    .then (data) ->
+      cb null, data
+    , cb
 
   # @private
-  directMessage : (toUserName, msg, cb, id = null) ->
+  directMessage : (recipientName, msg, cb, id = null) ->
     unless @enableDirectMessages
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
+    recipient = null
+    channel = null
     @processMessage msg, true
-    @server.state.getUser toUserName
-    .then (toUser) =>
-      toUser.userState.getAllSockets()
-      .then (toSockets) =>
-        toUser.message @userName, msg, withEH cb, =>
-          unless toSockets?.length
-            return cb @errorBuilder.makeError 'noUserOnline', toUser
-          @transport.sendToChannel toUser.echoChannel, 'directMessage', msg
-          @transport.sendToOthers id, @echoChannel, 'directMessageEcho'
-          , toUserName, msg
-          cb null, msg
+    @server.state.getUser recipientName
+    .then (user) =>
+      recipient = user
+      channel = recipient.echoChannel
+      recipient.message @userName, msg
+    .then ->
+      recipient.userState.getAllSockets()
+    .then (recipientSockets) =>
+      unless recipientSockets?.length
+        return Promise.reject @errorBuilder.makeError 'noUserOnline', recipient
+      @transport.sendToChannel channel, 'directMessage', msg
+      @transport.sendToOthers id, @echoChannel, 'directMessageEcho'
+        , recipientName, msg
+      Promise.resolve msg
+    .then (data) ->
+      cb null, data
     , cb
 
   # @private
   directRemoveFromList : (listName, values, cb) ->
-    @removeFromList @userName, listName, values, withoutData cb
+    @removeFromList @userName, listName, values
+    .then ->
+      cb()
+    , cb
 
   # @private
   directSetWhitelistMode : (mode, cb) ->
-    @changeMode @userName, mode, withoutData cb
+    @changeMode @userName, mode
+    .then ->
+      cb()
+    , cb
 
   # @private
   disconnect : (reason, cb, id) ->

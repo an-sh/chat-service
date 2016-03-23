@@ -1,4 +1,6 @@
 
+Promise = require 'bluebird'
+
 { withEH, extend } = require './utils.coffee'
 
 
@@ -12,46 +14,44 @@
 DirectMessagingPermissions =
 
   # @private
-  checkList : (author, listName, cb) ->
+  checkList : (author, listName) ->
     @directMessagingState.checkList listName
-    .then (data) ->
-      cb null, data
-    , cb
 
   # @private
-  checkListValues : (author, listName, values, cb) ->
-    @checkList author, listName, withEH cb, =>
+  checkListValues : (author, listName, values) ->
+    @checkList author, listName
+    .then =>
       for name in values
         if name == @userName
-          return cb @errorBuilder.makeError 'notAllowed'
-      cb()
+          error = @errorBuilder.makeError 'notAllowed'
+          return Promise.reject error
+      Promise.resolve()
 
   # @private
-  checkListAdd : (author, listName, values, cb) ->
-    @checkListValues author, listName, values, cb
+  checkListAdd : (author, listName, values) ->
+    @checkListValues author, listName, values
 
   # @private
-  checkListRemove : (author, listName, values, cb) ->
-    @checkListValues author, listName, values, cb
+  checkListRemove : (author, listName, values) ->
+    @checkListValues author, listName, values
 
   # @private
-  checkAcess : (userName, cb) ->
+  checkAcess : (userName) ->
     if userName == @userName
-      return process.nextTick => cb @errorBuilder.makeError 'notAllowed'
+      error = @errorBuilder.makeError 'notAllowed'
+      return Promise.reject error
     @directMessagingState.hasInList 'blacklist', userName
     .then (blacklisted) =>
       if blacklisted
-        return cb @errorBuilder.makeError 'notAllowed'
-      @directMessagingState.whitelistOnlyGet()
-      .then (whitelistOnly) =>
-        @directMessagingState.hasInList 'whitelist', userName
-        .then (hasInWhitelist) =>
-          if whitelistOnly and not hasInWhitelist
-            return cb @errorBuilder.makeError 'notAllowed'
-          cb()
-        , cb
-      , cb
-    , cb
+        Promise.reject @errorBuilder.makeError 'notAllowed'
+    .then =>
+      Promise.join @directMessagingState.whitelistOnlyGet()
+      , @directMessagingState.hasInList('whitelist', userName)
+      , (whitelistOnly, hasInWhitelist) =>
+        if whitelistOnly and not hasInWhitelist
+          Promise.reject @errorBuilder.makeError 'notAllowed'
+        else
+          Promise.resolve()
 
 
 # @private
@@ -71,54 +71,39 @@ class DirectMessaging
     @directMessagingState = new State @server, @userName
 
   # @private
-  initState : (state, cb) ->
+  initState : (state) ->
     @directMessagingState.initState state
-    .then (data) ->
-      cb null, data
-    , cb
 
   # @private
-  message : (author, msg, cb) ->
-    @checkAcess author, cb
+  message : (author, msg) ->
+    @checkAcess author
 
   # @private
-  getList : (author, listName, cb) ->
-    @checkList author, listName, withEH cb, =>
+  getList : (author, listName) ->
+    @checkList author, listName
+    .then =>
       @directMessagingState.getList listName
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  addToList : (author, listName, values, cb) ->
-    @checkListAdd author, listName, values, withEH cb, =>
+  addToList : (author, listName, values) ->
+    @checkListAdd author, listName, values
+    .then =>
       @directMessagingState.addToList listName, values
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  removeFromList : (author, listName, values, cb) ->
-    @checkListRemove author, listName, values, withEH cb, =>
+  removeFromList : (author, listName, values) ->
+    @checkListRemove author, listName, values
+    .then =>
       @directMessagingState.removeFromList listName, values
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  getMode : (author, cb) ->
+  getMode : (author) ->
     @directMessagingState.whitelistOnlyGet()
-    .then (data) ->
-      cb null, data
-    , cb
 
   # @private
-  changeMode : (author, mode, cb) ->
+  changeMode : (author, mode) ->
     m = if mode then true else false
     @directMessagingState.whitelistOnlySet m
-    .then (data) ->
-      cb null, data
-    , cb
 
 
 module.exports = DirectMessaging

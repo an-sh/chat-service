@@ -68,6 +68,7 @@ class ListsStateMemory
 
   # @private
   whitelistOnlyGet : () ->
+    wl = @whitelistOnly || false
     Promise.resolve @whitelistOnly
 
 
@@ -399,12 +400,7 @@ class MemoryState
     user = new User @server, name
     @users[name] = user
     if state
-      new Promise (resolve, reject) ->
-        user.initState state, (error, data) ->
-          if error
-            reject error
-          else
-            resolve data
+      user.initState state
     else
       Promise.resolve()
 
