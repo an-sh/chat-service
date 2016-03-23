@@ -151,7 +151,10 @@ UserAssociations =
         (fn) =>
           d = _.clone data
           d.op = 'RollbackSocketJoinRoom'
-          @userState.removeSocketFromRoom id, roomName, @withFailLog d, fn
+          @userState.removeSocketFromRoom id, roomName
+          .then ->
+            fn()
+          , fn #TODO
         ] , =>
           cb @errorBuilder.makeError 'serverError', error
 
@@ -164,24 +167,29 @@ UserAssociations =
 
   # @private
   joinSocketToRoom : (id, roomName, cb) ->
-    @userState.lockToRoom id, roomName, withEH cb, (lock) =>
+    @userState.lockToRoom id, roomName
+    .then (lock) =>
       unlock = @userState.bindUnlock lock, 'joinSocketToRoom', id, cb
       @withRoom roomName, withEH unlock, (room) =>
         room.join @userName, withEH unlock, (isNewJoin) =>
           rollback = @makeRollbackRoomJoin id, room, isNewJoin, unlock
-          @userState.addSocketToRoom id, roomName, withEH rollback, (njoined) =>
+          @userState.addSocketToRoom id, roomName
+          .then (njoined) =>
             @transport.joinChannel id, roomName, withEH rollback, =>
               if njoined == 1
                 @userJoinRoomReport @userName, roomName
               @socketJoinEcho id, roomName, njoined
               cb null, njoined
+          , rollback
+    , cb
 
   # @private
   leaveSocketFromRoom : (id, roomName, cb) ->
-    @userState.lockToRoom id, roomName, withEH cb, (lock) =>
+    @userState.lockToRoom id, roomName
+    .then (lock) =>
       unlock = @userState.bindUnlock lock, 'leaveSocketFromRoom', id, cb
-      @userState.removeSocketFromRoom id, roomName, withEH unlock
-      , (njoined) =>
+      @userState.removeSocketFromRoom id, roomName
+      .then (njoined) =>
         @leaveChannel id, roomName, =>
           @socketLeftEcho id, roomName, njoined
           unless njoined
@@ -190,12 +198,15 @@ UserAssociations =
               unlock null, 0
           else
             unlock null, njoined
+      , unlock
+    , cb
 
   # @private
   removeSocketFromServer : (id, cb) ->
-    @userState.setSocketDisconnecting id, withEH cb, =>
-      @userState.removeSocket id, withEH cb
-      , (roomsRemoved, joinedSockets, nconnected) =>
+    @userState.setSocketDisconnecting id
+    .then =>
+      @userState.removeSocket id
+      .spread (roomsRemoved, joinedSockets, nconnected) =>
         if roomsRemoved?.length
           @socketLeaveChannels id, roomsRemoved, =>
             for roomName, idx in roomsRemoved
@@ -207,19 +218,23 @@ UserAssociations =
         else
           @socketDisconnectEcho id, nconnected
           cb null, nconnected
+    , cb
 
   # @private
   removeFromRoom : (roomName, cb) ->
-    @userState.lockToRoom null, roomName, withEH cb, (lock) =>
+    @userState.lockToRoom null, roomName
+    .then (lock) =>
       unlock = @userState.bindUnlock lock, 'removeUserFromRoom', null, cb
-      @userState.removeAllSocketsFromRoom roomName, withEH unlock
-      , (removedSockets) =>
+      @userState.removeAllSocketsFromRoom roomName
+      .then (removedSockets) =>
         if removedSockets?.length
           @channelLeaveSockets roomName, removedSockets, =>
             @userRemovedReport @userName, roomName
             @leaveRoom roomName, unlock
         else
           @leaveRoom roomName, unlock
+      , unlock
+    , cb
 
   # @private
   removeUserFromRoom : (userName, roomName, cb) ->
@@ -296,11 +311,12 @@ class User extends DirectMessaging
 
   # @private
   revertRegisterSocket : (id) ->
-    @userState.removeSocket id, ->
+    @userState.removeSocket id
 
   # @private
   registerSocket : (id, cb) ->
-    @userState.addSocket id, withEH cb, (nconnected) =>
+    @userState.addSocket id
+    .then (nconnected) =>
       # Client disconnected before callbacks have been set.
       unless @transport.getSocketObject id
         @revertRegisterSocket id
@@ -309,14 +325,17 @@ class User extends DirectMessaging
         @bindCommand id, cmd, @[cmd]
       @bindCommand id, 'disconnect', => @transport.startClientDisconnect()
       cb null, @, nconnected
+    , cb
 
   # @private
   disconnectInstanceSockets : (cb) ->
-    @userState.getAllSockets withEH cb, (sockets) =>
+    @userState.getAllSockets()
+    .then (sockets) =>
       async.eachLimit sockets, asyncLimit, (sid, fn) =>
         @transport.disconnectClient sid
         fn()
       , cb
+    , cb
 
   # @private
   directAddToList : (listName, values, cb) ->
@@ -355,11 +374,17 @@ class User extends DirectMessaging
 
   # @private
   disconnect : (reason, cb, id) ->
-    @removeSocketFromServer id, cb
+    @removeSocketFromServer id
+    .then (data) ->
+      cb null, data
+    , cb
 
   # @private
   listOwnSockets : (cb) ->
-    @userState.getSocketsToRooms cb
+    @userState.getSocketsToRooms()
+    .then (data) ->
+      cb null, data
+    , cb
 
   # @private
   roomAddToList : (roomName, listName, values, cb) ->

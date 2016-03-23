@@ -72,7 +72,10 @@ class DirectMessaging
 
   # @private
   initState : (state, cb) ->
-    @directMessagingState.initState state, cb
+    @directMessagingState.initState state
+    .then (data) ->
+      cb null, data
+    , cb
 
   # @private
   message : (author, msg, cb) ->

@@ -201,11 +201,11 @@ class DirectMessagingStateMemory extends ListsStateMemory
     @blacklist = new FastSet
 
   # @private
-  initState : ({ whitelist, blacklist, whitelistOnly } = {}, cb) ->
+  initState : ({ whitelist, blacklist, whitelistOnly } = {}) ->
     initState @whitelist, whitelist
     initState @blacklist, blacklist
     @whitelistOnly = if whitelistOnly then true else false
-    process.nextTick -> cb()
+    Promise.resolve()
 
   # @private
   hasList : (listName) ->
@@ -228,28 +228,28 @@ class UserStateMemory
     "echo:#{userName}"
 
   # @private
-  addSocket : (id, cb) ->
+  addSocket : (id) ->
     roomsset = new FastSet
     @socketsToRooms.set id, roomsset
     nconnected = @socketsToRooms.length
-    process.nextTick -> cb null, nconnected
+    Promise.resolve nconnected
 
   # @private
-  getAllSockets : (cb) ->
+  getAllSockets : () ->
     sockets = @socketsToRooms.keys()
-    process.nextTick -> cb null, sockets
+    Promise.resolve sockets
 
   # @private
-  getSocketsToRooms : (cb) ->
+  getSocketsToRooms : () ->
     result = {}
     sockets = @socketsToRooms.keys()
     for id in sockets
       socketsset = @socketsToRooms.get id
       result[id] = socketsset.toArray()
-    process.nextTick -> cb null, result
+    Promise.resolve result
 
   # @private
-  addSocketToRoom : (id, roomName, cb) ->
+  addSocketToRoom : (id, roomName) ->
     roomsset = @socketsToRooms.get id
     socketsset = @roomsToSockets.get roomName
     unless socketsset
@@ -258,19 +258,19 @@ class UserStateMemory
     roomsset.add roomName
     socketsset.add id
     njoined = socketsset.length
-    process.nextTick -> cb null, njoined
+    Promise.resolve njoined
 
   # @private
-  removeSocketFromRoom : (id, roomName, cb) ->
+  removeSocketFromRoom : (id, roomName) ->
     roomsset = @socketsToRooms.get id
     socketsset = @roomsToSockets.get roomName
     roomsset.delete roomName
     socketsset?.delete id
     njoined = socketsset?.length || 0
-    process.nextTick -> cb null, njoined
+    Promise.resolve njoined
 
   # @private
-  removeAllSocketsFromRoom : (roomName, cb) ->
+  removeAllSocketsFromRoom : (roomName) ->
     sockets = @socketsToRooms.keys()
     socketsset = @roomsToSockets.get roomName
     removedSockets = socketsset.toArray()
@@ -279,10 +279,10 @@ class UserStateMemory
       roomsset.delete roomName
     socketsset = socketsset.difference sockets
     @roomsToSockets.set roomName, socketsset
-    process.nextTick -> cb null, removedSockets
+    Promise.resolve removedSockets
 
   # @private
-  removeSocket : (id, cb) ->
+  removeSocket : (id) ->
     rooms = @roomsToSockets.toArray()
     roomsset = @socketsToRooms.get id
     removedRooms = roomsset.toArray()
@@ -295,15 +295,15 @@ class UserStateMemory
     roomsset = roomsset.difference removedRooms
     @socketsToRooms.delete id
     nconnected = @socketsToRooms.length
-    process.nextTick -> cb null, removedRooms, joinedSockets, nconnected
+    Promise.resolve [ removedRooms, joinedSockets, nconnected ]
 
   # @private
-  lockToRoom : (id, roomName, cb) ->
-    process.nextTick -> cb()
+  lockToRoom : (id, roomName) ->
+    Promise.resolve()
 
   # @private
-  setSocketDisconnecting : (id, cb) ->
-    process.nextTick -> cb()
+  setSocketDisconnecting : (id) ->
+    Promise.resolve()
 
   # @private
   bindUnlock : (lock, op, id, cb) ->
