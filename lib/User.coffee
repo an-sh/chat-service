@@ -239,8 +239,10 @@ UserAssociations =
   # @private
   removeUserFromRoom : (userName, roomName, cb) ->
     task = (fn) =>
-      @state.getUser userName, withEH fn, (user) ->
+      @state.getUser userName
+      .then (user) ->
         user.removeFromRoom roomName, fn
+      , fn
     async.retry { times : 2, interval : @lockTTL }, task, cb
 
   # @private
@@ -280,8 +282,11 @@ class User extends DirectMessaging
         cb args...
 
   # @private
-  withRoom : (roomName, fn) ->
-    @state.getRoom roomName, fn
+  withRoom : (roomName, cb) ->
+    @state.getRoom roomName
+    .then (room) ->
+      cb null, room
+    , cb
 
   # @private
   processMessage : (msg, setTimestamp = false) ->
@@ -355,14 +360,18 @@ class User extends DirectMessaging
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
     @processMessage msg, true
-    @server.state.getUser toUserName, withEH cb, (toUser, toSockets) =>
-      toUser.message @userName, msg, withEH cb, =>
-        unless toSockets?.length
-          return cb @errorBuilder.makeError 'noUserOnline', toUser
-        @transport.sendToChannel toUser.echoChannel, 'directMessage', msg
-        @transport.sendToOthers id, @echoChannel, 'directMessageEcho'
-        , toUserName, msg
-        cb null, msg
+    @server.state.getUser toUserName
+    .then (toUser) =>
+      toUser.userState.getAllSockets()
+      .then (toSockets) =>
+        toUser.message @userName, msg, withEH cb, =>
+          unless toSockets?.length
+            return cb @errorBuilder.makeError 'noUserOnline', toUser
+          @transport.sendToChannel toUser.echoChannel, 'directMessage', msg
+          @transport.sendToOthers id, @echoChannel, 'directMessageEcho'
+          , toUserName, msg
+          cb null, msg
+    , cb
 
   # @private
   directRemoveFromList : (listName, values, cb) ->
@@ -405,7 +414,9 @@ class User extends DirectMessaging
       return cb error
     @state.addRoom roomName
       , { owner : @userName, whitelistOnly : whitelistOnly }
-      , withoutData cb
+      .then ->
+        cb()
+      , cb
 
   # @private
   roomDelete : (roomName, cb) ->
@@ -416,8 +427,10 @@ class User extends DirectMessaging
       room.checkIsOwner @userName, withEH cb, =>
         room.getUsers withEH cb, (userNames) =>
           @removeRoomUsers room, userNames, =>
-            @state.removeRoom room.name, ->
+            @state.removeRoom room.name
+            .then ->
               room.removeState withoutData cb
+            , cb
 
   # @private
   roomGetAccessList : (roomName, listName, cb) ->

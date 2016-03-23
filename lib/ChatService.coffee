@@ -587,7 +587,10 @@ class ChatService
           @state.close()
           done error
         else
-          @state.close done
+          @state.close()
+          .then ->
+            done()
+          , done
       if @hooks.onClose
         @hooks.onClose @, error, closeDB
       else

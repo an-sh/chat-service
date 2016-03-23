@@ -6,7 +6,6 @@ Promise = require 'bluebird'
 Room = require './Room.coffee'
 User = require './User.coffee'
 _ = require 'lodash'
-async = require 'async'
 
 { withEH, asyncLimit } = require './utils.coffee'
 
@@ -307,6 +306,7 @@ class UserStateMemory
 
   # @private
   bindUnlock : (lock, op, id, cb) ->
+    # TODO
     (args...) ->
       process.nextTick -> cb args...
 
@@ -326,74 +326,87 @@ class MemoryState
     @DirectMessagingState = DirectMessagingStateMemory
 
   # @private
-  close : (cb) ->
-    process.nextTick -> cb()
+  close : () ->
+    Promise.resolve()
 
   # @private
-  getRoom : (name, cb) ->
+  getRoom : (name) ->
     r = @rooms[name]
     unless r
       error = @errorBuilder.makeError 'noRoom', name
-    process.nextTick -> cb error, r
+      return Promise.reject error
+    Promise.resolve r
 
   # @private
-  addRoom : (name, state, cb) ->
+  addRoom : (name, state) ->
     room = new Room @server, name
     unless @rooms[name]
       @rooms[name] = room
     else
       error = @errorBuilder.makeError 'roomExists', name
-      return process.nextTick -> cb error
+      return Promise.reject error
     if state
-      room.initState state, cb
+      new Promise (resolve, reject) ->
+        room.initState state, (error, data) ->
+          if error
+            reject error
+          else
+            resolve data
     else
-      process.nextTick -> cb()
+      Promise.resolve()
 
   # @private
-  removeRoom : (name, cb) ->
+  removeRoom : (name) ->
     if @rooms[name]
       delete @rooms[name]
+      Promise.resolve()
     else
       error = @errorBuilder.makeError 'noRoom', name
-    process.nextTick -> cb error
+      Promise.reject error
 
   # @private
-  removeSocket : (uid, id, cb) ->
-    process.nextTick -> cb()
+  removeSocket : (uid, id) ->
+    Promise.resolve()
 
   # @private
-  loginUserSocket : (uid, name, id, cb) ->
+  loginUserSocket : (uid, name, id) ->
     user = @users[name]
-    if user
-      process.nextTick ->
-        user.registerSocket id, cb
-    else
-      newUser = new User @server, name
-      @users[name] = newUser
-      process.nextTick ->
-        newUser.registerSocket id, cb
+    unless user
+      user = new User @server, name
+      @users[name] = user
+    new Promise (resolve, reject) ->
+      user.registerSocket id, (error, user, nconnected) ->
+        if error
+          reject error
+        else
+          resolve [user, nconnected]
 
   # @private
-  getUser : (name, cb) ->
+  getUser : (name) ->
     user = @users[name]
     unless user
       error = @errorBuilder.makeError 'noUser', name
+      Promise.reject error
     else
-      sockets = user.userState.socketsToRooms.keys()
-    process.nextTick -> cb error, user, sockets
+      Promise.resolve user
 
   # @private
-  addUser : (name, state, cb) ->
+  addUser : (name, state) ->
     user = @users[name]
     if user
       error = @errorBuilder.makeError 'userExists', name
-      return process.nextTick -> cb error
+      return Promise.reject error
     user = new User @server, name
     @users[name] = user
     if state
-      user.initState state, cb
+      new Promise (resolve, reject) ->
+        user.initState state, (error, data) ->
+          if error
+            reject error
+          else
+            resolve data
     else
-      process.nextTick -> cb()
+      Promise.resolve()
 
 
 module.exports = MemoryState

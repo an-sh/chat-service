@@ -83,12 +83,14 @@ class SocketIOTransport
       error = @errorBuilder.makeError 'invalidName', userName
       return @rejectLogin socket, error
     @server.state.loginUserSocket @server.serverUID, userName, socket.id
-    , (error, user, nconnected) =>
-      if error then return @rejectLogin socket, error
+    .spread (user, nconnected) =>
       socket.join user.echoChannel, @withTE (error) =>
         if error then return @rejectLogin socket, error
         user.socketConnectEcho socket.id, nconnected
         @confirmLogin socket, userName, authData
+    , (error) ->
+      @rejectLogin socket, error
+
 
   # @private
   # @nodoc

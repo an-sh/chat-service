@@ -38,8 +38,10 @@ ServiceAPI =
       args = _.slice args, 0, -1
     else
       cb = ->
-    @state.getUser userName, withEH cb, (user) ->
+    @state.getUser userName
+    .then (user) ->
       user.exec command, useHooks, id, args..., cb
+    , cb
 
   # Adds an user with a state.
   #
@@ -55,7 +57,10 @@ ServiceAPI =
     if checkNameSymbols userName
       error = @errorBuilder.makeError 'invalidName', userName
       return process.nextTick -> cb error
-    @state.addUser userName, state, withoutData cb
+    @state.addUser userName, state
+    .then ->
+      cb()
+    , cb
 
   # Gets user direct messaging mode.
   #
@@ -63,11 +68,13 @@ ServiceAPI =
   # @param cb [Callback<error, Boolean>] Calls callback with an error
   #   or the user mode.
   getUserMode : (userName, cb = ->) ->
-    @state.getUser userName, withEH cb, (user) ->
+    @state.getUser userName
+    .then (user) ->
       user.directMessagingState.whitelistOnlyGet()
       .then (data) ->
         cb null, data
       , cb
+    , cb
 
   # Gets an user list.
   #
@@ -76,19 +83,23 @@ ServiceAPI =
   # @param cb [Callback<error, Array<String>>] Calls callback with an
   #   error or the requested user list.
   getUserList : (userName, listName, cb = ->)  ->
-    @state.getUser userName, withEH cb, (user) ->
+    @state.getUser userName
+    .then (user) ->
       user.directMessagingState.getList listName
       .then (data) ->
         cb null, data
       , cb
+    , cb
 
   # Disconnects all user sockets for this instance.
   #
   # @param userName [String] User name.
   # @param cb [Callback] Optional callback.
   disconnectUserSockets : (userName, cb = ->) ->
-    @state.getUser userName, withEH cb, (user) ->
+    @state.getUser userName
+    .then (user) ->
       user.disconnectInstanceSockets cb
+    , cb
 
   # Adds a room with a state.
   #
@@ -105,7 +116,10 @@ ServiceAPI =
     if checkNameSymbols roomName
       error = @errorBuilder.makeError 'invalidName', roomName
       return process.nextTick -> cb error
-    @state.addRoom roomName, state, withoutData cb
+    @state.addRoom roomName, state
+    .then ->
+      cb()
+    , cb
 
   # Removes all room data, and removes joined user from the room.
   #
@@ -116,8 +130,10 @@ ServiceAPI =
     user.withRoom roomName, withEH cb, (room) =>
       room.getUsers withEH cb, (usernames) =>
         user.removeRoomUsers room, usernames, =>
-          @state.removeRoom room.name, ->
+          @state.removeRoom room.name
+          .then ->
             room.removeState withoutData cb
+          , cb
 
   # Gets a room owner.
   #
