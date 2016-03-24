@@ -2,7 +2,9 @@
 _ = require 'lodash'
 async = require 'async'
 
+CommandBinder = require './CommandBinder'
 DirectMessaging = require './DirectMessaging'
+UserAssociations = require './UserAssociations'
 
 { asyncLimit
   checkNameSymbols
@@ -10,255 +12,6 @@ DirectMessaging = require './DirectMessaging'
   withEH
   withoutData
 } = require './utils.coffee'
-
-
-# @private
-# @mixin
-# @nodoc
-#
-# Implements command implementation functions binding and wrapping.
-# Required existence of server in extented classes.
-CommandBinder =
-
-  # @private
-  wrapCommand : (name, fn) ->
-    errorBuilder = @server.errorBuilder
-    cmd = (oargs..., cb, id) =>
-      validator = @server.validator
-      transport = @server.transport
-      beforeHook = @server.hooks?["#{name}Before"]
-      afterHook = @server.hooks?["#{name}After"]
-      execCommand = (error, data, nargs...) =>
-        if error or data
-          return cb error, data
-        args = if nargs.length then nargs else oargs
-        if args.length != oargs.length
-          return cb errorBuilder.makeError 'serverError', 'hook nargs error.'
-        afterCommand = (error, data) =>
-          reportResults = (nerror = error, ndata = data, moredata...) ->
-            if name == 'disconnect'
-              transport.endClientDisconnect()
-            cb nerror, ndata, moredata...
-          if afterHook
-            results = _.slice arguments
-            afterHook @server, @userName, id, args, results, reportResults
-          else
-            reportResults()
-        fn.apply @, [ args..., afterCommand, id ]
-      validator.checkArguments name, oargs..., (errors) =>
-        if errors
-          return cb errorBuilder.makeError errors...
-        unless beforeHook
-          execCommand()
-        else
-          beforeHook @server, @userName, id, oargs, execCommand
-    return cmd
-
-  # @private
-  bindAck : (cb) ->
-    (error, data, rest...) ->
-      error = null unless error?
-      data = null unless data?
-      cb error, data, rest... if cb
-
-  # @private
-  bindCommand : (id, name, fn) ->
-    cmd = @wrapCommand name, fn
-    @transport.bind id, name, =>
-      cb = _.last arguments
-      if _.isFunction cb
-        args = _.slice arguments, 0, -1
-      else
-        cb = null
-        args = arguments
-      ack = @bindAck cb
-      cmd args..., ack, id
-
-
-# @private
-# @nodoc
-# @mixin
-#
-# Associations for User class.
-UserAssociations =
-
-  # @private
-  userJoinRoomReport : (userName, roomName) ->
-    @transport.sendToChannel roomName, 'roomUserJoined', roomName, userName
-
-  # @private
-  userLeftRoomReport : (userName, roomName) ->
-    @transport.sendToChannel roomName, 'roomUserLeft', roomName, userName
-
-  # @private
-  userRemovedReport : (userName, roomName) ->
-    echoChannel = @userState.makeEchoChannelName userName
-    @transport.sendToChannel echoChannel, 'roomAccessRemoved', roomName
-    @userLeftRoomReport userName, roomName
-
-  # @private
-  socketJoinEcho : (id, roomName, njoined) ->
-    echoChannel = @userState.echoChannel
-    @transport.sendToOthers id, echoChannel, 'roomJoinedEcho'
-    , roomName, id, njoined
-
-  # @private
-  socketLeftEcho : (id, roomName, njoined) ->
-    echoChannel = @userState.echoChannel
-    @transport.sendToOthers id, echoChannel, 'roomLeftEcho'
-    , roomName, id, njoined
-
-  # @private
-  socketConnectEcho : (id, nconnected) ->
-    echoChannel = @userState.echoChannel
-    @transport.sendToOthers id, echoChannel, 'socketConnectEcho', id, nconnected
-
-  # @private
-  socketDisconnectEcho : (id, nconnected) ->
-    echoChannel = @userState.echoChannel
-    @transport.sendToOthers id, echoChannel, 'socketDisconnectEcho', id
-    , nconnected
-
-  # @private
-  leaveChannel : (id, channel, cb) ->
-    data = { room : channel, id : id }
-    data.op = 'socketLeaveChannel'
-    @transport.leaveChannel id, channel, @withFailLog data, cb
-
-  # @private
-  socketLeaveChannels : (id, channels, cb) ->
-    async.eachLimit channels, asyncLimit, (channel, fn) =>
-      @leaveChannel id, channel, fn
-    , cb
-
-  # @private
-  channelLeaveSockets : (channel, ids, cb) ->
-    async.eachLimit ids, asyncLimit, (id, fn) =>
-      @leaveChannel id, channel, fn
-    , cb
-
-  # @private
-  makeRollbackRoomJoin : (id, room, isNewJoin, cb) ->
-    roomName = room.name
-    data = { room : roomName, id : id }
-    (error) =>
-      async.parallel [
-        (fn) =>
-          unless isNewJoin then return fn()
-          d = _.clone data
-          d.op = 'RollbackUserJoinRoom'
-          room.leave @userName
-          .then (data) ->
-            cb null, data
-          , @withFailLog fn
-        (fn) =>
-          d = _.clone data
-          d.op = 'RollbackSocketJoinRoom'
-          @userState.removeSocketFromRoom id, roomName
-          .then ->
-            fn()
-          , fn #TODO
-        ] , =>
-          cb @errorBuilder.makeError 'serverError', error
-
-  # @private
-  leaveRoom : (roomName, cb) ->
-    data = { userName : @userName, room : roomName }
-    data.op = 'UserLeaveRoom'
-    @withRoom roomName, @withFailLog data, (room) =>
-      room.leave @userName
-      .then (data) ->
-        cb null, data
-      , @withFailLog cb
-
-  # @private
-  joinSocketToRoom : (id, roomName, cb) ->
-    @userState.lockToRoom id, roomName
-    .then (lock) =>
-      unlock = @userState.bindUnlock lock, 'joinSocketToRoom', id, cb
-      @withRoom roomName, withEH unlock, (room) =>
-        room.join @userName
-        .then (isNewJoin) =>
-          rollback = @makeRollbackRoomJoin id, room, isNewJoin, unlock
-          @userState.addSocketToRoom id, roomName
-          .then (njoined) =>
-            @transport.joinChannel id, roomName, withEH rollback, =>
-              if njoined == 1
-                @userJoinRoomReport @userName, roomName
-              @socketJoinEcho id, roomName, njoined
-              cb null, njoined
-          , rollback
-        , unlock
-    , cb
-
-  # @private
-  leaveSocketFromRoom : (id, roomName, cb) ->
-    @userState.lockToRoom id, roomName
-    .then (lock) =>
-      unlock = @userState.bindUnlock lock, 'leaveSocketFromRoom', id, cb
-      @userState.removeSocketFromRoom id, roomName
-      .then (njoined) =>
-        @leaveChannel id, roomName, =>
-          @socketLeftEcho id, roomName, njoined
-          unless njoined
-            @leaveRoom roomName, =>
-              @userLeftRoomReport @userName, roomName
-              unlock null, 0
-          else
-            unlock null, njoined
-      , unlock
-    , cb
-
-  # @private
-  removeSocketFromServer : (id, cb) ->
-    @userState.setSocketDisconnecting id
-    .then =>
-      @userState.removeSocket id
-      .spread (roomsRemoved, joinedSockets, nconnected) =>
-        if roomsRemoved?.length
-          @socketLeaveChannels id, roomsRemoved, =>
-            for roomName, idx in roomsRemoved
-              njoined = joinedSockets[idx]
-              @socketLeftEcho id, roomName, njoined
-              unless njoined then @userLeftRoomReport @userName, roomName
-            @socketDisconnectEcho id, nconnected
-            cb null, nconnected
-        else
-          @socketDisconnectEcho id, nconnected
-          cb null, nconnected
-    , cb
-
-  # @private
-  removeFromRoom : (roomName, cb) ->
-    @userState.lockToRoom null, roomName
-    .then (lock) =>
-      unlock = @userState.bindUnlock lock, 'removeUserFromRoom', null, cb
-      @userState.removeAllSocketsFromRoom roomName
-      .then (removedSockets) =>
-        if removedSockets?.length
-          @channelLeaveSockets roomName, removedSockets, =>
-            @userRemovedReport @userName, roomName
-            @leaveRoom roomName, unlock
-        else
-          @leaveRoom roomName, unlock
-      , unlock
-    , cb
-
-  # @private
-  removeUserFromRoom : (userName, roomName, cb) ->
-    task = (fn) =>
-      @state.getUser userName
-      .then (user) ->
-        user.removeFromRoom roomName, fn
-      , fn
-    async.retry { times : 2, interval : @lockTTL }, task, cb
-
-  # @private
-  removeRoomUsers : (room, userNames, cb) ->
-    roomName = room.name
-    async.eachLimit userNames, asyncLimit, (userName, fn) =>
-      @removeUserFromRoom userName, roomName, fn
-    , -> cb()
 
 
 # @private
@@ -283,12 +36,9 @@ class User extends DirectMessaging
     @lockTTL = @userState.lockTTL
     @echoChannel = @userState.echoChannel
     @errorsLogger = @server.errorsLogger
-    @withFailLog = (data, cb) =>
-      (error, args...) =>
-        data.userName = @userName unless data.userName
-        @errorsLogger error, data if error and @errorsLogger
-        cb args...
-        return Promise.resolve() #TODO
+    @logError = (error, data) =>
+      data.userName = @userName unless data.userName
+      @errorsLogger error, data if @errorsLogger
 
   # @private
   withRoom : (roomName, cb) ->
@@ -433,8 +183,11 @@ class User extends DirectMessaging
       .then (userNames) =>
         if @enableAccessListsUpdates
           @transport.sendToChannel roomName, 'roomAccessListAdded'
-          , roomName, listName , values
-        @removeRoomUsers room, userNames, cb
+          , roomName, listName, values
+        @removeRoomUsers roomName, userNames
+        .then ->
+          cb()
+        , cb
       , cb
 
   # @private
@@ -461,14 +214,12 @@ class User extends DirectMessaging
       .then ->
         room.getUsers()
       .then (userNames) =>
-        @removeRoomUsers room, userNames, =>
-          @state.removeRoom room.name
-          .then ->
-            room.removeState()
-            .then ->
-              cb()
-            , cb
-          , cb
+        @removeRoomUsers roomName, userNames
+      .then =>
+        @state.removeRoom roomName
+      .then ->
+        room.removeState()
+        .then -> cb()
       .catch cb
 
   # @private
@@ -522,12 +273,18 @@ class User extends DirectMessaging
   # @private
   roomJoin : (roomName, cb, id) ->
     @withRoom roomName, withEH cb, (room) =>
-      @joinSocketToRoom id, room.name, cb
+      @joinSocketToRoom id, roomName
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   roomLeave : (roomName, cb, id) ->
     @withRoom roomName, withEH cb, (room) =>
-      @leaveSocketFromRoom id, room.name, cb
+      @leaveSocketFromRoom id, room.name
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   roomMessage : (roomName, msg, cb) ->
@@ -547,7 +304,10 @@ class User extends DirectMessaging
         if @enableAccessListsUpdates
           @transport.sendToChannel roomName, 'roomAccessListRemoved',
           roomName, listName, values
-        @removeRoomUsers room, userNames, cb
+        @removeRoomUsers roomName, userNames
+        .then ->
+          cb()
+        , cb
       , cb
 
   # @private
@@ -557,7 +317,10 @@ class User extends DirectMessaging
       .spread (userNames, mode) =>
         if @enableAccessListsUpdates
           @transport.sendToChannel roomName, 'roomModeChanged', roomName, mode
-        @removeRoomUsers room, userNames, cb
+        @removeRoomUsers roomName, userNames
+        .then (data) ->
+          cb null, data
+        , cb
       .catch cb
 
   # @private

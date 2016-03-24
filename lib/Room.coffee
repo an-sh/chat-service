@@ -1,7 +1,7 @@
 
 Promise = require 'bluebird'
 
-{ withEH, extend, asyncLimit } =
+{ extend, asyncLimit } =
   require './utils.coffee'
 
 # @private
@@ -101,6 +101,7 @@ RoomPermissions =
         for name in values
           if name == owner
             return Promise.reject @errorBuilder.makeError 'notAllowed'
+        Promise.resolve()
 
   # @private
   checkListAdd : (author, listName, values) ->

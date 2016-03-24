@@ -1,7 +1,9 @@
 
 _ = require 'lodash'
-SocketServer = require 'socket.io'
+Promise = require 'bluebird'
 RedisAdapter = require 'socket.io-redis'
+SocketServer = require 'socket.io'
+
 
 { checkNameSymbols
   bindTE
@@ -171,6 +173,7 @@ class SocketIOTransport
   # @nodoc
   sendToChannel : (channel, args...) ->
     @nsp.to(channel).emit args...
+    Promise.resolve()
 
   # @private
   # @nodoc
@@ -180,21 +183,25 @@ class SocketIOTransport
       @sendToChannel channel, args...
     else
       socket.to(channel).emit args...
+      Promise.resolve()
 
   # @private
   # @nodoc
-  joinChannel : (id, channel, cb) ->
+  joinChannel : (id, channel) ->
     socket = @getSocketObject id
     unless socket
-      return cb @errorBuilder.makeError 'serverError', 500
-    socket.join channel, @withTE cb
+      Promise.reject @errorBuilder.makeError 'serverError', 500
+    else
+      Promise.fromCallback (fn) ->
+        socket.join channel, fn
 
   # @private
   # @nodoc
-  leaveChannel : (id, channel, cb) ->
+  leaveChannel : (id, channel) ->
     socket = @getSocketObject id
-    unless socket then return cb()
-    socket.leave channel, @withTE cb
+    unless socket then return Promise.resolve()
+    Promise.fromCallback (fn) ->
+      socket.leave channel, fn
 
   # @private
   # @nodoc

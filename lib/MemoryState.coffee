@@ -298,18 +298,13 @@ class UserStateMemory
     Promise.resolve [ removedRooms, joinedSockets, nconnected ]
 
   # @private
-  lockToRoom : (id, roomName) ->
-    Promise.resolve()
+  lockToRoom : (roomName, id = null) ->
+    Promise.resolve().disposer ->
+      Promise.resolve()
 
   # @private
   setSocketDisconnecting : (id) ->
     Promise.resolve()
-
-  # @private
-  bindUnlock : (lock, op, id, cb) ->
-    # TODO
-    (args...) ->
-      process.nextTick -> cb args...
 
 
 # Implements global state API.
