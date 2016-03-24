@@ -1,5 +1,6 @@
 
-async = require 'async'
+Promise = require 'bluebird'
+
 { withEH, extend, asyncLimit } =
   require './utils.coffee'
 
@@ -13,136 +14,138 @@ async = require 'async'
 RoomPermissions =
 
   # @private
-  isAdmin : (userName, cb) ->
+  isAdmin : (userName) ->
     @roomState.ownerGet()
     .then (owner) =>
       if owner == userName
-        return cb null, true
+        return Promise.resolve true
       @roomState.hasInList 'adminlist', userName
       .then (hasName) ->
         if hasName
-          return cb null, true
-        cb null, false
-      , cb
-    , cb
+          Promise.resolve true
+        else
+          Promise.resolve false
 
   # @private
-  hasRemoveChangedCurrentAccess : (userName, listName, cb) ->
+  hasRemoveChangedCurrentAccess : (userName, listName) ->
     @roomState.hasInList 'userlist', userName
     .then (hasUser) =>
       unless hasUser
-        return cb null, false
-      @isAdmin userName, withEH cb, (admin) =>
+        return Promise.resolve false
+      @isAdmin userName
+      .then (admin) =>
         if admin
-          cb null, false
+          Promise.resolve false
         else if listName == 'whitelist'
-          @roomState.whitelistOnlyGet()
-          .then (whitelistOnly) ->
-            cb null, whitelistOnly
-          , cb
+          @roomState.whitelistOnlyGet().then (whitelistOnly) ->
+            if whitelistOnly
+              Promise.resolve true
+            else
+              Promise.resolve false
         else
-          cb null, false
-    , cb
+          Promise.resolve false
+    .catch (error) ->
+      # TODO log
+      Promise.resolve false
 
   # @private
-  hasAddChangedCurrentAccess : (userName, listName, cb) ->
+  hasAddChangedCurrentAccess : (userName, listName) ->
     @roomState.hasInList 'userlist', userName
     .then (hasUser) =>
       unless hasUser
-        return cb null, false
-      @isAdmin userName, withEH cb, (admin) ->
+        return Promise.resolve false
+      @isAdmin userName
+      .then (admin) ->
         if admin
-          cb null, false
+          Promise.resolve false
         else if listName == 'blacklist'
-          cb null, true
+          Promise.resolve true
         else
-          cb null, false
-    , cb
+          Promise.resolve false
+    .catch (error) ->
+      # TODO log
+      Promise.resolve false
 
   # @private
-  getModeChangedCurrentAccess : (value, cb) ->
+  getModeChangedCurrentAccess : (value) ->
     unless value
-      process.nextTick -> cb null, false
+      Promise.resolve false
     else
       @roomState.getCommonUsers()
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  checkJoinedUser : (author, cb) ->
+  checkJoinedUser : (author) ->
     @roomState.hasInList 'userlist', author
     .then (hasAuthor) =>
       unless hasAuthor
-        return cb @errorBuilder.makeError 'notJoined', @name
-      cb()
-    , cb
+        Promise.reject @errorBuilder.makeError 'notJoined', @name
+      else
+        Promise.resolve()
 
   # @private
-  checkListChanges : (author, listName, values, cb) ->
-    @checkJoinedUser author, withEH cb, =>
+  checkListChanges : (author, listName, values) ->
+    @checkJoinedUser author
+    .then =>
       @roomState.ownerGet()
-      .then (owner) =>
-        if listName == 'userlist'
-          return cb @errorBuilder.makeError 'notAllowed'
-        if author == owner
-          return cb()
-        if listName == 'adminlist'
-          return cb @errorBuilder.makeError 'notAllowed'
-        @roomState.hasInList 'adminlist', author
-        .then (hasAuthor) =>
-          unless hasAuthor
-            return cb @errorBuilder.makeError 'notAllowed'
-          for name in values
-            if name == owner
-              return cb @errorBuilder.makeError 'notAllowed'
-          cb()
-        , cb
-      , cb
+    .then (owner) =>
+      if listName == 'userlist'
+        return Promise.reject @errorBuilder.makeError 'notAllowed'
+      if author == owner
+        return Promise.resolve()
+      if listName == 'adminlist'
+        return Promise.reject @errorBuilder.makeError 'notAllowed'
+      @roomState.hasInList 'adminlist', author
+      .then (admin) =>
+        unless admin
+          return Promise.reject @errorBuilder.makeError 'notAllowed'
+        for name in values
+          if name == owner
+            return Promise.reject @errorBuilder.makeError 'notAllowed'
 
   # @private
-  checkListAdd : (author, listName, values, cb) ->
-    @checkListChanges author, listName, values, cb
+  checkListAdd : (author, listName, values) ->
+    @checkListChanges author, listName, values
 
   # @private
-  checkListRemove : (author, listName, values, cb) ->
-    @checkListChanges author, listName, values, cb
+  checkListRemove : (author, listName, values) ->
+    @checkListChanges author, listName, values
 
   # @private
   checkModeChange : (author, value, cb) ->
-    @isAdmin author, withEH cb, (admin) =>
+    @isAdmin author
+    .then (admin) =>
       unless admin
-        return cb @errorBuilder.makeError 'notAllowed'
-      cb()
+        Promise.reject @errorBuilder.makeError 'notAllowed'
+      else
+        Promise.resolve()
 
   # @private
-  checkAcess : (userName, cb) ->
-    @isAdmin userName, withEH cb, (admin) =>
-      if admin
-        return cb()
+  checkAcess : (userName) ->
+    @isAdmin userName
+    .then (admin) =>
+      if admin then return Promise.resolve()
       @roomState.hasInList 'blacklist', userName
       .then (blacklisted) =>
         if blacklisted
-          return cb @errorBuilder.makeError 'notAllowed'
+          return Promise.reject @errorBuilder.makeError 'notAllowed'
         @roomState.whitelistOnlyGet()
         .then (whitelistOnly) =>
+          unless whitelistOnly then return Promise.resolve()
           @roomState.hasInList 'whitelist', userName
-          .then (inWhitelist) =>
-            if whitelistOnly and not inWhitelist
-              return cb @errorBuilder.makeError 'notAllowed'
-            cb()
-          , cb
-        , cb
-      , cb
+          .then (whitelisted) =>
+            if whitelisted
+              Promise.resolve()
+            else
+              Promise.reject @errorBuilder.makeError 'notAllowed'
 
   # @private
-  checkIsOwner : (author, cb) ->
-    @roomState.ownerGet()
-    .then (owner) =>
-      unless owner == author
-        return cb @errorBuilder.makeError 'notAllowed'
-      cb()
-    , cb
+  checkIsOwner : (author) ->
+    @roomState.ownerGet().then (owner) =>
+      if owner == author
+        Promise.resolve()
+      else
+        Promise.reject @errorBuilder.makeError 'notAllowed'
+
 
 # @private
 # @nodoc
@@ -161,138 +164,99 @@ class Room
     @roomState = new State @server, @name
 
   # @private
-  initState : (state, cb) ->
+  initState : (state) ->
     @roomState.initState state
-    .then (data) ->
-      cb null, data
-    , cb
 
   # @private
-  removeState : (cb) ->
+  removeState : () ->
     @roomState.removeState()
-    .then (data) ->
-      cb null, data
-    , cb
 
   # @private
-  getUsers: (cb) ->
+  getUsers: () ->
     @roomState.getList 'userlist'
-    .then (data) ->
-      cb null, data
-    , cb
 
   # @private
-  leave : (userName, cb) ->
+  leave : (userName) ->
     @roomState.removeFromList 'userlist', [userName]
-    .then (data) ->
-      cb null, data
-    , cb
 
   # @private
-  join : (userName, cb) ->
-    @checkAcess userName, withEH cb, =>
+  join : (userName) ->
+    @checkAcess userName
+    .then =>
       @roomState.addToList 'userlist', [userName]
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  message : (author, msg, cb) ->
+  message : (author, msg) ->
     @roomState.hasInList 'userlist', author
     .then (hasAuthor) =>
       unless hasAuthor
-        return cb @errorBuilder.makeError 'notJoined', @name
+        return Promise.reject @errorBuilder.makeError 'notJoined', @name
       @roomState.messageAdd msg
-      .then (data) ->
-        cb null, data
-      , cb
-    , cb
 
   # @private
-  getList : (author, listName, cb) ->
-    @checkJoinedUser author, withEH cb, =>
+  getList : (author, listName) ->
+    @checkJoinedUser author
+    .then =>
       @roomState.getList listName
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  getRecentMessages : (author, cb) ->
-    @checkJoinedUser author, withEH cb, =>
+  getRecentMessages : (author) ->
+    @checkJoinedUser author
+    .then =>
       @roomState.messagesGetRecent()
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  getMessagesLastId : (author, cb) ->
-    @checkJoinedUser author, withEH cb, =>
+  getMessagesLastId : (author) ->
+    @checkJoinedUser author
+    .then =>
       @roomState.messagesGetLastId()
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  getMessagesAfterId : (author, id, cb) ->
-    @checkJoinedUser author, withEH cb, =>
+  getMessagesAfterId : (author, id) ->
+    @checkJoinedUser author
+    .then =>
       @roomState.messagesGetAfterId id
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  addToList : (author, listName, values, cb) ->
-    @checkListAdd author, listName, values, withEH cb, =>
+  addToList : (author, listName, values) ->
+    @checkListAdd author, listName, values
+    .then =>
       @roomState.addToList listName, values
-      .then =>
-        data = []
-        async.eachLimit values, asyncLimit
-        , (val, fn) =>
-          @hasAddChangedCurrentAccess val, listName, withEH fn, (changed) ->
-            if changed then data.push val
-            fn()
-        , (error) -> cb error, data
-      , cb
+    .then =>
+      Promise.filter values, (val) =>
+        @hasAddChangedCurrentAccess val, listName
+      , { concurrency : asyncLimit }
 
   # @private
-  removeFromList : (author, listName, values, cb) ->
-    @checkListRemove author, listName, values, withEH cb, =>
+  removeFromList : (author, listName, values) ->
+    @checkListRemove author, listName, values
+    .then =>
       @roomState.removeFromList listName, values
-      .then =>
-        data = []
-        async.eachLimit values, asyncLimit
-        , (val, fn) =>
-          @hasRemoveChangedCurrentAccess val, listName, withEH fn, (changed) ->
-            if changed then data.push val
-            fn()
-        , (error) -> cb error, data
-      , cb
+    .then =>
+      Promise.filter values, (val) =>
+        @hasRemoveChangedCurrentAccess val, listName
+      , { concurrency : asyncLimit }
 
   # @private
-  getMode : (author, cb) ->
+  getMode : (author) ->
     @roomState.whitelistOnlyGet()
-    .then (data) ->
-      cb null, data
-    , cb
 
   # @private
-  getOwner : (author, cb) ->
-    @checkJoinedUser author, withEH cb, =>
+  getOwner : (author) ->
+    @checkJoinedUser author
+    .then =>
       @roomState.ownerGet()
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  changeMode : (author, mode, cb) ->
-    @checkModeChange author, mode, withEH cb, =>
-      whitelistOnly = if mode then true else false
+  changeMode : (author, mode) ->
+    whitelistOnly = if mode then true else false
+    @checkModeChange author, mode
+    .then =>
       @roomState.whitelistOnlySet whitelistOnly
-      .then =>
-        @getModeChangedCurrentAccess whitelistOnly, withEH cb
-        , (userNames) ->
-          cb null, userNames, mode
-      , cb
+    .then =>
+      @getModeChangedCurrentAccess whitelistOnly
+    .then (usernames) ->
+      Promise.resolve [ usernames, whitelistOnly ]
 
 
 module.exports = Room

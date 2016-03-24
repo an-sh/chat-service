@@ -1466,7 +1466,7 @@ describe 'Chat service.', ->
                 expect(data).true
                 done()
 
-        it 'should check user names, before adding', (done) ->
+        it 'should check user names before adding', (done) ->
           chatServer = new ChatService { port : port }, null, state
           chatServer.addUser 'user:1', null, (error, data) ->
             expect(error).ok
@@ -1498,7 +1498,7 @@ describe 'Chat service.', ->
               expect(data[0]).equal(user2)
               done()
 
-        it 'should check room names, before adding', (done) ->
+        it 'should check room names before adding', (done) ->
           chatServer = new ChatService { port : port }, null, state
           chatServer.addRoom 'room:1', null, (error, data) ->
             expect(error).ok

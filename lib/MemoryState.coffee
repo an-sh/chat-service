@@ -347,12 +347,7 @@ class MemoryState
       error = @errorBuilder.makeError 'roomExists', name
       return Promise.reject error
     if state
-      new Promise (resolve, reject) ->
-        room.initState state, (error, data) ->
-          if error
-            reject error
-          else
-            resolve data
+      room.initState state
     else
       Promise.resolve()
 

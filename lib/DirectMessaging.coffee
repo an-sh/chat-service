@@ -23,8 +23,7 @@ DirectMessagingPermissions =
     .then =>
       for name in values
         if name == @userName
-          error = @errorBuilder.makeError 'notAllowed'
-          return Promise.reject error
+          return Promise.reject @errorBuilder.makeError 'notAllowed'
       Promise.resolve()
 
   # @private
@@ -38,20 +37,20 @@ DirectMessagingPermissions =
   # @private
   checkAcess : (userName) ->
     if userName == @userName
-      error = @errorBuilder.makeError 'notAllowed'
-      return Promise.reject error
+      return Promise.reject @errorBuilder.makeError 'notAllowed'
     @directMessagingState.hasInList 'blacklist', userName
     .then (blacklisted) =>
       if blacklisted
-        Promise.reject @errorBuilder.makeError 'notAllowed'
-    .then =>
-      Promise.join @directMessagingState.whitelistOnlyGet()
-      , @directMessagingState.hasInList('whitelist', userName)
-      , (whitelistOnly, hasInWhitelist) =>
-        if whitelistOnly and not hasInWhitelist
-          Promise.reject @errorBuilder.makeError 'notAllowed'
-        else
-          Promise.resolve()
+        return Promise.reject @errorBuilder.makeError 'notAllowed'
+      @directMessagingState.whitelistOnlyGet()
+      .then (whitelistOnly) =>
+        unless whitelistOnly then return Promise.resolve()
+        @directMessagingState.hasInList 'whitelist', userName
+        .then (whitelisted) =>
+          if whitelisted
+            Promise.resolve()
+          else
+            Promise.reject @errorBuilder.makeError 'notAllowed'
 
 
 # @private

@@ -147,7 +147,10 @@ UserAssociations =
           unless isNewJoin then return fn()
           d = _.clone data
           d.op = 'RollbackUserJoinRoom'
-          room.leave @userName, @withFailLog d, fn
+          room.leave @userName
+          .then (data) ->
+            cb null, data
+          , @withFailLog fn
         (fn) =>
           d = _.clone data
           d.op = 'RollbackSocketJoinRoom'
@@ -163,7 +166,10 @@ UserAssociations =
     data = { userName : @userName, room : roomName }
     data.op = 'UserLeaveRoom'
     @withRoom roomName, @withFailLog data, (room) =>
-      room.leave @userName, @withFailLog data, cb
+      room.leave @userName
+      .then (data) ->
+        cb null, data
+      , @withFailLog cb
 
   # @private
   joinSocketToRoom : (id, roomName, cb) ->
@@ -171,7 +177,8 @@ UserAssociations =
     .then (lock) =>
       unlock = @userState.bindUnlock lock, 'joinSocketToRoom', id, cb
       @withRoom roomName, withEH unlock, (room) =>
-        room.join @userName, withEH unlock, (isNewJoin) =>
+        room.join @userName
+        .then (isNewJoin) =>
           rollback = @makeRollbackRoomJoin id, room, isNewJoin, unlock
           @userState.addSocketToRoom id, roomName
           .then (njoined) =>
@@ -181,6 +188,7 @@ UserAssociations =
               @socketJoinEcho id, roomName, njoined
               cb null, njoined
           , rollback
+        , unlock
     , cb
 
   # @private
@@ -280,6 +288,7 @@ class User extends DirectMessaging
         data.userName = @userName unless data.userName
         @errorsLogger error, data if error and @errorsLogger
         cb args...
+        return Promise.resolve() #TODO
 
   # @private
   withRoom : (roomName, cb) ->
@@ -377,7 +386,7 @@ class User extends DirectMessaging
       channel = recipient.echoChannel
       recipient.message @userName, msg
     .then ->
-      recipient.userState.getAllSockets()
+      recipient.userState.getAllSockets() #TODO
     .then (recipientSockets) =>
       unless recipientSockets?.length
         return Promise.reject @errorBuilder.makeError 'noUserOnline', recipient
@@ -420,11 +429,13 @@ class User extends DirectMessaging
   # @private
   roomAddToList : (roomName, listName, values, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.addToList @userName, listName, values, withEH cb, (userNames) =>
+      room.addToList @userName, listName, values
+      .then (userNames) =>
         if @enableAccessListsUpdates
           @transport.sendToChannel roomName, 'roomAccessListAdded'
           , roomName, listName , values
         @removeRoomUsers room, userNames, cb
+      , cb
 
   # @private
   roomCreate : (roomName, whitelistOnly, cb) ->
@@ -446,43 +457,67 @@ class User extends DirectMessaging
       error = @errorBuilder.makeError 'notAllowed'
       return cb error
     @withRoom roomName, withEH cb, (room) =>
-      room.checkIsOwner @userName, withEH cb, =>
-        room.getUsers withEH cb, (userNames) =>
-          @removeRoomUsers room, userNames, =>
-            @state.removeRoom room.name
+      room.checkIsOwner @userName
+      .then ->
+        room.getUsers()
+      .then (userNames) =>
+        @removeRoomUsers room, userNames, =>
+          @state.removeRoom room.name
+          .then ->
+            room.removeState()
             .then ->
-              room.removeState withoutData cb
+              cb()
             , cb
+          , cb
+      .catch cb
 
   # @private
   roomGetAccessList : (roomName, listName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.getList @userName, listName, cb
+      room.getList @userName, listName
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   roomGetOwner : (roomName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.getOwner @userName, cb
+      room.getOwner @userName
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   roomGetWhitelistMode : (roomName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.getMode @userName, cb
+      room.getMode @userName
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   roomHistory : (roomName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.getRecentMessages @userName, cb
+      room.getRecentMessages @userName
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   roomHistoryLastId : (roomName, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.getMessagesLastId @userName, cb
+      room.getMessagesLastId @userName
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   roomHistorySync : (roomName, id, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.getMessagesAfterId @userName, id, cb
+      room.getMessagesAfterId @userName, id
+      .then (data) ->
+        cb null, data
+      , cb
 
   # @private
   roomJoin : (roomName, cb, id) ->
@@ -498,26 +533,32 @@ class User extends DirectMessaging
   roomMessage : (roomName, msg, cb) ->
     @withRoom roomName, withEH cb, (room) =>
       @processMessage msg
-      room.message @userName, msg, withEH cb, (pmsg) =>
+      room.message @userName, msg
+      .then (pmsg) =>
         @transport.sendToChannel roomName, 'roomMessage', roomName, pmsg
         cb null, pmsg.id
+      , cb
 
   # @private
   roomRemoveFromList : (roomName, listName, values, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.removeFromList @userName, listName, values, withEH cb, (userNames) =>
+      room.removeFromList @userName, listName, values
+      .then (userNames) =>
         if @enableAccessListsUpdates
           @transport.sendToChannel roomName, 'roomAccessListRemoved',
           roomName, listName, values
         @removeRoomUsers room, userNames, cb
+      , cb
 
   # @private
   roomSetWhitelistMode : (roomName, mode, cb) ->
     @withRoom roomName, withEH cb, (room) =>
-      room.changeMode @userName, mode, withEH cb, (userNames, mode) =>
+      room.changeMode @userName, mode
+      .spread (userNames, mode) =>
         if @enableAccessListsUpdates
           @transport.sendToChannel roomName, 'roomModeChanged', roomName, mode
         @removeRoomUsers room, userNames, cb
+      .catch cb
 
   # @private
   systemMessage : (data, cb, id = null) ->

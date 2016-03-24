@@ -128,12 +128,17 @@ ServiceAPI =
   removeRoom : (roomName, cb = ->) ->
     user = new User @
     user.withRoom roomName, withEH cb, (room) =>
-      room.getUsers withEH cb, (usernames) =>
+      room.getUsers()
+      .then (usernames) =>
         user.removeRoomUsers room, usernames, =>
           @state.removeRoom room.name
           .then ->
-            room.removeState withoutData cb
+            room.removeState()
+            .then ->
+              cb()
+            , cb
           , cb
+      , cb
 
   # Gets a room owner.
   #
