@@ -7,6 +7,7 @@ _ = require 'lodash'
 User = require './User'
 
 # @mixin
+# @note Use either a callback or use promises returned from methods.
 # API for server side operations.
 ServiceAPI =
 
@@ -23,7 +24,7 @@ ServiceAPI =
   # @option params [Boolean] useHooks If `true` executes command with
   #   before and after hooks, default is `false`.
   #
-  # @return Promise
+  # @return [Promise]
   execUserCommand : (params, command, args...) ->
     if _.isObject params
       id = params.id || null
@@ -54,7 +55,7 @@ ServiceAPI =
   # @option state [Boolean] whitelistOnly User direct messages
   #   whitelistOnly mode.
   #
-  # @return Promise
+  # @return [Promise]
   addUser : (userName, state, cb) ->
     checkNameSymbols userName, @errorBuilder
     .then =>
@@ -64,10 +65,10 @@ ServiceAPI =
   # Gets user direct messaging mode.
   #
   # @param userName [String] User name.
-  # @param cb [Callback<error, Boolean>] Calls callback with an error
+  # @param cb [Callback<error, Boolean>] Optional callback with an error
   #   or the user mode.
   #
-  # @return Promise
+  # @return [Promise]
   getUserMode : (userName, cb) ->
     @state.getUser userName
     .then (user) ->
@@ -78,10 +79,10 @@ ServiceAPI =
   #
   # @param userName [String] User name.
   # @param listName [String] List name.
-  # @param cb [Callback<error, Array<String>>] Calls callback with an
+  # @param cb [Callback<error, Array<String>>] Optional callback with an
   #   error or the requested user list.
   #
-  # @return Promise
+  # @return [Promise]
   getUserList : (userName, listName, cb)  ->
     @state.getUser userName
     .then (user) ->
@@ -93,7 +94,7 @@ ServiceAPI =
   # @param userName [String] User name.
   # @param cb [Callback] Optional callback.
   #
-  # @return Promise
+  # @return [Promise]
   disconnectUserSockets : (userName, cb) ->
     @state.getUser userName
     .then (user) ->
@@ -112,7 +113,7 @@ ServiceAPI =
   # @option state [Boolean] whitelistOnly Room whitelistOnly mode.
   # @option state [String] owner Room owner.
   #
-  # @return Promise
+  # @return [Promise]
   addRoom : (roomName, state, cb) ->
     checkNameSymbols roomName, @errorBuilder
     .then =>
@@ -124,7 +125,7 @@ ServiceAPI =
   # @param roomName [String] User name.
   # @param cb [Callback] Optional callback.
   #
-  # @return Promise
+  # @return [Promise]
   deleteRoom : (roomName, cb) ->
     user = new User @
     @state.getRoom roomName
@@ -141,9 +142,9 @@ ServiceAPI =
   # Gets a room owner.
   #
   # @param roomName [String] Room name.
-  # @param cb [Callback<error, String>] Calls callback with an error
+  # @param cb [Callback<error, String>] Optional callback with an error
   #   or the room owner.
-  # @return Promise
+  # @return [Promise]
   getRoomOwner : (roomName, cb) ->
     @state.getRoom roomName
     .then (room) ->
@@ -156,7 +157,7 @@ ServiceAPI =
   # @param cb [Callback<error, Boolean>] Optional callback with an error
   #   or the room mode.
   #
-  # @return Promise
+  # @return [Promise]
   getRoomMode : (roomName, cb) ->
     @state.getRoom roomName
     .then (room) ->
@@ -170,7 +171,7 @@ ServiceAPI =
   # @param cb [Callback<error, Array<String>>] Optional callback with an
   #   error or the requested room list.
   #
-  # @return Promise
+  # @return [Promise]
   getRoomList : (roomName, listName, cb) ->
     @state.getRoom roomName
     .then (room) ->
@@ -183,7 +184,7 @@ ServiceAPI =
   # @param owner [String] Owner user name.
   # @param cb [Callback] Optional callback.
   #
-  # @return Promise
+  # @return [Promise]
   changeRoomOwner : (roomName, owner, cb) ->
     @state.getRoom roomName
     .then (room) ->

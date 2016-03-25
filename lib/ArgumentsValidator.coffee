@@ -6,6 +6,7 @@ check = require 'check-types'
 
 
 # Commands arguments type and count validation.
+# @note Use either a callback or use promises returned from methods.
 class ArgumentsValidator
 
   # @private
@@ -26,6 +27,8 @@ class ArgumentsValidator
   # @param name [String] Command name.
   # @param args [Rest...] Command arguments.
   # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise]
   checkArguments : (name, args..., cb) ->
     Promise.try =>
       checkfn = @checkers.get name
