@@ -1,7 +1,7 @@
 
 Promise = require 'bluebird'
 
-{ withEH, extend } = require './utils.coffee'
+{ extend } = require './utils.coffee'
 
 
 # @private

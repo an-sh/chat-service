@@ -365,12 +365,9 @@ class MemoryState
     unless user
       user = new User @server, name
       @users[name] = user
-    new Promise (resolve, reject) ->
-      user.registerSocket id, (error, user, nconnected) ->
-        if error
-          reject error
-        else
-          resolve [user, nconnected]
+    user.registerSocket id
+    .spread (user, nconnected) ->
+      Promise.resolve [user, nconnected]
 
   # @private
   getUser : (name) ->

@@ -1,9 +1,9 @@
 
 Map = require 'collections/fast-map'
+Promise = require 'bluebird'
 _ = require 'lodash'
-async = require 'async'
 check = require 'check-types'
-{ asyncLimit } = require './utils.coffee'
+
 
 # Commands arguments type and count validation.
 class ArgumentsValidator
@@ -25,24 +25,20 @@ class ArgumentsValidator
   #
   # @param name [String] Command name.
   # @param args [Rest...] Command arguments.
-  # @param cb [Callback] Callback.
+  # @param cb [Callback] Optional callback.
   checkArguments : (name, args..., cb) ->
-    checkfn = @checkers.get name
-    unless checkfn
-      return process.nextTick =>
-        cb @errorBuilder.makeError 'noCommand', name
-    error = @checkTypes checkfn, args
-    if error
-      return process.nextTick -> cb error
-    customCheckers = @customCheckers[name]
-    if customCheckers
-      async.forEachOfLimit customCheckers, asyncLimit
-      , (checker, idx, fn) ->
-        unless checker then return fn()
-        checker args[idx], fn
-      , cb
-    else
-      process.nextTick -> cb()
+    Promise.try =>
+      checkfn = @checkers.get name
+      unless checkfn
+        throw @errorBuilder.makeError 'noCommand', name
+      error = @checkTypes checkfn, args
+      if error then throw error
+      customCheckers = @customCheckers[name] || []
+      Promise.each customCheckers, (checker, idx) ->
+        if checker
+          Promise.fromCallback (fn) ->
+            checker args[idx], fn
+    .asCallback cb
 
   # @private
   # @nodoc

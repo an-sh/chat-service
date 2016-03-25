@@ -12,9 +12,8 @@ CommandBinder =
   # @private
   wrapCommand : (name, fn) ->
     errorBuilder = @server.errorBuilder
-    cmd = (oargs..., cb, id) =>
+    cmd = (oargs..., id, cb) =>
       validator = @server.validator
-      transport = @server.transport
       beforeHook = @server.hooks?["#{name}Before"]
       afterHook = @server.hooks?["#{name}After"]
       execCommand = (error, data, nargs...) =>
@@ -25,15 +24,14 @@ CommandBinder =
           return cb errorBuilder.makeError 'serverError', 'hook nargs error.'
         afterCommand = (error, data) =>
           reportResults = (nerror = error, ndata = data, moredata...) ->
-            if name == 'disconnect'
-              transport.endClientDisconnect()
             cb nerror, ndata, moredata...
           if afterHook
             results = _.slice arguments
             afterHook @server, @userName, id, args, results, reportResults
           else
             reportResults()
-        fn.apply @, [ args..., afterCommand, id ]
+        p = fn.apply @, [ args..., id ]
+        .asCallback afterCommand
       validator.checkArguments name, oargs..., (errors) =>
         if errors
           return cb errorBuilder.makeError errors...
@@ -51,6 +49,16 @@ CommandBinder =
       cb error, data, rest... if cb
 
   # @private
+  withDisconnectWatcher : (cmd, args..., id, ack) ->
+    isDisconnecting = @transport.startClientDisconnect id
+    unless isDisconnecting
+      cmd args..., id, =>
+        @transport.endClientDisconnect id
+        ack()
+    else
+      ack()
+
+  # @private
   bindCommand : (id, name, fn) ->
     cmd = @wrapCommand name, fn
     @transport.bind id, name, =>
@@ -61,7 +69,10 @@ CommandBinder =
         cb = null
         args = arguments
       ack = @bindAck cb
-      cmd args..., ack, id
+      if name == 'disconnect'
+        @withDisconnectWatcher cmd, args..., id, ack
+      else
+        cmd args..., id, ack
 
 
 module.exports = CommandBinder

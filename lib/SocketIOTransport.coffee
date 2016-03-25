@@ -1,13 +1,11 @@
 
-_ = require 'lodash'
 Promise = require 'bluebird'
 RedisAdapter = require 'socket.io-redis'
+Set = require 'collections/fast-set'
 SocketServer = require 'socket.io'
+_ = require 'lodash'
 
-
-{ checkNameSymbols
-  bindTE
-} = require './utils.coffee'
+{ checkNameSymbols } = require './utils.coffee'
 
 # @private
 # @nodoc
@@ -19,7 +17,6 @@ class SocketIOTransport
   constructor : (@server, @options, @adapterConstructor, @adapterOptions) ->
     @hooks = @server.hooks
     @errorBuilder = @server.errorBuilder
-    bindTE @
     @io = @options.io
     @namespace = @options.namespace || '/chat-service'
     Adapter = switch true
@@ -43,14 +40,9 @@ class SocketIOTransport
     @nsp = @io.of @namespace
     @server.io = @io
     @server.nsp = @nsp
-    @setLivecycle()
-
-  # @private
-  # @nodoc
-  setLivecycle : ->
-    @nclosing = 0
-    @closeCB = null
+    @closing = new Set()
     @finished = false
+    @closed = false
 
   # @private
   # @nodoc
@@ -63,7 +55,7 @@ class SocketIOTransport
   # @nodoc
   rejectLogin : (socket, error) ->
     socket.emit 'loginRejected', error
-    socket.disconnect(true)
+    socket.disconnect()
 
   # @private
   # @nodoc
@@ -71,33 +63,35 @@ class SocketIOTransport
     if _.isObject(authData)
       authData.id = socket.id unless authData.id?
     socket.emit 'loginConfirmed', userName, authData
+    Promise.resolve()
 
   # @private
   # @nodoc
   addClient : (error, socket, userName, authData = {}) ->
-    if error then return @rejectLogin socket, error
-    unless userName
-      userName = socket.handshake.query?.user
+    id = socket.id
+    Promise.try ->
+      if error then throw error
+    .then =>
       unless userName
-        error = @errorBuilder.makeError 'noLogin'
-        return @rejectLogin socket, error
-    if checkNameSymbols userName
-      error = @errorBuilder.makeError 'invalidName', userName
-      return @rejectLogin socket, error
-    @server.state.loginUserSocket @server.serverUID, userName, socket.id
+        userName = socket.handshake.query?.user
+        unless userName
+          throw @errorBuilder.makeError 'noLogin'
+    .then =>
+      checkNameSymbols userName, @errorBuilder
+    .then =>
+      @server.state.loginUserSocket @server.serverUID, userName, id
     .spread (user, nconnected) =>
-      socket.join user.echoChannel, @withTE (error) =>
-        if error then return @rejectLogin socket, error
-        user.socketConnectEcho socket.id, nconnected
+      @joinChannel id, user.echoChannel
+      .then =>
+        user.socketConnectEcho id, nconnected
         @confirmLogin socket, userName, authData
-    , (error) ->
+    .catch (error) =>
       @rejectLogin socket, error
-
 
   # @private
   # @nodoc
   checkShutdown : (socket, next) ->
-    if @closeCB or @finished
+    if @closed
       return socket.disconnect(true)
     next()
 
@@ -120,49 +114,49 @@ class SocketIOTransport
 
   # @private
   # @nodoc
-  finish : () ->
-    if @closeCB and not @finished
+  startClientDisconnect : (id) ->
+    isDisconnecting = @closing.has id
+    @closing.add id
+    return isDisconnecting
+
+  # @private
+  # @nodoc
+  endClientDisconnect : (id) ->
+    @closing.delete id
+    if @closed and @closing.length == 0 and not @finished
       @finished = true
-      @closeCB()
+      process.nextTick => @finishCB()
 
   # @private
   # @nodoc
-  startClientDisconnect : () ->
-    unless @closeCB then @nclosing++
-
-  # @private
-  # @nodoc
-  endClientDisconnect : () ->
-    @nclosing--
-    if @closeCB and @nclosing == 0
-      process.nextTick => @finish()
+  closingTimeoutChecker : (closeStartingTime) ->
+    if @finished then return
+    currentTime = _.now()
+    if currentTime > closeStartingTime + @closeTimeout
+      @finished = true
+      @finishCB new Error 'Transport closing timeout.'
+    else
+      setTimeout =>
+        @closingTimeoutChecker closeStartingTime,
+      , 50
 
   # @private
   # @nodoc
   close : (done = ->) ->
-    @closeCB = (error) =>
-      @closeCB = null
+    @closed = true
+    @finishCB = (error) =>
       unless @dontCloseIO
         @io.close()
       if @http
         @io.engine.close()
       done error
-    closeStartingTime = _.now()
-    closingTimeoutChecker = =>
-      if @finished then return
-      timeCurrent = _.now()
-      if timeCurrent > closeStartingTime + @closeTimeout
-        @finished = true
-        @closeCB new Error 'Transport closing timeout.'
-      else
-        setTimeout closingTimeoutChecker, 100
-    for sid, socket of @nsp.connected
-      @nclosing++
-      socket.disconnect()
-    if @nclosing == 0
-      process.nextTick => @closeCB()
+    for id, socket of @nsp.connected
+      unless @closing.has id
+        socket.disconnect()
+    if @closing.length == 0
+      process.nextTick => @finishCB()
     else
-      closingTimeoutChecker()
+      @closingTimeoutChecker _.now()
 
   # @private
   # @nodoc
@@ -209,6 +203,7 @@ class SocketIOTransport
     socket = @getSocketObject id
     if socket
       socket.disconnect()
+    Promise.resolve()
 
 
 module.exports = SocketIOTransport

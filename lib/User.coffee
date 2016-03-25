@@ -1,16 +1,14 @@
 
 _ = require 'lodash'
-async = require 'async'
 
 CommandBinder = require './CommandBinder'
 DirectMessaging = require './DirectMessaging'
+Promise = require 'bluebird'
 UserAssociations = require './UserAssociations'
 
 { asyncLimit
   checkNameSymbols
   extend
-  withEH
-  withoutData
 } = require './utils.coffee'
 
 
@@ -27,6 +25,8 @@ class User extends DirectMessaging
     super @server, @userName
     @state = @server.state
     @transport = @server.transport
+    @validator = @server.validator
+    @hooks = @server.hooks
     @enableUserlistUpdates = @server.enableUserlistUpdates
     @enableAccessListsUpdates = @server.enableAccessListsUpdates
     @enableRoomsManagement = @server.enableRoomsManagement
@@ -39,13 +39,6 @@ class User extends DirectMessaging
     @logError = (error, data) =>
       data.userName = @userName unless data.userName
       @errorsLogger error, data if @errorsLogger
-
-  # @private
-  withRoom : (roomName, cb) ->
-    @state.getRoom roomName
-    .then (room) ->
-      cb null, room
-    , cb
 
   # @private
   processMessage : (msg, setTimestamp = false) ->
@@ -66,67 +59,56 @@ class User extends DirectMessaging
     if useHooks
       cmd = @[command]
       fn = @wrapCommand command, cmd
-      fn args..., ack, id
+      fn args..., id, ack
     else
       validator = @server.validator
       validator.checkArguments command, args..., (errors) =>
         if errors then return ack @errorBuilder.makeError errors...
-        @[command] args..., ack, id
+        @[command] args..., id
+        .asCallback ack
 
   # @private
   revertRegisterSocket : (id) ->
     @userState.removeSocket id
+    # TODO
+    Promise.resolve()
 
   # @private
-  registerSocket : (id, cb) ->
+  registerSocket : (id) ->
     @userState.addSocket id
     .then (nconnected) =>
-      # Client disconnected before callbacks have been set.
       unless @transport.getSocketObject id
-        @revertRegisterSocket id
-        cb()
+        return @revertRegisterSocket id
       for cmd of @server.userCommands
         @bindCommand id, cmd, @[cmd]
-      @bindCommand id, 'disconnect', => @transport.startClientDisconnect()
-      cb null, @, nconnected
-    , cb
+      Promise.resolve [ @, nconnected ]
 
   # @private
-  disconnectInstanceSockets : (cb) ->
+  disconnectInstanceSockets : () ->
     @userState.getAllSockets()
     .then (sockets) =>
-      async.eachLimit sockets, asyncLimit, (sid, fn) =>
+      Promise.map sockets, (sid) =>
         @transport.disconnectClient sid
-        fn()
-      , cb
-    , cb
+      , { concurrency : asyncLimit }
 
   # @private
-  directAddToList : (listName, values, cb) ->
+  directAddToList : (listName, values) ->
     @addToList @userName, listName, values
-    .then ->
-      cb()
-    , cb
+    .then -> Promise.resolve()
 
   # @private
-  directGetAccessList : (listName, cb) ->
+  directGetAccessList : (listName) ->
     @getList @userName, listName
-    .then (data) ->
-      cb null, data
-    , cb
 
   # @private
-  directGetWhitelistMode: (cb) ->
+  directGetWhitelistMode: () ->
     @getMode @userName
-    .then (data) ->
-      cb null, data
-    , cb
 
   # @private
-  directMessage : (recipientName, msg, cb, id = null) ->
+  directMessage : (recipientName, msg, id) ->
     unless @enableDirectMessages
       error = @errorBuilder.makeError 'notAllowed'
-      return cb error
+      return Promise.reject error
     recipient = null
     channel = null
     @processMessage msg, true
@@ -144,72 +126,55 @@ class User extends DirectMessaging
       @transport.sendToOthers id, @echoChannel, 'directMessageEcho'
         , recipientName, msg
       Promise.resolve msg
-    .then (data) ->
-      cb null, data
-    , cb
 
   # @private
-  directRemoveFromList : (listName, values, cb) ->
+  directRemoveFromList : (listName, values) ->
     @removeFromList @userName, listName, values
-    .then ->
-      cb()
-    , cb
+    .then -> Promise.resolve()
 
   # @private
-  directSetWhitelistMode : (mode, cb) ->
+  directSetWhitelistMode : (mode) ->
     @changeMode @userName, mode
-    .then ->
-      cb()
-    , cb
+    .then -> Promise.resolve()
 
   # @private
-  disconnect : (reason, cb, id) ->
+  disconnect : (reason, id) ->
     @removeSocketFromServer id
-    .then (data) ->
-      cb null, data
-    , cb
 
   # @private
-  listOwnSockets : (cb) ->
+  listOwnSockets : () ->
     @userState.getSocketsToRooms()
-    .then (data) ->
-      cb null, data
-    , cb
 
   # @private
-  roomAddToList : (roomName, listName, values, cb) ->
-    @withRoom roomName, withEH cb, (room) =>
+  roomAddToList : (roomName, listName, values) ->
+    @state.getRoom roomName
+    .then (room) =>
       room.addToList @userName, listName, values
-      .then (userNames) =>
-        if @enableAccessListsUpdates
-          @transport.sendToChannel roomName, 'roomAccessListAdded'
-          , roomName, listName, values
-        @removeRoomUsers roomName, userNames
-        .then ->
-          cb()
-        , cb
-      , cb
+    .then (userNames) =>
+      if @enableAccessListsUpdates
+        @transport.sendToChannel roomName, 'roomAccessListAdded'
+        , roomName, listName, values
+      @removeRoomUsers roomName, userNames
+      .then -> Promise.resolve()
 
   # @private
-  roomCreate : (roomName, whitelistOnly, cb) ->
+  roomCreate : (roomName, whitelistOnly) ->
     unless @enableRoomsManagement
       error = @errorBuilder.makeError 'notAllowed'
-      return cb error
-    if checkNameSymbols roomName
-      error = @errorBuilder.makeError 'invalidName', roomName
-      return cb error
-    @state.addRoom roomName
+      return Promise.reject error
+    checkNameSymbols roomName, @errorBuilder
+    .then =>
+      @state.addRoom roomName
       , { owner : @userName, whitelistOnly : whitelistOnly }
-      .then ->
-        cb()
-      , cb
+    .then -> Promise.resolve()
 
   # @private
-  roomDelete : (roomName, cb) ->
+  roomDelete : (roomName) ->
     unless @enableRoomsManagement
       error = @errorBuilder.makeError 'notAllowed'
-      return cb error
-    @withRoom roomName, withEH cb, (room) =>
+      return Promise.reject error
+    @state.getRoom roomName
+    .then (room) =>
       room.checkIsOwner @userName
       .then ->
         room.getUsers()
@@ -219,113 +184,91 @@ class User extends DirectMessaging
         @state.removeRoom roomName
       .then ->
         room.removeState()
-        .then -> cb()
-      .catch cb
+      .then -> Promise.resolve()
 
   # @private
-  roomGetAccessList : (roomName, listName, cb) ->
-    @withRoom roomName, withEH cb, (room) =>
+  roomGetAccessList : (roomName, listName) ->
+    @state.getRoom roomName
+    .then (room) =>
       room.getList @userName, listName
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  roomGetOwner : (roomName, cb) ->
-    @withRoom roomName, withEH cb, (room) =>
+  roomGetOwner : (roomName) ->
+    @state.getRoom roomName
+    .then (room) =>
       room.getOwner @userName
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  roomGetWhitelistMode : (roomName, cb) ->
-    @withRoom roomName, withEH cb, (room) =>
+  roomGetWhitelistMode : (roomName) ->
+    @state.getRoom roomName
+    .then (room) =>
       room.getMode @userName
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  roomHistory : (roomName, cb) ->
-    @withRoom roomName, withEH cb, (room) =>
+  roomHistory : (roomName) ->
+    @state.getRoom roomName
+    .then (room) =>
       room.getRecentMessages @userName
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  roomHistoryLastId : (roomName, cb) ->
-    @withRoom roomName, withEH cb, (room) =>
+  roomHistoryLastId : (roomName) ->
+    @state.getRoom roomName
+    .then (room) =>
       room.getMessagesLastId @userName
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  roomHistorySync : (roomName, id, cb) ->
-    @withRoom roomName, withEH cb, (room) =>
-      room.getMessagesAfterId @userName, id
-      .then (data) ->
-        cb null, data
-      , cb
+  roomHistorySync : (roomName, msgid) ->
+    @state.getRoom roomName
+    .then (room) =>
+      room.getMessagesAfterId @userName, msgid
 
   # @private
-  roomJoin : (roomName, cb, id) ->
-    @withRoom roomName, withEH cb, (room) =>
+  roomJoin : (roomName, id) ->
+    @state.getRoom roomName
+    .then (room) =>
       @joinSocketToRoom id, roomName
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  roomLeave : (roomName, cb, id) ->
-    @withRoom roomName, withEH cb, (room) =>
+  roomLeave : (roomName, id) ->
+    @state.getRoom roomName
+    .then (room) =>
       @leaveSocketFromRoom id, room.name
-      .then (data) ->
-        cb null, data
-      , cb
 
   # @private
-  roomMessage : (roomName, msg, cb) ->
-    @withRoom roomName, withEH cb, (room) =>
+  roomMessage : (roomName, msg) ->
+    @state.getRoom roomName
+    .then (room) =>
       @processMessage msg
       room.message @userName, msg
-      .then (pmsg) =>
-        @transport.sendToChannel roomName, 'roomMessage', roomName, pmsg
-        cb null, pmsg.id
-      , cb
+    .then (pmsg) =>
+      @transport.sendToChannel roomName, 'roomMessage', roomName, pmsg
+      Promise.resolve pmsg.id
 
   # @private
-  roomRemoveFromList : (roomName, listName, values, cb) ->
-    @withRoom roomName, withEH cb, (room) =>
+  roomRemoveFromList : (roomName, listName, values) ->
+    @state.getRoom roomName
+    .then (room) =>
       room.removeFromList @userName, listName, values
-      .then (userNames) =>
-        if @enableAccessListsUpdates
-          @transport.sendToChannel roomName, 'roomAccessListRemoved',
-          roomName, listName, values
-        @removeRoomUsers roomName, userNames
-        .then ->
-          cb()
-        , cb
-      , cb
+    .then (userNames) =>
+      if @enableAccessListsUpdates
+        @transport.sendToChannel roomName, 'roomAccessListRemoved',
+        roomName, listName, values
+      @removeRoomUsers roomName, userNames
+    .then -> Promise.resolve()
 
   # @private
-  roomSetWhitelistMode : (roomName, mode, cb) ->
-    @withRoom roomName, withEH cb, (room) =>
+  roomSetWhitelistMode : (roomName, mode) ->
+    @state.getRoom roomName
+    .then (room) =>
       room.changeMode @userName, mode
-      .spread (userNames, mode) =>
-        if @enableAccessListsUpdates
-          @transport.sendToChannel roomName, 'roomModeChanged', roomName, mode
-        @removeRoomUsers roomName, userNames
-        .then (data) ->
-          cb null, data
-        , cb
-      .catch cb
+    .spread (userNames, mode) =>
+      if @enableAccessListsUpdates
+        @transport.sendToChannel roomName, 'roomModeChanged', roomName, mode
+      @removeRoomUsers roomName, userNames
 
   # @private
-  systemMessage : (data, cb, id = null) ->
+  systemMessage : (data, id) ->
     @transport.sendToOthers id, @echoChannel, 'systemMessage', data
-    cb()
+
 
 module.exports = User

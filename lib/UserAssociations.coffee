@@ -1,6 +1,6 @@
 
-_ = require 'lodash'
 Promise = require 'bluebird'
+_ = require 'lodash'
 
 { asyncLimit } = require './utils.coffee'
 

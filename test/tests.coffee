@@ -43,26 +43,28 @@ describe 'Chat service.', ->
   socket2 = null
   socket3 = null
 
-  cleanup = null
+  customCleanup = null
 
   afterEachFn = (done) ->
-    endcb = (error) ->
-      if error then return done error
-      redis.flushall done
     socket1?.disconnect()
     socket1 = null
     socket2?.disconnect()
     socket2 = null
     socket3?.disconnect()
     socket3 = null
-    if cleanup
-      cleanup endcb
-      cleanup = null
+    if customCleanup
+      customCleanup (error) ->
+        redis.flushall ->
+          customCleanup = null
+          done error
     else if chatServer
-      chatServer.close endcb
-      chatServer = null
+      chatServer.close (error) ->
+        redis.flushall ->
+          chatServer.io.close()
+          chatServer = null
+          done error
     else
-      endcb()
+      redis.flushall done
 
   before (done) ->
     redis.dbsize (error, data) ->
@@ -86,7 +88,7 @@ describe 'Chat service.', ->
           s.transportOptions = { http : app }
           chatServer1 = new ChatService null, null, s
           app.listen port
-          cleanup = (cb) ->
+          customCleanup = (cb) ->
             chatServer1.close (error) ->
               if error then cb error
               app.close cb
@@ -100,7 +102,7 @@ describe 'Chat service.', ->
           s = _.clone state
           s.transportOptions = { io : io }
           chatServer1 = new ChatService null, null, s
-          cleanup = (cb) ->
+          customCleanup = (cb) ->
             chatServer1.close (error) ->
               if error then cb error
               io.close()
@@ -1516,7 +1518,7 @@ describe 'Chat service.', ->
                   socket2.emit 'roomJoin', roomName1, ->
                     async.parallel [
                       (cb) ->
-                        chatServer.removeRoom roomName1, (error, data) ->
+                        chatServer.deleteRoom roomName1, (error, data) ->
                           expect(error).not.ok
                           expect(data).not.ok
                           cb()
@@ -1542,7 +1544,7 @@ describe 'Chat service.', ->
 
         it 'should check existing rooms before removing a room', (done) ->
           chatServer = new ChatService { port : port }, null, state
-          chatServer.removeRoom roomName1, (error, data) ->
+          chatServer.deleteRoom roomName1, (error, data) ->
             expect(error).ok
             expect(data).not.ok
             done()
@@ -1639,12 +1641,12 @@ describe 'Chat service.', ->
                   , 'roomAddToList', 'whitelist', [user1]
                   , (error, data) ->
                     expect(error).ok
-                    expect(data).null
+                    expect(data).not.ok
                     chatServer.execUserCommand user1
                     , 'roomAddToList', roomName1, 1, [user1]
                     , (error, data) ->
                       expect(error).ok
-                      expect(data).null
+                      expect(data).not.ok
                       done()
 
 

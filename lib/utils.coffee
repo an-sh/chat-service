@@ -1,4 +1,5 @@
 
+Promise = require 'bluebird'
 _ = require 'lodash'
 
 # @private
@@ -15,42 +16,18 @@ extend = (c, mixins...) ->
 
 # @private
 # @nodoc
-withEH = (errorCallback, normallCallback) ->
-  (error, args...) ->
-    if error then return errorCallback error
-    normallCallback args...
-
-# @private
-# @nodoc
-bindTE = (obj) ->
-  obj.withTE = (callback, normallCallback) ->
-    (error, data...) ->
-      if error
-        callback obj.errorBuilder.makeError 'serverError', 500
-      else if normallCallback
-        normallCallback data...
-      else
-        callback error, data...
-
-# @private
-# @nodoc
-withoutData = (fn) ->
-  (error) -> fn error
-
-# @private
-# @nodoc
 nameChecker = /^[^\u0000-\u001F:{}\u007F]+$/
 
 # @private
 # @nodoc
-checkNameSymbols = (name) ->
-  not (_.isString(name) and nameChecker.test(name))
+checkNameSymbols = (name, errorBuilder) ->
+  if (_.isString(name) and nameChecker.test(name))
+    Promise.resolve()
+  else
+    Promise.reject errorBuilder.makeError 'invalidName', name
 
 module.exports = {
   asyncLimit
-  bindTE
   checkNameSymbols
   extend
-  withEH
-  withoutData
 }

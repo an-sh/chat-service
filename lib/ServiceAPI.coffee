@@ -1,10 +1,8 @@
 
+Promise = require 'bluebird'
 _ = require 'lodash'
 
-{ checkNameSymbols
-  withEH
-  withoutData
-} = require './utils.coffee'
+{ checkNameSymbols } = require './utils.coffee'
 
 User = require './User'
 
@@ -24,6 +22,8 @@ ServiceAPI =
   #   'disconnect', 'roomJoin', 'roomLeave' commands.
   # @option params [Boolean] useHooks If `true` executes command with
   #   before and after hooks, default is `false`.
+  #
+  # @return Promise
   execUserCommand : (params, command, args...) ->
     if _.isObject params
       id = params.id || null
@@ -33,15 +33,15 @@ ServiceAPI =
       id = null
       useHooks = false
       userName = params
-    cb = _.last args
-    if _.isFunction cb
+    if _.isFunction _.last args
+      cb = _.last args
       args = _.slice args, 0, -1
-    else
-      cb = ->
     @state.getUser userName
     .then (user) ->
-      user.exec command, useHooks, id, args..., cb
-    , cb
+      Promise.fromCallback (fn) ->
+        user.exec command, useHooks, id, args..., fn
+      , { multiArgs : true }
+    .asCallback cb, { spread : true }
 
   # Adds an user with a state.
   #
@@ -53,28 +53,26 @@ ServiceAPI =
   # @option state [Array<String>] blacklist User direct messages blacklist.
   # @option state [Boolean] whitelistOnly User direct messages
   #   whitelistOnly mode.
-  addUser : (userName, state, cb = ->) ->
-    if checkNameSymbols userName
-      error = @errorBuilder.makeError 'invalidName', userName
-      return process.nextTick -> cb error
-    @state.addUser userName, state
-    .then ->
-      cb()
-    , cb
+  #
+  # @return Promise
+  addUser : (userName, state, cb) ->
+    checkNameSymbols userName, @errorBuilder
+    .then =>
+      @state.addUser userName, state
+    .asCallback cb
 
   # Gets user direct messaging mode.
   #
   # @param userName [String] User name.
   # @param cb [Callback<error, Boolean>] Calls callback with an error
   #   or the user mode.
-  getUserMode : (userName, cb = ->) ->
+  #
+  # @return Promise
+  getUserMode : (userName, cb) ->
     @state.getUser userName
     .then (user) ->
       user.directMessagingState.whitelistOnlyGet()
-      .then (data) ->
-        cb null, data
-      , cb
-    , cb
+    .asCallback cb
 
   # Gets an user list.
   #
@@ -82,24 +80,25 @@ ServiceAPI =
   # @param listName [String] List name.
   # @param cb [Callback<error, Array<String>>] Calls callback with an
   #   error or the requested user list.
-  getUserList : (userName, listName, cb = ->)  ->
+  #
+  # @return Promise
+  getUserList : (userName, listName, cb)  ->
     @state.getUser userName
     .then (user) ->
       user.directMessagingState.getList listName
-      .then (data) ->
-        cb null, data
-      , cb
-    , cb
+    .asCallback cb
 
   # Disconnects all user sockets for this instance.
   #
   # @param userName [String] User name.
   # @param cb [Callback] Optional callback.
-  disconnectUserSockets : (userName, cb = ->) ->
+  #
+  # @return Promise
+  disconnectUserSockets : (userName, cb) ->
     @state.getUser userName
     .then (user) ->
       user.disconnectInstanceSockets cb
-    , cb
+    .asCallback cb
 
   # Adds a room with a state.
   #
@@ -112,22 +111,24 @@ ServiceAPI =
   # @option state [Array<String>] adminlist Room adminlist.
   # @option state [Boolean] whitelistOnly Room whitelistOnly mode.
   # @option state [String] owner Room owner.
-  addRoom : (roomName, state, cb = ->) ->
-    if checkNameSymbols roomName
-      error = @errorBuilder.makeError 'invalidName', roomName
-      return process.nextTick -> cb error
-    @state.addRoom roomName, state
-    .then ->
-      cb()
-    , cb
+  #
+  # @return Promise
+  addRoom : (roomName, state, cb) ->
+    checkNameSymbols roomName, @errorBuilder
+    .then =>
+      @state.addRoom roomName, state
+    .asCallback cb
 
   # Removes all room data, and removes joined user from the room.
   #
   # @param roomName [String] User name.
   # @param cb [Callback] Optional callback.
-  removeRoom : (roomName, cb = ->) ->
+  #
+  # @return Promise
+  deleteRoom : (roomName, cb) ->
     user = new User @
-    user.withRoom roomName, withEH cb, (room) =>
+    @state.getRoom roomName
+    .then (room) =>
       room.getUsers()
       .then (usernames) ->
         user.removeRoomUsers roomName, usernames
@@ -135,61 +136,59 @@ ServiceAPI =
         @state.removeRoom room.name
       .then ->
         room.removeState()
-        .then -> cb()
-      .catch cb
+    .asCallback cb
 
   # Gets a room owner.
   #
   # @param roomName [String] Room name.
   # @param cb [Callback<error, String>] Calls callback with an error
   #   or the room owner.
-  getRoomOwner : (roomName, cb = ->) ->
-    user = new User @
-    user.withRoom roomName, withEH cb, (room) ->
+  # @return Promise
+  getRoomOwner : (roomName, cb) ->
+    @state.getRoom roomName
+    .then (room) ->
       room.roomState.ownerGet()
-      .then (data) ->
-        cb null, data
-      , cb
+    .asCallback cb
 
   # Gets a room mode.
   #
   # @param roomName [String] Room mode.
-  # @param cb [Callback<error, Boolean>] Calls callback with an error
+  # @param cb [Callback<error, Boolean>] Optional callback with an error
   #   or the room mode.
-  getRoomMode : (roomName, cb = ->) ->
-    user = new User @
-    user.withRoom roomName, withEH cb, (room) ->
+  #
+  # @return Promise
+  getRoomMode : (roomName, cb) ->
+    @state.getRoom roomName
+    .then (room) ->
       room.roomState.whitelistOnlyGet()
-      .then (data) ->
-        cb null, data
-      , cb
+    .asCallback cb
 
   # Gets a room list.
   #
   # @param roomName [String] Room name.
   # @param listName [String] List name.
-  # @param cb [Callback<error, Array<String>>] Calls callback with an
+  # @param cb [Callback<error, Array<String>>] Optional callback with an
   #   error or the requested room list.
+  #
+  # @return Promise
   getRoomList : (roomName, listName, cb) ->
-    user = new User @
-    user.withRoom roomName, withEH cb, (room) ->
+    @state.getRoom roomName
+    .then (room) ->
       room.roomState.getList listName
-      .then (data) ->
-        cb null, data
-      , cb
+    .asCallback cb
 
   # Changes a room owner.
   #
   # @param roomName [String] Room name.
   # @param owner [String] Owner user name.
   # @param cb [Callback] Optional callback.
-  changeRoomOwner : (roomName, owner, cb = ->) ->
-    user = new User @
-    user.withRoom roomName, withEH cb, (room) ->
+  #
+  # @return Promise
+  changeRoomOwner : (roomName, owner, cb) ->
+    @state.getRoom roomName
+    .then (room) ->
       room.roomState.ownerSet owner
-      .then (data) ->
-        cb null, data
-      , cb
+    .asCallback cb
 
 
 module.exports = ServiceAPI
