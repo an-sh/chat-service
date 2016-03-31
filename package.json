@@ -5,7 +5,8 @@
   "description": "Server side chat based on top of socket.io focused on scalability and extensibility.",
   "main": "index.js",
   "scripts": {
-    "test": "mocha && istanbul report text-summary lcov",
+    "test": "mocha --require ./coffee-coverage-loader.js && istanbul report text-summary lcov",
+    "test-debug": "mocha",
     "pipe-coverage": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js --verbose"
   },
   "author": {
