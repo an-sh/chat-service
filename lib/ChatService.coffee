@@ -3,7 +3,6 @@ _ = require 'lodash'
 uid = require 'uid-safe'
 
 ArgumentsValidator = require './ArgumentsValidator.coffee'
-ErrorBuilder = require './ErrorBuilder.coffee'
 MemoryState = require './MemoryState.coffee'
 RedisState = require './RedisState.coffee'
 ServiceAPI = require './ServiceAPI.coffee'
@@ -136,11 +135,11 @@ class ServerMessages
 #
 # List of commands that are sent from a client. Result is sent back as
 # a socket.io ack with in the standard (error, data) callback
-# parameters format. Error is ether a string or an object, depending
-# on {ChatService} `useRawErrorObjects` option. See {ErrorBuilder} for
-# an error object format description. Some messages will echo
-# {ServerMessages} to other user's sockets or trigger sending
-# {ServerMessages} to other users.
+# parameters format. Error is ether a String or an Object, depending
+# on {ChatService} `useRawErrorObjects` option. See {ChatServiceError}
+# for an errors list. Some messages will echo {ServerMessages} to
+# other user's sockets or trigger sending {ServerMessages} to other
+# users.
 #
 # @example Socket.io client example
 #   socket = ioClient.connect url, params
@@ -395,7 +394,7 @@ class ChatService
   #
   # @option serviceOptions [Boolean] useRawErrorObjects Send error
   #   objects instead of strings, default is `false`. See
-  #   {ErrorBuilder}.
+  #   {ChatServiceError}.
   #
   #
   # @option hooks [Function(<ChatService>, <Socket>,
@@ -503,9 +502,6 @@ class ChatService
     @startServer()
 
 
-  # @property [Object] {ErrorBuilder} instance.
-  errorBuilder: null
-
   # @property [Object] {ArgumentsValidator} instance.
   validator: null
 
@@ -560,7 +556,6 @@ class ChatService
       when @transportConstructor == 'socket.io' then SocketIOTransport
       when _.isFunction @transportConstructor then @transportConstructor
       else throw new Error "Invalid transport: #{@stateConstructor}"
-    @errorBuilder = new ErrorBuilder @useRawErrorObjects
     @userCommands = new UserCommands()
     @serverMessages = new ServerMessages()
     @validator = new ArgumentsValidator @

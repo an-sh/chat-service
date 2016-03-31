@@ -1,4 +1,5 @@
 
+ChatServiceError = require './ChatServiceError.coffee'
 Promise = require 'bluebird'
 
 { extend, asyncLimit } =
@@ -8,9 +9,8 @@ Promise = require 'bluebird'
 # @mixin
 # @nodoc
 #
-# Implements room messaging permissions checks.
-# Required existence of userName, roomState and errorBuilder in
-# extented classes.
+# Implements room messaging permissions checks.  Required existence of
+# userName, roomState and in extented classes.
 RoomPermissions =
 
   # @private
@@ -78,7 +78,7 @@ RoomPermissions =
     @roomState.hasInList 'userlist', author
     .then (hasAuthor) =>
       unless hasAuthor
-        Promise.reject @errorBuilder.makeError 'notJoined', @name
+        Promise.reject new ChatServiceError 'notJoined', @name
       else
         Promise.resolve()
 
@@ -89,18 +89,18 @@ RoomPermissions =
       @roomState.ownerGet()
     .then (owner) =>
       if listName == 'userlist'
-        return Promise.reject @errorBuilder.makeError 'notAllowed'
+        return Promise.reject new ChatServiceError 'notAllowed'
       if author == owner
         return Promise.resolve()
       if listName == 'adminlist'
-        return Promise.reject @errorBuilder.makeError 'notAllowed'
+        return Promise.reject new ChatServiceError 'notAllowed'
       @roomState.hasInList 'adminlist', author
-      .then (admin) =>
+      .then (admin) ->
         unless admin
-          return Promise.reject @errorBuilder.makeError 'notAllowed'
+          return Promise.reject new ChatServiceError 'notAllowed'
         for name in values
           if name == owner
-            return Promise.reject @errorBuilder.makeError 'notAllowed'
+            return Promise.reject new ChatServiceError 'notAllowed'
         Promise.resolve()
 
   # @private
@@ -114,9 +114,9 @@ RoomPermissions =
   # @private
   checkModeChange : (author, value, cb) ->
     @isAdmin author
-    .then (admin) =>
+    .then (admin) ->
       unless admin
-        Promise.reject @errorBuilder.makeError 'notAllowed'
+        Promise.reject new ChatServiceError 'notAllowed'
       else
         Promise.resolve()
 
@@ -128,24 +128,24 @@ RoomPermissions =
       @roomState.hasInList 'blacklist', userName
       .then (blacklisted) =>
         if blacklisted
-          return Promise.reject @errorBuilder.makeError 'notAllowed'
+          return Promise.reject new ChatServiceError 'notAllowed'
         @roomState.whitelistOnlyGet()
         .then (whitelistOnly) =>
           unless whitelistOnly then return Promise.resolve()
           @roomState.hasInList 'whitelist', userName
-          .then (whitelisted) =>
+          .then (whitelisted) ->
             if whitelisted
               Promise.resolve()
             else
-              Promise.reject @errorBuilder.makeError 'notAllowed'
+              Promise.reject new ChatServiceError 'notAllowed'
 
   # @private
   checkIsOwner : (author) ->
-    @roomState.ownerGet().then (owner) =>
+    @roomState.ownerGet().then (owner) ->
       if owner == author
         Promise.resolve()
       else
-        Promise.reject @errorBuilder.makeError 'notAllowed'
+        Promise.reject new ChatServiceError 'notAllowed'
 
 
 # @private
@@ -160,7 +160,6 @@ class Room
 
   # @private
   constructor : (@server, @name) ->
-    @errorBuilder = @server.errorBuilder
     State = @server.state.RoomState
     @roomState = new State @server, @name
 
@@ -191,7 +190,7 @@ class Room
     @roomState.hasInList 'userlist', author
     .then (hasAuthor) =>
       unless hasAuthor
-        return Promise.reject @errorBuilder.makeError 'notJoined', @name
+        return Promise.reject new ChatServiceError 'notJoined', @name
       @roomState.messageAdd msg
 
   # @private

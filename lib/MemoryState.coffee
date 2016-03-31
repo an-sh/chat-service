@@ -1,4 +1,5 @@
 
+ChatServiceError = require './ChatServiceError.coffee'
 FastSet = require 'collections/fast-set'
 List = require 'collections/list'
 Map = require 'collections/fast-map'
@@ -27,7 +28,7 @@ class ListsStateMemory
   # @private
   checkList : (listName) ->
     unless @hasList listName
-      error = @errorBuilder.makeError 'noList', listName
+      error = new ChatServiceError 'noList', listName
       Promise.reject error
     else
       Promise.resolve()
@@ -79,7 +80,6 @@ class RoomStateMemory extends ListsStateMemory
 
   # @private
   constructor : (@server, @name) ->
-    @errorBuilder = @server.errorBuilder
     @historyMaxGetMessages = @server.historyMaxGetMessages
     @historyMaxMessages = @server.historyMaxMessages
     @whitelist = new FastSet
@@ -195,7 +195,6 @@ class DirectMessagingStateMemory extends ListsStateMemory
 
   # @private
   constructor : (@server, @userName) ->
-    @errorBuilder = @server.errorBuilder
     @whitelistOnly
     @whitelist = new FastSet
     @blacklist = new FastSet
@@ -314,7 +313,6 @@ class MemoryState
 
   # @private
   constructor : (@server, @options = {}) ->
-    @errorBuilder = @server.errorBuilder
     @users = {}
     @rooms = {}
     @RoomState = RoomStateMemory
@@ -329,7 +327,7 @@ class MemoryState
   getRoom : (name) ->
     r = @rooms[name]
     unless r
-      error = @errorBuilder.makeError 'noRoom', name
+      error = new ChatServiceError 'noRoom', name
       return Promise.reject error
     Promise.resolve r
 
@@ -339,7 +337,7 @@ class MemoryState
     unless @rooms[name]
       @rooms[name] = room
     else
-      error = @errorBuilder.makeError 'roomExists', name
+      error = new ChatServiceError 'roomExists', name
       return Promise.reject error
     if state
       room.initState state
@@ -352,7 +350,7 @@ class MemoryState
       delete @rooms[name]
       Promise.resolve()
     else
-      error = @errorBuilder.makeError 'noRoom', name
+      error = new ChatServiceError 'noRoom', name
       Promise.reject error
 
   # @private
@@ -373,7 +371,7 @@ class MemoryState
   getUser : (name) ->
     user = @users[name]
     unless user
-      error = @errorBuilder.makeError 'noUser', name
+      error = new ChatServiceError 'noUser', name
       Promise.reject error
     else
       Promise.resolve user
@@ -382,7 +380,7 @@ class MemoryState
   addUser : (name, state) ->
     user = @users[name]
     if user
-      error = @errorBuilder.makeError 'userExists', name
+      error = new ChatServiceError 'userExists', name
       return Promise.reject error
     user = new User @server, name
     @users[name] = user

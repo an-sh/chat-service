@@ -1,4 +1,5 @@
 
+ChatServiceError = require './ChatServiceError.coffee'
 Map = require 'collections/fast-map'
 Promise = require 'bluebird'
 _ = require 'lodash'
@@ -17,7 +18,6 @@ class ArgumentsValidator
       @checkers.set name, _.bind @[name], @
     @directMessagesChecker = @server.directMessagesChecker
     @roomMessagesChecker = @server.roomMessagesChecker
-    @errorBuilder = @server.errorBuilder
     @customCheckers =
       directMessage : [ null, @directMessagesChecker ]
       roomMessage : [ null, @roomMessagesChecker ]
@@ -32,8 +32,7 @@ class ArgumentsValidator
   checkArguments : (name, args..., cb) ->
     Promise.try =>
       checkfn = @checkers.get name
-      unless checkfn
-        throw @errorBuilder.makeError 'noCommand', name
+      unless checkfn then throw new ChatServiceError 'noCommand', name
       error = @checkTypes checkfn, args
       if error then throw error
       customCheckers = @customCheckers[name] || []
@@ -62,10 +61,11 @@ class ArgumentsValidator
   checkTypes : (checkfn, args) ->
     checkers = checkfn()
     if args?.length != checkers.length
-      return [ 'wrongArgumentsCount', checkers.length, args.length ]
+      return new ChatServiceError 'wrongArgumentsCount'
+      , checkers.length, args.length
     for checker, idx in checkers
       unless checker args[idx]
-        return [ 'badArgument', idx, args[idx] ]
+        return new ChatServiceError 'badArgument', idx, args[idx]
     return null
 
   # @private

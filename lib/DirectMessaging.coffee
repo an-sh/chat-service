@@ -1,4 +1,5 @@
 
+ChatServiceError = require './ChatServiceError.coffee'
 Promise = require 'bluebird'
 
 { extend } = require './utils.coffee'
@@ -8,9 +9,8 @@ Promise = require 'bluebird'
 # @mixin
 # @nodoc
 #
-# Implements direct messaging permissions checks.
-# Required existence of userName, directMessagingState and
-# errorBuilder in extented classes.
+# Implements direct messaging permissions checks. Required existence
+# of userName, directMessagingState and in extented classes.
 DirectMessagingPermissions =
 
   # @private
@@ -23,7 +23,7 @@ DirectMessagingPermissions =
     .then =>
       for name in values
         if name == @userName
-          return Promise.reject @errorBuilder.makeError 'notAllowed'
+          return Promise.reject new ChatServiceError 'notAllowed'
       Promise.resolve()
 
   # @private
@@ -37,20 +37,20 @@ DirectMessagingPermissions =
   # @private
   checkAcess : (userName) ->
     if userName == @userName
-      return Promise.reject @errorBuilder.makeError 'notAllowed'
+      return Promise.reject new ChatServiceError 'notAllowed'
     @directMessagingState.hasInList 'blacklist', userName
     .then (blacklisted) =>
       if blacklisted
-        return Promise.reject @errorBuilder.makeError 'notAllowed'
+        return Promise.reject new ChatServiceError 'notAllowed'
       @directMessagingState.whitelistOnlyGet()
       .then (whitelistOnly) =>
         unless whitelistOnly then return Promise.resolve()
         @directMessagingState.hasInList 'whitelist', userName
-        .then (whitelisted) =>
+        .then (whitelisted) ->
           if whitelisted
             Promise.resolve()
           else
-            Promise.reject @errorBuilder.makeError 'notAllowed'
+            Promise.reject new ChatServiceError 'notAllowed'
 
 
 # @private
@@ -65,7 +65,6 @@ class DirectMessaging
 
   # @private
   constructor : (@server, @userName) ->
-    @errorBuilder = @server.errorBuilder
     State = @server.state.DirectMessagingState
     @directMessagingState = new State @server, @userName
 

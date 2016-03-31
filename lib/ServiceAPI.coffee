@@ -57,7 +57,7 @@ ServiceAPI =
   #
   # @return [Promise]
   addUser : (userName, state, cb) ->
-    checkNameSymbols userName, @errorBuilder
+    checkNameSymbols userName
     .then =>
       @state.addUser userName, state
     .asCallback cb
@@ -115,7 +115,7 @@ ServiceAPI =
   #
   # @return [Promise]
   addRoom : (roomName, state, cb) ->
-    checkNameSymbols roomName, @errorBuilder
+    checkNameSymbols roomName
     .then =>
       @state.addRoom roomName, state
     .asCallback cb

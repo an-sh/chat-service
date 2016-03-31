@@ -1,4 +1,5 @@
 
+ChatServiceError = require './ChatServiceError.coffee'
 _ = require 'lodash'
 
 # @private
@@ -11,7 +12,6 @@ CommandBinder =
 
   # @private
   wrapCommand : (name, fn) ->
-    errorBuilder = @server.errorBuilder
     cmd = (oargs..., id, cb) =>
       validator = @server.validator
       beforeHook = @server.hooks?["#{name}Before"]
@@ -21,7 +21,7 @@ CommandBinder =
           return cb error, data
         args = if nargs.length then nargs else oargs
         if args.length != oargs.length
-          return cb errorBuilder.makeError 'serverError', 'hook nargs error.'
+          return cb new ChatServiceError 'serverError', 'hook nargs error.'
         afterCommand = (error, data) =>
           reportResults = (nerror = error, ndata = data, moredata...) ->
             cb nerror, ndata, moredata...
@@ -32,9 +32,9 @@ CommandBinder =
             reportResults()
         p = fn.apply @, [ args..., id ]
         .asCallback afterCommand
-      validator.checkArguments name, oargs..., (errors) =>
-        if errors
-          return cb errorBuilder.makeError errors...
+      validator.checkArguments name, oargs..., (error) =>
+        if error
+          return cb error
         unless beforeHook
           execCommand()
         else
@@ -43,8 +43,10 @@ CommandBinder =
 
   # @private
   bindAck : (cb) ->
-    (error, data, rest...) ->
+    (error, data, rest...) =>
       error = null unless error?
+      if error and not @server.useRawErrorObjects
+        error = error.toString()
       data = null unless data?
       cb error, data, rest... if cb
 

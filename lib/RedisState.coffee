@@ -1,4 +1,5 @@
 
+ChatServiceError = require './ChatServiceError.coffee'
 Redis = require 'ioredis'
 Room = require './Room.coffee'
 User = require './User.coffee'
@@ -6,7 +7,6 @@ _ = require 'lodash'
 async = require 'async'
 
 { asyncLimit
-  bindTE
   extend
   withEH
 } = require './utils.coffee'
@@ -34,7 +34,7 @@ stateOperations =
   # @private
   initState : (state, cb) ->
     @redis.setnx @makeKeyName('exists'), 1, @withTE cb, (exists) =>
-      if exists then return cb @errorBuilder.makeError @exitsErrorName, name
+      if exists then return cb new ChatServiceError @exitsErrorName, name
       @stateReset state, @withTE cb, =>
         @redis.set @makeKeyName('exists'), 1, @withTE cb
 
@@ -56,7 +56,7 @@ class ListsStateRedis
   # @private
   checkList : (listName, cb) ->
     unless @hasList listName
-      error = @errorBuilder.makeError 'noList', listName
+      error = new ChatServiceError 'noList', listName
     process.nextTick -> cb error
 
   # @private
@@ -105,8 +105,6 @@ class RoomStateRedis extends ListsStateRedis
 
   # @private
   constructor : (@server, @name) ->
-    @errorBuilder = @server.errorBuilder
-    bindTE @
     @historyMaxGetMessages = @server.historyMaxGetMessages
     @historyMaxMessages = @server.historyMaxMessages
     @redis = @server.redis
@@ -183,8 +181,6 @@ class DirectMessagingStateRedis extends ListsStateRedis
 
   # @private
   constructor : (@server, @userName) ->
-    @errorBuilder = @server.errorBuilder
-    bindTE @
     @name = @userName
     @prefix = 'user'
     @exitsErrorName = 'userExists'
@@ -218,9 +214,7 @@ class UserStateRedis
     @name = @userName
     @prefix = 'user'
     @redis = @server.redis
-    @errorBuilder = @server.errorBuilder
     @echoChannel = @makeEchoChannelName @userName
-    bindTE @
 
   # @private
   makeKeyName : (keyName) ->
@@ -290,8 +284,6 @@ class RedisState
 
   # @private
   constructor : (@server, @options = {}) ->
-    @errorBuilder = @server.errorBuilder
-    bindTE @
     redisOptions = _.castArray @options.redisOptions
     if @options.useCluster
       @redis = new Redis.Cluster redisOptions...
@@ -323,7 +315,7 @@ class RedisState
   # @private
   getRoom : (name, cb) ->
     @hasRoom name, withEH cb, (exists) =>
-      unless exists then return cb @errorBuilder.makeError 'noRoom', name
+      unless exists then return cb new ChatServiceError 'noRoom', name
       room = new Room @server, name
       cb null, room
 
@@ -335,7 +327,7 @@ class RedisState
   # @private
   removeRoom : (name, cb) ->
     @hasRoom name, withEH cb, (exists) =>
-      unless exists then return cb @errorBuilder.makeError 'noRoom', name
+      unless exists then return cb new ChatServiceError 'noRoom', name
       room = new Room @server, name
       room.removeState cb
 
@@ -352,9 +344,9 @@ class RedisState
   # @private
   getUser : (name, cb) ->
     user = new User @server, name
-    @hasUser name, withEH cb, (exists) =>
-      user.getAllSockets name, withEH cb, (sockets) =>
-        unless exists then return cb @errorBuilder.makeError 'noUser', name
+    @hasUser name, withEH cb, (exists) ->
+      user.getAllSockets name, withEH cb, (sockets) ->
+        unless exists then return cb new ChatServiceError 'noUser', name
         cb null, user, sockets
 
   # @private

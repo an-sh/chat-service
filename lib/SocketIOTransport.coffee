@@ -1,4 +1,5 @@
 
+ChatServiceError = require './ChatServiceError.coffee'
 Promise = require 'bluebird'
 RedisAdapter = require 'socket.io-redis'
 Set = require 'collections/fast-set'
@@ -16,7 +17,6 @@ class SocketIOTransport
   # @nodoc
   constructor : (@server, @options, @adapterConstructor, @adapterOptions) ->
     @hooks = @server.hooks
-    @errorBuilder = @server.errorBuilder
     @io = @options.io
     @namespace = @options.namespace || '/chat-service'
     Adapter = switch true
@@ -71,13 +71,13 @@ class SocketIOTransport
     id = socket.id
     Promise.try ->
       if error then throw error
-    .then =>
+    .then ->
       unless userName
         userName = socket.handshake.query?.user
         unless userName
-          throw @errorBuilder.makeError 'noLogin'
-    .then =>
-      checkNameSymbols userName, @errorBuilder
+          Promise.reject new ChatServiceError 'noLogin'
+    .then ->
+      checkNameSymbols userName
     .then =>
       @server.state.loginUserSocket @server.serverUID, userName, id
     .spread (user, nconnected) =>
@@ -184,7 +184,7 @@ class SocketIOTransport
   joinChannel : (id, channel) ->
     socket = @getSocketObject id
     unless socket
-      Promise.reject @errorBuilder.makeError 'serverError', 500
+      Promise.reject new ChatServiceError 'serverError', 500
     else
       Promise.fromCallback (fn) ->
         socket.join channel, fn

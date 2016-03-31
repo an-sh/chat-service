@@ -1,10 +1,10 @@
 
-_ = require 'lodash'
-
+ChatServiceError = require './ChatServiceError.coffee'
 CommandBinder = require './CommandBinder'
 DirectMessaging = require './DirectMessaging'
 Promise = require 'bluebird'
 UserAssociations = require './UserAssociations'
+_ = require 'lodash'
 
 { asyncLimit
   checkNameSymbols
@@ -51,19 +51,19 @@ class User extends DirectMessaging
   exec : (command, useHooks, id, args..., cb) ->
     ack = @bindAck cb
     unless @server.userCommands[command]
-      return process.nextTick =>
-        ack @errorBuilder.makeError 'noCommand', command
+      return process.nextTick ->
+        ack new ChatServiceError 'noCommand', command
     if not id and command in [ 'disconnect', 'roomJoin' ,'roomLeave' ]
-      return process.nextTick =>
-        ack @errorBuilder.makeError 'noSocket', command
+      return process.nextTick ->
+        ack new ChatServiceError 'noSocket', command
     if useHooks
       cmd = @[command]
       fn = @wrapCommand command, cmd
       fn args..., id, ack
     else
       validator = @server.validator
-      validator.checkArguments command, args..., (errors) =>
-        if errors then return ack @errorBuilder.makeError errors...
+      validator.checkArguments command, args..., (error) =>
+        if error then return ack error
         @[command] args..., id
         .asCallback ack
 
@@ -107,7 +107,7 @@ class User extends DirectMessaging
   # @private
   directMessage : (recipientName, msg, id) ->
     unless @enableDirectMessages
-      error = @errorBuilder.makeError 'notAllowed'
+      error = new ChatServiceError 'notAllowed'
       return Promise.reject error
     recipient = null
     channel = null
@@ -121,7 +121,8 @@ class User extends DirectMessaging
       recipient.userState.getAllSockets() #TODO
     .then (recipientSockets) =>
       unless recipientSockets?.length
-        return Promise.reject @errorBuilder.makeError 'noUserOnline', recipient
+        error = new ChatServiceError 'noUserOnline', recipient.userName
+        return Promise.reject error
       @transport.sendToChannel channel, 'directMessage', msg
       @transport.sendToOthers id, @echoChannel, 'directMessageEcho'
         , recipientName, msg
@@ -160,9 +161,9 @@ class User extends DirectMessaging
   # @private
   roomCreate : (roomName, whitelistOnly) ->
     unless @enableRoomsManagement
-      error = @errorBuilder.makeError 'notAllowed'
+      error = new ChatServiceError 'notAllowed'
       return Promise.reject error
-    checkNameSymbols roomName, @errorBuilder
+    checkNameSymbols roomName
     .then =>
       @state.addRoom roomName
       , { owner : @userName, whitelistOnly : whitelistOnly }
@@ -171,7 +172,7 @@ class User extends DirectMessaging
   # @private
   roomDelete : (roomName) ->
     unless @enableRoomsManagement
-      error = @errorBuilder.makeError 'notAllowed'
+      error = new ChatServiceError 'notAllowed'
       return Promise.reject error
     @state.getRoom roomName
     .then (room) =>
