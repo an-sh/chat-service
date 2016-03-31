@@ -1,6 +1,10 @@
 
 ChatServiceError = require './ChatServiceError.coffee'
+Promise = require 'bluebird'
 _ = require 'lodash'
+
+{ ensureMultipleArguments, possiblyCallback } = require './utils.coffee'
+
 
 # @private
 # @mixin
@@ -11,70 +15,78 @@ _ = require 'lodash'
 CommandBinder =
 
   # @private
-  wrapCommand : (name, fn) ->
-    cmd = (oargs..., id, cb) =>
-      validator = @server.validator
-      beforeHook = @server.hooks?["#{name}Before"]
-      afterHook = @server.hooks?["#{name}After"]
-      execCommand = (error, data, nargs...) =>
-        if error or data
-          return cb error, data
-        args = if nargs.length then nargs else oargs
-        if args.length != oargs.length
-          return cb new ChatServiceError 'serverError', 'hook nargs error.'
-        afterCommand = (error, data) =>
-          reportResults = (nerror = error, ndata = data, moredata...) ->
-            cb nerror, ndata, moredata...
-          if afterHook
-            results = _.slice arguments
-            afterHook @server, @userName, id, args, results, reportResults
-          else
-            reportResults()
-        p = fn.apply @, [ args..., id ]
-        .asCallback afterCommand
-      validator.checkArguments name, oargs..., (error) =>
-        if error
-          return cb error
-        unless beforeHook
-          execCommand()
-        else
-          beforeHook @server, @userName, id, oargs, execCommand
-    return cmd
-
-  # @private
   bindAck : (cb) ->
-    (error, data, rest...) =>
+    useRawErrorObjects = @server.useRawErrorObjects
+    (error, data, rest...) ->
       error = null unless error?
-      if error and not @server.useRawErrorObjects
-        error = error.toString()
       data = null unless data?
-      cb error, data, rest... if cb
+      unless useRawErrorObjects
+        error = error?.toString()
+      cb error, data, rest...
 
   # @private
-  withDisconnectWatcher : (cmd, args..., id, ack) ->
-    isDisconnecting = @transport.startClientDisconnect id
-    unless isDisconnecting
-      cmd args..., id, =>
-        @transport.endClientDisconnect id
-        ack()
-    else
-      ack()
+  commandWatcher : (id, name) ->
+    if name == 'disconnect'
+      wasDisconnecting = @transport.startClientDisconnect id
+      unless wasDisconnecting
+        Promise.resolve(wasDisconnecting).disposer =>
+          @transport.endClientDisconnect id
+      else
+        Promise.resolve(wasDisconnecting)
+
+  # @private
+  makeCommand : (name, fn) ->
+    self = @
+    validator = @server.validator
+    beforeHook = @server.hooks?["#{name}Before"]
+    afterHook = @server.hooks?["#{name}After"]
+    (oargs..., info = {}, cb) =>
+      args = oargs
+      ack = @bindAck cb if cb
+      callInfo = { @server, @userName }
+      callInfo.id = info.id || null
+      callInfo.bypassPermissions = info.bypassPermissions || false
+      callInfo.bypassHooks = info.bypassHooks || false
+      Promise.using @commandWatcher(info.id, name), (stop) ->
+        if stop then return
+        validator.checkArguments name, args...
+        .then ->
+          if beforeHook and not callInfo.bypassHooks
+            Promise.fromCallback (cb) ->
+              beforeHook callInfo, args, ensureMultipleArguments cb
+            , {multiArgs: true}
+        .then (results = []) ->
+          [data, nargs...] = results
+          if data then return data
+          Promise.try ->
+            if nargs?.length
+              args = nargs
+              validator.checkArguments name, args...
+          .then ->
+            fn.apply self, [args..., info]
+          .then (data) ->
+            Promise.resolve [ null, data ]
+          .catch (error) ->
+            Promise.resolve [error, null]
+          .spread (error, data) ->
+            if afterHook and not callInfo.bypassHooks
+              Promise.fromCallback (cb) ->
+                results = [error, data]
+                afterHook callInfo, args, results, ensureMultipleArguments cb
+              , {multiArgs: true}
+            else if error
+              Promise.reject error
+            else
+              Promise.resolve [ data ]
+      .asCallback ack, { spread : true }
 
   # @private
   bindCommand : (id, name, fn) ->
-    cmd = @wrapCommand name, fn
-    @transport.bind id, name, =>
-      cb = _.last arguments
-      if _.isFunction cb
-        args = _.slice arguments, 0, -1
-      else
-        cb = null
-        args = arguments
-      ack = @bindAck cb
-      if name == 'disconnect'
-        @withDisconnectWatcher cmd, args..., id, ack
-      else
-        cmd args..., id, ack
+    cmd = @makeCommand name, fn
+    info = { id : id }
+    @transport.bind id, name, ->
+      [args, cb] = possiblyCallback arguments
+      cmd args..., info, cb
 
 
 module.exports = CommandBinder

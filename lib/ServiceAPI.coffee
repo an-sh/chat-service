@@ -2,7 +2,7 @@
 Promise = require 'bluebird'
 _ = require 'lodash'
 
-{ checkNameSymbols } = require './utils.coffee'
+{ checkNameSymbols, possiblyCallback } = require './utils.coffee'
 
 User = require './User'
 
@@ -21,27 +21,23 @@ ServiceAPI =
   # @option params [String] username User name.
   # @option params [String] id Socket id, it is required for
   #   'disconnect', 'roomJoin', 'roomLeave' commands.
-  # @option params [Boolean] useHooks If `true` executes command with
+  # @option params [Boolean] bypassHooks If `false` executes command with
   #   before and after hooks, default is `false`.
+  # @option params [Boolean] bypassPermissions If `true` executes
+  #   command without checking permissions for rooms commands, default
+  #   is `false`.
   #
   # @return [Promise]
   execUserCommand : (params, command, args...) ->
     if _.isObject params
-      id = params.id || null
-      useHooks = params.useHooks || false
       userName = params.userName
     else
-      id = null
-      useHooks = false
       userName = params
-    if _.isFunction _.last args
-      cb = _.last args
-      args = _.slice args, 0, -1
+      params = null
+    [args, cb] = possiblyCallback args
     @state.getUser userName
     .then (user) ->
-      Promise.fromCallback (fn) ->
-        user.exec command, useHooks, id, args..., fn
-      , { multiArgs : true }
+      user.exec command, params, args...
     .asCallback cb, { spread : true }
 
   # Adds an user with a state.

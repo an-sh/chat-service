@@ -20,10 +20,10 @@ describe 'Chat service.', ->
 
   makeParams = (userName) ->
     params =
-      'query' : "user=#{userName}"
-      'multiplex' : false
-      'reconnection' : false
-      'transports' : [ 'websocket' ]
+      query : "user=#{userName}"
+      multiplex : false
+      reconnection : false
+      transports : [ 'websocket' ]
     unless userName
       delete params.query
     return params
@@ -172,7 +172,7 @@ describe 'Chat service.', ->
         it 'should execute socket.io middleware', (done) ->
           reason = 'some error'
           auth = (socket, cb) ->
-            cb( new Error reason )
+            cb new Error reason
           chatService = new ChatService { port : port }
           , { middleware : auth }, state
           socket1 = clientConnect()
@@ -181,16 +181,17 @@ describe 'Chat service.', ->
             done()
 
         it 'should reject login if onConnect hook passes error', (done) ->
-          err = { someField : 'some reason' }
+          err = null
           onConnect = (server, id, cb) ->
             expect(server).instanceof(ChatService)
             expect(id).a('string')
+            err = new Error 'some error'
             cb err
           chatService = new ChatService { port : port }
             , { onConnect : onConnect }, state
           socket1 = clientConnect user1
           socket1.on 'loginRejected', (e) ->
-            expect(e).deep.equal(err)
+            expect(e).deep.equal(err.toString())
             done()
 
         it 'should support multiple sockets per user', (done) ->
@@ -1336,7 +1337,8 @@ describe 'Chat service.', ->
           before = null
           after = null
           sid = null
-          beforeHook = (server, userName, id, args, cb) ->
+          beforeHook = (callInfo, args, cb) ->
+            { server, userName, id } = callInfo
             [ name , mode ] = args
             expect(server).instanceof(ChatService)
             expect(userName).equal(user1)
@@ -1346,7 +1348,8 @@ describe 'Chat service.', ->
             expect(cb).instanceof(Function)
             before = true
             cb()
-          afterHook = (server, userName, id, args, results, cb) ->
+          afterHook = (callInfo, args, results, cb) ->
+            { server, userName, id } = callInfo
             [ name , mode ] = args
             [ error, data ] = results
             expect(server).instanceof(ChatService)
@@ -1366,14 +1369,14 @@ describe 'Chat service.', ->
           socket1.on 'loginConfirmed', (u, data) ->
             sid = data.id
             socket1.emit 'roomCreate', roomName1, true, (error, data) ->
+              expect(error).not.ok
               expect(before).true
               expect(after).true
-              expect(error).not.ok
               expect(data).equal(someData)
               done()
 
         it 'should support changing arguments in before hooks', (done) ->
-          beforeHook = (server, userName, id, args, cb) ->
+          beforeHook = (callInfo, args, cb) ->
             cb null, null, roomName2
           chatService = new ChatService { port : port
             , enableRoomsManagement : true}
@@ -1389,8 +1392,8 @@ describe 'Chat service.', ->
                   done()
 
         it 'should support more arguments in after hooks', (done) ->
-          afterHook = (server, userName, id, args, results, cb) ->
-            cb null, null, true
+          afterHook = (callInfo, args, results, cb) ->
+            cb results..., true
           chatService = new ChatService { port : port }
           , { 'listOwnSocketsAfter' : afterHook }
           , state
@@ -1406,7 +1409,7 @@ describe 'Chat service.', ->
 
         it 'should send errors if new arguments have a different length'
         , (done) ->
-          beforeHook = (server, userName, id, args, cb) ->
+          beforeHook = (callInfo, args, cb) ->
             cb null, null, roomName2
           chatService = new ChatService { port : port
             , enableRoomsManagement : true}
@@ -1418,12 +1421,12 @@ describe 'Chat service.', ->
               expect(error).ok
               done()
 
-        it 'should execute disconnect After and Before hooks', (done) ->
+        it 'should execute disconnect Before and Aefore hooks', (done) ->
           before = false
-          disconnectBefore = (server, userName, id, args, cb) ->
+          disconnectBefore = (callInfo, args, cb) ->
             before = true
             cb()
-          disconnectAfter = (server, userName, id, args, results, cb) ->
+          disconnectAfter = (callInfo, args, results, cb) ->
             expect(before).true
             cb()
             done()
@@ -1436,15 +1439,16 @@ describe 'Chat service.', ->
             chatService1.close()
 
         it 'should stop commands on before hook error or data', (done) ->
-          err = 'error'
-          beforeHook = (server, userName, id, args, cb) ->
+          err = null
+          beforeHook = (callInfo, args, cb) ->
+            err = new Error 'some error'
             cb err
           chatService = new ChatService { port : port }
           , { 'listOwnSocketsBefore' : beforeHook }, state
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed', ->
             socket1.emit 'listOwnSockets', (error, data) ->
-              expect(error).equal(err)
+              expect(error).equal(err.toString())
               expect(data).null
               done()
 
@@ -1664,18 +1668,31 @@ describe 'Chat service.', ->
                     cb()
               ], done
 
-        it 'should execute commands with hooks.', (done) ->
-          chatService = new ChatService { port : port }, null, state
+        it 'should execute commands without hooks.', (done) ->
+          before = null
+          after = null
+          beforeHook = (callInfo, args, cb) ->
+            before = true
+            cb()
+          afterHook = (callInfo, args, results, cb) ->
+            after = true
+            cb()
+          chatService = new ChatService { port : port }
+          , { 'roomAddToListBefore' : beforeHook
+            , 'roomAddToListAfter' : afterHook }
+          , state
           chatService.addRoom roomName1, {owner : user1}, ->
             chatService.addUser user2, null, ->
               socket1 = clientConnect user1
               socket1.on 'loginConfirmed', ->
                 socket1.emit 'roomJoin', roomName1, ->
                   chatService.execUserCommand { userName : user1
-                    , useHooks : true }
+                    , bypassHooks : true }
                   , 'roomAddToList', roomName1, 'whitelist', [user1]
                   , (error, data) ->
                     expect(error).not.ok
+                    expect(before).null
+                    expect(after).null
                     expect(data).null
                     done()
 

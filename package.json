@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha --require ./coffee-coverage-loader.js && istanbul report text-summary lcov",
-    "test-debug": "mocha",
+    "test-debug": "BLUEBIRD_DEBUG=1 mocha",
     "pipe-coverage": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js --verbose"
   },
   "author": {

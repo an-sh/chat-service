@@ -7,6 +7,7 @@ UserAssociations = require './UserAssociations'
 _ = require 'lodash'
 
 { asyncLimit
+  ensureMultipleArguments
   checkNameSymbols
   extend
 } = require './utils.coffee'
@@ -48,24 +49,17 @@ class User extends DirectMessaging
     return msg
 
   # @private
-  exec : (command, useHooks, id, args..., cb) ->
-    ack = @bindAck cb
+  exec : (command, options = {}, args...) ->
+    id = options.id
     unless @server.userCommands[command]
-      return process.nextTick ->
-        ack new ChatServiceError 'noCommand', command
+      throw new ChatServiceError 'noCommand', command
     if not id and command in [ 'disconnect', 'roomJoin' ,'roomLeave' ]
-      return process.nextTick ->
-        ack new ChatServiceError 'noSocket', command
-    if useHooks
-      cmd = @[command]
-      fn = @wrapCommand command, cmd
-      fn args..., id, ack
-    else
-      validator = @server.validator
-      validator.checkArguments command, args..., (error) =>
-        if error then return ack error
-        @[command] args..., id
-        .asCallback ack
+      throw new ChatServiceError 'noSocket', command
+    fn = @[command]
+    cmd = @makeCommand command, fn
+    Promise.fromCallback (cb) ->
+      cmd args..., options, ensureMultipleArguments cb
+    , {multiArgs: true}
 
   # @private
   revertRegisterSocket : (id) ->
@@ -105,7 +99,8 @@ class User extends DirectMessaging
     @getMode @userName
 
   # @private
-  directMessage : (recipientName, msg, id) ->
+  directMessage : (recipientName, msg, params) ->
+    id = params.id || null
     unless @enableDirectMessages
       error = new ChatServiceError 'notAllowed'
       return Promise.reject error
@@ -139,7 +134,8 @@ class User extends DirectMessaging
     .then -> Promise.resolve()
 
   # @private
-  disconnect : (reason, id) ->
+  disconnect : (reason, params) ->
+    id = params.id || null
     @removeSocketFromServer id
 
   # @private
@@ -224,13 +220,15 @@ class User extends DirectMessaging
       room.getMessagesAfterId @userName, msgid
 
   # @private
-  roomJoin : (roomName, id) ->
+  roomJoin : (roomName, params) ->
+    id = params.id || null
     @state.getRoom roomName
     .then (room) =>
       @joinSocketToRoom id, roomName
 
   # @private
-  roomLeave : (roomName, id) ->
+  roomLeave : (roomName, params) ->
+    id = params.id || null
     @state.getRoom roomName
     .then (room) =>
       @leaveSocketFromRoom id, room.name
@@ -268,7 +266,8 @@ class User extends DirectMessaging
       @removeRoomUsers roomName, userNames
 
   # @private
-  systemMessage : (data, id) ->
+  systemMessage : (data, params) ->
+    id = params.id || null
     @transport.sendToOthers id, @echoChannel, 'systemMessage', data
 
 

@@ -1,6 +1,7 @@
 
 util = require 'util'
 
+# TODO
 # ChatService errors.
 class ChatServiceError
 
@@ -38,6 +39,8 @@ class ChatServiceError
   toString : () ->
     str = @errorStrings[@name] || @name.unknownError
     util.format str, @args...
+
+util.inherits ChatServiceError, Error
 
 
 module.exports = ChatServiceError

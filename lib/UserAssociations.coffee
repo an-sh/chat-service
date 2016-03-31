@@ -160,7 +160,7 @@ UserAssociations =
         Promise.resolve()
 
   # @private
-  removeRoomUsers : (roomName, userNames) ->
+  removeRoomUsers : (roomName, userNames = []) ->
     Promise.map userNames, (userName) =>
       @removeUserFromRoom userName, roomName
     , { concurrency : asyncLimit }

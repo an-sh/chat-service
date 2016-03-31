@@ -2,8 +2,7 @@
 ChatServiceError = require './ChatServiceError.coffee'
 Promise = require 'bluebird'
 
-{ extend, asyncLimit } =
-  require './utils.coffee'
+{ extend, asyncLimit } = require './utils.coffee'
 
 # @private
 # @mixin
@@ -69,7 +68,7 @@ RoomPermissions =
   # @private
   getModeChangedCurrentAccess : (value) ->
     unless value
-      Promise.resolve false
+      Promise.resolve []
     else
       @roomState.getCommonUsers()
 
@@ -249,7 +248,7 @@ class Room
 
   # @private
   changeMode : (author, mode) ->
-    whitelistOnly = if mode then true else false
+    whitelistOnly = mode
     @checkModeChange author, mode
     .then =>
       @roomState.whitelistOnlySet whitelistOnly

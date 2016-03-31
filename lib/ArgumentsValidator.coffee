@@ -5,6 +5,8 @@ Promise = require 'bluebird'
 _ = require 'lodash'
 check = require 'check-types'
 
+{ possiblyCallback } = require './utils.coffee'
+
 
 # Commands arguments type and count validation.
 # @note Use either a callback or use promises returned from methods.
@@ -25,11 +27,11 @@ class ArgumentsValidator
   # Check command arguments.
   #
   # @param name [String] Command name.
-  # @param args [Rest...] Command arguments.
-  # @param cb [Callback] Optional callback.
+  # @param args [Rest...] Command arguments with an optional callback.
   #
   # @return [Promise]
-  checkArguments : (name, args..., cb) ->
+  checkArguments : (name, args...) ->
+    [args, cb] = possiblyCallback args
     Promise.try =>
       checkfn = @checkers.get name
       unless checkfn then throw new ChatServiceError 'noCommand', name

@@ -54,7 +54,7 @@ class SocketIOTransport
   # @private
   # @nodoc
   rejectLogin : (socket, error) ->
-    socket.emit 'loginRejected', error
+    socket.emit 'loginRejected', error?.toString()
     socket.disconnect()
 
   # @private
@@ -115,9 +115,9 @@ class SocketIOTransport
   # @private
   # @nodoc
   startClientDisconnect : (id) ->
-    isDisconnecting = @closing.has id
+    wasDisconnecting = @closing.has id
     @closing.add id
-    return isDisconnecting
+    return wasDisconnecting
 
   # @private
   # @nodoc

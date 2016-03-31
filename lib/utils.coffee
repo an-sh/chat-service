@@ -12,7 +12,6 @@ asyncLimit = 32
 # @nodoc
 nameChecker = /^[^\u0000-\u001F:{}\u007F]+$/
 
-
 # @private
 # @nodoc
 extend = (c, mixins...) ->
@@ -23,15 +22,31 @@ extend = (c, mixins...) ->
 
 # @private
 # @nodoc
+possiblyCallback = (args) ->
+  cb = _.last args
+  if _.isFunction cb
+    args = _.slice args, 0, -1
+  else
+    cb = null
+  [args, cb]
+
+# @private
+# @nodoc
 checkNameSymbols = (name) ->
   if (_.isString(name) and nameChecker.test(name))
     Promise.resolve()
   else
     Promise.reject new ChatServiceError 'invalidName', name
 
+ensureMultipleArguments = (cb) ->
+  (error, data...) ->
+    cb error, data...
+
 module.exports = {
   asyncLimit
   checkNameSymbols
+  ensureMultipleArguments
   extend
   nameChecker
+  possiblyCallback
 }
