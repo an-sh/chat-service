@@ -142,7 +142,7 @@ class SocketIOTransport
 
   # @private
   # @nodoc
-  close : (done = ->) ->
+  close : (done) ->
     @closed = true
     @finishCB = (error) =>
       unless @dontCloseIO

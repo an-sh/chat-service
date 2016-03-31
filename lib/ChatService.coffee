@@ -1,12 +1,12 @@
 
-_ = require 'lodash'
-uid = require 'uid-safe'
-
 ArgumentsValidator = require './ArgumentsValidator.coffee'
 MemoryState = require './MemoryState.coffee'
+Promise = require 'bluebird'
 RedisState = require './RedisState.coffee'
 ServiceAPI = require './ServiceAPI.coffee'
 SocketIOTransport = require './SocketIOTransport.coffee'
+_ = require 'lodash'
+uid = require 'uid-safe'
 
 { extend } = require './utils.coffee'
 
@@ -575,22 +575,19 @@ class ChatService
 
   # Closes server.
   # @param done [callback] Optional callback.
-  close : (done = ->) ->
-    @transport.close (error) =>
-      closeDB = (error) =>
-        if error
-          @state.close()
-          done error
-        else
-          @state.close()
-          .then ->
-            done()
-          , done
+  # @return [Promise]
+  close : (done) ->
+    Promise.fromCallback (cb) =>
+      @transport.close cb
+    .asCallback (error) =>
       if @hooks.onClose
-        @hooks.onClose @, error, closeDB
-      else
-        closeDB error
-
+        Promise.fromCallback (cb) =>
+          @hooks.onClose @, error, cb
+      else if error
+        Promise.reject error
+    .asCallback done
+    .finally =>
+      @state.close()
 
 
 module.exports = ChatService

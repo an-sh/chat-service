@@ -90,7 +90,6 @@ describe 'Chat service.', ->
           app.listen port
           customCleanup = (cb) ->
             chatService1.close (error) ->
-              if error then cb error
               app.close cb
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed', (u) ->
@@ -104,9 +103,8 @@ describe 'Chat service.', ->
           chatService1 = new ChatService null, null, s
           customCleanup = (cb) ->
             chatService1.close (error) ->
-              if error then cb error
               io.close()
-              cb()
+              cb error
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed', (u) ->
             expect(u).equal(user1)
