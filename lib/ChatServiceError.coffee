@@ -1,9 +1,8 @@
 
 util = require 'util'
 
-# TODO
 # ChatService errors.
-class ChatServiceError
+class ChatServiceError extends Error
 
   # @property [Object] Error strings.
   @::errorStrings =
@@ -38,9 +37,7 @@ class ChatServiceError
   # @nodoc
   toString : () ->
     str = @errorStrings[@name] || @name.unknownError
-    util.format str, @args...
-
-util.inherits ChatServiceError, Error
+    util.format "Error: #{str}", @args...
 
 
 module.exports = ChatServiceError
