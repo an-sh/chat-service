@@ -60,7 +60,6 @@ describe 'Chat service.', ->
     else if chatService
       chatService.close (error) ->
         redis.flushall ->
-          chatService.io.close()
           chatService = null
           done error
     else
@@ -1419,7 +1418,7 @@ describe 'Chat service.', ->
               expect(error).ok
               done()
 
-        it 'should execute disconnect Before and Aefore hooks', (done) ->
+        it 'should execute disconnect Before and After hooks', (done) ->
           before = false
           disconnectBefore = (callInfo, args, cb) ->
             before = true

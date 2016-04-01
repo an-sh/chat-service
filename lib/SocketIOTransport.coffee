@@ -5,8 +5,10 @@ RedisAdapter = require 'socket.io-redis'
 Set = require 'collections/fast-set'
 SocketServer = require 'socket.io'
 _ = require 'lodash'
+EventEmitter = require('events').EventEmitter
 
 { checkNameSymbols } = require './utils.coffee'
+
 
 # @private
 # @nodoc
@@ -40,21 +42,17 @@ class SocketIOTransport
     @nsp = @io.of @namespace
     @server.io = @io
     @server.nsp = @nsp
+    @disconnectNotify = new EventEmitter()
     @closing = new Set()
-    @finished = false
     @closed = false
 
   # @private
   # @nodoc
-  bind : (id, name, fn) ->
-    socket = @getSocketObject id
-    if socket
-      socket.on name, fn
-
-  # @private
-  # @nodoc
   rejectLogin : (socket, error) ->
-    socket.emit 'loginRejected', error?.toString()
+    useRawErrorObjects = @server.useRawErrorObjects
+    unless useRawErrorObjects
+      error = error?.toString()
+    socket.emit 'loginRejected', error
     socket.disconnect()
 
   # @private
@@ -70,7 +68,7 @@ class SocketIOTransport
   addClient : (error, socket, userName, authData = {}) ->
     id = socket.id
     Promise.try ->
-      if error then throw error
+      if error then Promise.reject error
     .then ->
       unless userName
         userName = socket.handshake.query?.user
@@ -90,13 +88,6 @@ class SocketIOTransport
 
   # @private
   # @nodoc
-  checkShutdown : (socket, next) ->
-    if @closed
-      return socket.disconnect(true)
-    next()
-
-  # @private
-  # @nodoc
   setEvents : ->
     if @hooks.middleware
       middleware = _.castArray @hooks.middleware
@@ -104,13 +95,11 @@ class SocketIOTransport
         @nsp.use fn
     if @hooks.onConnect
       @nsp.on 'connection', (socket) =>
-        @checkShutdown socket, =>
-          @hooks.onConnect @server, socket.id, (error, userName, authData) =>
-            @addClient error, socket, userName, authData
+        @hooks.onConnect @server, socket.id, (error, userName, authData) =>
+          @addClient error, socket, userName, authData
     else
       @nsp.on 'connection', (socket) =>
-        @checkShutdown socket, =>
-          @addClient null, socket
+        @addClient null, socket
 
   # @private
   # @nodoc
@@ -123,40 +112,46 @@ class SocketIOTransport
   # @nodoc
   endClientDisconnect : (id) ->
     @closing.delete id
-    if @closed and @closing.length == 0 and not @finished
-      @finished = true
-      process.nextTick => @finishCB()
+    @disconnectNotify.emit 'endClientDisconnect', @closing.length
+    return
 
   # @private
   # @nodoc
-  closingTimeoutChecker : (closeStartingTime) ->
-    if @finished then return
-    currentTime = _.now()
-    if currentTime > closeStartingTime + @closeTimeout
-      @finished = true
-      @finishCB new Error 'Transport closing timeout.'
-    else
-      setTimeout =>
-        @closingTimeoutChecker closeStartingTime,
-      , 50
+  waitDisconnectAll : ->
+    if @closing.length > 0
+      Promise.fromCallback (cb) =>
+        @disconnectNotify.on 'endClientDisconnect', (n) =>
+          if n == 0
+            @disconnectNotify.removeAllListeners 'endClientDisconnect'
+            cb()
 
   # @private
   # @nodoc
   close : (done) ->
+    if @closed
+      return Promise.resolve().asCallback done
     @closed = true
-    @finishCB = (error) =>
+    @nsp.removeAllListeners 'connection'
+    Promise.try =>
       unless @dontCloseIO
         @io.close()
-      if @http
+      else if @http
         @io.engine.close()
-      done error
-    for id, socket of @nsp.connected
-      unless @closing.has id
-        socket.disconnect()
-    if @closing.length == 0
-      process.nextTick => @finishCB()
-    else
-      @closingTimeoutChecker _.now()
+      else
+        for id, socket of @nsp.connected
+          socket.disconnect()
+      return
+    .then =>
+      @waitDisconnectAll()
+    .timeout 5000
+    .asCallback done
+
+  # @private
+  # @nodoc
+  bind : (id, name, fn) ->
+    socket = @getSocketObject id
+    if socket
+      socket.on name, fn
 
   # @private
   # @nodoc

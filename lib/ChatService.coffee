@@ -577,8 +577,7 @@ class ChatService
   # @param done [callback] Optional callback.
   # @return [Promise]
   close : (done) ->
-    Promise.fromCallback (cb) =>
-      @transport.close cb
+    @transport.close()
     .asCallback (error) =>
       if @hooks.onClose
         Promise.fromCallback (cb) =>
