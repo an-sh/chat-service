@@ -104,24 +104,22 @@ class User extends DirectMessaging
     unless @enableDirectMessages
       error = new ChatServiceError 'notAllowed'
       return Promise.reject error
-    recipient = null
-    channel = null
     @processMessage msg, true
     @server.state.getUser recipientName
     .then (user) =>
       recipient = user
       channel = recipient.echoChannel
       recipient.message @userName, msg
-    .then ->
-      recipient.userState.getAllSockets() #TODO
-    .then (recipientSockets) =>
-      unless recipientSockets?.length
-        error = new ChatServiceError 'noUserOnline', recipient.userName
-        return Promise.reject error
-      @transport.sendToChannel channel, 'directMessage', msg
-      @transport.sendToOthers id, @echoChannel, 'directMessageEcho'
+      .then ->
+        recipient.userState.getAllSockets()
+      .then (recipientSockets) =>
+        unless recipientSockets?.length
+          error = new ChatServiceError 'noUserOnline', recipient.userName
+          return Promise.reject error
+        @transport.sendToChannel channel, 'directMessage', msg
+        @transport.sendToOthers id, @echoChannel, 'directMessageEcho'
         , recipientName, msg
-      Promise.resolve msg
+        Promise.resolve msg
 
   # @private
   directRemoveFromList : (listName, values) ->
