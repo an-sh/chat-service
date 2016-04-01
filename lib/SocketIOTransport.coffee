@@ -16,7 +16,6 @@ EventEmitter = require('events').EventEmitter
 class SocketIOTransport
 
   # @private
-  # @nodoc
   constructor : (@server, @options, @adapterConstructor, @adapterOptions) ->
     @hooks = @server.hooks
     @io = @options.io
@@ -47,7 +46,6 @@ class SocketIOTransport
     @closed = false
 
   # @private
-  # @nodoc
   rejectLogin : (socket, error) ->
     useRawErrorObjects = @server.useRawErrorObjects
     unless useRawErrorObjects
@@ -56,7 +54,6 @@ class SocketIOTransport
     socket.disconnect()
 
   # @private
-  # @nodoc
   confirmLogin : (socket, userName, authData) ->
     if _.isObject(authData)
       authData.id = socket.id unless authData.id?
@@ -64,7 +61,6 @@ class SocketIOTransport
     Promise.resolve()
 
   # @private
-  # @nodoc
   addClient : (error, socket, userName, authData = {}) ->
     id = socket.id
     Promise.try ->
@@ -87,7 +83,6 @@ class SocketIOTransport
       @rejectLogin socket, error
 
   # @private
-  # @nodoc
   setEvents : ->
     if @hooks.middleware
       middleware = _.castArray @hooks.middleware
@@ -102,21 +97,18 @@ class SocketIOTransport
         @addClient null, socket
 
   # @private
-  # @nodoc
   startClientDisconnect : (id) ->
     wasDisconnecting = @closing.has id
     @closing.add id
     return wasDisconnecting
 
   # @private
-  # @nodoc
   endClientDisconnect : (id) ->
     @closing.delete id
     @disconnectNotify.emit 'endClientDisconnect', @closing.length
     return
 
   # @private
-  # @nodoc
   waitDisconnectAll : ->
     if @closing.length > 0
       Promise.fromCallback (cb) =>
@@ -126,7 +118,6 @@ class SocketIOTransport
             cb()
 
   # @private
-  # @nodoc
   close : (done) ->
     if @closed
       return Promise.resolve().asCallback done
@@ -147,25 +138,21 @@ class SocketIOTransport
     .asCallback done
 
   # @private
-  # @nodoc
   bind : (id, name, fn) ->
     socket = @getSocketObject id
     if socket
       socket.on name, fn
 
   # @private
-  # @nodoc
   getSocketObject : (id) ->
     @nsp.connected[id]
 
   # @private
-  # @nodoc
   sendToChannel : (channel, args...) ->
     @nsp.to(channel).emit args...
     Promise.resolve()
 
   # @private
-  # @nodoc
   sendToOthers : (id, channel, args...) ->
     socket = @getSocketObject id
     unless socket
@@ -175,7 +162,6 @@ class SocketIOTransport
       Promise.resolve()
 
   # @private
-  # @nodoc
   joinChannel : (id, channel) ->
     socket = @getSocketObject id
     unless socket
@@ -185,7 +171,6 @@ class SocketIOTransport
         socket.join channel, fn
 
   # @private
-  # @nodoc
   leaveChannel : (id, channel) ->
     socket = @getSocketObject id
     unless socket then return Promise.resolve()
@@ -193,7 +178,6 @@ class SocketIOTransport
       socket.leave channel, fn
 
   # @private
-  # @nodoc
   disconnectClient : (id) ->
     socket = @getSocketObject id
     if socket

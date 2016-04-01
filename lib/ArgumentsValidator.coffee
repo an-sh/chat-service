@@ -9,7 +9,6 @@ check = require 'check-types'
 
 
 # Commands arguments type and count validation.
-# @note Use either a callback or use promises returned from methods.
 class ArgumentsValidator
 
   # @private

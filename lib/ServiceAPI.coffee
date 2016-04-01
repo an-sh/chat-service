@@ -7,7 +7,6 @@ _ = require 'lodash'
 User = require './User'
 
 # @mixin
-# @note Use either a callback or use promises returned from methods.
 # API for server side operations.
 ServiceAPI =
 
