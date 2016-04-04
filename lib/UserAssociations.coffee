@@ -75,7 +75,7 @@ UserAssociations =
     , @userState.removeSocketFromRoom( id, roomName)
     , ->
       Promise.reject(error)
-    .catch (e) ->
+    .catch (e) =>
       @logError e, { room : channel, id : id, op : 'rollbackRoomJoin' }
       Promise.reject(error)
 
@@ -84,7 +84,7 @@ UserAssociations =
     @state.getRoom roomName
     .then (room) =>
       room.leave @userName
-    .catch (e) ->
+    .catch (e) =>
       @logError e, { room : channel, id : id, op : 'UserLeaveRoom' }
       Promise.resolve()
 
