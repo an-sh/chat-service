@@ -36,10 +36,6 @@ class User extends DirectMessaging
     @userState = new State @server, @userName
     @lockTTL = @userState.lockTTL
     @echoChannel = @userState.echoChannel
-    @errorsLogger = @server.errorsLogger
-    @logError = (error, data) =>
-      data.userName = @userName unless data.userName
-      @errorsLogger error, data if @errorsLogger
 
   # @private
   processMessage : (msg, setTimestamp = false) ->
@@ -73,17 +69,17 @@ class User extends DirectMessaging
         Promise.resolve()
 
   # @private
-  revertRegisterSocket : (id) ->
-    @userState.removeSocket id
-    # TODO
-    Promise.resolve()
+  consistencyFailure : (error, operationInfo = {}) ->
+    operationInfo.userName = @userName
+    @server.emit 'consistencyFailure', error, operationInfo
 
   # @private
   registerSocket : (id) ->
     @userState.addSocket id
     .then (nconnected) =>
       unless @transport.getSocketObject id
-        return @revertRegisterSocket id
+        @removeUserSocket id
+        return Promise.reject new ChatServiceError 'noSocket', 'connection'
       for cmd of @server.userCommands
         @bindCommand id, cmd, @[cmd]
       Promise.resolve [ @, nconnected ]

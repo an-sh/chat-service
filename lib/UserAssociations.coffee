@@ -53,7 +53,8 @@ UserAssociations =
   leaveChannel : (id, channel) ->
     @transport.leaveChannel id, channel
     .catch (e) =>
-      @logError { room : channel, id : id, op : 'socketLeaveChannel' }
+      @consistencyFailure e
+      , { room : channel, id : id, op : 'socketLeaveChannel' }
       Promise.resolve()
 
   # @private
@@ -71,13 +72,13 @@ UserAssociations =
   # @private
   rollbackRoomJoin : (error, id, room) ->
     roomName = room.name
-    Promise.join room.leave(@userName)
-    , @userState.removeSocketFromRoom( id, roomName)
-    , ->
-      Promise.reject(error)
+    @userState.removeSocketFromRoom id, roomName
+    .then (njoined) =>
+      unless njoined then room.leave @userName
     .catch (e) =>
-      @logError e, { room : channel, id : id, op : 'rollbackRoomJoin' }
-      Promise.reject(error)
+      @consistencyFailure e
+      , { room : roomName, id : id, op : 'rollbackRoomJoin' }
+    .return error
 
   # @private
   leaveRoom : (roomName) ->
@@ -85,7 +86,7 @@ UserAssociations =
     .then (room) =>
       room.leave @userName
     .catch (e) =>
-      @logError e, { room : channel, id : id, op : 'UserLeaveRoom' }
+      @consistencyFailure e, { room : roomName, op : 'UserLeaveRoom' }
       Promise.resolve()
 
   # @private
@@ -123,18 +124,25 @@ UserAssociations =
             Promise.resolve njoined
 
   # @private
+  removeUserSocket : (id) ->
+    @userState.removeSocket id
+    .catch (e) =>
+      @consistencyFailure e, { id : id, op : 'removeUserSocket' }
+      Promise.resolve()
+
+  # @private
   removeSocketFromServer : (id) ->
     @userState.setSocketDisconnecting id
     .then =>
-      @userState.removeSocket id
-      .spread (roomsRemoved = [], joinedSockets = [], nconnected) =>
-        @socketLeaveChannels id, roomsRemoved
-        .then =>
-          for roomName, idx in roomsRemoved
-            njoined = joinedSockets[idx]
-            @socketLeftEcho id, roomName, njoined
-            unless njoined then @userLeftRoomReport @userName, roomName
-          @socketDisconnectEcho id, nconnected
+      @removeUserSocket id
+    .spread (roomsRemoved = [], joinedSockets = [], nconnected = 0) =>
+      @socketLeaveChannels id, roomsRemoved
+      .then =>
+        for roomName, idx in roomsRemoved
+          njoined = joinedSockets[idx]
+          @socketLeftEcho id, roomName, njoined
+          unless njoined then @userLeftRoomReport @userName, roomName
+        @socketDisconnectEcho id, nconnected
 
   # @private
   removeFromRoom : (roomName) ->
