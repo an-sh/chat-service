@@ -692,13 +692,16 @@ describe 'Chat service.', ->
 
         it 'should send a whitelistonly mode', (done) ->
           chatService = new ChatService { port : port }, null, state
-          chatService.addRoom roomName1, { whitelistOnly : true }, ->
+          chatService.addRoom roomName1
+          , { whitelistOnly : true, whitelist : [user1] }
+          , ->
             socket1 = clientConnect user1
             socket1.on 'loginConfirmed', ->
-              socket1.emit 'roomGetWhitelistMode', roomName1, (error, data) ->
-                expect(error).not.ok
-                expect(data).true
-                done()
+              socket1.emit 'roomJoin', roomName1, ->
+                socket1.emit 'roomGetWhitelistMode', roomName1, (error, data) ->
+                  expect(error).not.ok
+                  expect(data).true
+                  done()
 
         it 'should send lists to room users', (done) ->
           chatService = new ChatService { port : port }, null, state

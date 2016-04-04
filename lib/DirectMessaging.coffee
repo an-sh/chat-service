@@ -27,17 +27,11 @@ DirectMessagingPermissions =
       Promise.resolve()
 
   # @private
-  checkListAdd : (author, listName, values) ->
-    @checkListValues author, listName, values
-
-  # @private
-  checkListRemove : (author, listName, values) ->
-    @checkListValues author, listName, values
-
-  # @private
-  checkAcess : (userName) ->
+  checkAcess : (userName, bypassPermissions) ->
     if userName == @userName
       return Promise.reject new ChatServiceError 'notAllowed'
+    if bypassPermissions
+      return Promise.resolve()
     @directMessagingState.hasInList 'blacklist', userName
     .then (blacklisted) =>
       if blacklisted
@@ -47,10 +41,9 @@ DirectMessagingPermissions =
         unless whitelistOnly then return Promise.resolve()
         @directMessagingState.hasInList 'whitelist', userName
         .then (whitelisted) ->
-          if whitelisted
-            Promise.resolve()
-          else
-            Promise.reject new ChatServiceError 'notAllowed'
+          unless whitelisted
+            return Promise.reject new ChatServiceError 'notAllowed'
+          Promise.resolve()
 
 
 # @private
@@ -73,8 +66,8 @@ class DirectMessaging
     @directMessagingState.initState state
 
   # @private
-  message : (author, msg) ->
-    @checkAcess author
+  message : (author, msg, bypassPermissions) ->
+    @checkAcess author, bypassPermissions
 
   # @private
   getList : (author, listName) ->
@@ -84,13 +77,13 @@ class DirectMessaging
 
   # @private
   addToList : (author, listName, values) ->
-    @checkListAdd author, listName, values
+    @checkListValues author, listName, values
     .then =>
       @directMessagingState.addToList listName, values
 
   # @private
   removeFromList : (author, listName, values) ->
-    @checkListRemove author, listName, values
+    @checkListValues author, listName, values
     .then =>
       @directMessagingState.removeFromList listName, values
 
@@ -100,8 +93,8 @@ class DirectMessaging
 
   # @private
   changeMode : (author, mode) ->
-    m = if mode then true else false
-    @directMessagingState.whitelistOnlySet m
+    whitelistOnly = mode
+    @directMessagingState.whitelistOnlySet whitelistOnly
 
 
 module.exports = DirectMessaging

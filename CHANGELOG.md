@@ -14,6 +14,7 @@
 - Changed chat constructor options.
 - Changed hooks API.
 - Changed module export.
+- Changed room permissions.
 - Changed roomJoinedEcho and roomLeftEcho ServerMessages.
 - Changed roomMessage and directMessage server messages.
 - Changed roomMessage command.

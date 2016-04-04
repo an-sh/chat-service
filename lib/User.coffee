@@ -42,10 +42,13 @@ class User extends DirectMessaging
       @errorsLogger error, data if @errorsLogger
 
   # @private
-  processMessage : (msg, setTimestamp = false) ->
+  processMessage : (msg, bypassPermissions, setTimestamp = false) ->
+    delete msg.id
+    delete msg.timestamp
     if setTimestamp
-      msg.timestamp = _.now() unless msg.timestamp?
-    msg.author = @userName unless msg.author?
+      msg.timestamp = _.now()
+    unless bypassPermissions
+      msg.author = @userName
     return msg
 
   # @private
@@ -99,16 +102,16 @@ class User extends DirectMessaging
     @getMode @userName
 
   # @private
-  directMessage : (recipientName, msg, {id}) ->
+  directMessage : (recipientName, msg, {id, bypassPermissions}) ->
     unless @enableDirectMessages
       error = new ChatServiceError 'notAllowed'
       return Promise.reject error
-    @processMessage msg, true
+    @processMessage msg, bypassPermissions, true
     @server.state.getUser recipientName
     .then (user) =>
       recipient = user
       channel = recipient.echoChannel
-      recipient.message @userName, msg
+      recipient.message @userName, msg, bypassPermissions
       .then ->
         recipient.userState.getAllSockets()
       .then (recipientSockets) =>
@@ -167,7 +170,6 @@ class User extends DirectMessaging
       error = new ChatServiceError 'notAllowed'
       return Promise.reject error
     @state.getRoom roomName
-    #TODO
     .then (room) =>
       room.checkIsOwner @userName, bypassPermissions
       .then ->
@@ -232,7 +234,7 @@ class User extends DirectMessaging
   roomMessage : (roomName, msg, {bypassPermissions}) ->
     @state.getRoom roomName
     .then (room) =>
-      @processMessage msg
+      @processMessage msg, bypassPermissions
       room.message @userName, msg, bypassPermissions
     .then (pmsg) =>
       @transport.sendToChannel roomName, 'roomMessage', roomName, pmsg
