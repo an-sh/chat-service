@@ -37,7 +37,7 @@ class ChatServiceError extends Error
   # @nodoc
   toString : () ->
     str = @errorStrings[@name] || @name.unknownError
-    util.format "Error: #{str}", @args...
+    util.format "ChatServiceError: #{str}", @args...
 
 
 module.exports = ChatServiceError
