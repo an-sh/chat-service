@@ -10,10 +10,11 @@ User = require './User'
 # API for server side operations.
 ServiceAPI =
 
-  # Executes command as an user.
+  # Executes {UserCommands}.
   #
-  # @param params [String or Object] Is either a user name or an
-  #   options hash.
+  # @param params [String or Boolean or Object] Is a `username` if
+  #   String, or a `bypassPermissions` if Boolean, or an options hash if
+  #   Object.
   # @param command [String] Command name.
   # @param args [Rest...] Command arguments with an optional callback.
   #
@@ -23,18 +24,24 @@ ServiceAPI =
   # @option params [Boolean] bypassHooks If `false` executes command with
   #   before and after hooks, default is `false`.
   # @option params [Boolean] bypassPermissions If `true` executes
-  #   command without checking permissions for rooms commands, default
+  #   command without checking room/user permissions for commands, default
   #   is `false`.
   #
   # @return [Promise]
   execUserCommand : (params, command, args...) ->
     if _.isObject params
       userName = params.userName
+    else if _.isBoolean params
+      params = {bypassPermissions : params}
     else
       userName = params
       params = null
     [args, cb] = possiblyCallback args
-    @state.getUser userName
+    Promise.try =>
+      if userName
+        @state.getUser userName
+      else
+        new User @
     .then (user) ->
       user.exec command, params, args...
     .asCallback cb, { spread : true }
@@ -55,36 +62,10 @@ ServiceAPI =
     checkNameSymbols userName
     .then =>
       @state.addUser userName, state
+    .return()
     .asCallback cb
 
-  # Gets user direct messaging mode.
-  #
-  # @param userName [String] User name.
-  # @param cb [Callback<error, Boolean>] Optional callback with an error
-  #   or the user mode.
-  #
-  # @return [Promise]
-  getUserMode : (userName, cb) ->
-    @state.getUser userName
-    .then (user) ->
-      user.directMessagingState.whitelistOnlyGet()
-    .asCallback cb
-
-  # Gets an user list.
-  #
-  # @param userName [String] User name.
-  # @param listName [String] List name.
-  # @param cb [Callback<error, Array<String>>] Optional callback with an
-  #   error or the requested user list.
-  #
-  # @return [Promise]
-  getUserList : (userName, listName, cb)  ->
-    @state.getUser userName
-    .then (user) ->
-      user.directMessagingState.getList listName
-    .asCallback cb
-
-  # Disconnects all user sockets for this instance.
+  # Disconnects all user sockets for this service instance.
   #
   # @param userName [String] User name.
   # @param cb [Callback] Optional callback.
@@ -93,7 +74,8 @@ ServiceAPI =
   disconnectUserSockets : (userName, cb) ->
     @state.getUser userName
     .then (user) ->
-      user.disconnectInstanceSockets cb
+      user.disconnectInstanceSockets()
+    .return()
     .asCallback cb
 
   # Adds a room with a state.
@@ -113,6 +95,7 @@ ServiceAPI =
     checkNameSymbols roomName
     .then =>
       @state.addRoom roomName, state
+    .return()
     .asCallback cb
 
   # Removes all room data, and removes joined user from the room.
@@ -122,55 +105,8 @@ ServiceAPI =
   #
   # @return [Promise]
   deleteRoom : (roomName, cb) ->
-    user = new User @
-    @state.getRoom roomName
-    .then (room) =>
-      room.getUsers()
-      .then (usernames) ->
-        user.removeRoomUsers roomName, usernames
-      .then =>
-        @state.removeRoom room.name
-      .then ->
-        room.removeState()
-    .asCallback cb
-
-  # Gets a room owner.
-  #
-  # @param roomName [String] Room name.
-  # @param cb [Callback<error, String>] Optional callback with an error
-  #   or the room owner.
-  # @return [Promise]
-  getRoomOwner : (roomName, cb) ->
-    @state.getRoom roomName
-    .then (room) ->
-      room.roomState.ownerGet()
-    .asCallback cb
-
-  # Gets a room mode.
-  #
-  # @param roomName [String] Room mode.
-  # @param cb [Callback<error, Boolean>] Optional callback with an error
-  #   or the room mode.
-  #
-  # @return [Promise]
-  getRoomMode : (roomName, cb) ->
-    @state.getRoom roomName
-    .then (room) ->
-      room.roomState.whitelistOnlyGet()
-    .asCallback cb
-
-  # Gets a room list.
-  #
-  # @param roomName [String] Room name.
-  # @param listName [String] List name.
-  # @param cb [Callback<error, Array<String>>] Optional callback with an
-  #   error or the requested room list.
-  #
-  # @return [Promise]
-  getRoomList : (roomName, listName, cb) ->
-    @state.getRoom roomName
-    .then (room) ->
-      room.roomState.getList listName
+    @execUserCommand true, 'roomDelete', roomName
+    .return()
     .asCallback cb
 
   # Changes a room owner.
@@ -184,6 +120,7 @@ ServiceAPI =
     @state.getRoom roomName
     .then (room) ->
       room.roomState.ownerSet owner
+    .return()
     .asCallback cb
 
 

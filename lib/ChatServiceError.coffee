@@ -6,7 +6,7 @@ class ChatServiceError extends Error
 
   # @property [Object] Error strings.
   @::errorStrings =
-    badArgument : 'Bad argument %s value %s'
+    badArgument : 'Bad argument %s value %j'
     invalidName : 'String %s contains invalid characters'
     noCommand : 'No such command %s'
     noList : 'No such list %s'

@@ -23,20 +23,16 @@ RoomPermissions =
   hasRemoveChangedCurrentAccess : (userName, listName) ->
     @roomState.hasInList 'userlist', userName
     .then (hasUser) =>
-      unless hasUser  then return false
+      unless hasUser then return false
       @isAdmin userName
       .then (admin) =>
-        if admin
+        if admin or listName != 'whitelist'
           false
-        else if listName == 'whitelist'
-          @roomState.whitelistOnlyGet()
         else
-          false
+          @roomState.whitelistOnlyGet()
     .then (val) ->
       Promise.resolve val
-    .catch (error) ->
-      # TODO log
-      Promise.resolve false
+    .catchReturn false
 
   # @private
   hasAddChangedCurrentAccess : (userName, listName) ->
@@ -46,17 +42,13 @@ RoomPermissions =
         return false
       @isAdmin userName
       .then (admin) ->
-        if admin
+        if admin or listName != 'blacklist'
           false
-        else if listName == 'blacklist'
-          true
         else
-          false
+          true
     .then (val) ->
       Promise.resolve val
-    .catch (error) ->
-      # TODO log
-      Promise.resolve false
+    .catchReturn false
 
   # @private
   getModeChangedCurrentAccess : (value) ->
@@ -158,14 +150,12 @@ class Room
       Promise.reject new ChatServiceError 'notAllowed'
 
   # @private
-  leave : (userName, bypassPermissions) ->
+  leave : (userName) ->
     @roomState.removeFromList 'userlist', [userName]
 
   # @private
-  join : (userName, bypassPermissions) ->
-    Promise.try =>
-      unless bypassPermissions
-        @checkAcess userName
+  join : (userName) ->
+    @checkAcess userName
     .then =>
       @roomState.addToList 'userlist', [userName]
 
@@ -174,11 +164,10 @@ class Room
     Promise.try =>
       unless bypassPermissions
         @roomState.hasInList 'userlist', author
-      else
-        true
-    .then (hasAuthor) =>
-      unless hasAuthor
-        return Promise.reject new ChatServiceError 'notJoined', @name
+        .then (hasAuthor) =>
+          unless hasAuthor
+            Promise.reject new ChatServiceError 'notJoined', @name
+    .then =>
       @roomState.messageAdd msg
 
   # @private

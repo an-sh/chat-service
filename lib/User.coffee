@@ -42,13 +42,12 @@ class User extends DirectMessaging
       @errorsLogger error, data if @errorsLogger
 
   # @private
-  processMessage : (msg, bypassPermissions, setTimestamp = false) ->
+  processMessage : (msg, setTimestamp = false) ->
     delete msg.id
     delete msg.timestamp
     if setTimestamp
       msg.timestamp = _.now()
-    unless bypassPermissions
-      msg.author = @userName
+    msg.author = @userName || msg.author
     return msg
 
   # @private
@@ -63,6 +62,15 @@ class User extends DirectMessaging
     Promise.fromCallback (cb) ->
       cmd args..., options, ensureMultipleArguments cb
     , {multiArgs: true}
+
+  # @private
+  checkOnline : ->
+    @userState.getAllSockets()
+    .then (sockets) =>
+      unless sockets?.length
+        Promise.reject new ChatServiceError 'noUserOnline', @userName
+      else
+        Promise.resolve()
 
   # @private
   revertRegisterSocket : (id) ->
@@ -91,7 +99,7 @@ class User extends DirectMessaging
   # @private
   directAddToList : (listName, values) ->
     @addToList @userName, listName, values
-    .then -> Promise.resolve()
+    .return()
 
   # @private
   directGetAccessList : (listName) ->
@@ -106,18 +114,15 @@ class User extends DirectMessaging
     unless @enableDirectMessages
       error = new ChatServiceError 'notAllowed'
       return Promise.reject error
-    @processMessage msg, bypassPermissions, true
+    @processMessage msg, true
     @server.state.getUser recipientName
     .then (user) =>
       recipient = user
       channel = recipient.echoChannel
       recipient.message @userName, msg, bypassPermissions
       .then ->
-        recipient.userState.getAllSockets()
+        recipient.checkOnline()
       .then (recipientSockets) =>
-        unless recipientSockets?.length
-          error = new ChatServiceError 'noUserOnline', recipient.userName
-          return Promise.reject error
         @transport.sendToChannel channel, 'directMessage', msg
         @transport.sendToOthers id, @echoChannel, 'directMessageEcho'
         , recipientName, msg
@@ -126,12 +131,12 @@ class User extends DirectMessaging
   # @private
   directRemoveFromList : (listName, values) ->
     @removeFromList @userName, listName, values
-    .then -> Promise.resolve()
+    .return()
 
   # @private
   directSetWhitelistMode : (mode) ->
     @changeMode @userName, mode
-    .then -> Promise.resolve()
+    .return()
 
   # @private
   disconnect : (reason, {id}) ->
@@ -151,7 +156,7 @@ class User extends DirectMessaging
         @transport.sendToChannel roomName, 'roomAccessListAdded'
         , roomName, listName, values
       @removeRoomUsers roomName, userNames
-      .then -> Promise.resolve()
+      .return()
 
   # @private
   roomCreate : (roomName, whitelistOnly, {bypassPermissions}) ->
@@ -162,7 +167,7 @@ class User extends DirectMessaging
     .then =>
       @state.addRoom roomName
       , { owner : @userName, whitelistOnly : whitelistOnly }
-    .then -> Promise.resolve()
+    .return()
 
   # @private
   roomDelete : (roomName, {bypassPermissions}) ->
@@ -180,7 +185,7 @@ class User extends DirectMessaging
         @state.removeRoom roomName
       .then ->
         room.removeState()
-      .then -> Promise.resolve()
+      .return()
 
   # @private
   roomGetAccessList : (roomName, listName, {bypassPermissions}) ->
@@ -219,22 +224,22 @@ class User extends DirectMessaging
       room.getMessagesAfterId @userName, msgid, bypassPermissions
 
   # @private
-  roomJoin : (roomName, {id, bypassPermissions}) ->
+  roomJoin : (roomName, {id}) ->
     @state.getRoom roomName
     .then (room) =>
-      @joinSocketToRoom id, roomName, bypassPermissions
+      @joinSocketToRoom id, roomName
 
   # @private
-  roomLeave : (roomName, {id, bypassPermissions}) ->
+  roomLeave : (roomName, {id}) ->
     @state.getRoom roomName
     .then (room) =>
-      @leaveSocketFromRoom id, room.name, bypassPermissions
+      @leaveSocketFromRoom id, room.name
 
   # @private
   roomMessage : (roomName, msg, {bypassPermissions}) ->
     @state.getRoom roomName
     .then (room) =>
-      @processMessage msg, bypassPermissions
+      @processMessage msg
       room.message @userName, msg, bypassPermissions
     .then (pmsg) =>
       @transport.sendToChannel roomName, 'roomMessage', roomName, pmsg
@@ -250,7 +255,7 @@ class User extends DirectMessaging
         @transport.sendToChannel roomName, 'roomAccessListRemoved',
         roomName, listName, values
       @removeRoomUsers roomName, userNames
-    .then -> Promise.resolve()
+    .return()
 
   # @private
   roomSetWhitelistMode : (roomName, mode, {bypassPermissions}) ->
