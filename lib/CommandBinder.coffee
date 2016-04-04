@@ -65,9 +65,9 @@ CommandBinder =
           .then ->
             fn.apply self, [args..., info]
           .then (data) ->
-            Promise.resolve [ null, data ]
+            [ null, data ]
           .catch (error) ->
-            Promise.resolve [error, null]
+            [error, null]
           .spread (error, data) ->
             if afterHook and not callInfo.bypassHooks
               Promise.fromCallback (cb) ->
@@ -77,7 +77,7 @@ CommandBinder =
             else if error
               Promise.reject error
             else
-              Promise.resolve [ data ]
+              [ data ]
       .asCallback ack, { spread : true }
 
   # @private

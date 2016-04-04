@@ -16,7 +16,7 @@ RoomPermissions =
   isAdmin : (userName) ->
     @roomState.ownerGet()
     .then (owner) =>
-      if owner == userName then return Promise.resolve true
+      if owner == userName then return true
       @roomState.hasInList 'adminlist', userName
 
   # @private
@@ -30,30 +30,25 @@ RoomPermissions =
           false
         else
           @roomState.whitelistOnlyGet()
-    .then (val) ->
-      Promise.resolve val
     .catchReturn false
 
   # @private
   hasAddChangedCurrentAccess : (userName, listName) ->
     @roomState.hasInList 'userlist', userName
     .then (hasUser) =>
-      unless hasUser
-        return false
+      unless hasUser then return false
       @isAdmin userName
       .then (admin) ->
         if admin or listName != 'blacklist'
           false
         else
           true
-    .then (val) ->
-      Promise.resolve val
     .catchReturn false
 
   # @private
   getModeChangedCurrentAccess : (value) ->
     unless value
-      Promise.resolve []
+      []
     else
       @roomState.getCommonUsers()
 
@@ -64,7 +59,7 @@ RoomPermissions =
       if listName == 'userlist'
         return Promise.reject new ChatServiceError 'notAllowed'
       if author == owner or bypassPermissions
-        return Promise.resolve()
+        return
       if listName == 'adminlist'
         return Promise.reject new ChatServiceError 'notAllowed'
       @roomState.hasInList 'adminlist', author
@@ -74,44 +69,42 @@ RoomPermissions =
         for name in values
           if name == owner
             return Promise.reject new ChatServiceError 'notAllowed'
-        Promise.resolve()
+        return
 
   # @private
   checkModeChange : (author, value, bypassPermissions) ->
     @isAdmin author
     .then (admin) ->
-      if admin or bypassPermissions
-        return Promise.resolve()
-      Promise.reject new ChatServiceError 'notAllowed'
+      unless admin or bypassPermissions
+        Promise.reject new ChatServiceError 'notAllowed'
 
   # @private
   checkAcess : (userName) ->
     @isAdmin userName
     .then (admin) =>
-      if admin then return Promise.resolve()
+      if admin then return
       @roomState.hasInList 'blacklist', userName
       .then (blacklisted) =>
         if blacklisted
           return Promise.reject new ChatServiceError 'notAllowed'
         @roomState.whitelistOnlyGet()
         .then (whitelistOnly) =>
-          unless whitelistOnly then return Promise.resolve()
+          unless whitelistOnly then return
           @roomState.hasInList 'whitelist', userName
           .then (whitelisted) ->
             unless whitelisted
               return Promise.reject new ChatServiceError 'notAllowed'
-            Promise.resolve()
 
   # @private
   checkRead : (author, bypassPermissions) ->
     if bypassPermissions then return Promise.resolve()
     @isAdmin author
     .then (admin) =>
-      if admin then return Promise.resolve()
+      if admin then return
       @roomState.hasInList 'userlist', author
       .then (hasAuthor) =>
-        if hasAuthor then return Promise.resolve()
-        Promise.reject new ChatServiceError 'notJoined', @name
+        unless hasAuthor
+          Promise.reject new ChatServiceError 'notJoined', @name
 
 
 # @private
@@ -146,7 +139,7 @@ class Room
     if bypassPermissions then return Promise.resolve()
     @roomState.ownerGet()
     .then (owner) ->
-      if owner == author then return Promise.resolve()
+      if owner == author then return
       Promise.reject new ChatServiceError 'notAllowed'
 
   # @private
@@ -235,7 +228,7 @@ class Room
     .then =>
       @getModeChangedCurrentAccess whitelistOnly
     .then (usernames) ->
-      Promise.resolve [ usernames, whitelistOnly ]
+      [ usernames, whitelistOnly ]
 
 
 module.exports = Room

@@ -24,7 +24,7 @@ DirectMessagingPermissions =
       for name in values
         if name == @userName
           return Promise.reject new ChatServiceError 'notAllowed'
-      Promise.resolve()
+      return
 
   # @private
   checkAcess : (userName, bypassPermissions) ->
@@ -38,12 +38,11 @@ DirectMessagingPermissions =
         return Promise.reject new ChatServiceError 'notAllowed'
       @directMessagingState.whitelistOnlyGet()
       .then (whitelistOnly) =>
-        unless whitelistOnly then return Promise.resolve()
+        unless whitelistOnly then return
         @directMessagingState.hasInList 'whitelist', userName
         .then (whitelisted) ->
           unless whitelisted
             return Promise.reject new ChatServiceError 'notAllowed'
-          Promise.resolve()
 
 
 # @private

@@ -55,7 +55,7 @@ UserAssociations =
     .catch (e) =>
       @consistencyFailure e
       , { room : channel, id : id, op : 'socketLeaveChannel' }
-      Promise.resolve()
+    .return()
 
   # @private
   socketLeaveChannels : (id, channels) ->
@@ -87,7 +87,7 @@ UserAssociations =
       room.leave @userName
     .catch (e) =>
       @consistencyFailure e, { room : roomName, op : 'UserLeaveRoom' }
-      Promise.resolve()
+    .return()
 
   # @private
   joinSocketToRoom : (id, roomName) ->
@@ -103,7 +103,7 @@ UserAssociations =
             if njoined == 1
               @userJoinRoomReport @userName, roomName
             @socketJoinEcho id, roomName, njoined
-            Promise.resolve njoined
+            njoined
         .catch (e) =>
           @rollbackRoomJoin e, id, room
 
@@ -119,16 +119,16 @@ UserAssociations =
             @leaveRoom roomName
             .then =>
               @userLeftRoomReport @userName, roomName
-              Promise.resolve njoined
+              njoined
           else
-            Promise.resolve njoined
+            njoined
 
   # @private
   removeUserSocket : (id) ->
     @userState.removeSocket id
     .catch (e) =>
       @consistencyFailure e, { id : id, op : 'removeUserSocket' }
-      Promise.resolve()
+      return
 
   # @private
   removeSocketFromServer : (id) ->
@@ -164,8 +164,6 @@ UserAssociations =
       if attempt < maxAttempts
         Promise.delay(@lockTTL).then =>
           @removeUserFromRoom userName, roomName, attempt+1, maxAttempts
-      else
-        Promise.resolve()
 
   # @private
   removeRoomUsers : (roomName, userNames = []) ->

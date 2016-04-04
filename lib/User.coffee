@@ -50,9 +50,11 @@ class User extends DirectMessaging
   exec : (command, options = {}, args...) ->
     id = options.id
     unless @server.userCommands[command]
-      throw new ChatServiceError 'noCommand', command
+      error = new ChatServiceError 'noCommand', command
+      return Promise.reject error
     if not id and command in [ 'disconnect', 'roomJoin' ,'roomLeave' ]
-      throw new ChatServiceError 'noSocket', command
+      error = new ChatServiceError 'noSocket', command
+      return Promise.reject error
     fn = @[command]
     cmd = @makeCommand command, fn
     Promise.fromCallback (cb) ->
@@ -65,8 +67,6 @@ class User extends DirectMessaging
     .then (sockets) =>
       unless sockets?.length
         Promise.reject new ChatServiceError 'noUserOnline', @userName
-      else
-        Promise.resolve()
 
   # @private
   consistencyFailure : (error, operationInfo = {}) ->
@@ -82,7 +82,7 @@ class User extends DirectMessaging
         return Promise.reject new ChatServiceError 'noSocket', 'connection'
       for cmd of @server.userCommands
         @bindCommand id, cmd, @[cmd]
-      Promise.resolve [ @, nconnected ]
+      [ @, nconnected ]
 
   # @private
   disconnectInstanceSockets : () ->
@@ -122,7 +122,7 @@ class User extends DirectMessaging
         @transport.sendToChannel channel, 'directMessage', msg
         @transport.sendToOthers id, @echoChannel, 'directMessageEcho'
         , recipientName, msg
-        Promise.resolve msg
+        msg
 
   # @private
   directRemoveFromList : (listName, values) ->
@@ -239,7 +239,7 @@ class User extends DirectMessaging
       room.message @userName, msg, bypassPermissions
     .then (pmsg) =>
       @transport.sendToChannel roomName, 'roomMessage', roomName, pmsg
-      Promise.resolve pmsg.id
+      pmsg.id
 
   # @private
   roomRemoveFromList : (roomName, listName, values, {bypassPermissions}) ->

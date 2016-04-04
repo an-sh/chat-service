@@ -33,9 +33,11 @@ class ArgumentsValidator
     [args, cb] = possiblyCallback args
     Promise.try =>
       checkfn = @checkers.get name
-      unless checkfn then throw new ChatServiceError 'noCommand', name
+      unless checkfn
+        error = new ChatServiceError 'noCommand', name
+        return Promise.reject error
       error = @checkTypes checkfn, args
-      if error then throw error
+      if error then return Promise.reject error
       customCheckers = @customCheckers[name] || []
       Promise.each customCheckers, (checker, idx) ->
         if checker
