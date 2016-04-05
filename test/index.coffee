@@ -11,7 +11,7 @@ describe 'Chat service.', ->
 
     testutils.setState state
 
-    describe "State: #{state.state}, Adapter: #{state.adapter}.", ->
+    describe "State: '#{state.state}', adapter: '#{state.adapter}'.", ->
 
       describe 'Initialization', require './initialization.coffee'
 

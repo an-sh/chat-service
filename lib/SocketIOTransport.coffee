@@ -55,8 +55,7 @@ class SocketIOTransport
 
   # @private
   confirmLogin : (socket, userName, authData) ->
-    if _.isObject(authData)
-      authData.id = socket.id unless authData.id?
+    authData.id = socket.id
     socket.emit 'loginConfirmed', userName, authData
     Promise.resolve()
 

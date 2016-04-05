@@ -60,6 +60,23 @@ module.exports = ->
       expect(e).deep.equal(reason)
       done()
 
+  it 'should use onConnect hook username and data', (done) ->
+    name = 'someUser'
+    data = { token : 'token' }
+    onConnect = (server, id, cb) ->
+      expect(server).instanceof(ChatService)
+      expect(id).a('string')
+      err = new Error 'some error'
+      cb null, name, data
+    chatService = new ChatService { port : port }
+      , { onConnect : onConnect }, state
+    socket1 = clientConnect user1
+    socket1.on 'loginConfirmed', (u, d) ->
+      expect(u).equal(name)
+      expect(d).include.keys('id')
+      expect(d.token).equal(data.token)
+      done()
+
   it 'should reject login if onConnect hook passes error', (done) ->
     err = null
     onConnect = (server, id, cb) ->
