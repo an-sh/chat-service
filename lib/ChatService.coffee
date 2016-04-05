@@ -556,7 +556,7 @@ class ChatService extends EventEmitter
     Transport = switch true
       when @transportConstructor == 'socket.io' then SocketIOTransport
       when _.isFunction @transportConstructor then @transportConstructor
-      else throw new Error "Invalid transport: #{@stateConstructor}"
+      else throw new Error "Invalid transport: #{@transportConstructor}"
     @userCommands = new UserCommands()
     @serverMessages = new ServerMessages()
     @validator = new ArgumentsValidator @
@@ -585,9 +585,9 @@ class ChatService extends EventEmitter
           @hooks.onClose @, error, cb
       else if error
         Promise.reject error
-    .asCallback done
     .finally =>
       @state.close()
+    .asCallback done
 
 
 module.exports = ChatService

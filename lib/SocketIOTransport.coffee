@@ -117,9 +117,8 @@ class SocketIOTransport
             cb()
 
   # @private
-  close : (done) ->
-    if @closed
-      return Promise.resolve().asCallback done
+  close : () ->
+    if @closed then return Promise.resolve()
     @closed = true
     @nsp.removeAllListeners 'connection'
     Promise.try =>
@@ -134,7 +133,6 @@ class SocketIOTransport
     .then =>
       @waitDisconnectAll()
     .timeout 5000
-    .asCallback done
 
   # @private
   bind : (id, name, fn) ->
