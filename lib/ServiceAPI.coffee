@@ -20,12 +20,13 @@ ServiceAPI =
   #
   # @option params [String] username User name.
   # @option params [String] id Socket id, it is required for
-  #   'disconnect', 'roomJoin', 'roomLeave' commands.
-  # @option params [Boolean] bypassHooks If `false` executes command with
-  #   before and after hooks, default is `false`.
+  #   {UserCommands#disconnect}, {UserCommands#roomJoin},
+  #   {UserCommands#roomLeave} commands.
+  # @option params [Boolean] bypassHooks If `false` executes command
+  #   without before and after hooks, default is `false`.
   # @option params [Boolean] bypassPermissions If `true` executes
-  #   command without checking room/user permissions for commands, default
-  #   is `false`.
+  #   command (except {UserCommands#roomJoin}) bypassing any
+  #   permissions checking, default is `false`.
   #
   # @return [Promise]
   execUserCommand : (params, command, args...) ->
@@ -55,7 +56,7 @@ ServiceAPI =
   # @option state [Array<String>] whitelist User direct messages whitelist.
   # @option state [Array<String>] blacklist User direct messages blacklist.
   # @option state [Boolean] whitelistOnly User direct messages
-  #   whitelistOnly mode.
+  #   whitelistOnly mode, default is `false`.
   #
   # @return [Promise]
   addUser : (userName, state, cb) ->
@@ -87,7 +88,8 @@ ServiceAPI =
   # @option state [Array<String>] whitelist Room whitelist.
   # @option state [Array<String>] blacklist Room blacklist
   # @option state [Array<String>] adminlist Room adminlist.
-  # @option state [Boolean] whitelistOnly Room whitelistOnly mode.
+  # @option state [Boolean] whitelistOnly Room whitelistOnly mode,
+  #   default is `false`.
   # @option state [String] owner Room owner.
   #
   # @return [Promise]
@@ -100,7 +102,7 @@ ServiceAPI =
 
   # Removes all room data, and removes joined user from the room.
   #
-  # @param roomName [String] User name.
+  # @param roomName [String] Room name.
   # @param cb [Callback] Optional callback.
   #
   # @return [Promise]

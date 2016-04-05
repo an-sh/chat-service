@@ -361,9 +361,9 @@ class ChatService extends EventEmitter
   # Crates an object and starts a new server instance.
   #
   #
-  # @option serviceOptions [Number] closeTimeout Maximum time to wait
-  #   before a server disconnects all clients in ms, default is
-  #   `5000`.
+  # @option serviceOptions [Number] closeTimeout Maximum time in ms to
+  #   wait before a server disconnects all clients on shutdown,
+  #   default is `10000`.
   #
   # @option serviceOptions [Boolean] enableAccessListsUpdates Enables
   #   {ServerMessages#roomModeChanged},
@@ -398,50 +398,54 @@ class ChatService extends EventEmitter
   #   {ChatServiceError}.
   #
   #
-  # @option hooks [Function(<ChatService>, <Socket>,
-  #   <Callback(<Error>, <String>, <Object>)>)] onConnect Client
-  #   connection hook. Must call a callback with either error or user
-  #   name and auth data. User name and auth data are send back with
-  #   {ServerMessages#loginConfirmed} message. Error is sent as
+  # @option hooks [Function<ChatService, String, Callback<Error,
+  #   String, Object>>] onConnect Client connection hook. Has a server
+  #   instance, a socket id and a callback as arguments. Must call a
+  #   callback with either an error or an user name and an auth
+  #   data. User name and auth data are send back with a
+  #   {ServerMessages#loginConfirmed} message. Error is sent as a
   #   {ServerMessages#loginRejected} message.
   #
-  # @option hooks [Function(<ChatService>, <Callback(<Error>)>)]
+  # @option hooks [Function<ChatService, Callback<Error>>]
   #   onStart Executes when server is started. Must call a callback.
   #
-  # @option hooks [Function(<ChatService>, <Error>,
-  #   <Callback(<Error>)>)] onClose Executes when server is
+  # @option hooks [Function<ChatService, Error,
+  #   Callback<Error>>] onClose Executes when server is
   #   closed. Must call a callback.
   #
-  # @option hooks [Function(Object, <Callback(<Error>)>)]
+  # @option hooks [Function<Object, Callback<Error>>]
   #   directMessagesChecker Validator for {UserCommands#directMessage}
   #   message objects. When is set allow a custom content in direct
-  #   messages.
+  #   messages. Must call a callback.
   #
-  # @option hooks [Function(Object, <Callback(<Error>)>)]
+  # @option hooks [Function<Object, Callback<Error>>]
   #   roomMessagesChecker Validator for {UserCommands#roomMessage}
   #   message objects. When is set allow a custom content in room
-  #   messages.
+  #   messages. Must call a callback.
   #
-  # @option hooks [Function(ChatService, String, String, Array,
-  #   <Callback(<Error, Data, Array...>)>)] {command}Before Before
-  #   hooks are available for all {UserCommands} and all have the same
-  #   arguments: ChatService, userName, socket id, array of command
-  #   arguments and a callback. Callback may be called without
+  # @option hooks [Function<callInfo, Array, Callback<Error, Data,
+  #   Rest...>>] {UserCommands}Before Before hooks are available for
+  #   all {UserCommands} and executed after an arguments
+  #   validation. All have the same arguments: callInfo, array of
+  #   command arguments and a callback. Callback may be called without
   #   arguments to continue command execution, or with non-falsy Error
   #   or Data to stop execution and return error or result
-  #   respectively to the command issuer, or with falsy Error and Data
-  #   and rest arguments as the new command arguments to continue with
-  #   (Note: new arguments count and types must be the same as the
-  #   original command requires). Also note that before hooks are run
-  #   only after a successful arguments types validation.
+  #   respectively to the command issuer, or with null Error and Data
+  #   and rest arguments as the new command arguments.
   #
-  # @option hooks [Function(ChatService, String, String, Array, Array,
-  #   <Callback(Array...)>)] {command}After After hooks are available
-  #   for all {UserCommands} and all have the same arguments:
-  #   ChatService, userName, socket id, Array of command arguments,
-  #   Array of command results and a callback. Callback may be called
-  #   without arguments to return unchanged result or error to the
-  #   command issuer, or with new values to alter the results.
+  # @option hooks [Function<callInfo, Array, Array,
+  #   Callback<Rest...>>] {UserCommands}After After hooks are
+  #   available for all {UserCommands} and all have the same
+  #   arguments: callInfo, Array of command arguments, Array of
+  #   command results and a callback. Callback may be called without
+  #   arguments to return unchanged result or error to the command
+  #   issuer, or with new values to alter the result.
+  #
+  # @option callInfo [ChatService] server Service instance.
+  #
+  # @option callInfo [String] id Socket id.
+  #
+  # @option callInfo [String] userName User name.
   #
   #
   # @option integrationOptions [String or Constructor] state Chat
@@ -453,14 +457,14 @@ class ChatService extends EventEmitter
   #   Transport. Default is `'socket.io'`.
   #
   # @option integrationOptions [String or Constructor] adapter
-  #   Socket.io adapter, used if no `io` object is passed in
-  #   `transportOptions`.  Can be either `'memory'` or `'redis`' for
+  #   Socket.io adapter, used only if no `io` object is passed in
+  #   `transportOptions`. Can be either `'memory'` or `'redis`' for
   #   built-in adapter, or a custom state constructor function that
-  #   implements the Socket.io adapter API. Default is
-  #   `'memory'`. __Note:__ `'redis'` state and `'redis'` adapter and
-  #   theirs options are NOT related, two separate clients are used
-  #   with two different configurations, which can be set to use a
-  #   common Redis server.
+  #   implements the Socket.io adapter API. Default is `'memory'`.
+  #
+  # @note `'redis'` state and `'redis'` adapter and theirs options are
+  #   NOT related, two separate clients are used with two different
+  #   configurations, which can be set to use the same Redis server.
   #
   # @option integrationOptions [Object] stateOptions Options for a
   #   redis state.
@@ -468,9 +472,9 @@ class ChatService extends EventEmitter
   # @option integrationOptions [Object] transportOptions Options for a
   #   socket.io transport.
   #
-  # @option integrationOptions [Object or Array<Object] adapterOptions
-  #   Socket.io adapter construnctor arguments, used only when no `io`
-  #   object is passed in `transportOptions`.
+  # @option integrationOptions [Object or Array<Object>]
+  #   adapterOptions Socket.io adapter construnctor arguments, used
+  #   only when no `io` object is passed in `transportOptions`.
   #
   #
   # @option transportOptions [String] namespace Socket.io namespace,
@@ -480,10 +484,12 @@ class ChatService extends EventEmitter
   #   should be used by ChatService.
   #
   # @option transportOptions [Object] http Use socket.io http server
-  #   integration.
+  #   integration, used only when no `io` object is passed in
+  #   `transportOptions`.
   #
   # @option transportOptions [Object] ioOptions Socket.io additional
-  #   options.
+  #   options, used only when no `io` object is passed in
+  #   `transportOptions`.
   #
   #
   # @option stateOptions [Boolean] useCluster Enable Redis cluster,
@@ -491,6 +497,9 @@ class ChatService extends EventEmitter
   #
   # @option stateOptions [Number] lockTTL Locks timeout in ms,
   #   default is `5000`.
+  #
+  # @option stateOptions [Number] clockDrift Time drift in ms default
+  #   is `1000`.
   #
   # @option stateOptions [Object or Array<Object>] redisOptions
   #   ioredis client constructor arguments. If useCluster is set, used
@@ -520,7 +529,7 @@ class ChatService extends EventEmitter
   setOptions : ->
     @serverUID = uid.sync 18
 
-    @closeTimeout = @serviceOptions.closeTimeout || 5000
+    @closeTimeout = @serviceOptions.closeTimeout || 10000
     @enableAccessListsUpdates= @serviceOptions.enableAccessListsUpdates || false
     @enableDirectMessages = @serviceOptions.enableDirectMessages || false
     @enableRoomsManagement = @serviceOptions.enableRoomsManagement || false
