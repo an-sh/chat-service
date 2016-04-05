@@ -72,6 +72,7 @@ class User extends DirectMessaging
   consistencyFailure : (error, operationInfo = {}) ->
     operationInfo.userName = @userName
     @server.emit 'consistencyFailure', error, operationInfo
+    return
 
   # @private
   registerSocket : (id) ->

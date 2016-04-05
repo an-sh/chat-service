@@ -104,7 +104,7 @@ module.exports = ->
           expect(data[0]).equal(user2)
           done()
 
-  it 'should send system messages to all user sockets.', (done) ->
+  it 'should send system messages to all user sockets', (done) ->
     data = 'some data.'
     chatService = new ChatService { port : port }, null, state
     socket1 = clientConnect user1
@@ -123,7 +123,7 @@ module.exports = ->
               cb()
         ], done
 
-  it 'should execute commands without hooks.', (done) ->
+  it 'should execute commands without hooks', (done) ->
     before = null
     after = null
     beforeHook = (callInfo, args, cb) ->
@@ -151,7 +151,7 @@ module.exports = ->
               expect(data).null
               done()
 
-  it 'should bypass user messaging permissions.', (done) ->
+  it 'should bypass user messaging permissions', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
     chatService = new ChatService { port : port
@@ -171,7 +171,7 @@ module.exports = ->
           expect(msg.timestamp).a('Number')
           done()
 
-  it 'should bypass room messaging permissions.', (done) ->
+  it 'should bypass room messaging permissions', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
     chatService = new ChatService { port : port }, null, state
