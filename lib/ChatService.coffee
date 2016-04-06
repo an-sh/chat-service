@@ -275,11 +275,10 @@ class UserCommands
   # @see UserCommands#roomHistorySync
   roomHistoryLastId : (roomName, cb) ->
 
-  # Gets latest room messages. The maximum size is set by
-  # {ChatService} `historyMaxGetMessages` option.
+  # Gets the room maximum history size in number of messages.
   # @param roomName [String] Room name.
-  # @param cb [Function<error, Array<Objects>>] Sends ack with an
-  #   error or history size.
+  # @param cb [Function<error, Integer] Sends ack with an error or
+  #   history size.
   # @see UserCommands#roomMessage
   roomHistoryMaxSize : (roomName, cb) ->
 
@@ -395,8 +394,9 @@ class ChatService extends EventEmitter
   #   history size available via {UserCommands#roomHistory} or
   #   {UserCommands#roomHistorySync}, default is `100`.
   #
-  # @option serviceOptions [Number] defaultHistoryLimit Room default
-  #   history size in message, default is `10000`.
+  # @option serviceOptions [Number] defaultHistoryLimit Is used for
+  #   {UserCommands#roomCreate} or when {ServiceAPI~addRoom} is called
+  #   without `historyMaxSize` option, default is `10000`.
   #
   # @option serviceOptions [Number] port Server port, default is
   #   `8000`.
@@ -406,13 +406,13 @@ class ChatService extends EventEmitter
   #   {ChatServiceError}.
   #
   #
-  # @option hooks [Function<ChatService, String, Callback<Error,
-  #   String, Object>>] onConnect Client connection hook. Has a server
-  #   instance, a socket id and a callback as arguments. Must call a
-  #   callback with either an error or an user name and an auth
-  #   data. User name and auth data are send back with a
-  #   {ServerMessages#loginConfirmed} message. Error is sent as a
-  #   {ServerMessages#loginRejected} message.
+  # @option hooks [Function<ChatService, socketId:String,
+  #   Callback<Error, username:String, authData:Object>>] onConnect
+  #   Client connection hook. Has a server instance, a socket id and a
+  #   callback as arguments. Must call a callback with either an error
+  #   or an user name and an auth data. User name and auth data are
+  #   send back with a {ServerMessages#loginConfirmed} message. Error
+  #   is sent as a {ServerMessages#loginRejected} message.
   #
   # @option hooks [Function<ChatService, Callback<Error>>]
   #   onStart Executes when server is started. Must call a callback.
@@ -431,21 +431,21 @@ class ChatService extends EventEmitter
   #   message objects. When is set allow a custom content in room
   #   messages. Must call a callback.
   #
-  # @option hooks [Function<callInfo, Array, Callback<Error, Data,
-  #   Rest...>>] {UserCommands}Before Before hooks are available for
-  #   all {UserCommands} and executed after an arguments
+  # @option hooks [Function<callInfo, args:Array, Callback<Error,
+  #   Data, Rest...>>] {UserCommands}Before Before hooks are available
+  #   for all {UserCommands} and executed after an arguments
   #   validation. All have the same arguments: callInfo, array of
-  #   command arguments and a callback. Callback may be called without
+  #   command arguments and a callback. Callback must be called without
   #   arguments to continue command execution, or with non-falsy Error
   #   or Data to stop execution and return error or result
   #   respectively to the command issuer, or with null Error and Data
   #   and rest arguments as the new command arguments.
   #
-  # @option hooks [Function<callInfo, Array, Array,
+  # @option hooks [Function<callInfo, args:Array, results:Array,
   #   Callback<Rest...>>] {UserCommands}After After hooks are
   #   available for all {UserCommands} and all have the same
-  #   arguments: callInfo, Array of command arguments, Array of
-  #   command results and a callback. Callback may be called without
+  #   arguments: callInfo, array of command arguments, array of
+  #   command results and a callback. Callback must be called without
   #   arguments to return unchanged result or error to the command
   #   issuer, or with new values to alter the result.
   #
