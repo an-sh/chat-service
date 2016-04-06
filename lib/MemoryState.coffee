@@ -158,14 +158,13 @@ class RoomStateMemory extends ListsStateMemory
 
   # @private
   messagesGetLastId : () ->
-    id = @messagesIDs.peek() || 0
-    Promise.resolve id
+    Promise.resolve @lastMessageID
 
   # @private
   messagesGetAfterId : (id) ->
     nmessages = @messagesIDs.length
     maxlen = @historyMaxGetMessages
-    lastid = @messagesIDs.peek()
+    lastid = @lastMessageID
     id = _.min [ id, lastid ]
     end = lastid - id
     len = _.min [ maxlen, lastid - id ]
