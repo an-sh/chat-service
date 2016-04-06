@@ -237,7 +237,7 @@ class User extends DirectMessaging
   roomLeave : (roomName, {id}) ->
     @state.getRoom roomName
     .then (room) =>
-      @leaveSocketFromRoom id, room.name
+      @leaveSocketFromRoom id, room.roomName
 
   # @private
   roomMessage : (roomName, msg, {bypassPermissions}) ->

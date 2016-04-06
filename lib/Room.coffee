@@ -106,7 +106,7 @@ RoomPermissions =
       @roomState.hasInList 'userlist', author
       .then (hasAuthor) =>
         unless hasAuthor
-          Promise.reject new ChatServiceError 'notJoined', @name
+          Promise.reject new ChatServiceError 'notJoined', @roomName
 
 
 # @private
@@ -120,9 +120,9 @@ class Room
   extend @, RoomPermissions
 
   # @private
-  constructor : (@server, @name) ->
+  constructor : (@server, @roomName) ->
     State = @server.state.RoomState
-    @roomState = new State @server, @name
+    @roomState = new State @server, @roomName
 
   # @private
   initState : (state) ->
@@ -134,7 +134,7 @@ class Room
 
   # @private
   consistencyFailure : (error, operationInfo = {}) ->
-    operationInfo.roomName = @name
+    operationInfo.roomName = @roomName
     @server.emit 'consistencyFailure', error, operationInfo
     return
 
@@ -167,7 +167,7 @@ class Room
         @roomState.hasInList 'userlist', author
         .then (hasAuthor) =>
           unless hasAuthor
-            Promise.reject new ChatServiceError 'notJoined', @name
+            Promise.reject new ChatServiceError 'notJoined', @roomName
     .then =>
       @roomState.messageAdd msg
 

@@ -72,7 +72,7 @@ UserAssociations =
 
   # @private
   rollbackRoomJoin : (error, id, room) ->
-    roomName = room.name
+    roomName = room.roomName
     @removeSocketFromRoom id, roomName
     .then (njoined) =>
       unless njoined then @leaveRoom roomName, room
