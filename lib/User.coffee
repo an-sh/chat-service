@@ -216,6 +216,12 @@ class User extends DirectMessaging
       room.getMessagesLastId @userName, bypassPermissions
 
   # @private
+  roomHistoryMaxSize : (roomName, {bypassPermissions}) ->
+    @state.getRoom roomName
+    .then (room) =>
+      room.getHistoryMaxSize @userName, bypassPermissions
+
+  # @private
   roomHistorySync : (roomName, msgid, {bypassPermissions}) ->
     @state.getRoom roomName
     .then (room) =>

@@ -275,6 +275,14 @@ class UserCommands
   # @see UserCommands#roomHistorySync
   roomHistoryLastId : (roomName, cb) ->
 
+  # Gets latest room messages. The maximum size is set by
+  # {ChatService} `historyMaxGetMessages` option.
+  # @param roomName [String] Room name.
+  # @param cb [Function<error, Array<Objects>>] Sends ack with an
+  #   error or history size.
+  # @see UserCommands#roomMessage
+  roomHistoryMaxSize : (roomName, cb) ->
+
   # Returns messages that were sent after a message with the specified
   # id. The maximum size is set by {ChatService}
   # `historyMaxGetMessages` option. May be called several times to
@@ -387,8 +395,8 @@ class ChatService extends EventEmitter
   #   history size available via {UserCommands#roomHistory} or
   #   {UserCommands#roomHistorySync}, default is `100`.
   #
-  # @option serviceOptions [Number] historyMaxMessages Room history
-  #   DB size, default is `10000`.
+  # @option serviceOptions [Number] defaultHistoryLimit Room default
+  #   history size in message, default is `10000`.
   #
   # @option serviceOptions [Number] port Server port, default is
   #   `8000`.
@@ -537,9 +545,9 @@ class ChatService extends EventEmitter
     @historyMaxGetMessages = @serviceOptions.historyMaxGetMessages
     if not _.isNumber(@historyMaxGetMessages) or @historyMaxGetMessages < 0
       @historyMaxGetMessages = 100
-    @historyMaxMessages = @serviceOptions.historyMaxMessages
-    if not _.isNumber(@historyMaxMessages) or @historyMaxGetMessages < 0
-      @historyMaxMessages = 10000
+    @defaultHistoryLimit = @serviceOptions.defaultHistoryLimit
+    if not _.isNumber(@defaultHistoryLimit) or @defaultHistoryLimit < 0
+      @defaultHistoryLimit = 10000
     @port = @serviceOptions.port || 8000
     @useRawErrorObjects = @serviceOptions.useRawErrorObjects || false
 

@@ -238,5 +238,11 @@ class Room
     .then (usernames) ->
       [ usernames, whitelistOnly ]
 
+  # @private
+  getHistoryMaxSize : (author, bypassPermissions) ->
+    @checkRead author, bypassPermissions
+    .then =>
+      @roomState.historyMaxSizeGet()
+
 
 module.exports = Room

@@ -12,6 +12,7 @@
 - Changed adminlist to accessList.
 - Changed auth hook to middleware.
 - Changed chat constructor options.
+- Changed global rooms history limit to a per-room value.
 - Changed hooks API.
 - Changed module export.
 - Changed room permissions.

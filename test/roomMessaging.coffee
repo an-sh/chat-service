@@ -178,7 +178,7 @@ module.exports = ->
   it 'should drop history if limit is zero', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port, historyMaxMessages : 0 }
+    chatService = new ChatService { port : port, defaultHistoryLimit : 0 }
     , null, state
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
@@ -193,8 +193,7 @@ module.exports = ->
   it 'should not send history if get limit is zero', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port
-      , historyMaxGetMessages : 0 }
+    chatService = new ChatService { port : port, historyMaxGetMessages : 0 }
     , null, state
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
@@ -206,13 +205,25 @@ module.exports = ->
               expect(data).empty
               done()
 
+  it 'should send room history maximum size', (done) ->
+    sz = 1000
+    chatService = new ChatService { port : port, defaultHistoryLimit : sz }
+    , null, state
+    chatService.addRoom roomName1, null, ->
+      socket1 = clientConnect user1
+      socket1.on 'loginConfirmed', ->
+        socket1.emit 'roomJoin', roomName1, ->
+          socket1.emit 'roomHistoryMaxSize', roomName1, (error, data) ->
+            expect(error).not.ok
+            expect(data).equal(sz)
+            done()
+
   it 'should truncate long history', (done) ->
     txt1 = 'Test message 1.'
     message1 = { textMessage : txt1 }
     txt2 = 'Test message 2.'
     message2 = { textMessage : txt2 }
-    chatService = new ChatService { port : port
-      , historyMaxMessages : 1 }
+    chatService = new ChatService { port : port , defaultHistoryLimit : 1 }
     , null, state
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
@@ -280,8 +291,7 @@ module.exports = ->
   it 'should sync history with respect to the max get', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port
-      , historyMaxGetMessages : 2 }
+    chatService = new ChatService { port : port, historyMaxGetMessages : 2 }
     , null, state
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
@@ -330,8 +340,7 @@ module.exports = ->
   it 'should sync history with respect to a history size', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port
-      , historyMaxMessages : 2 }
+    chatService = new ChatService { port : port , defaultHistoryLimit : 2 }
     , null, state
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1

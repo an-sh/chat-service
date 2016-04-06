@@ -81,7 +81,7 @@ class RoomStateMemory extends ListsStateMemory
   # @private
   constructor : (@server, @name) ->
     @historyMaxGetMessages = @server.historyMaxGetMessages
-    @historyMaxMessages = @server.historyMaxMessages
+    @historyMaxSize = @server.defaultHistoryLimit
     @whitelist = new FastSet
     @blacklist = new FastSet
     @adminlist = new FastSet
@@ -96,7 +96,7 @@ class RoomStateMemory extends ListsStateMemory
   # @private
   initState : (state = {}) ->
     { whitelist, blacklist, adminlist
-    , whitelistOnly, owner } = state
+    , whitelistOnly, owner, historyMaxSize } = state
     initState @whitelist, whitelist
     initState @blacklist, blacklist
     initState @adminlist, adminlist
@@ -105,7 +105,7 @@ class RoomStateMemory extends ListsStateMemory
     initState @messagesIDs
     @whitelistOnly = if whitelistOnly then true else false
     @owner = if owner then owner else null
-    Promise.resolve()
+    @historyMaxSizeSet historyMaxSize
 
   # @private
   removeState : () ->
@@ -125,6 +125,15 @@ class RoomStateMemory extends ListsStateMemory
     Promise.resolve()
 
   # @private
+  historyMaxSizeGet : () ->
+    Promise.resolve @historyMaxSize
+
+  historyMaxSizeSet : (historyMaxSize) ->
+    if _.isNumber(historyMaxSize) and historyMaxSize >= 0
+      @historyMaxSize = historyMaxSize
+    Promise.resolve()
+
+  # @private
   messageAdd : (msg) ->
     timestamp = _.now()
     @lastMessageID++
@@ -132,12 +141,12 @@ class RoomStateMemory extends ListsStateMemory
       msg.timestamp = timestamp
       msg.id = @lastMessageID
       Promise.resolve msg
-    if @historyMaxMessages <= 0
+    if @historyMaxSize <= 0
       return makeResult()
     @messagesHistory.unshift msg
     @messagesTimestamps.unshift timestamp
     @messagesIDs.unshift @lastMessageID
-    if @messagesHistory.length > @historyMaxMessages
+    if @messagesHistory.length > @historyMaxSize
       @messagesHistory.pop()
       @messagesTimestamps.pop()
       @messagesIDs.pop()

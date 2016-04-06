@@ -91,6 +91,7 @@ ServiceAPI =
   # @option state [Boolean] whitelistOnly Room whitelistOnly mode,
   #   default is `false`.
   # @option state [String] owner Room owner.
+  # @option state [Integer] historyMaxSize Room history maximum size.
   #
   # @return [Promise]
   addRoom : (roomName, state, cb) ->
@@ -122,6 +123,20 @@ ServiceAPI =
     @state.getRoom roomName
     .then (room) ->
       room.roomState.ownerSet owner
+    .return()
+    .asCallback cb
+
+  # Changes a room history size.
+  #
+  # @param roomName [String] Room name.
+  # @param size [Integer] Room history size.
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise]
+  changeRoomHistoryMaxSize : (roomName, size, cb) ->
+    @state.getRoom roomName
+    .then (room) ->
+      room.roomState.historyMaxSizeSet size
     .return()
     .asCallback cb
 

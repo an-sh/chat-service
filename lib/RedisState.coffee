@@ -106,7 +106,7 @@ class RoomStateRedis extends ListsStateRedis
   # @private
   constructor : (@server, @name) ->
     @historyMaxGetMessages = @server.historyMaxGetMessages
-    @historyMaxMessages = @server.historyMaxMessages
+    @historyMaxSize = @server.historyMaxSize
     @redis = @server.redis
     @exitsErrorName = 'roomExists'
     @prefix = 'rooms'
