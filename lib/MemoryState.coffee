@@ -88,8 +88,8 @@ class RoomStateMemory extends ListsStateMemory
     @userlist = new FastSet
     @messagesHistory = new List
     @messagesTimestamps = new List
-    @messagesIDs = new List
-    @lastMessageID = 0
+    @messagesIds = new List
+    @lastMessageId = 0
     @whitelistOnly = false
     @owner = null
 
@@ -102,7 +102,7 @@ class RoomStateMemory extends ListsStateMemory
     initState @adminlist, adminlist
     initState @messagesHistory
     initState @messagesTimestamps
-    initState @messagesIDs
+    initState @messagesIds
     @whitelistOnly = if whitelistOnly then true else false
     @owner = if owner then owner else null
     @historyMaxSizeSet historyMaxSize
@@ -136,27 +136,27 @@ class RoomStateMemory extends ListsStateMemory
   # @private
   messageAdd : (msg) ->
     timestamp = _.now()
-    @lastMessageID++
+    @lastMessageId++
     makeResult = =>
       msg.timestamp = timestamp
-      msg.id = @lastMessageID
+      msg.id = @lastMessageId
       Promise.resolve msg
     if @historyMaxSize <= 0
       return makeResult()
     @messagesHistory.unshift msg
     @messagesTimestamps.unshift timestamp
-    @messagesIDs.unshift @lastMessageID
+    @messagesIds.unshift @lastMessageId
     if @messagesHistory.length > @historyMaxSize
       @messagesHistory.pop()
       @messagesTimestamps.pop()
-      @messagesIDs.pop()
+      @messagesIds.pop()
     makeResult()
 
   # @private
   messagesGetRecent : () ->
     msgs = @messagesHistory.slice 0, @historyMaxGetMessages
     tss = @messagesTimestamps.slice 0, @historyMaxGetMessages
-    ids = @messagesIDs.slice 0, @historyMaxGetMessages
+    ids = @messagesIds.slice 0, @historyMaxGetMessages
     data = []
     for msg, idx in msgs
       obj = _.cloneDeep msg
@@ -167,20 +167,20 @@ class RoomStateMemory extends ListsStateMemory
 
   # @private
   messagesGetLastId : () ->
-    Promise.resolve @lastMessageID
+    Promise.resolve @lastMessageId
 
   # @private
   messagesGetAfterId : (id) ->
-    nmessages = @messagesIDs.length
+    nmessages = @messagesIds.length
     maxlen = @historyMaxGetMessages
-    lastid = @lastMessageID
+    lastid = @lastMessageId
     id = _.min [ id, lastid ]
     end = lastid - id
     len = _.min [ maxlen, lastid - id ]
     start = _.max [ 0, end - len ]
     msgs = @messagesHistory.slice start, end
     tss = @messagesTimestamps.slice start, end
-    ids = @messagesIDs.slice start, end
+    ids = @messagesIds.slice start, end
     data = []
     for msg, idx in msgs
       obj = _.cloneDeep msg

@@ -133,9 +133,9 @@ class RoomStateRedis extends ListsStateRedis
       (fn) =>
         redis.del @makeKeyName('messagesTimestamps'), fn
       (fn) =>
-        redis.del @makeKeyName('messagesIDs'), fn
+        redis.del @makeKeyName('messagesIds'), fn
       (fn) =>
-        redis.set @makeKeyName('lastMessageID'), 0, fn
+        redis.set @makeKeyName('lastMessageId'), 0, fn
       (fn) =>
         whitelistOnly = if whitelistOnly then 1 else 0
         @redis.set @makeKeyName('whitelistMode'), whitelistOnly, fn
@@ -161,7 +161,7 @@ class RoomStateRedis extends ListsStateRedis
     #TODO
 
   messagesGetLastId : (cb) ->
-    @redis.get @makeKeyName('lastMessageID'), @withTE cb
+    @redis.get @makeKeyName('lastMessageId'), @withTE cb
 
   messagesGetAfterId : (id, cb) ->
     #TODO
