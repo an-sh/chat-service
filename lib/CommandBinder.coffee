@@ -43,17 +43,17 @@ CommandBinder =
     (oargs..., info = {}, cb) =>
       args = oargs
       ack = @bindAck cb if cb
-      callInfo = { @server, @userName }
-      callInfo.id = info.id || null
-      callInfo.bypassPermissions = info.bypassPermissions || false
-      callInfo.bypassHooks = info.bypassHooks || false
+      execInfo = { @server, @userName }
+      execInfo.id = info.id || null
+      execInfo.bypassPermissions = info.bypassPermissions || false
+      execInfo.bypassHooks = info.bypassHooks || false
       Promise.using @commandWatcher(info.id, name), (stop) ->
         if stop then return
         validator.checkArguments name, args...
         .then ->
-          if beforeHook and not callInfo.bypassHooks
+          if beforeHook and not execInfo.bypassHooks
             Promise.fromCallback (cb) ->
-              beforeHook callInfo, args, ensureMultipleArguments cb
+              beforeHook execInfo, args, ensureMultipleArguments cb
             , {multiArgs: true}
         .then (results = []) ->
           [data, nargs...] = results
@@ -69,10 +69,10 @@ CommandBinder =
           .catch (error) ->
             [error, null]
           .spread (error, data) ->
-            if afterHook and not callInfo.bypassHooks
+            if afterHook and not execInfo.bypassHooks
               Promise.fromCallback (cb) ->
                 results = [error, data]
-                afterHook callInfo, args, results, ensureMultipleArguments cb
+                afterHook execInfo, args, results, ensureMultipleArguments cb
               , {multiArgs: true}
             else if error
               Promise.reject error

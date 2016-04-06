@@ -431,29 +431,32 @@ class ChatService extends EventEmitter
   #   message objects. When is set allow a custom content in room
   #   messages. Must call a callback.
   #
-  # @option hooks [Function<callInfo, args:Array, Callback<Error,
+  # @option hooks [Function<execInfo, args:Array, Callback<Error,
   #   Data, Rest...>>] {UserCommands}Before Before hooks are available
   #   for all {UserCommands} and executed after an arguments
-  #   validation. All have the same arguments: callInfo, array of
+  #   validation. All have the same arguments: execInfo, array of
   #   command arguments and a callback. Callback must be called without
   #   arguments to continue command execution, or with non-falsy Error
   #   or Data to stop execution and return error or result
   #   respectively to the command issuer, or with null Error and Data
   #   and rest arguments as the new command arguments.
   #
-  # @option hooks [Function<callInfo, args:Array, results:Array,
+  # @option hooks [Function<execInfo, args:Array, results:Array,
   #   Callback<Rest...>>] {UserCommands}After After hooks are
   #   available for all {UserCommands} and all have the same
-  #   arguments: callInfo, array of command arguments, array of
+  #   arguments: execInfo, array of command arguments, array of
   #   command results and a callback. Callback must be called without
   #   arguments to return unchanged result or error to the command
   #   issuer, or with new values to alter the result.
   #
-  # @option callInfo [ChatService] server Service instance.
+  # @option execInfo [ChatService] server Service instance.
   #
-  # @option callInfo [String] id Socket id.
+  # @option execInfo [String or null] userName User name.
   #
-  # @option callInfo [String] userName User name.
+  # @option execInfo [String or null] id Socket id.
+  #
+  # @option execInfo [Boolean] bypassPermissions Bypass permissions,
+  #   see {ServiceAPI~execUserCommand}.
   #
   #
   # @option integrationOptions [String or Constructor] state Chat
