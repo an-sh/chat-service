@@ -34,7 +34,8 @@ class User extends DirectMessaging
     @enableDirectMessages = @server.enableDirectMessages
     State = @server.state.UserState
     @userState = new State @server, @userName
-    @lockTTL = @userState.lockTTL
+    @lockTTL = @state.lockTTL
+    @clockDrift = @state.clockDrift
     @echoChannel = @userState.echoChannel
 
   # @private

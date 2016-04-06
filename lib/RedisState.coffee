@@ -293,6 +293,7 @@ class RedisState
     @UserState = UserStateRedis
     @DirectMessagingState = DirectMessagingStateRedis
     @lockTTL = @options.lockTTL || 5000
+    @clockDrift = @options.clockDrift || 1000
     @server.redis = @redis
 
   # @private

@@ -22,38 +22,34 @@ UserAssociations =
 
   # @private
   userRemovedReport : (userName, roomName) ->
-    echoChannel = @userState.makeEchoChannelName userName
-    @transport.sendToChannel echoChannel, 'roomAccessRemoved', roomName
+    @transport.sendToChannel @echoChannel, 'roomAccessRemoved', roomName
     @userLeftRoomReport userName, roomName
 
   # @private
   socketJoinEcho : (id, roomName, njoined) ->
-    echoChannel = @userState.echoChannel
-    @transport.sendToOthers id, echoChannel, 'roomJoinedEcho'
+    @transport.sendToOthers id, @echoChannel, 'roomJoinedEcho'
     , roomName, id, njoined
 
   # @private
   socketLeftEcho : (id, roomName, njoined) ->
-    echoChannel = @userState.echoChannel
-    @transport.sendToOthers id, echoChannel, 'roomLeftEcho'
+    @transport.sendToOthers id, @echoChannel, 'roomLeftEcho'
     , roomName, id, njoined
 
   # @private
   socketConnectEcho : (id, nconnected) ->
-    echoChannel = @userState.echoChannel
-    @transport.sendToOthers id, echoChannel, 'socketConnectEcho', id, nconnected
+    @transport.sendToOthers id, @echoChannel, 'socketConnectEcho', id
+    , nconnected
 
   # @private
   socketDisconnectEcho : (id, nconnected) ->
-    echoChannel = @userState.echoChannel
-    @transport.sendToOthers id, echoChannel, 'socketDisconnectEcho', id
+    @transport.sendToOthers id, @echoChannel, 'socketDisconnectEcho', id
     , nconnected
 
   # @private
   leaveChannel : (id, channel) ->
     @transport.leaveChannel id, channel
     .catch (e) =>
-      @consistencyFailure e, {roomName : channel, id, op : 'socketLeaveChannel'}
+      @consistencyFailure e, {roomName : channel, id, op : 'leaveChannel'}
 
   # @private
   socketLeaveChannels : (id, channels) ->
@@ -68,21 +64,31 @@ UserAssociations =
     , { concurrency : asyncLimit }
 
   # @private
-  rollbackRoomJoin : (error, id, room) ->
-    roomName = room.name
+  removeSocketFromRoom : (id, roomName) ->
     @userState.removeSocketFromRoom id, roomName
-    .then (njoined) =>
-      unless njoined then room.leave @userName
     .catch (e) =>
-      @consistencyFailure e, { roomName, id, op : 'rollbackRoomJoin' }
+      @consistencyFailure e, { roomName, id, op : 'removeSocketFromRoom' }
+      return 1
 
   # @private
-  leaveRoom : (roomName) ->
-    @state.getRoom roomName
+  rollbackRoomJoin : (error, id, room) ->
+    roomName = room.name
+    @removeSocketFromRoom id, roomName
+    .then (njoined) =>
+      unless njoined then @leaveRoom roomName, room
+    .return error
+
+  # @private
+  leaveRoom : (roomName, room = null) ->
+    Promise.try =>
+      unless room
+        @state.getRoom roomName
+      else
+        room
     .then (room) =>
       room.leave @userName
     .catch (e) =>
-      @consistencyFailure e, { roomName, op : 'UserLeaveRoom' }
+      @consistencyFailure e, { roomName, op : 'leaveRoom' }
 
   # @private
   joinSocketToRoom : (id, roomName) ->
@@ -105,7 +111,7 @@ UserAssociations =
   # @private
   leaveSocketFromRoom : (id, roomName) ->
     Promise.using @userState.lockToRoom(roomName, id), =>
-      @userState.removeSocketFromRoom id, roomName
+      @removeSocketFromRoom id, roomName
       .then (njoined) =>
         @leaveChannel id, roomName
         .then =>
@@ -139,9 +145,15 @@ UserAssociations =
         @socketDisconnectEcho id, nconnected
 
   # @private
+  removeUserSocketsFromRoom : (roomName) ->
+    @userState.removeAllSocketsFromRoom roomName
+    .catch (e) =>
+      @consistencyFailure e, { roomName, op : 'removeUserSocketsFromRoom' }
+
+  # @private
   removeFromRoom : (roomName) ->
     Promise.using @userState.lockToRoom(roomName), =>
-      @userState.removeAllSocketsFromRoom roomName
+      @removeUserSocketsFromRoom roomName
       .then (removedSockets = []) =>
         @channelLeaveSockets roomName, removedSockets
         .then =>
@@ -152,12 +164,13 @@ UserAssociations =
   # @private
   removeUserFromRoom : (userName, roomName, attempt = 1, maxAttempts = 2) ->
     @state.getUser userName
-    .then (user) ->
+    .then (user) =>
       user.removeFromRoom roomName
-    .catch =>
-      if attempt < maxAttempts
-        Promise.delay(@lockTTL).then =>
-          @removeUserFromRoom userName, roomName, attempt+1, maxAttempts
+      .catch =>
+        if attempt < maxAttempts
+          Promise.delay(@lockTTL + @clockDrift).then =>
+            @removeUserFromRoom userName, roomName, attempt+1, maxAttempts
+    .catchReturn()
 
   # @private
   removeRoomUsers : (roomName, userNames = []) ->

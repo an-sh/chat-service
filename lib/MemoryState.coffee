@@ -317,6 +317,8 @@ class MemoryState
     @RoomState = RoomStateMemory
     @UserState = UserStateMemory
     @DirectMessagingState = DirectMessagingStateMemory
+    @lockTTL = @options.lockTTL || 5000
+    @clockDrift = @options.clockDrift || 1000
 
   # @private
   close : () ->
