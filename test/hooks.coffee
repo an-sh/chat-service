@@ -106,6 +106,23 @@ module.exports = ->
         expect(data).equal(someData)
         done()
 
+  it 'should allow commands rest arguments', (done) ->
+    afterHook = (execInfo, cb) ->
+      { restArgs } = execInfo
+      expect(restArgs).instanceof(Array)
+      expect(restArgs).lengthOf(1)
+      expect(restArgs[0]).true
+      cb()
+    chatService = new ChatService { port : port }
+    , { 'listOwnSocketsAfter' : afterHook }
+    , state
+    socket1 = clientConnect user1
+    socket1.on 'loginConfirmed', (u, data) ->
+      sid = data.id
+      socket1.emit 'listOwnSockets', true, (error, data) ->
+        expect(error).not.ok
+        done()
+
   it 'should support changing arguments in before hooks', (done) ->
     beforeHook = (execInfo, cb) ->
       execInfo.args = [roomName2]
