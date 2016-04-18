@@ -66,27 +66,29 @@ module.exports = ->
     before = null
     after = null
     sid = null
-    beforeHook = (callInfo, args, cb) ->
-      { server, userName, id } = callInfo
+    beforeHook = (execInfo, cb) ->
+      { server, userName, id, args } = execInfo
       [ name , mode ] = args
-      expect(server).instanceof(ChatService)
-      expect(userName).equal(user1)
-      expect(id).equal(sid)
-      expect(name).a('string')
-      expect(mode).a('boolean')
-      expect(cb).instanceof(Function)
-      before = true
-      cb()
-    afterHook = (callInfo, args, results, cb) ->
-      { server, userName, id } = callInfo
-      [ name , mode ] = args
-      [ error, data ] = results
       expect(server).instanceof(ChatService)
       expect(userName).equal(user1)
       expect(id).equal(sid)
       expect(args).instanceof(Array)
       expect(name).a('string')
       expect(mode).a('boolean')
+      expect(cb).instanceof(Function)
+      before = true
+      cb()
+    afterHook = (execInfo, cb) ->
+      { server, userName, id, args, results, error } = execInfo
+      [ name , mode ] = args
+      expect(server).instanceof(ChatService)
+      expect(userName).equal(user1)
+      expect(id).equal(sid)
+      expect(args).instanceof(Array)
+      expect(name).a('string')
+      expect(mode).a('boolean')
+      expect(results).instanceof(Array)
+      expect(error).null
       expect(cb).instanceof(Function)
       after = true
       cb null, someData
@@ -105,10 +107,10 @@ module.exports = ->
         done()
 
   it 'should support changing arguments in before hooks', (done) ->
-    beforeHook = (callInfo, args, cb) ->
-      cb null, null, roomName2
-    chatService = new ChatService { port : port
-      , enableRoomsManagement : true}
+    beforeHook = (execInfo, cb) ->
+      execInfo.args = [roomName2]
+      cb()
+    chatService = new ChatService { port : port, enableRoomsManagement : true }
     , { 'roomGetWhitelistModeBefore' : beforeHook }
     , state
     socket1 = clientConnect user1
@@ -121,8 +123,8 @@ module.exports = ->
             done()
 
   it 'should support more arguments in after hooks', (done) ->
-    afterHook = (callInfo, args, results, cb) ->
-      cb results..., true
+    afterHook = (execInfo, cb) ->
+      cb null, execInfo.results..., true
     chatService = new ChatService { port : port }
     , { 'listOwnSocketsAfter' : afterHook }
     , state
@@ -136,26 +138,12 @@ module.exports = ->
         expect(moredata).true
         done()
 
-  it 'should send errors if new arguments have a different length'
-  , (done) ->
-    beforeHook = (callInfo, args, cb) ->
-      cb null, null, roomName2
-    chatService = new ChatService { port : port
-      , enableRoomsManagement : true}
-    , { 'roomCreateBefore' : beforeHook }
-    , state
-    socket1 = clientConnect user1
-    socket1.on 'loginConfirmed', ->
-      socket1.emit 'roomCreate', roomName1, true, (error) ->
-        expect(error).ok
-        done()
-
   it 'should execute disconnect Before and After hooks', (done) ->
     before = false
-    disconnectBefore = (callInfo, args, cb) ->
+    disconnectBefore = (execInfo, cb) ->
       before = true
       cb()
-    disconnectAfter = (callInfo, args, results, cb) ->
+    disconnectAfter = (execInfo, cb) ->
       expect(before).true
       cb()
       done()
@@ -169,7 +157,7 @@ module.exports = ->
 
   it 'should stop commands on before hook data', (done) ->
     val = 'asdf'
-    beforeHook = (callInfo, args, cb) ->
+    beforeHook = (execInfo, cb) ->
       cb null, val
     chatService = new ChatService { port : port }
     , { 'listOwnSocketsBefore' : beforeHook }, state

@@ -2,6 +2,7 @@
 ChatServiceError = require './ChatServiceError.coffee'
 Promise = require 'bluebird'
 _ = require 'lodash'
+ExecInfo = require './ExecInfo.coffee'
 
 { ensureMultipleArguments, possiblyCallback } = require './utils.coffee'
 
@@ -40,44 +41,39 @@ CommandBinder =
     validator = @server.validator
     beforeHook = @server.hooks?["#{name}Before"]
     afterHook = @server.hooks?["#{name}After"]
-    (oargs..., info = {}, cb) =>
-      args = oargs
+    (args..., info = {}, cb) =>
       ack = @bindAck cb if cb
-      execInfo = { @server, @userName }
-      execInfo.id = info.id || null
-      execInfo.bypassPermissions = info.bypassPermissions || false
-      execInfo.bypassHooks = info.bypassHooks || false
+      execInfo = new ExecInfo
+      _.assignIn execInfo, { @server, @userName }
+      _.assignIn execInfo, info
+      _.assignIn execInfo, validator.splitArguments name, args
       Promise.using @commandWatcher(info.id, name), (stop) ->
-        if stop then return
-        validator.checkArguments name, args...
+        if stop then return []
+        validator.checkArguments name, execInfo.args...
         .then ->
           if beforeHook and not execInfo.bypassHooks
             Promise.fromCallback (cb) ->
-              beforeHook execInfo, args, ensureMultipleArguments cb
+              beforeHook execInfo, ensureMultipleArguments cb
             , {multiArgs: true}
-        .then (results = []) ->
-          [data, nargs...] = results
-          if data then return data
-          Promise.try ->
-            if nargs?.length
-              args = nargs
-              validator.checkArguments name, args...
-          .then ->
-            fn.apply self, [args..., info]
-          .then (data) ->
-            [ null, data ]
+        .then (results) ->
+          if results?.length then return results
+          fn.apply self, [execInfo.args..., execInfo]
+          .then (result) ->
+            execInfo.results = [result]
           .catch (error) ->
-            [error, null]
-          .spread (error, data) ->
+            execInfo.error = error
+          .then ->
             if afterHook and not execInfo.bypassHooks
               Promise.fromCallback (cb) ->
-                results = [error, data]
-                afterHook execInfo, args, results, ensureMultipleArguments cb
+                afterHook execInfo, ensureMultipleArguments cb
               , {multiArgs: true}
-            else if error
-              Promise.reject error
+          .then (results) ->
+            if results?.length
+              results
+            else if execInfo.error
+              Promise.reject execInfo.error
             else
-              [ data ]
+              execInfo.results
       .asCallback ack, { spread : true }
 
   # @private

@@ -47,6 +47,21 @@ class ArgumentsValidator
 
   # @private
   # @nodoc
+  getArgsCount : (name) ->
+    checkfn = @checkers.get name
+    unless checkfn then return 0
+    return checkfn().length || 0
+
+  # @private
+  # @nodoc
+  splitArguments : (name, oargs) ->
+    nargs = @getArgsCount name
+    args = _.slice oargs, 0, nargs
+    restArgs = _.slice oargs, nargs
+    { args, restArgs }
+
+  # @private
+  # @nodoc
   checkMessage : (msg) ->
     passed = check.object msg
     unless passed then return false
