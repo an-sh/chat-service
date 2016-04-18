@@ -38,17 +38,10 @@ checkNameSymbols = (name) ->
   else
     Promise.reject new ChatServiceError 'invalidName', name
 
-# @private
-# @nodoc
-ensureMultipleArguments = (cb) ->
-  (error, data...) ->
-    cb error, data...
-
 
 module.exports = {
   asyncLimit
   checkNameSymbols
-  ensureMultipleArguments
   extend
   nameChecker
   possiblyCallback

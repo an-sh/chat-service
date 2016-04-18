@@ -7,7 +7,6 @@ UserAssociations = require './UserAssociations'
 _ = require 'lodash'
 
 { asyncLimit
-  ensureMultipleArguments
   checkNameSymbols
   extend
 } = require './utils.coffee'
@@ -59,7 +58,7 @@ class User extends DirectMessaging
     fn = @[command]
     cmd = @makeCommand command, fn
     Promise.fromCallback (cb) ->
-      cmd args..., options, ensureMultipleArguments cb
+      cmd args..., options, cb
     , {multiArgs: true}
 
   # @private

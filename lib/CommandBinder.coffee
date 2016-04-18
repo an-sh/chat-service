@@ -4,7 +4,7 @@ Promise = require 'bluebird'
 _ = require 'lodash'
 ExecInfo = require './ExecInfo.coffee'
 
-{ ensureMultipleArguments, possiblyCallback } = require './utils.coffee'
+{ possiblyCallback } = require './utils.coffee'
 
 
 # @private
@@ -53,7 +53,7 @@ CommandBinder =
         .then ->
           if beforeHook and not execInfo.bypassHooks
             Promise.fromCallback (cb) ->
-              beforeHook execInfo, ensureMultipleArguments cb
+              beforeHook execInfo, cb
             , {multiArgs: true}
         .then (results) ->
           if results?.length then return results
@@ -65,7 +65,7 @@ CommandBinder =
           .then ->
             if afterHook and not execInfo.bypassHooks
               Promise.fromCallback (cb) ->
-                afterHook execInfo, ensureMultipleArguments cb
+                afterHook execInfo, cb
               , {multiArgs: true}
           .then (results) ->
             if results?.length
