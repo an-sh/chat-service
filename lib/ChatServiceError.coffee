@@ -26,7 +26,7 @@ class ChatServiceError extends Error
   # @property [String] Error key in errorStrings.
   name: 'unknownError'
 
-  # @property [Array<Objects>] Error arguments.
+  # @property [Array<Object>] Error arguments.
   args: []
 
   # @private

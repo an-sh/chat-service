@@ -263,7 +263,7 @@ class UserCommands
   # Gets latest room messages. The maximum size is set by
   # {ChatService} `historyMaxGetMessages` option.
   # @param roomName [String] Room name.
-  # @param cb [Function<error, Array<Objects>>] Sends ack with an
+  # @param cb [Function<error, Array<Object>>] Sends ack with an
   #   error or array of messages.
   # @see UserCommands#roomMessage
   roomHistory : (roomName, cb)->
@@ -274,7 +274,7 @@ class UserCommands
   # fill gaps larger then the value of `historyMaxGetMessages`.
   # @param roomName [String] Room name.
   # @param id [Number] Message id.
-  # @param cb [Function<error, Array<Objects>>] Sends ack with an
+  # @param cb [Function<error, Array<Object>>] Sends ack with an
   #   error or array of messages.
   # @see UserCommands#roomHistoryLastId
   # @see UserCommands#roomMessage
