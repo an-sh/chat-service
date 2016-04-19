@@ -213,9 +213,9 @@ module.exports = ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
         socket1.emit 'roomJoin', roomName1, ->
-          socket1.emit 'roomHistoryMaxSize', roomName1, (error, data) ->
+          socket1.emit 'roomHistorySyncInfo', roomName1, (error, data) ->
             expect(error).not.ok
-            expect(data).equal(sz)
+            expect(data.historyMaxSize).equal(sz)
             done()
 
   it 'should truncate long history', (done) ->
@@ -386,7 +386,7 @@ module.exports = ->
               cb()
         ], done
 
-  it 'should return the latest room history id', (done) ->
+  it 'should return and update room sync info', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
     chatService = new ChatService { port : port }
@@ -395,13 +395,19 @@ module.exports = ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
         socket1.emit 'roomJoin', roomName1, ->
-          socket1.emit 'roomHistoryLastId', roomName1, (error, data) ->
+          socket1.emit 'roomHistorySyncInfo', roomName1, (error, data) ->
             expect(error).not.ok
-            expect(data).equal(0)
+            expect(data).ownProperty('historyMaxGetMessages')
+            expect(data).ownProperty('historyMaxSize')
+            expect(data).ownProperty('historySize')
+            expect(data).ownProperty('lastMessageId')
+            expect(data.lastMessageId).equal(0)
+            expect(data.historySize).equal(0)
             socket1.emit 'roomMessage', roomName1, message, ->
-              socket1.emit 'roomHistoryLastId', roomName1, (error, data) ->
+              socket1.emit 'roomHistorySyncInfo', roomName1, (error, data) ->
                 expect(error).not.ok
-                expect(data).equal(1)
+                expect(data.lastMessageId).equal(1)
+                expect(data.historySize).equal(1)
                 done()
 
   it 'should list own sockets with rooms', (done) ->

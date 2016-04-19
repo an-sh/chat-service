@@ -196,24 +196,17 @@ class ArgumentsValidator
 
   # @private
   # @nodoc
-  roomHistoryLastId : (roomName) ->
-    [
-      check.string
-    ]
-
-  # @private
-  # @nodoc
-  roomHistoryMaxSize : (roomName) ->
-    [
-      check.string
-    ]
-
-  # @private
-  # @nodoc
   roomHistorySync : (roomName, id) ->
     [
       check.string
       (str) -> check.greaterOrEqual str, 0
+    ]
+
+  # @private
+  # @nodoc
+  roomHistorySyncInfo : (roomName) ->
+    [
+      check.string
     ]
 
   # @private

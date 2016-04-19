@@ -125,9 +125,6 @@ class RoomStateMemory extends ListsStateMemory
     Promise.resolve()
 
   # @private
-  historyMaxSizeGet : () ->
-    Promise.resolve @historyMaxSize
-
   historyMaxSizeSet : (historyMaxSize) ->
     if _.isNumber(historyMaxSize) and historyMaxSize >= 0
       @historyMaxSize = historyMaxSize
@@ -166,8 +163,11 @@ class RoomStateMemory extends ListsStateMemory
     Promise.resolve data
 
   # @private
-  messagesGetLastId : () ->
-    Promise.resolve @lastMessageId
+  syncInfo : () ->
+    historySize = @messagesHistory.length
+    info = { historySize, @historyMaxSize
+      , @historyMaxGetMessages, @lastMessageId, }
+    Promise.resolve info
 
   # @private
   messagesGetAfterId : (id) ->

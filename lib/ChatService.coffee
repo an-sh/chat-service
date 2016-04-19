@@ -268,20 +268,6 @@ class UserCommands
   # @see UserCommands#roomMessage
   roomHistory : (roomName, cb)->
 
-  # Gets the latest room message id.
-  # @param roomName [String] Room name.
-  # @param cb [Function<error, Number>] Sends ack with an
-  #   error or the latest message id.
-  # @see UserCommands#roomHistorySync
-  roomHistoryLastId : (roomName, cb) ->
-
-  # Gets the room maximum history size in number of messages.
-  # @param roomName [String] Room name.
-  # @param cb [Function<error, Integer] Sends ack with an error or
-  #   history size.
-  # @see UserCommands#roomMessage
-  roomHistoryMaxSize : (roomName, cb) ->
-
   # Returns messages that were sent after a message with the specified
   # id. The maximum size is set by {ChatService}
   # `historyMaxGetMessages` option. May be called several times to
@@ -293,6 +279,15 @@ class UserCommands
   # @see UserCommands#roomHistoryLastId
   # @see UserCommands#roomMessage
   roomHistorySync : (roomName, id, cb) ->
+
+  # Gets the the room synchronisation information.
+  # @param roomName [String] Room name.
+  # @param cb [Function<error, Object<historyMaxGetMessages:Number,
+  #   historyMaxSize:Number, historySize:Number,
+  #   lastMessageId:Number>>] Sends ack with an error or an object
+  #   contains the room synchronisation information.
+  # @see UserCommands#roomHistorySync
+  roomHistorySyncInfo : (roomName, cb) ->
 
   # Joins room, an user must join the room to receive messages or
   # execute room commands. Sends {ServerMessages#roomJoinedEcho} to other

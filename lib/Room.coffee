@@ -184,10 +184,10 @@ class Room
       @roomState.messagesGetRecent()
 
   # @private
-  getMessagesLastId : (author, bypassPermissions) ->
+  getSyncInfo : (author, bypassPermissions) ->
     @checkRead author, bypassPermissions
     .then =>
-      @roomState.messagesGetLastId()
+      @roomState.syncInfo()
 
   # @private
   getMessagesAfterId : (author, id, bypassPermissions) ->
@@ -237,12 +237,6 @@ class Room
       @getModeChangedCurrentAccess whitelistOnly
     .then (usernames) ->
       [ usernames, whitelistOnly ]
-
-  # @private
-  getHistoryMaxSize : (author, bypassPermissions) ->
-    @checkRead author, bypassPermissions
-    .then =>
-      @roomState.historyMaxSizeGet()
 
 
 module.exports = Room

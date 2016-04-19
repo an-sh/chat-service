@@ -112,7 +112,8 @@ module.exports = ->
         socket1 = clientConnect user1
         socket1.on 'loginConfirmed', ->
           socket1.emit 'roomJoin', roomName1, ->
-            socket1.emit 'roomHistoryMaxSize', roomName1, (error, data) ->
+            socket1.emit 'roomHistorySyncInfo', roomName1, (error, data) ->
               expect(error).not.ok
-              expect(data).equal(sz)
+              expect(data).ownProperty('historyMaxSize')
+              expect(data.historyMaxSize).equal(sz)
               done()

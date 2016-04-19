@@ -4,10 +4,10 @@
 - Added ServiceAPI for scripting.
 - Added listOwnSockets command.
 - Added roomGetOwner command.
-- Added roomHistorySync and roomHistoryLastId commands.
+- Added roomHistorySync and roomHistorySyncInfo commands.
 - Added socketConnectEcho and socketDisconnectEcho messages.
 - Added systemMessage command.
-- Allow custom content in message objects.
+- Added hooks for checking custom content in message objects.
 - Changed Redis schema.
 - Changed adminlist to accessList.
 - Changed auth hook to middleware.
