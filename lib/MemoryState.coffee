@@ -8,8 +8,6 @@ Room = require './Room.coffee'
 User = require './User.coffee'
 _ = require 'lodash'
 
-{ asyncLimit } = require './utils.coffee'
-
 
 # @private
 # @nodoc
@@ -131,6 +129,19 @@ class RoomStateMemory extends ListsStateMemory
     Promise.resolve()
 
   # @private
+  syncInfo : () ->
+    historySize = @messagesHistory.length
+    info = { historySize, @historyMaxSize
+      , @historyMaxGetMessages, @lastMessageId }
+    Promise.resolve info
+
+  # @private
+  getCommonUsers : () ->
+    diff = (@userlist.difference @whitelist).difference @adminlist
+    data = diff.toArray()
+    Promise.resolve data
+
+  # @private
   messageAdd : (msg) ->
     timestamp = _.now()
     @lastMessageId++
@@ -163,13 +174,6 @@ class RoomStateMemory extends ListsStateMemory
     Promise.resolve data
 
   # @private
-  syncInfo : () ->
-    historySize = @messagesHistory.length
-    info = { historySize, @historyMaxSize
-      , @historyMaxGetMessages, @lastMessageId, }
-    Promise.resolve info
-
-  # @private
   messagesGetAfterId : (id) ->
     nmessages = @messagesIds.length
     maxlen = @historyMaxGetMessages
@@ -188,12 +192,6 @@ class RoomStateMemory extends ListsStateMemory
       msg.id = ids[idx]
       data[idx] = obj
     Promise.resolve msgs
-
-  # @private
-  getCommonUsers : () ->
-    diff = (@userlist.difference @whitelist).difference @adminlist
-    data = diff.toArray()
-    Promise.resolve data
 
 
 # Implements direct messaging state API.
@@ -365,7 +363,13 @@ class MemoryState
       Promise.reject error
 
   # @private
+  addSocket : (uid, id) ->
+    #TODO
+    Promise.resolve()
+
+  # @private
   removeSocket : (uid, id) ->
+    #TODO
     Promise.resolve()
 
   # @private
