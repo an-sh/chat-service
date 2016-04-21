@@ -72,7 +72,9 @@ class SocketIOTransport
     .then ->
       checkNameSymbols userName
     .then =>
-      @server.state.loginUserSocket @server.serverUID, userName, id
+      @server.state.getOrAddUser userName
+    .then (user) ->
+      user.registerSocket id
     .spread (user, nconnected) =>
       @joinChannel id, user.echoChannel
       .then =>

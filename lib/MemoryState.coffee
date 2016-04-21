@@ -8,7 +8,7 @@ Room = require './Room.coffee'
 User = require './User.coffee'
 _ = require 'lodash'
 
-{ withEH, asyncLimit } = require './utils.coffee'
+{ asyncLimit } = require './utils.coffee'
 
 
 # @private
@@ -351,8 +351,9 @@ class MemoryState
       return Promise.reject error
     if state
       room.initState state
+      .return room
     else
-      Promise.resolve()
+      Promise.resolve room
 
   # @private
   removeRoom : (name) ->
@@ -368,14 +369,10 @@ class MemoryState
     Promise.resolve()
 
   # @private
-  loginUserSocket : (uid, name, id) ->
+  getOrAddUser : (name, state) ->
     user = @users[name]
-    unless user
-      user = new User @server, name
-      @users[name] = user
-    user.registerSocket id
-    .spread (user, nconnected) ->
-      Promise.resolve [user, nconnected]
+    if user then return Promise.resolve user
+    @addUser name
 
   # @private
   getUser : (name) ->
@@ -396,8 +393,9 @@ class MemoryState
     @users[name] = user
     if state
       user.initState state
+      .return user
     else
-      Promise.resolve()
+      Promise.resolve user
 
 
 module.exports = MemoryState
