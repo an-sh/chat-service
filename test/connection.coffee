@@ -122,7 +122,7 @@ module.exports = ->
     socket1.on 'loginConfirmed', ->
       async.parallel [
         (cb) ->
-          socket1.on 'disconnect', -> cb()
-        (cb) ->
           chatService1.close cb
+        (cb) ->
+          socket1.on 'disconnect', -> cb()
       ], done

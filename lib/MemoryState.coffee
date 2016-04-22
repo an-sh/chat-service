@@ -180,7 +180,7 @@ class RoomStateMemory extends ListsStateMemory
     lastid = @lastMessageId
     id = _.min [ id, lastid ]
     end = lastid - id
-    len = _.min [ maxlen, lastid - id ]
+    len = _.min [ maxlen, end ]
     start = _.max [ 0, end - len ]
     msgs = @messagesHistory.slice start, end
     tss = @messagesTimestamps.slice start, end

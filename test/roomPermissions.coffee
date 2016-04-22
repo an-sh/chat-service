@@ -303,11 +303,12 @@ module.exports = ->
             socket3.emit 'roomJoin', roomName1, cb
       ], (error) ->
         expect(error).not.ok
-        socket1.emit 'roomAddToList', roomName1, 'blacklist'
-        , [user2, user3, 'nouser']
         socket3.on 'roomAccessRemoved', ->
           done new Error 'Wrong user removed.'
         async.parallel [
+          (cb) ->
+            socket1.emit 'roomAddToList', roomName1, 'blacklist'
+            , [user2, user3, 'nouser'], cb
           (cb) ->
             socket2.on 'roomAccessRemoved', (r) ->
               expect(r).equal(roomName1)

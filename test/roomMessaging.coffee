@@ -155,8 +155,9 @@ module.exports = ->
             socket2.emit 'roomJoin', roomName1, cb
         ], (error) ->
           expect(error).not.ok
-          socket1.emit 'roomMessage', roomName1, message
           async.parallel [
+            (cb) ->
+              socket1.emit 'roomMessage', roomName1, message, cb
             (cb) ->
               socket1.on 'roomMessage', (room, msg) ->
                 expect(room).equal(roomName1)

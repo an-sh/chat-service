@@ -97,8 +97,9 @@ module.exports = ->
     socket1.on 'loginConfirmed', ->
       socket2 = clientConnect user1
       socket2.on 'loginConfirmed', ->
-        chatService.execUserCommand user1, 'systemMessage', data
         async.parallel [
+          (cb) ->
+            chatService.execUserCommand user1, 'systemMessage', data, cb
           (cb) ->
             socket1.on 'systemMessage', (d) ->
               expect(d).equal(data)
