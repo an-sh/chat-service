@@ -175,6 +175,8 @@ class User extends DirectMessaging
     .then (room) =>
       room.checkIsOwner @userName, bypassPermissions
       .then ->
+        room.startRemoving()
+      .then ->
         room.getUsers()
       .then (userNames) =>
         @removeRoomUsers roomName, userNames

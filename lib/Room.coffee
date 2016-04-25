@@ -133,6 +133,10 @@ class Room
     @roomState.removeState()
 
   # @private
+  startRemoving : () ->
+    @roomState.startRemoving()
+
+  # @private
   consistencyFailure : (error, operationInfo = {}) ->
     operationInfo.roomName = @roomName
     @server.emit 'consistencyFailure', error, operationInfo

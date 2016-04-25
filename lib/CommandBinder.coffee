@@ -21,6 +21,9 @@ CommandBinder =
     (error, data, rest...) ->
       error = null unless error?
       data = null unless data?
+      if process.env.BLUEBIRD_DEBUG
+        if error and not (error instanceof ChatServiceError)
+          console.error error?.stack || error?.toString() || error
       unless useRawErrorObjects
         error = error?.toString()
       cb error, data, rest...

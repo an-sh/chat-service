@@ -110,6 +110,10 @@ class RoomStateMemory extends ListsStateMemory
     Promise.resolve()
 
   # @private
+  startRemoving : () ->
+    Promise.resolve()
+
+  # @private
   hasList : (listName) ->
     return listName in [ 'adminlist', 'whitelist', 'blacklist', 'userlist' ]
 
@@ -357,10 +361,7 @@ class MemoryState
   removeRoom : (name) ->
     if @rooms[name]
       delete @rooms[name]
-      Promise.resolve()
-    else
-      error = new ChatServiceError 'noRoom', name
-      Promise.reject error
+    Promise.resolve()
 
   # @private
   addSocket : (uid, id) ->

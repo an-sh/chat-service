@@ -1,7 +1,7 @@
 
 states = [
   { state : 'memory', adapter : 'memory' }
-  # { state : 'redis', adapter : 'redis' }
+  { state : 'redis', adapter : 'redis' }
 ]
 
 module.exports=

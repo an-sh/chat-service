@@ -16,8 +16,10 @@ namespace = 'chatservice'
 # @private
 # @nodoc
 initSet = (redis, set, values) ->
-  redis.del set, ->
-    unless values then return
+  redis.del set
+  .then ->
+    unless values
+      return Promise.resolve()
     redis.sadd set, values
 
 
@@ -29,21 +31,93 @@ stateOperations =
 
   # @private
   initState : (state) ->
-    @redis.setnx @makeKeyName('exists'), 1
-    .then (exists) =>
-      if exists
-        error = new ChatServiceError @exitsErrorName, name
+    @redis.setnx @makeKeyName('exists'), true
+    .then (isnew) =>
+      unless isnew
+        error = new ChatServiceError @exitsErrorName, @name
         return Promise.reject error
     .then =>
       @stateReset state
     .then =>
-      @redis.set @makeKeyName('exists'), 1
+      @redis.setnx @makeKeyName('isInit'), true
 
   # @private
-  removeState : () ->
-    @initState null
+  removeState : ->
+    @stateReset null
     .then =>
-      @redis.set @makeKeyName('exists'), 0
+      @redis.del @makeKeyName('exists')
+
+  # @private
+  startRemoving : ->
+    @redis.del @makeKeyName('isInit')
+
+
+# Redis scripts.
+# @private
+# @nodoc
+luaCommands =
+
+  messageAdd:
+    numberOfKeys: 5,
+    lua: """
+local msg = ARGV[1]
+local ts = ARGV[2]
+
+local lastMessageId = KEYS[1]
+local historyMaxSize = KEYS[2]
+local messagesIds = KEYS[3]
+local messagesTimestamps = KEYS[4]
+local messagesHistory = KEYS[5]
+
+local id = tonumber(redis.call('INCR', lastMessageId))
+local maxsz = tonumber(redis.call('GET', historyMaxSize))
+
+redis.call('LPUSH', messagesIds, id)
+redis.call('LPUSH', messagesTimestamps, ts)
+redis.call('LPUSH', messagesHistory, msg)
+
+local sz = tonumber(redis.call('LLEN', messagesHistory))
+
+if sz > maxsz then
+   redis.call('RPOP', messagesIds)
+   redis.call('RPOP', messagesTimestamps)
+   redis.call('RPOP', messagesHistory)
+end
+
+return {id}
+"""
+
+  messagesGetAfterId:
+    numberOfKeys: 5,
+    lua: """
+local id = ARGV[1]
+local maxlen = ARGV[2]
+
+local lastMessageId = KEYS[1]
+local historyMaxSize = KEYS[2]
+local messagesIds = KEYS[3]
+local messagesTimestamps = KEYS[4]
+local messagesHistory = KEYS[5]
+
+local lastid = tonumber(redis.call('GET', lastMessageId))
+local maxsz = tonumber(redis.call('GET', historyMaxSize))
+local id = math.min(id, lastid)
+local endp = lastid - id
+local len = math.min(maxlen, endp)
+local start = math.max(0, endp - len)
+
+if start >= endp then
+   return {}
+end
+
+endp = endp - 1
+local msgs = redis.call('LRANGE', messagesHistory, start, endp)
+local tss = redis.call('LRANGE', messagesTimestamps, start, endp)
+local ids = redis.call('LRANGE', messagesIds, start, endp)
+
+return {msgs, tss, ids}
+"""
+
 
 
 # Implements state API lists management.
@@ -91,12 +165,12 @@ class ListsStateRedis
 
   # @private
   whitelistOnlySet : (mode) ->
-    whitelistOnly = if mode then 1 else 0
+    whitelistOnly = if mode then true else ''
     @redis.set @makeKeyName('whitelistMode'), whitelistOnly
 
   # @private
   whitelistOnlyGet : () ->
-    @redis.get @makeKeyName('whitelistMode'), @name
+    @redis.get @makeKeyName('whitelistMode')
     .then (data) ->
       result = if data then true else false
       Promise.resolve result
@@ -120,7 +194,7 @@ class RoomStateRedis extends ListsStateRedis
   stateReset : (state = {}) ->
     { whitelist, blacklist, adminlist
     , whitelistOnly, owner, historyMaxSize } = state
-    whitelistOnly = if whitelistOnly then 1 else 0
+    whitelistOnly = if whitelistOnly then true else ''
     owner = '' unless owner
     Promise.all [
       initSet(@redis, @makeKeyName('whitelist'), whitelist)
@@ -164,6 +238,9 @@ class RoomStateRedis extends ListsStateRedis
     .get @makeKeyName('lastMessageId')
     .exec()
     .spread ([_0, historyMaxSize], [_1, historySize], [_2, lastMessageId]) =>
+      historySize = parseInt historySize
+      historyMaxSize = parseInt historyMaxSize
+      lastMessageId = parseInt lastMessageId
       info = { historySize, historyMaxSize
         , @historyMaxGetMessages, lastMessageId }
       Promise.resolve info
@@ -175,14 +252,51 @@ class RoomStateRedis extends ListsStateRedis
 
   # @private
   messageAdd : (msg) ->
-    #TODO
+    timestamp = _.now()
+    smsg = JSON.stringify msg
+    @redis.messageAdd @makeKeyName('lastMessageId')
+    , @makeKeyName('historyMaxSize'), @makeKeyName('messagesIds')
+    , @makeKeyName('messagesTimestamps'),  @makeKeyName('messagesHistory')
+    , smsg , timestamp
+    .spread (id) ->
+      msg.id = id
+      msg.timestamp = timestamp
+      Promise.resolve msg
+
+  # @private
+  convertMessages : (msgs, tss, ids) ->
+    data = []
+    if not msgs
+      return Promise.resolve data
+    for msg, idx in msgs
+      obj = JSON.parse msg
+      obj.timestamp = parseInt tss[idx]
+      obj.id = parseInt ids[idx]
+      data[idx] = obj
+    Promise.resolve data
 
   # @private
   messagesGetRecent : () ->
-    #TODO
+    if @historyMaxGetMessages <= 0
+      return Promise.resolve []
+    @redis.multi()
+    .lrange @makeKeyName('messagesHistory'), 0, @historyMaxGetMessages - 1
+    .lrange @makeKeyName('messagesTimestamps'), 0, @historyMaxGetMessages - 1
+    .lrange @makeKeyName('messagesIds'), 0, @historyMaxGetMessages - 1
+    .exec()
+    .spread ([_0, msgs], [_1, tss], [_2, ids]) =>
+      @convertMessages msgs, tss, ids
 
-  messagesGetAfterId : (id) ->
-    #TODO
+  # @private
+  messagesGetAfterId : (id, maxMessages = @historyMaxGetMessages) ->
+    if maxMessages <= 0
+      return Promise.resolve []
+    @redis.messagesGetAfterId @makeKeyName('lastMessageId')
+    , @makeKeyName('historyMaxSize'), @makeKeyName('messagesIds')
+    , @makeKeyName('messagesTimestamps'),  @makeKeyName('messagesHistory')
+    , id, maxMessages
+    .spread (msgs, tss, ids) =>
+      @convertMessages msgs, tss, ids
 
 
 # Implements direct messaging state API.
@@ -305,6 +419,10 @@ class RedisState
     @lockTTL = @options.lockTTL || 5000
     @clockDrift = @options.clockDrift || 1000
     @server.redis = @redis
+    for cmd, def of stateOperations
+      @redis.defineCommand cmd,
+        numberOfKeys: def.numberOfKeys
+        lua: def.lua
 
   # @private
   makeKeyName : (prefix, name, keyName) ->
@@ -381,4 +499,57 @@ class RedisState
     .return user
 
 
-module.exports = RedisState
+MemoryState = require './MemoryState.coffee'
+
+class TestState extends MemoryState
+
+  constructor : (@server, @options = {}) ->
+    super
+    redisOptions = _.castArray @options.redisOptions
+    if @options.useCluster
+      @redis = new Redis.Cluster redisOptions...
+    else
+      @redis = new Redis redisOptions...
+    @RoomState = RoomStateRedis
+    @lockTTL = @options.lockTTL || 5000
+    @clockDrift = @options.clockDrift || 1000
+    @server.redis = @redis
+    for cmd, def of luaCommands
+      @redis.defineCommand cmd,
+        numberOfKeys: def.numberOfKeys
+        lua: def.lua
+
+  # @private
+  makeKeyName : (prefix, name, keyName) ->
+    "#{namespace}:#{prefix}:{#{name}}:#{keyName}"
+
+  # @private
+  hasRoom : (name) ->
+    @redis.get @makeKeyName('rooms', name, 'isInit')
+
+  # @private
+  close : () ->
+    @redis.disconnect()
+
+  # @private
+  getRoom : (name) ->
+    @hasRoom name
+    .then (exists) =>
+      unless exists
+        error = new ChatServiceError 'noRoom', name
+        return Promise.reject error
+      room = new Room @server, name
+      Promise.resolve room
+
+  # @private
+  addRoom : (name, state) ->
+    room = new Room @server, name
+    room.initState state
+    .return room
+
+  # @private
+  removeRoom : (name) ->
+    Promise.resolve()
+
+
+module.exports = TestState
