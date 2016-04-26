@@ -377,7 +377,7 @@ class MemoryState
   getOrAddUser : (name, state) ->
     user = @users[name]
     if user then return Promise.resolve user
-    @addUser name
+    @addUser name, state
 
   # @private
   getUser : (name) ->

@@ -170,7 +170,6 @@ UserAssociations =
         if attempt < maxAttempts
           Promise.delay(@lockTTL + @clockDrift).then =>
             @removeUserFromRoom userName, roomName, attempt+1, maxAttempts
-    .catchReturn()
 
   # @private
   removeRoomUsers : (roomName, userNames = []) ->

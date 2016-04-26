@@ -154,12 +154,13 @@ module.exports = ->
     , { owner : user1, whitelistOnly : true }
     , ->
       socket1 = clientConnect user1
-      socket1.emit 'roomJoin',  roomName1, ->
-        socket1.emit 'roomSetWhitelistMode', roomName1, false
-        socket1.on 'roomModeChanged', (roomName, mode) ->
-          expect(roomName).equal(roomName1)
-          expect(mode).false
-          done()
+      socket1.on 'loginConfirmed', ->
+        socket1.emit 'roomJoin',  roomName1, ->
+          socket1.emit 'roomSetWhitelistMode', roomName1, false
+          socket1.on 'roomModeChanged', (roomName, mode) ->
+            expect(roomName).equal(roomName1)
+            expect(mode).false
+            done()
 
   it 'should allow wl and bl modifications for admins', (done) ->
     chatService = new ChatService { port : port }, null, state

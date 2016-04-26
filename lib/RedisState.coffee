@@ -79,9 +79,9 @@ redis.call('LPUSH', messagesHistory, msg)
 local sz = tonumber(redis.call('LLEN', messagesHistory))
 
 if sz > maxsz then
-   redis.call('RPOP', messagesIds)
-   redis.call('RPOP', messagesTimestamps)
-   redis.call('RPOP', messagesHistory)
+  redis.call('RPOP', messagesIds)
+  redis.call('RPOP', messagesTimestamps)
+  redis.call('RPOP', messagesHistory)
 end
 
 return {id}
@@ -107,7 +107,7 @@ local len = math.min(maxlen, endp)
 local start = math.max(0, endp - len)
 
 if start >= endp then
-   return {}
+  return {}
 end
 
 endp = endp - 1
@@ -118,6 +118,84 @@ local ids = redis.call('LRANGE', messagesIds, start, endp)
 return {msgs, tss, ids}
 """
 
+  getSocketsToRooms:
+    numberOfKeys: 1,
+    lua: """
+local result = {}
+local sockets = KEYS[1]
+local prefix = ARGV[1]
+local ids = redis.call('SMEMBERS', sockets)
+
+if table.getn(ids) == 0 then
+  local jsonResult = cjson.encode(cjson.null)
+  return {jsonResult}
+end
+
+for i, id in pairs(ids) do
+  local joined = redis.call('SMEMBERS', prefix .. id)
+  result[id] = joined
+end
+
+local jsonResult = cjson.encode(result)
+return {jsonResult}
+"""
+
+  removeAllSocketsFromRoom:
+    numberOfKeys: 1,
+    lua: """
+local room = KEYS[1]
+local prefix = ARGV[1]
+local roomName = ARGV[2]
+local ids = redis.call('SMEMBERS', room)
+
+if table.getn(ids) == 0 then
+  local jsonResult = cjson.encode(cjson.null)
+  return {jsonResult}
+end
+
+redis.call('DEL', room)
+
+for i, id in pairs(ids) do
+  redis.call('SREM', prefix .. id, roomName)
+end
+
+local jsonResult = cjson.encode(ids)
+return {jsonResult}
+"""
+
+  removeSocket:
+    numberOfKeys: 2,
+    lua: """
+local id = KEYS[1]
+local sockets = KEYS[2]
+local prefix = ARGV[1]
+local socketid = ARGV[2]
+local rooms = redis.call('SMEMBERS', id)
+
+redis.call('SREM', sockets, socketid)
+local nconnected = redis.call('SCARD', sockets)
+
+local removedRooms = {}
+local joinedSockets = {}
+
+for i, room in pairs(rooms) do
+  local ismember = redis.call('SISMEMBER', prefix .. room, socketid)
+  if ismember == 1 then
+    redis.call('SREM', prefix .. room, socketid)
+    local njoined = redis.call('SCARD', prefix .. room)
+    table.insert(removedRooms, room)
+    table.insert(joinedSockets, njoined)
+  end
+end
+
+if table.getn(removedRooms) == 0 or table.getn(rooms) == 0 then
+  local jsonResult = cjson.encode({cjson.null, cjson.null, nconnected})
+  return {jsonResult}
+end
+
+local jsonResult = cjson.encode({removedRooms, joinedSockets, nconnected})
+return {jsonResult}
+"""
 
 
 # Implements state API lists management.
@@ -184,7 +262,8 @@ class RoomStateRedis extends ListsStateRedis
   extend @, stateOperations
 
   # @private
-  constructor : (@server, @name) ->
+  constructor : (@server, @roomName) ->
+    @name = @roomName
     @historyMaxGetMessages = @server.historyMaxGetMessages
     @redis = @server.redis
     @exitsErrorName = 'roomExists'
@@ -318,9 +397,9 @@ class DirectMessagingStateRedis extends ListsStateRedis
     return listName in [ 'whitelist', 'blacklist' ]
 
   # @private
-  resetState : (state = {}) ->
+  stateReset : (state = {}) ->
     { whitelist, blacklist, whitelistOnly } = state
-    whitelistOnly = if whitelistOnly then 1 else 0
+    whitelistOnly = if whitelistOnly then true else ''
     Promise.all [
       initSet(@redis, @makeKeyName('whitelist'), whitelist)
       initSet(@redis, @makeKeyName('blacklist'), blacklist)
@@ -346,12 +425,12 @@ class UserStateRedis
     "#{namespace}:#{@prefix}:{#{@name}}:#{keyName}"
 
   # @private
-  makeSocketToRoomsName : (id) ->
+  makeSocketToRooms : (id = '') ->
     "#{namespace}:#{@prefix}:{#{@name}}:socketsToRooms:#{id}"
 
   # @private
-  makeRoomToSocketsName : (id) ->
-    "#{namespace}:#{@prefix}:{#{@name}}:roomsToSockets:#{id}"
+  makeRoomToSockets : (room = '') ->
+    "#{namespace}:#{@prefix}:{#{@name}}:roomsToSockets:#{room}"
 
   # @private
   makeEchoChannelName : (userName) ->
@@ -371,34 +450,59 @@ class UserStateRedis
     @redis.smembers @makeKeyName('sockets')
 
   # @private
-  getSocketsToRooms: () ->
-    #TODO
+  getSocketsToRooms : () ->
+    @redis.getSocketsToRooms @makeKeyName('sockets'), @makeSocketToRooms()
+    .spread (result) ->
+      data = JSON.parse result
+      for k, v of data
+        if _.isEmpty v
+          data[k] = []
+      Promise.resolve data
 
   # @private
   addSocketToRoom : (id, roomName) ->
-    #TODO
+    @redis.multi()
+    .sadd @makeSocketToRooms(id), roomName
+    .sadd @makeRoomToSockets(roomName), id
+    .scard @makeRoomToSockets(roomName)
+    .exec()
+    .spread (_0, _1, [_2, njoined]) ->
+      Promise.resolve njoined
 
   # @private
   removeSocketFromRoom : (id, roomName) ->
-    #TODO
+    @redis.multi()
+    .srem @makeSocketToRooms(id), roomName
+    .srem @makeRoomToSockets(roomName), id
+    .scard @makeRoomToSockets(roomName)
+    .exec()
+    .spread (_0, _1, [_2, njoined]) ->
+      Promise.resolve njoined
 
   # @private
   removeAllSocketsFromRoom : (roomName) ->
-    #TODO
+    @redis.removeAllSocketsFromRoom @makeRoomToSockets(roomName)
+    , @makeSocketToRooms(), roomName
+    .spread (result) ->
+      Promise.resolve JSON.parse result
 
   # @private
   removeSocket : (id) ->
-    #TODO
+    @redis.removeSocket @makeSocketToRooms(id), @makeKeyName('sockets')
+    , @makeRoomToSockets(), id
+    .spread (result) ->
+      Promise.resolve JSON.parse result
 
   # @private
   lockToRoom : (roomName, id = null) ->
+    #TODO
     Promise.resolve().disposer ->
-      #TODO
       Promise.resolve()
 
   # @private
   setSocketDisconnecting : (id) ->
     #TODO
+    Promise.resolve()
 
 
 # Implements global state API.
@@ -419,101 +523,6 @@ class RedisState
     @lockTTL = @options.lockTTL || 5000
     @clockDrift = @options.clockDrift || 1000
     @server.redis = @redis
-    for cmd, def of stateOperations
-      @redis.defineCommand cmd,
-        numberOfKeys: def.numberOfKeys
-        lua: def.lua
-
-  # @private
-  makeKeyName : (prefix, name, keyName) ->
-    "#{namespace}:#{prefix}:{#{name}}:#{keyName}"
-
-  # @private
-  hasRoom : (name) ->
-    @redis.get @makeKeyName('rooms', name, 'exists')
-
-  # @private
-  hasUser : (name) ->
-    @redis.get @makeKeyName('user', name, 'exists')
-
-  # @private
-  close : () ->
-    @redis.disconnect()
-
-  # @private
-  getRoom : (name) ->
-    @hasRoom name
-    .then (exists) =>
-      unless exists
-        error = new ChatServiceError 'noRoom', name
-        return Promise.reject error
-      room = new Room @server, name
-      Promise.resolve room
-
-  # @private
-  addRoom : (name, state) ->
-    room = new Room @server, name
-    room.initState state
-    .return room
-
-  # @private
-  removeRoom : (name) ->
-    @hasRoom name
-    .then (exists) =>
-      unless exists
-        error = new ChatServiceError 'noRoom', name
-        return Promise.reject error
-      room = new Room @server, name
-      room.removeState()
-
-  # @private
-  addSocket : (uid, id) ->
-    #TODO
-
-  # @private
-  removeSocket : (uid, id) ->
-    #TODO
-
-  # @private
-  getOrAddUser : (name, state) ->
-    user = new User @server, name
-    @hasUser name
-    .then (exists) ->
-      unless exists then user.initState()
-    .return user
-
-  # @private
-  getUser : (name) ->
-    user = new User @server, name
-    @hasUser name
-    .then (exists) ->
-      unless exists
-        error = new ChatServiceError 'noUser', name
-        return Promise.reject error
-      Promise.resolve user
-
-  # @private
-  addUser : (name, state) ->
-    user = new User @server, name
-    user.initState state
-    .return user
-
-
-MemoryState = require './MemoryState.coffee'
-
-class TestState extends MemoryState
-
-  constructor : (@server, @options = {}) ->
-    super
-    redisOptions = _.castArray @options.redisOptions
-    if @options.useCluster
-      @redis = new Redis.Cluster redisOptions...
-    else
-      @redis = new Redis redisOptions...
-    @RoomState = RoomStateRedis
-    @lockTTL = @options.lockTTL || 5000
-    @clockDrift = @options.clockDrift || 1000
-    @server.redis = @redis
     for cmd, def of luaCommands
       @redis.defineCommand cmd,
         numberOfKeys: def.numberOfKeys
@@ -528,8 +537,13 @@ class TestState extends MemoryState
     @redis.get @makeKeyName('rooms', name, 'isInit')
 
   # @private
+  hasUser : (name) ->
+    @redis.get @makeKeyName('user', name, 'isInit')
+
+  # @private
   close : () ->
     @redis.disconnect()
+    Promise.resolve()
 
   # @private
   getRoom : (name) ->
@@ -551,5 +565,41 @@ class TestState extends MemoryState
   removeRoom : (name) ->
     Promise.resolve()
 
+  # @private
+  addSocket : (uid, id) ->
+    #TODO
+    Promise.resolve()
 
-module.exports = TestState
+  # @private
+  removeSocket : (uid, id) ->
+    #TODO
+    Promise.resolve()
+
+  # @private
+  getOrAddUser : (name, state) ->
+    user = new User @server, name
+    @hasUser name
+    .then (exists) ->
+      unless exists then user.initState state
+    .catch ChatServiceError, (e) ->
+      user
+    .return user
+
+  # @private
+  getUser : (name) ->
+    user = new User @server, name
+    @hasUser name
+    .then (exists) ->
+      unless exists
+        error = new ChatServiceError 'noUser', name
+        return Promise.reject error
+      Promise.resolve user
+
+  # @private
+  addUser : (name, state) ->
+    user = new User @server, name
+    user.initState state
+    .return user
+
+
+module.exports = RedisState
