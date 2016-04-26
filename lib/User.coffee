@@ -113,8 +113,7 @@ class User extends DirectMessaging
       return Promise.reject error
     @processMessage msg, true
     @server.state.getUser recipientName
-    .then (user) =>
-      recipient = user
+    .then (recipient) =>
       channel = recipient.echoChannel
       recipient.message @userName, msg, bypassPermissions
       .then ->

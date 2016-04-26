@@ -92,8 +92,7 @@ class DirectMessaging
 
   # @private
   changeMode : (author, mode) ->
-    whitelistOnly = mode
-    @directMessagingState.whitelistOnlySet whitelistOnly
+    @directMessagingState.whitelistOnlySet mode
 
 
 module.exports = DirectMessaging

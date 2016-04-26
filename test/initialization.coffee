@@ -19,6 +19,7 @@ socketIO = require 'socket.io'
   user3
   roomName1
   roomName2
+  redisConnect
 } = require './config.coffee'
 
 module.exports = ->
@@ -93,7 +94,7 @@ module.exports = ->
   it 'should use a custom adapter constructor', (done) ->
     Adapter = require 'socket.io-redis'
     chatService = new ChatService { port : port }, null
-    , { adapter : Adapter, adapterOptions : "localhost:6379" }
+    , { adapter : Adapter, adapterOptions : redisConnect }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u) ->
       expect(u).equal(user1)
