@@ -20,6 +20,8 @@
   "keywords": [
     "chat",
     "messaging",
+    "IoT",
+    "service",
     "microservice",
     "socket.io",
     "redis"

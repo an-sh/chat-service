@@ -350,8 +350,8 @@ class UserCommands
   roomSetWhitelistMode : (roomName, mode, cb) ->
 
   # Send data to other connected users's sockets. Or can be used with
-  # execUserCommand and the null id to send data from a server to all
-  # users's sockets.
+  # {ServiceAPI~execUserCommand} and the null id to send data from a
+  # server to all users's sockets.
   # @param data [Object] Arbitrary data.
   # @param cb [Function<error, null>] Sends ack with an error or an
   #   empty data.
@@ -430,32 +430,18 @@ class ChatService extends EventEmitter
   #   message objects. When is set allow a custom content in room
   #   messages. Must call a callback.
   #
-  # @option hooks [Function<execInfo, args:Array, Callback<Error,
-  #   Data, Rest...>>] {UserCommands}Before Before hooks are available
-  #   for all {UserCommands} and executed after an arguments
-  #   validation. All have the same arguments: execInfo, array of
-  #   command arguments and a callback. Callback must be called without
-  #   arguments to continue command execution, or with non-falsy Error
-  #   or Data to stop execution and return error or result
-  #   respectively to the command issuer, or with null Error and Data
-  #   and rest arguments as the new command arguments.
+  # @option hooks [Function<execInfo, Callback<Rest...>>] {cmd}Before
+  #   Before hooks are available for all {UserCommands} and executed
+  #   after an arguments validation. Callback must be called either
+  #   without arguments to continue command execution, or with
+  #   arguments to stop execution and return arguments as results to
+  #   the command issuer.
   #
-  # @option hooks [Function<execInfo, args:Array, results:Array,
-  #   Callback<Rest...>>] {UserCommands}After After hooks are
-  #   available for all {UserCommands} and all have the same
-  #   arguments: execInfo, array of command arguments, array of
-  #   command results and a callback. Callback must be called without
-  #   arguments to return unchanged result or error to the command
-  #   issuer, or with new values to alter the result.
-  #
-  # @option execInfo [ChatService] server Service instance.
-  #
-  # @option execInfo [String or null] userName User name.
-  #
-  # @option execInfo [String or null] id Socket id.
-  #
-  # @option execInfo [Boolean] bypassPermissions Bypass permissions,
-  #   see {ServiceAPI~execUserCommand}.
+  # @option hooks [Function<execInfo, Callback<Rest...>>] {cmd}After
+  #   After hooks are available for all {UserCommands}. Callback must
+  #   be called without arguments to return unchanged result or error
+  #   to the command issuer, or with arguments to return arguments as
+  #   results to the command issuer.
   #
   #
   # @option integrationOptions [String or Constructor] state Chat
