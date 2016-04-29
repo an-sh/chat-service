@@ -524,6 +524,7 @@ class ChatService extends EventEmitter
   # @nodoc
   setOptions : ->
     @serverUID = uid.sync 18
+    @runningCommands = 0
 
     @closeTimeout = @serviceOptions.closeTimeout || 10000
     @enableAccessListsUpdates= @serviceOptions.enableAccessListsUpdates || false

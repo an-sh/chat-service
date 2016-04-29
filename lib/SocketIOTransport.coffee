@@ -41,8 +41,6 @@ class SocketIOTransport
     @nsp = @io.of @namespace
     @server.io = @io
     @server.nsp = @nsp
-    @disconnectNotify = new EventEmitter()
-    @closing = new Set()
     @closed = false
 
   # @private
@@ -98,25 +96,10 @@ class SocketIOTransport
         @addClient null, socket
 
   # @private
-  startClientDisconnect : (id) ->
-    wasDisconnecting = @closing.has id
-    @closing.add id
-    return wasDisconnecting
-
-  # @private
-  endClientDisconnect : (id) ->
-    @closing.delete id
-    @disconnectNotify.emit 'endClientDisconnect', @closing.length
-    return
-
-  # @private
-  waitDisconnectAll : ->
-    if @closing.length > 0
+  waitCommands : ->
+    if @server.runningCommands > 0
       Promise.fromCallback (cb) =>
-        @disconnectNotify.on 'endClientDisconnect', (n) =>
-          if n == 0
-            @disconnectNotify.removeAllListeners 'endClientDisconnect'
-            cb()
+        @server.once 'close', cb
 
   # @private
   close : () ->
@@ -133,7 +116,7 @@ class SocketIOTransport
           socket.disconnect()
       return
     .then =>
-      @waitDisconnectAll()
+      @waitCommands()
     .timeout 5000
 
   # @private

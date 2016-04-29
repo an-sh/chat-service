@@ -30,13 +30,11 @@ CommandBinder =
 
   # @private
   commandWatcher : (id, name) ->
-    if name == 'disconnect'
-      wasDisconnecting = @transport.startClientDisconnect id
-      unless wasDisconnecting
-        Promise.resolve(wasDisconnecting).disposer =>
-          @transport.endClientDisconnect id
-      else
-        Promise.resolve(wasDisconnecting)
+    @server.runningCommands++
+    Promise.resolve().disposer =>
+      @server.runningCommands--
+      if @transport.closed and @server.runningCommands <= 0
+        @server.emit 'close'
 
   # @private
   makeCommand : (name, fn) ->
@@ -51,7 +49,6 @@ CommandBinder =
       _.assignIn execInfo, info
       _.assignIn execInfo, validator.splitArguments name, args
       Promise.using @commandWatcher(info.id, name), (stop) ->
-        if stop then return []
         validator.checkArguments name, execInfo.args...
         .then ->
           if beforeHook and not execInfo.bypassHooks
