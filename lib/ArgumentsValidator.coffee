@@ -189,22 +189,23 @@ class ArgumentsValidator
 
   # @private
   # @nodoc
-  roomHistory : (roomName)->
+  roomRecentHistory : (roomName)->
     [
       check.string
     ]
 
   # @private
   # @nodoc
-  roomHistorySync : (roomName, id) ->
+  roomHistoryGet : (roomName, id, limit) ->
     [
       check.string
       (str) -> check.greaterOrEqual str, 0
+      (str) -> check.greaterOrEqual str, 1
     ]
 
   # @private
   # @nodoc
-  roomHistorySyncInfo : (roomName) ->
+  roomHistoryInfo : (roomName) ->
     [
       check.string
     ]

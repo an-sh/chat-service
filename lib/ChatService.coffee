@@ -266,28 +266,32 @@ class UserCommands
   # @param cb [Function<error, Array<Object>>] Sends ack with an
   #   error or array of messages.
   # @see UserCommands#roomMessage
-  roomHistory : (roomName, cb)->
+  roomRecentHistory : (roomName, cb)->
 
   # Returns messages that were sent after a message with the specified
-  # id. The maximum size is set by {ChatService}
-  # `historyMaxGetMessages` option. May be called several times to
-  # fill gaps larger then the value of `historyMaxGetMessages`.
+  # id. The returned number of messages is limited by the limit
+  # parameter. The maximum limit is bounded by {ChatService}
+  # `historyMaxGetMessages` option. If the specified id was deleted
+  # due to history limit, it returns messages starting from the oldest
+  # available.
   # @param roomName [String] Room name.
   # @param id [Number] Message id.
+  # @param limit [Number] Maximum number of messages to return. The maximum
+  #   number is limited by {ChatService} `historyMaxGetMessages` option.
   # @param cb [Function<error, Array<Object>>] Sends ack with an
   #   error or array of messages.
   # @see UserCommands#roomHistoryLastId
   # @see UserCommands#roomMessage
-  roomHistorySync : (roomName, id, cb) ->
+  roomHistoryGet : (roomName, id, limit, cb) ->
 
-  # Gets the the room synchronisation information.
+  # Gets the the room history information.
   # @param roomName [String] Room name.
   # @param cb [Function<error, Object<historyMaxGetMessages:Number,
   #   historyMaxSize:Number, historySize:Number,
   #   lastMessageId:Number>>] Sends ack with an error or an object
-  #   contains the room synchronisation information.
-  # @see UserCommands#roomHistorySync
-  roomHistorySyncInfo : (roomName, cb) ->
+  #   contains the room history information.
+  # @see UserCommands#roomHistoryGet
+  roomHistoryInfo : (roomName, cb) ->
 
   # Joins room, an user must join the room to receive messages or
   # execute room commands. Sends {ServerMessages#roomJoinedEcho} to other
@@ -385,9 +389,9 @@ class ChatService extends EventEmitter
   #   {ServerMessages#roomUserJoined} and
   #   {ServerMessages#roomUserLeft} messages, default is `false`.
   #
-  # @option serviceOptions [Number] historyMaxGetMessages Room
-  #   history size available via {UserCommands#roomHistory} or
-  #   {UserCommands#roomHistorySync}, default is `100`.
+  # @option serviceOptions [Number] historyMaxGetMessages Room history
+  #   size available via {UserCommands#roomRecentHistory} or
+  #   {UserCommands#roomHistoryGet}, default is `100`.
   #
   # @option serviceOptions [Number] defaultHistoryLimit Is used for
   #   {UserCommands#roomCreate} or when {ServiceAPI~addRoom} is called

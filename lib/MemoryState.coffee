@@ -133,7 +133,7 @@ class RoomStateMemory extends ListsStateMemory
     Promise.resolve()
 
   # @private
-  syncInfo : () ->
+  historyInfo : () ->
     historySize = @messagesHistory.length
     info = { historySize, @historyMaxSize
       , @historyMaxGetMessages, @lastMessageId }
@@ -178,13 +178,14 @@ class RoomStateMemory extends ListsStateMemory
     Promise.resolve data
 
   # @private
-  messagesGetAfterId : (id) ->
+  messagesGet : (id, maxMessages = @historyMaxGetMessages) ->
+    if maxMessages <= 0
+      return Promise.resolve []
     nmessages = @messagesIds.length
-    maxlen = @historyMaxGetMessages
     lastid = @lastMessageId
     id = _.min [ id, lastid ]
     end = lastid - id
-    len = _.min [ maxlen, end ]
+    len = _.min [ maxMessages, end ]
     start = _.max [ 0, end - len ]
     msgs = @messagesHistory.slice start, end
     tss = @messagesTimestamps.slice start, end

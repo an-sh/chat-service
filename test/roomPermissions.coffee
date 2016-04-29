@@ -39,7 +39,7 @@ module.exports = ->
         socket1.emit 'roomMessage', roomName1, message, (error, data) ->
           expect(error).ok
           expect(data).null
-          socket1.emit 'roomHistory', roomName1, (error, data) ->
+          socket1.emit 'roomRecentHistory', roomName1, (error, data) ->
             expect(error).ok
             expect(data).null
             done()

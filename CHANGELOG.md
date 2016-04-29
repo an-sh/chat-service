@@ -2,12 +2,12 @@
 ### 0.7.0 (unreleased)
 
 - Added ServiceAPI for scripting.
+- Added hooks for checking custom content in message objects.
 - Added listOwnSockets command.
 - Added roomGetOwner command.
-- Added roomHistorySync and roomHistorySyncInfo commands.
+- Added roomHistoryGet and roomHistoryInfo commands.
 - Added socketConnectEcho and socketDisconnectEcho messages.
 - Added systemMessage command.
-- Added hooks for checking custom content in message objects.
 - Changed Redis schema.
 - Changed adminlist to accessList.
 - Changed auth hook to middleware.
@@ -16,6 +16,7 @@
 - Changed hooks API.
 - Changed module export.
 - Changed room permissions.
+- Changed roomHistory to roomRecentHistory.
 - Changed roomJoinedEcho and roomLeftEcho ServerMessages.
 - Changed roomMessage and directMessage server messages.
 - Changed roomMessage command.

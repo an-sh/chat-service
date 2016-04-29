@@ -128,7 +128,7 @@ module.exports = ->
           socket1.emit 'roomMessage', roomName1, message, (error, data) ->
             expect(error).not.ok
             expect(data).a('Number')
-            socket1.emit 'roomHistory', roomName1, (error, data) ->
+            socket1.emit 'roomRecentHistory', roomName1, (error, data) ->
               expect(error).not.ok
               expect(data).length(1)
               expect(data[0]).include.keys 'textMessage', 'author'
@@ -186,7 +186,7 @@ module.exports = ->
       socket1.on 'loginConfirmed', ->
         socket1.emit 'roomJoin', roomName1, ->
           socket1.emit 'roomMessage', roomName1, message, ->
-            socket1.emit 'roomHistory', roomName1, (error, data) ->
+            socket1.emit 'roomRecentHistory', roomName1, (error, data) ->
               expect(error).not.ok
               expect(data).empty
               done()
@@ -201,7 +201,7 @@ module.exports = ->
       socket1.on 'loginConfirmed', ->
         socket1.emit 'roomJoin', roomName1, ->
           socket1.emit 'roomMessage', roomName1, message, (error, data) ->
-            socket1.emit 'roomHistory', roomName1, (error, data) ->
+            socket1.emit 'roomRecentHistory', roomName1, (error, data) ->
               expect(error).not.ok
               expect(data).empty
               done()
@@ -214,7 +214,7 @@ module.exports = ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
         socket1.emit 'roomJoin', roomName1, ->
-          socket1.emit 'roomHistorySyncInfo', roomName1, (error, data) ->
+          socket1.emit 'roomHistoryInfo', roomName1, (error, data) ->
             expect(error).not.ok
             expect(data.historyMaxSize).equal(sz)
             done()
@@ -234,7 +234,7 @@ module.exports = ->
           , (error, data) ->
             socket1.emit 'roomMessage', roomName1, message2
             , (error, data) ->
-              socket1.emit 'roomHistory', roomName1, (error, data) ->
+              socket1.emit 'roomRecentHistory', roomName1, (error, data) ->
                 expect(error).not.ok
                 expect(data).length(1)
                 expect(data[0]).include.keys 'textMessage', 'author'
@@ -263,8 +263,7 @@ module.exports = ->
         expect(error).not.ok
         async.parallel [
           (cb) ->
-            socket1.emit 'roomHistorySync', roomName1, 0
-            , (error, data) ->
+            socket1.emit 'roomHistoryGet', roomName1, 0, 10, (error, data) ->
               expect(error).not.ok
               expect(data).lengthOf(2)
               expect(data[0]).include.keys 'textMessage', 'author'
@@ -275,15 +274,13 @@ module.exports = ->
               expect(data[0].id).equal(2)
               cb()
           (cb) ->
-            socket1.emit 'roomHistorySync', roomName1, 1
-            , (error, data) ->
+            socket1.emit 'roomHistoryGet', roomName1, 1, 10, (error, data) ->
               expect(error).not.ok
               expect(data).lengthOf(1)
               expect(data[0].id).equal(2)
               cb()
           (cb) ->
-            socket1.emit 'roomHistorySync', roomName1, 2
-            , (error, data) ->
+            socket1.emit 'roomHistoryGet', roomName1, 2, 10, (error, data) ->
               expect(error).not.ok
               expect(data).empty
               cb()
@@ -310,29 +307,25 @@ module.exports = ->
         expect(error).not.ok
         async.parallel [
           (cb) ->
-            socket1.emit 'roomHistorySync', roomName1, 0
-            , (error, data) ->
+            socket1.emit 'roomHistoryGet', roomName1, 0, 10, (error, data) ->
               expect(error).not.ok
               expect(data).lengthOf(2)
               expect(data[0].id).equal(2)
               cb()
           (cb) ->
-            socket1.emit 'roomHistorySync', roomName1, 1
-            , (error, data) ->
+            socket1.emit 'roomHistoryGet', roomName1, 1, 10, (error, data) ->
               expect(error).not.ok
               expect(data).lengthOf(2)
               expect(data[0].id).equal(3)
               cb()
           (cb) ->
-            socket1.emit 'roomHistorySync', roomName1, 2
-            , (error, data) ->
+            socket1.emit 'roomHistoryGet', roomName1, 2, 10, (error, data) ->
               expect(error).not.ok
               expect(data).lengthOf(1)
               expect(data[0].id).equal(3)
               cb()
           (cb) ->
-            socket1.emit 'roomHistorySync', roomName1, 3
-            , (error, data) ->
+            socket1.emit 'roomHistoryGet', roomName1, 3, 10, (error, data) ->
               expect(error).not.ok
               expect(data).empty
               cb()
@@ -359,29 +352,25 @@ module.exports = ->
         expect(error).not.ok
         async.parallel [
           (cb) ->
-            socket1.emit 'roomHistorySync', roomName1, 0
-            , (error, data) ->
+            socket1.emit 'roomHistoryGet', roomName1, 0, 10, (error, data) ->
               expect(error).not.ok
               expect(data).lengthOf(2)
               expect(data[0].id).equal(3)
               cb()
           (cb) ->
-            socket1.emit 'roomHistorySync', roomName1, 1
-            , (error, data) ->
+            socket1.emit 'roomHistoryGet', roomName1, 1, 10, (error, data) ->
               expect(error).not.ok
               expect(data).lengthOf(2)
               expect(data[0].id).equal(3)
               cb()
           (cb) ->
-            socket1.emit 'roomHistorySync', roomName1, 2
-            , (error, data) ->
+            socket1.emit 'roomHistoryGet', roomName1, 2, 10, (error, data) ->
               expect(error).not.ok
               expect(data).lengthOf(1)
               expect(data[0].id).equal(3)
               cb()
           (cb) ->
-            socket1.emit 'roomHistorySync', roomName1, 3
-            , (error, data) ->
+            socket1.emit 'roomHistoryGet', roomName1, 3, 10, (error, data) ->
               expect(error).not.ok
               expect(data).empty
               cb()
@@ -396,7 +385,7 @@ module.exports = ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
         socket1.emit 'roomJoin', roomName1, ->
-          socket1.emit 'roomHistorySyncInfo', roomName1, (error, data) ->
+          socket1.emit 'roomHistoryInfo', roomName1, (error, data) ->
             expect(error).not.ok
             expect(data).ownProperty('historyMaxGetMessages')
             expect(data).ownProperty('historyMaxSize')
@@ -405,7 +394,7 @@ module.exports = ->
             expect(data.lastMessageId).equal(0)
             expect(data.historySize).equal(0)
             socket1.emit 'roomMessage', roomName1, message, ->
-              socket1.emit 'roomHistorySyncInfo', roomName1, (error, data) ->
+              socket1.emit 'roomHistoryInfo', roomName1, (error, data) ->
                 expect(error).not.ok
                 expect(data.lastMessageId).equal(1)
                 expect(data.historySize).equal(1)

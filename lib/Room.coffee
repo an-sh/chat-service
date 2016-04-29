@@ -1,6 +1,7 @@
 
 ChatServiceError = require './ChatServiceError.coffee'
 Promise = require 'bluebird'
+_ = require 'lodash'
 
 { extend, asyncLimit } = require './utils.coffee'
 
@@ -188,16 +189,18 @@ class Room
       @roomState.messagesGetRecent()
 
   # @private
-  getSyncInfo : (author, bypassPermissions) ->
+  getHistoryInfo : (author, bypassPermissions) ->
     @checkRead author, bypassPermissions
     .then =>
-      @roomState.syncInfo()
+      @roomState.historyInfo()
 
   # @private
-  getMessagesAfterId : (author, id, bypassPermissions) ->
+  getMessages : (author, id, limit, bypassPermissions) ->
     @checkRead author, bypassPermissions
     .then =>
-      @roomState.messagesGetAfterId id
+      unless bypassPermissions
+        limit = _.max limit, @server.historyMaxGetMessages
+      @roomState.messagesGet id, limit
 
   # @private
   addToList : (author, listName, values, bypassPermissions) ->

@@ -87,7 +87,7 @@ end
 return {id}
 """
 
-  messagesGetAfterId:
+  messagesGet:
     numberOfKeys: 5,
     lua: """
 local id = ARGV[1]
@@ -310,7 +310,7 @@ class RoomStateRedis extends ListsStateRedis
       @redis.set(@makeKeyName('historyMaxSize'), @server.defaultHistoryLimit)
 
   # @private
-  syncInfo : () ->
+  historyInfo : () ->
     @redis.multi()
     .get @makeKeyName('historyMaxSize')
     .llen @makeKeyName('messagesHistory')
@@ -367,10 +367,10 @@ class RoomStateRedis extends ListsStateRedis
       @convertMessages msgs, tss, ids
 
   # @private
-  messagesGetAfterId : (id, maxMessages = @historyMaxGetMessages) ->
+  messagesGet : (id, maxMessages = @historyMaxGetMessages) ->
     if maxMessages <= 0
       return Promise.resolve []
-    @redis.messagesGetAfterId @makeKeyName('lastMessageId')
+    @redis.messagesGet @makeKeyName('lastMessageId')
     , @makeKeyName('historyMaxSize'), @makeKeyName('messagesIds')
     , @makeKeyName('messagesTimestamps'),  @makeKeyName('messagesHistory')
     , id, maxMessages
