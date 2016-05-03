@@ -127,8 +127,12 @@ UserAssociations =
   # @private
   removeUserSocket : (id) ->
     @userState.removeSocket id
+    .then (res) =>
+      @state.removeSocket id
+      .return res
     .catch (e) =>
       @consistencyFailure e, { id, op : 'removeUserSocket' }
+      return []
 
   # @private
   removeSocketFromServer : (id) ->

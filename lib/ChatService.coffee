@@ -523,7 +523,7 @@ class ChatService extends EventEmitter
   # @private
   # @nodoc
   setOptions : ->
-    @serverUID = uid.sync 18
+    @instanceUID = uid.sync 18
     @runningCommands = 0
 
     @closeTimeout = @serviceOptions.closeTimeout || 10000

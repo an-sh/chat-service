@@ -326,8 +326,10 @@ class MemoryState
   constructor : (@server, @options = {}) ->
     @users = {}
     @rooms = {}
+    @sockets = {}
     @RoomState = RoomStateMemory
     @UserState = UserStateMemory
+    @instanceUID = @server.instanceUID
     @DirectMessagingState = DirectMessagingStateMemory
     @lockTTL = @options.lockTTL || 5000
     @clockDrift = @options.clockDrift || 1000
@@ -365,13 +367,13 @@ class MemoryState
     Promise.resolve()
 
   # @private
-  addSocket : (uid, id) ->
-    #TODO
+  addSocket : (id, userName) ->
+    @sockets[id] = userName
     Promise.resolve()
 
   # @private
-  removeSocket : (uid, id) ->
-    #TODO
+  removeSocket : (id) ->
+    delete @sockets[id]
     Promise.resolve()
 
   # @private

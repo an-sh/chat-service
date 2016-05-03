@@ -522,6 +522,7 @@ class RedisState
     @DirectMessagingState = DirectMessagingStateRedis
     @lockTTL = @options.lockTTL || 5000
     @clockDrift = @options.clockDrift || 1000
+    @instanceUID = @server.instanceUID
     @server.redis = @redis
     for cmd, def of luaCommands
       @redis.defineCommand cmd,
@@ -566,14 +567,12 @@ class RedisState
     Promise.resolve()
 
   # @private
-  addSocket : (uid, id) ->
-    #TODO
-    Promise.resolve()
+  addSocket : (id, userName) ->
+    @redis.hset @makeKeyName('instance', @instanceUID, 'sockets'), id, userName
 
   # @private
-  removeSocket : (uid, id) ->
-    #TODO
-    Promise.resolve()
+  removeSocket : (id) ->
+    @redis.hdel @makeKeyName('instance', @instanceUID, 'sockets'), id
 
   # @private
   getOrAddUser : (name, state) ->
