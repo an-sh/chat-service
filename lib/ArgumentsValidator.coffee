@@ -15,13 +15,13 @@ class ArgumentsValidator
   # @nodoc
   constructor : (@server) ->
     @checkers = new Map
-    for name, fn of @server.userCommands
-      @checkers.set name, _.bind @[name], @
     @directMessagesChecker = @server.directMessagesChecker
     @roomMessagesChecker = @server.roomMessagesChecker
     @customCheckers =
       directMessage : [ null, @directMessagesChecker ]
       roomMessage : [ null, @roomMessagesChecker ]
+    for name, fn of @server.userCommands
+      @checkers.set name, @[name]()
 
   # Check command arguments.
   #
@@ -32,11 +32,11 @@ class ArgumentsValidator
   checkArguments : (name, args...) ->
     [args, cb] = possiblyCallback args
     Promise.try =>
-      checkfn = @checkers.get name
-      unless checkfn
+      checkers = @checkers.get name
+      unless checkers
         error = new ChatServiceError 'noCommand', name
         return Promise.reject error
-      error = @checkTypes checkfn, args
+      error = @checkTypes checkers, args
       if error then return Promise.reject error
       customCheckers = @customCheckers[name] || []
       Promise.each customCheckers, (checker, idx) ->
@@ -48,9 +48,9 @@ class ArgumentsValidator
   # @private
   # @nodoc
   getArgsCount : (name) ->
-    checkfn = @checkers.get name
-    unless checkfn then return 0
-    return checkfn().length || 0
+    checker = @checkers.get name
+    unless checker then return 0
+    return checker.length || 0
 
   # @private
   # @nodoc
@@ -76,8 +76,7 @@ class ArgumentsValidator
 
   # @private
   # @nodoc
-  checkTypes : (checkfn, args) ->
-    checkers = checkfn()
+  checkTypes : (checkers, args) ->
     if args?.length != checkers.length
       return new ChatServiceError 'wrongArgumentsCount'
       , checkers.length, args.length
