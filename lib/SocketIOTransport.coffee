@@ -132,7 +132,7 @@ class SocketIOTransport
   # @private
   sendToChannel : (channel, args...) ->
     @nsp.to(channel).emit args...
-    Promise.resolve()
+    return
 
   # @private
   sendToOthers : (id, channel, args...) ->
@@ -141,7 +141,7 @@ class SocketIOTransport
       @sendToChannel channel, args...
     else
       socket.to(channel).emit args...
-      Promise.resolve()
+    return
 
   # @private
   joinChannel : (id, channel) ->

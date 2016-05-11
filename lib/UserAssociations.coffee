@@ -104,7 +104,7 @@ UserAssociations =
             if njoined == 1
               @userJoinRoomReport @userName, roomName
             @socketJoinEcho id, roomName, njoined
-            njoined
+          .return njoined
         .catch (e) =>
           @rollbackRoomJoin e, id, room
 
@@ -120,9 +120,7 @@ UserAssociations =
             @leaveRoom roomName
             .then =>
               @userLeftRoomReport @userName, roomName
-              njoined
-          else
-            njoined
+        .return njoined
 
   # @private
   removeUserSocket : (id) ->

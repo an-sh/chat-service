@@ -270,6 +270,7 @@ class User extends DirectMessaging
   # @private
   systemMessage : (data, {id}) ->
     @transport.sendToOthers id, @echoChannel, 'systemMessage', data
+    Promise.resolve()
 
 
 module.exports = User
