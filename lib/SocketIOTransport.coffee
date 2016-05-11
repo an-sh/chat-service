@@ -2,7 +2,6 @@
 ChatServiceError = require './ChatServiceError.coffee'
 Promise = require 'bluebird'
 RedisAdapter = require 'socket.io-redis'
-Set = require 'collections/fast-set'
 SocketServer = require 'socket.io'
 _ = require 'lodash'
 EventEmitter = require('events').EventEmitter

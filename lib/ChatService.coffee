@@ -349,6 +349,14 @@ class UserCommands
   #   empty data.
   roomSetWhitelistMode : (roomName, mode, cb) ->
 
+  # Send user's joined state and last state change timestamp.
+  # @param roomName [String] Rooms name.
+  # @param userName [String] UserName.
+  # @param cb [Function<error, Object<timestamp:Number,
+  #   joined:Boolean> >] Sends ack with an error or an object with a
+  #   joined state and a state switch timestamp.
+  roomUserSeen : (roomName, userName) ->
+
   # Send data to other connected users's sockets. Or can be used with
   # {ServiceAPI~execUserCommand} and the null id to send data from a
   # server to all users's sockets.

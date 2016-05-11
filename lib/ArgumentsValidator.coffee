@@ -251,6 +251,14 @@ class ArgumentsValidator
 
   # @private
   # @nodoc
+  roomUserSeen : (roomName, userName) ->
+    [
+      check.string
+      check.string
+    ]
+
+  # @private
+  # @nodoc
   systemMessage : (data) ->
     [
       -> true

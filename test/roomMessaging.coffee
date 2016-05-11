@@ -400,6 +400,52 @@ module.exports = ->
                 expect(data.historySize).equal(1)
                 done()
 
+  it 'should get and update user seen info', (done) ->
+    chatService = new ChatService { port : port }
+    , null, state
+    chatService.addRoom roomName1, null, ->
+      ts = new Date().getTime()
+      tsmax = ts + 2000
+      async.parallel [
+        (cb) ->
+          socket1 = clientConnect user1
+          socket1.on 'loginConfirmed', ->
+            socket1.emit 'roomJoin', roomName1, cb
+        (cb) ->
+          socket2 = clientConnect user2
+          socket2.on 'loginConfirmed', ->
+            socket2.emit 'roomJoin', roomName1, cb
+        ], (error) ->
+          expect(error).not.ok
+          socket1.emit 'roomUserSeen', roomName1, user2, (error, info1) ->
+            expect(error).not.ok
+            expect(info1).an('object')
+            expect(info1.joined).true
+            expect(info1.timestamp).a('Number')
+            expect(info1.timestamp).within(ts, tsmax)
+            socket2.emit 'roomLeave', roomName1, ->
+              socket1.emit 'roomUserSeen', roomName1, user2, (error, info2) ->
+                expect(info2).an('object')
+                expect(info2.joined).false
+                expect(info2.timestamp).a('Number')
+                expect(info2.timestamp).within(ts, tsmax)
+                expect(info2.timestamp).above(info1.timestamp)
+                done()
+
+  it 'should get empty seen info for unseen users', (done) ->
+    chatService = new ChatService { port : port }
+    , null, state
+    chatService.addRoom roomName1, null, ->
+      socket1 = clientConnect user1
+      socket1.on 'loginConfirmed', ->
+        socket1.emit 'roomJoin', roomName1, ->
+          socket1.emit 'roomUserSeen', roomName1, user2, (error, info) ->
+            expect(error).not.ok
+            expect(info).an('object')
+            expect(info.joined).false
+            expect(info.timestamp).null
+            done()
+
   it 'should list own sockets with rooms', (done) ->
     chatService = new ChatService { port : port }, null, state
     { sid1, sid2, sid3 } = {}

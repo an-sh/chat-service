@@ -268,6 +268,12 @@ class User extends DirectMessaging
       @removeRoomUsers roomName, userNames
 
   # @private
+  roomUserSeen : (roomName, userName, {bypassPermissions}) ->
+    @state.getRoom roomName
+    .then (room) =>
+      room.userSeen @userName, userName, bypassPermissions
+
+  # @private
   systemMessage : (data, {id}) ->
     @transport.sendToOthers id, @echoChannel, 'systemMessage', data
     Promise.resolve()

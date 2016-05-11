@@ -6,6 +6,7 @@
 - Added listOwnSockets command.
 - Added roomGetOwner command.
 - Added roomHistoryGet and roomHistoryInfo commands.
+- Added roomUserSeen command.
 - Added socketConnectEcho and socketDisconnectEcho messages.
 - Added systemMessage command.
 - Changed Redis schema.

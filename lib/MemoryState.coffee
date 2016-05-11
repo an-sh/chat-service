@@ -2,7 +2,7 @@
 ChatServiceError = require './ChatServiceError.coffee'
 FastSet = require 'collections/fast-set'
 List = require 'collections/list'
-Map = require 'collections/fast-map'
+FastMap = require 'collections/fast-map'
 Promise = require 'bluebird'
 Room = require './Room.coffee'
 User = require './User.coffee'
@@ -87,6 +87,7 @@ class RoomStateMemory extends ListsStateMemory
     @messagesHistory = new List
     @messagesTimestamps = new List
     @messagesIds = new List
+    @usersseen = new FastMap
     @lastMessageId = 0
     @whitelistOnly = false
     @owner = null
@@ -101,6 +102,7 @@ class RoomStateMemory extends ListsStateMemory
     initState @messagesHistory
     initState @messagesTimestamps
     initState @messagesIds
+    initState @usersseen
     @whitelistOnly = if whitelistOnly then true else false
     @owner = if owner then owner else null
     @historyMaxSizeSet historyMaxSize
@@ -198,6 +200,18 @@ class RoomStateMemory extends ListsStateMemory
       data[idx] = obj
     Promise.resolve msgs
 
+  # @private
+  userSeenGet : (userName) ->
+    joined = if @userlist.get userName then true else false
+    timestamp = @usersseen.get(userName) || null
+    Promise.resolve { joined, timestamp }
+
+  # @private
+  userSeenUpdate : (userName) ->
+    timestamp = _.now()
+    @usersseen.set userName, timestamp
+    Promise.resolve()
+
 
 # Implements direct messaging state API.
 # @private
@@ -229,8 +243,8 @@ class UserStateMemory
 
   # @private
   constructor : (@server, @userName) ->
-    @socketsToRooms = new Map
-    @roomsToSockets = new Map
+    @socketsToRooms = new FastMap
+    @roomsToSockets = new FastMap
     @echoChannel = @makeEchoChannelName @userName
 
   # @private

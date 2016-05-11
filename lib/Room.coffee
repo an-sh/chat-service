@@ -156,14 +156,24 @@ class Room
       Promise.reject new ChatServiceError 'notAllowed'
 
   # @private
-  leave : (userName) ->
-    @roomState.removeFromList 'userlist', [userName]
+  leave : (author) ->
+    @roomState.hasInList 'userlist', author
+    .then (hasAuthor) =>
+      if hasAuthor
+        @roomState.removeFromList 'userlist', [author]
+        .then =>
+          @roomState.userSeenUpdate author
 
   # @private
-  join : (userName) ->
-    @checkAcess userName
+  join : (author) ->
+    @checkAcess author
     .then =>
-      @roomState.addToList 'userlist', [userName]
+      @roomState.hasInList 'userlist', author
+    .then (hasAuthor) =>
+      unless hasAuthor
+        @roomState.userSeenUpdate author
+        .then =>
+          @roomState.addToList 'userlist', [author]
 
   # @private
   message : (author, msg, bypassPermissions) ->
@@ -244,6 +254,12 @@ class Room
       @getModeChangedCurrentAccess whitelistOnly
     .then (usernames) ->
       [ usernames, whitelistOnly ]
+
+  # @private
+  userSeen : (author, userName, bypassPermissions) ->
+    @checkRead author, bypassPermissions
+    .then =>
+      @roomState.userSeenGet userName
 
 
 module.exports = Room

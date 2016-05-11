@@ -283,6 +283,7 @@ class RoomStateRedis extends ListsStateRedis
       @redis.del(@makeKeyName 'messagesHistory')
       @redis.del(@makeKeyName 'messagesTimestamps')
       @redis.del(@makeKeyName 'messagesIds')
+      @redis.del(@makeKeyName('usersseen'))
       @redis.set(@makeKeyName('lastMessageId'), 0)
       @redis.set(@makeKeyName('whitelistMode'), whitelistOnly)
       @redis.set(@makeKeyName('owner'), owner)
@@ -376,6 +377,22 @@ class RoomStateRedis extends ListsStateRedis
     , id, maxMessages
     .spread (msgs, tss, ids) =>
       @convertMessages msgs, tss, ids
+
+  # @private
+  userSeenGet : (userName) ->
+    @redis.multi()
+    .hget @makeKeyName('usersseen'), userName
+    .sismember @makeKeyName('userlist'), userName
+    .exec()
+    .spread ([_1, ts], [_2, isjoined] ) ->
+      joined = if isjoined then true else false
+      timestamp = if ts then parseInt ts else null
+      { joined, timestamp }
+
+  # @private
+  userSeenUpdate : (userName) ->
+    timestamp = _.now()
+    @redis.hset @makeKeyName('usersseen'), userName, timestamp
 
 
 # Implements direct messaging state API.
