@@ -4,6 +4,7 @@
 - Added ServiceAPI for scripting.
 - Added hooks for checking custom content in message objects.
 - Added listOwnSockets command.
+- Added redis socket.io adapter dependency.
 - Added roomGetOwner command.
 - Added roomHistoryGet and roomHistoryInfo commands.
 - Added roomUserSeen command.
@@ -15,17 +16,17 @@
 - Changed chat constructor options.
 - Changed global rooms history limit to a per-room value.
 - Changed hooks API.
+- Changed internal APIs (full rewrite, use promises now).
 - Changed module export.
+- Changed node.js minimum version to 0.12.
 - Changed room permissions.
 - Changed roomHistory to roomRecentHistory.
 - Changed roomJoinedEcho and roomLeftEcho ServerMessages.
 - Changed roomMessage and directMessage server messages.
 - Changed roomMessage command.
-- Code and tests cleanups.
-- Commands arguments validation fixes.
-- Huge internal APIs changes.
-- Include redis socket.io adapter.
-- Remove listRooms command.
+- Cleanup tests, suit split.
+- Fixed commands arguments validation.
+- Removed listRooms command.
 
 ### 0.6.1 (2016/02/01)
 
