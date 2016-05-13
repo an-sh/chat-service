@@ -5,6 +5,8 @@ Redis = require 'ioredis'
 Room = require './Room.coffee'
 User = require './User.coffee'
 _ = require 'lodash'
+promiseRetry = require 'promise-retry'
+uid = require 'uid-safe'
 
 { extend } = require './utils.coffee'
 
@@ -52,10 +54,42 @@ stateOperations =
     @redis.del @makeKeyName('isInit')
 
 
+# Redis lock operations.
+# @mixin
+# @private
+# @nodoc
+lockOperations =
+
+  # @private
+  lock : (key, val, ttl) ->
+    promiseRetry {minTimeout: 100, retries : 10, factor: 1.5, randomize : true}
+    , (retry, n) =>
+      @redis.set key, val, 'NX', 'PX', ttl
+      .then (res) ->
+        unless res
+          err = new ChatServiceError 'timeout'
+          retry err
+      .catch retry
+
+  # @private
+  unlock : (key, val) ->
+    @redis.unlock key, val
+
+
 # Redis scripts.
 # @private
 # @nodoc
 luaCommands =
+
+  unlock:
+    numberOfKeys: 1,
+    lua: """
+if redis.call("get",KEYS[1]) == ARGV[1] then
+  return redis.call("del",KEYS[1])
+else
+  return 0
+end
+"""
 
   messageAdd:
     numberOfKeys: 5,
@@ -430,6 +464,8 @@ class DirectMessagingStateRedis extends ListsStateRedis
 # @nodoc
 class UserStateRedis
 
+  extend @, lockOperations
+
   # @private
   constructor : (@server, @userName) ->
     @name = @userName
@@ -443,11 +479,15 @@ class UserStateRedis
 
   # @private
   makeSocketToRooms : (id = '') ->
-    "#{namespace}:#{@prefix}:{#{@name}}:socketsToRooms:#{id}"
+    @makeKeyName "socketsToRooms:#{id}"
 
   # @private
   makeRoomToSockets : (room = '') ->
-    "#{namespace}:#{@prefix}:{#{@name}}:roomsToSockets:#{room}"
+    @makeKeyName "roomsToSockets:#{room}"
+
+  # @private
+  makeRoomLock : (room = '') ->
+    @makeKeyName "roomLock:#{room}"
 
   # @private
   makeEchoChannelName : (userName) ->
@@ -511,15 +551,13 @@ class UserStateRedis
       Promise.resolve JSON.parse result
 
   # @private
-  lockToRoom : (roomName, id = null) ->
-    #TODO
-    Promise.resolve().disposer ->
-      Promise.resolve()
-
-  # @private
-  setSocketDisconnecting : (id) ->
-    #TODO
-    Promise.resolve()
+  lockToRoom : (roomName, ttl) ->
+    uid(18)
+    .then (val) =>
+      @lock @makeRoomLock(roomName), val, ttl
+      .then =>
+        Promise.resolve().disposer =>
+          @unlock @makeRoomLock(roomName), val
 
 
 # Implements global state API.
@@ -538,7 +576,6 @@ class RedisState
     @UserState = UserStateRedis
     @DirectMessagingState = DirectMessagingStateRedis
     @lockTTL = @options.lockTTL || 5000
-    @clockDrift = @options.clockDrift || 1000
     @instanceUID = @server.instanceUID
     @server.redis = @redis
     for cmd, def of luaCommands

@@ -92,7 +92,7 @@ UserAssociations =
 
   # @private
   joinSocketToRoom : (id, roomName) ->
-    Promise.using @userState.lockToRoom(roomName, id), =>
+    Promise.using @userState.lockToRoom(roomName, @lockTTL), =>
       @state.getRoom roomName
       .then (room) =>
         room.join @userName
@@ -110,7 +110,7 @@ UserAssociations =
 
   # @private
   leaveSocketFromRoom : (id, roomName) ->
-    Promise.using @userState.lockToRoom(roomName, id), =>
+    Promise.using @userState.lockToRoom(roomName, @lockTTL), =>
       @removeSocketFromRoom id, roomName
       .then (njoined) =>
         @leaveChannel id, roomName
@@ -134,9 +134,7 @@ UserAssociations =
 
   # @private
   removeSocketFromServer : (id) ->
-    @userState.setSocketDisconnecting id
-    .then =>
-      @removeUserSocket id
+    @removeUserSocket id
     .spread (roomsRemoved = [], joinedSockets = [], nconnected = 0) =>
       @socketLeaveChannels id, roomsRemoved
       .then =>
@@ -154,7 +152,7 @@ UserAssociations =
 
   # @private
   removeFromRoom : (roomName) ->
-    Promise.using @userState.lockToRoom(roomName), =>
+    Promise.using @userState.lockToRoom(roomName, @lockTTL), =>
       @removeUserSocketsFromRoom roomName
       .then (removedSockets = []) =>
         @channelLeaveSockets roomName, removedSockets
@@ -164,14 +162,11 @@ UserAssociations =
           @leaveRoom roomName
 
   # @private
-  removeUserFromRoom : (userName, roomName, attempt = 1, maxAttempts = 2) ->
+  removeUserFromRoom : (userName, roomName) ->
     @state.getUser userName
-    .then (user) =>
+    .then (user) ->
       user.removeFromRoom roomName
-      .catch =>
-        if attempt < maxAttempts
-          Promise.delay(@lockTTL + @clockDrift).then =>
-            @removeUserFromRoom userName, roomName, attempt+1, maxAttempts
+    .catch -> Promise.resolve()
 
   # @private
   removeRoomUsers : (roomName, userNames = []) ->

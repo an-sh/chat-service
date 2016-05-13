@@ -322,13 +322,9 @@ class UserStateMemory
     Promise.resolve [ removedRooms, joinedSockets, nconnected ]
 
   # @private
-  lockToRoom : (roomName, id = null) ->
+  lockToRoom : (roomName, ttl) ->
     Promise.resolve().disposer ->
       Promise.resolve()
-
-  # @private
-  setSocketDisconnecting : (id) ->
-    Promise.resolve()
 
 
 # Implements global state API.
@@ -343,10 +339,9 @@ class MemoryState
     @sockets = {}
     @RoomState = RoomStateMemory
     @UserState = UserStateMemory
-    @instanceUID = @server.instanceUID
     @DirectMessagingState = DirectMessagingStateMemory
+    @instanceUID = @server.instanceUID
     @lockTTL = @options.lockTTL || 5000
-    @clockDrift = @options.clockDrift || 1000
 
   # @private
   close : () ->

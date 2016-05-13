@@ -502,9 +502,6 @@ class ChatService extends EventEmitter
   # @option stateOptions [Number] lockTTL Locks timeout in ms,
   #   default is `5000`.
   #
-  # @option stateOptions [Number] clockDrift Time drift in ms default
-  #   is `1000`.
-  #
   # @option stateOptions [Object or Array<Object>] redisOptions
   #   ioredis client constructor arguments. If useCluster is set, used
   #   as arguments for a Cluster client.
