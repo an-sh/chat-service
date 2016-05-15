@@ -6,7 +6,7 @@ expect = require('chai').expect
 
 { cleanup
   clientConnect
-  getState
+  startService
 } = require './testutils.coffee'
 
 { port
@@ -23,7 +23,6 @@ module.exports = ->
   socket1 = null
   socket2 = null
   socket3 = null
-  state = getState()
 
   afterEach (cb) ->
     cleanup chatService, [socket1, socket2, socket3], cb
@@ -32,7 +31,7 @@ module.exports = ->
   it 'should emit join and leave echo for all user\'s sockets', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (u, data) ->
@@ -55,7 +54,7 @@ module.exports = ->
   it 'should emit leave echo on disconnect', (done) ->
     sid1 = null
     sid2 = null
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       async.parallel [
         (cb) ->
@@ -96,9 +95,7 @@ module.exports = ->
             done()
 
   it 'should broadcast join and leave room messages', (done) ->
-    chatService = new ChatService { port : port
-      , enableUserlistUpdates : true }
-    , null, state
+    chatService = startService { enableUserlistUpdates : true }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -120,7 +117,7 @@ module.exports = ->
   it 'should store and send room history', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -142,7 +139,7 @@ module.exports = ->
   it 'should send room messages to all joined users', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       async.parallel [
         (cb) ->
@@ -179,8 +176,7 @@ module.exports = ->
   it 'should drop history if limit is zero', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port, defaultHistoryLimit : 0 }
-    , null, state
+    chatService = startService { defaultHistoryLimit : 0 }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -194,8 +190,7 @@ module.exports = ->
   it 'should not send history if get limit is zero', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port, historyMaxGetMessages : 0 }
-    , null, state
+    chatService = startService { historyMaxGetMessages : 0 }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -208,8 +203,7 @@ module.exports = ->
 
   it 'should send room history maximum size', (done) ->
     sz = 1000
-    chatService = new ChatService { port : port, defaultHistoryLimit : sz }
-    , null, state
+    chatService = startService { defaultHistoryLimit : sz }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -224,8 +218,7 @@ module.exports = ->
     message1 = { textMessage : txt1 }
     txt2 = 'Test message 2.'
     message2 = { textMessage : txt2 }
-    chatService = new ChatService { port : port , defaultHistoryLimit : 1 }
-    , null, state
+    chatService = startService { defaultHistoryLimit : 1 }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -248,7 +241,7 @@ module.exports = ->
   it 'should sync history', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port } , null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       async.series [
@@ -289,8 +282,7 @@ module.exports = ->
   it 'should sync history with respect to the max get', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port, historyMaxGetMessages : 2 }
-    , null, state
+    chatService = startService { historyMaxGetMessages : 2 }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       async.series [
@@ -334,8 +326,7 @@ module.exports = ->
   it 'should sync history with respect to a history size', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port , defaultHistoryLimit : 2 }
-    , null, state
+    chatService = startService { defaultHistoryLimit : 2 }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       async.series [
@@ -379,8 +370,7 @@ module.exports = ->
   it 'should return and update room sync info', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port }
-    , null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -401,8 +391,7 @@ module.exports = ->
                 done()
 
   it 'should get and update user seen info', (done) ->
-    chatService = new ChatService { port : port }
-    , null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       ts = new Date().getTime()
       tsmax = ts + 2000
@@ -433,8 +422,7 @@ module.exports = ->
                 done()
 
   it 'should get empty seen info for unseen users', (done) ->
-    chatService = new ChatService { port : port }
-    , null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -447,7 +435,7 @@ module.exports = ->
             done()
 
   it 'should list own sockets with rooms', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     { sid1, sid2, sid3 } = {}
     chatService.addRoom roomName1, null, ->
       chatService.addRoom roomName2, null, ->

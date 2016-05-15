@@ -6,7 +6,7 @@ expect = require('chai').expect
 
 { cleanup
   clientConnect
-  getState
+  startService
 } = require './testutils.coffee'
 
 { port
@@ -23,14 +23,13 @@ module.exports = ->
   socket1 = null
   socket2 = null
   socket3 = null
-  state = getState()
 
   afterEach (cb) ->
     cleanup chatService, [socket1, socket2, socket3], cb
     chatService = socket1 = socket2 = socket3 = null
 
   it 'should get a user mode', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addUser user1, { whitelistOnly : true }, ->
       chatService.execUserCommand user1, 'directGetWhitelistMode'
       , (error, data) ->
@@ -39,7 +38,7 @@ module.exports = ->
         done()
 
   it 'should change user lists', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addUser user1, null, ->
       chatService.execUserCommand user1
       , 'directAddToList', 'whitelist', [user2], (error, data) ->
@@ -53,14 +52,14 @@ module.exports = ->
           done()
 
   it 'should check room names before adding', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom 'room:1', null, (error, data) ->
       expect(error).ok
       expect(data).not.ok
       done()
 
   it 'should allow deleting rooms', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, (error, data) ->
       chatService.deleteRoom roomName1, (error, data) ->
         expect(error).not.ok
@@ -68,7 +67,7 @@ module.exports = ->
         done()
 
   it 'should get a room mode', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, { whitelistOnly : true }, ->
       chatService.execUserCommand true
       , 'roomGetWhitelistMode', roomName1, (error, data) ->
@@ -77,7 +76,7 @@ module.exports = ->
         done()
 
   it 'should change room lists', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       chatService.execUserCommand true
       , 'roomAddToList', roomName1, 'whitelist', [user2], (error, data) ->
@@ -92,7 +91,7 @@ module.exports = ->
 
   it 'should send system messages to all user sockets', (done) ->
     data = 'some data.'
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket2 = clientConnect user1
@@ -113,16 +112,14 @@ module.exports = ->
   it 'should execute commands without hooks', (done) ->
     before = null
     after = null
-    beforeHook = (callInfo, args, cb) ->
+    roomAddToListBefore = (callInfo, args, cb) ->
       before = true
       cb()
-    afterHook = (callInfo, args, results, cb) ->
+    roomAddToListAfter = (callInfo, args, results, cb) ->
       after = true
       cb()
-    chatService = new ChatService { port : port }
-    , { 'roomAddToListBefore' : beforeHook
-      , 'roomAddToListAfter' : afterHook }
-    , state
+    chatService = startService null
+      , { roomAddToListBefore, roomAddToListAfter }
     chatService.addRoom roomName1, { owner : user1 }, ->
       chatService.addUser user2, null, ->
         socket1 = clientConnect user1
@@ -141,9 +138,7 @@ module.exports = ->
   it 'should bypass user messaging permissions', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port
-      , enableDirectMessages : true }
-    , null, state
+    chatService = startService { enableDirectMessages : true }
     chatService.addUser user1, null, ->
       chatService.addUser user2, {whitelistOnly : true}, ->
       socket2 = clientConnect user2
@@ -161,7 +156,7 @@ module.exports = ->
   it 'should bypass room messaging permissions', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1
     , { whitelistOnly : true, whitelist : [user1] }
     , ->

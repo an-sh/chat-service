@@ -6,7 +6,7 @@ expect = require('chai').expect
 
 { cleanup
   clientConnect
-  getState
+  startService
 } = require './testutils.coffee'
 
 { port
@@ -23,7 +23,6 @@ module.exports = ->
   socket1 = null
   socket2 = null
   socket3 = null
-  state = getState()
 
   afterEach (cb) ->
     cleanup chatService, [socket1, socket2, socket3], cb
@@ -32,7 +31,7 @@ module.exports = ->
   it 'should reject room messages from not joined users', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -45,7 +44,7 @@ module.exports = ->
             done()
 
   it 'should send a whitelistonly mode', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1
     , { whitelistOnly : true, whitelist : [user1] }
     , ->
@@ -58,7 +57,7 @@ module.exports = ->
             done()
 
   it 'should send lists to room users', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -71,7 +70,7 @@ module.exports = ->
             done()
 
   it 'should reject send lists to not joined users', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -82,7 +81,7 @@ module.exports = ->
           done()
 
   it 'should ckeck room list names', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -94,9 +93,7 @@ module.exports = ->
             done()
 
   it 'should allow duplicate adding to lists', (done) ->
-    chatService = new ChatService { port : port
-      , enableRoomsManagement : true }
-    , null, state
+    chatService = startService { enableRoomsManagement : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u) ->
       socket1.emit 'roomCreate', roomName1, false, ->
@@ -111,10 +108,8 @@ module.exports = ->
               expect(data).null
               done()
 
-  it 'should allow not existing deleting from lists', (done) ->
-    chatService = new ChatService { port : port
-      , enableRoomsManagement : true }
-    , null, state
+  it 'should allow not added deleting from lists', (done) ->
+    chatService = startService { enableRoomsManagement : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u) ->
       socket1.emit 'roomCreate', roomName1, false, ->
@@ -126,9 +121,7 @@ module.exports = ->
             done()
 
   it 'should send access list changed messages', (done) ->
-    chatService = new ChatService { port : port
-      , enableAccessListsUpdates : true }
-    , null, state
+    chatService = startService { enableAccessListsUpdates : true }
     chatService.addRoom roomName1, { owner : user1 }, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -147,9 +140,7 @@ module.exports = ->
               done()
 
   it 'should send mode changed messages', (done) ->
-    chatService = new ChatService { port : port
-      , enableAccessListsUpdates : true }
-    , null, state
+    chatService = startService { enableAccessListsUpdates : true }
     chatService.addRoom roomName1
     , { owner : user1, whitelistOnly : true }
     , ->
@@ -163,7 +154,7 @@ module.exports = ->
             done()
 
   it 'should allow wl and bl modifications for admins', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, { adminlist : [user1] }, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -187,7 +178,7 @@ module.exports = ->
                   done()
 
   it 'should reject adminlist modifications for admins', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, { adminlist : [user1, user2] }, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -203,9 +194,7 @@ module.exports = ->
 
   it 'should reject list modifications with owner for admins'
   , (done) ->
-    chatService = new ChatService { port : port
-      , enableRoomsManagement : true }
-    , null, state
+    chatService = startService { enableRoomsManagement : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket1.emit 'roomCreate', roomName1, false, ->
@@ -224,7 +213,7 @@ module.exports = ->
                   done()
 
   it 'should reject direct userlist modifications', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, { adminlist : [user1] }, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -236,7 +225,7 @@ module.exports = ->
             done()
 
   it 'should reject any lists modifications for non-admins', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -248,7 +237,7 @@ module.exports = ->
             done()
 
   it 'should reject mode changes for non-admins', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -260,7 +249,7 @@ module.exports = ->
             done()
 
   it 'should check room permissions', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, { blacklist : [user1] }, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -270,7 +259,7 @@ module.exports = ->
           done()
 
   it 'should check room permissions in whitelist mode', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1
     , { whitelist : [user2], whitelistOnly : true }
     , ->
@@ -287,7 +276,7 @@ module.exports = ->
               done()
 
   it 'should remove users on permissions changes', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, { adminlist: [user1, user3] }, ->
       async.parallel [
         (cb) ->
@@ -322,7 +311,7 @@ module.exports = ->
         ], done
 
   it 'should remove affected users on mode changes', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, { adminlist : [user1] }, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -339,7 +328,7 @@ module.exports = ->
 
   it 'should remove users on permissions changes in whitelist mode'
   , (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1
     , { adminlist : [user1, user3]
       , whitelist : [user2]
@@ -363,9 +352,7 @@ module.exports = ->
                     done()
 
   it 'should remove disconnected users' , (done) ->
-    chatService = new ChatService { port : port
-      , enableUserlistUpdates : true }
-    , null, state
+    chatService = startService { enableUserlistUpdates : true }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->

@@ -6,7 +6,7 @@ expect = require('chai').expect
 
 { cleanup
   clientConnect
-  getState
+  startService
 } = require './testutils.coffee'
 
 { port
@@ -23,7 +23,6 @@ module.exports = ->
   socket1 = null
   socket2 = null
   socket3 = null
-  state = getState()
 
   afterEach (cb) ->
     cleanup chatService, [socket1, socket2, socket3], cb
@@ -32,9 +31,7 @@ module.exports = ->
   it 'should check user permissions', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port
-      , enableDirectMessages : true }
-    , null, state
+    chatService = startService { enableDirectMessages : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket2 = clientConnect user2
@@ -52,9 +49,7 @@ module.exports = ->
   it 'should check user permissions in whitelist mode', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port
-      , enableDirectMessages : true }
-    , null, state
+    chatService = startService { enableDirectMessages : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket2 = clientConnect user2
@@ -81,9 +76,7 @@ module.exports = ->
                   done()
 
   it 'should allow an user to modify own lists', (done) ->
-    chatService = new ChatService { port : port
-      , enableDirectMessages : true }
-    , null, state
+    chatService = startService { enableDirectMessages : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket1.emit 'directAddToList', 'blacklist', [user2]
@@ -105,9 +98,7 @@ module.exports = ->
               done()
 
   it 'should reject to add user to own lists', (done) ->
-    chatService = new ChatService { port : port
-      , enableDirectMessages : true }
-    , null, state
+    chatService = startService { enableDirectMessages : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket1.emit 'directAddToList', 'blacklist', [user1]
@@ -117,9 +108,7 @@ module.exports = ->
         done()
 
   it 'should check user list names', (done) ->
-    chatService = new ChatService { port : port
-      , enableDirectMessages : true }
-    , null, state
+    chatService = startService { enableDirectMessages : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket1.emit 'directAddToList', 'nolist', [user2]
@@ -129,9 +118,7 @@ module.exports = ->
         done()
 
   it 'should allow duplicate adding to lists' , (done) ->
-    chatService = new ChatService { port : port
-      , enableDirectMessages : true }
-    , null, state
+    chatService = startService { enableDirectMessages : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket1.emit 'directAddToList', 'blacklist', [user2]
@@ -145,9 +132,7 @@ module.exports = ->
           done()
 
   it 'should allow not existing deleting from lists' , (done) ->
-    chatService = new ChatService { port : port
-      , enableDirectMessages : true }
-    , null, state
+    chatService = startService { enableDirectMessages : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket1.emit 'directRemoveFromList', 'blacklist', [user2]
@@ -157,9 +142,7 @@ module.exports = ->
         done()
 
   it 'should allow an user to modify own mode', (done) ->
-    chatService = new ChatService { port : port
-      , enableDirectMessages : true }
-    , null, state
+    chatService = startService { enableDirectMessages : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket1.emit 'directSetWhitelistMode', true, (error, data) ->

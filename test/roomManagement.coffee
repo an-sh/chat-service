@@ -6,7 +6,7 @@ expect = require('chai').expect
 
 { cleanup
   clientConnect
-  getState
+  startService
 } = require './testutils.coffee'
 
 { port
@@ -23,16 +23,13 @@ module.exports = ->
   socket1 = null
   socket2 = null
   socket3 = null
-  state = getState()
 
   afterEach (cb) ->
     cleanup chatService, [socket1, socket2, socket3], cb
     chatService = socket1 = socket2 = socket3 = null
 
   it 'should create and delete rooms', (done) ->
-    chatService = new ChatService { port : port
-      , enableRoomsManagement : true }
-    , null, state
+    chatService = startService { enableRoomsManagement : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u) ->
       socket1.emit 'roomCreate', roomName1, false, ->
@@ -51,9 +48,7 @@ module.exports = ->
                 done()
 
   it 'should reject delete rooms for non-owners', (done) ->
-    chatService = new ChatService { port : port
-      , enableRoomsManagement : true }
-    , null, state
+    chatService = startService { enableRoomsManagement : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u) ->
       socket1.emit 'roomCreate', roomName1, false, ->
@@ -65,9 +60,7 @@ module.exports = ->
           done()
 
   it 'should check for invalid room names', (done) ->
-    chatService = new ChatService { port : port
-      , enableRoomsManagement : true }
-    , null, state
+    chatService = startService { enableRoomsManagement : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u) ->
       socket1.emit 'roomCreate', 'room}1', false, (error, data) ->
@@ -76,7 +69,7 @@ module.exports = ->
         done()
 
   it 'should reject room management when the option is disabled', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName2, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (u) ->
@@ -89,9 +82,7 @@ module.exports = ->
             done()
 
   it 'should send access removed on a room deletion', (done) ->
-    chatService = new ChatService { port : port
-      , enableRoomsManagement : true }
-    , null, state
+    chatService = startService { enableRoomsManagement : true }
     chatService.addRoom roomName1, { owner : user1 }, ->
       async.parallel [
         (cb) ->

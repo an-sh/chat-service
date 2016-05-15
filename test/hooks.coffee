@@ -6,7 +6,7 @@ expect = require('chai').expect
 
 { cleanup
   clientConnect
-  getState
+  startService
 } = require './testutils.coffee'
 
 { port
@@ -23,7 +23,6 @@ module.exports = ->
   socket1 = null
   socket2 = null
   socket3 = null
-  state = getState()
 
   afterEach (cb) ->
     cleanup chatService, [socket1, socket2, socket3], cb
@@ -49,16 +48,14 @@ module.exports = ->
       , ->
         cb()
         fn()
-    chatService = new ChatService { port : port }
-    , { onStart : onStart }, state
+    chatService = startService null, { onStart }
 
   it 'should exectute onClose hook', (done) ->
-    closeHook = (server, error, cb) ->
+    onClose = (server, error, cb) ->
       expect(server).instanceof(ChatService)
       expect(error).not.ok
       cb()
-    chatService1 = new ChatService { port : port }
-    , { onClose : closeHook }, state
+    chatService1 = startService null, { onClose }
     chatService1.close done
 
   it 'should execute before and after hooks', (done) ->
@@ -66,7 +63,7 @@ module.exports = ->
     before = null
     after = null
     sid = null
-    beforeHook = (execInfo, cb) ->
+    roomCreateBefore = (execInfo, cb) ->
       { server, userName, id, args } = execInfo
       [ name , mode ] = args
       expect(server).instanceof(ChatService)
@@ -78,7 +75,7 @@ module.exports = ->
       expect(cb).instanceof(Function)
       before = true
       cb()
-    afterHook = (execInfo, cb) ->
+    roomCreateAfter = (execInfo, cb) ->
       { server, userName, id, args, results, error } = execInfo
       [ name , mode ] = args
       expect(server).instanceof(ChatService)
@@ -92,10 +89,8 @@ module.exports = ->
       expect(cb).instanceof(Function)
       after = true
       cb null, someData
-    chatService = new ChatService { port : port
-      , enableRoomsManagement : true}
-    , { 'roomCreateBefore' : beforeHook, 'roomCreateAfter' : afterHook }
-    , state
+    chatService = startService { enableRoomsManagement : true }
+      , { roomCreateBefore, roomCreateAfter }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u, data) ->
       sid = data.id
@@ -107,15 +102,13 @@ module.exports = ->
         done()
 
   it 'should allow commands rest arguments', (done) ->
-    afterHook = (execInfo, cb) ->
+    listOwnSocketsAfter = (execInfo, cb) ->
       { restArgs } = execInfo
       expect(restArgs).instanceof(Array)
       expect(restArgs).lengthOf(1)
       expect(restArgs[0]).true
       cb()
-    chatService = new ChatService { port : port }
-    , { 'listOwnSocketsAfter' : afterHook }
-    , state
+    chatService = startService null, { listOwnSocketsAfter }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u, data) ->
       sid = data.id
@@ -124,12 +117,11 @@ module.exports = ->
         done()
 
   it 'should support changing arguments in before hooks', (done) ->
-    beforeHook = (execInfo, cb) ->
+    roomGetWhitelistModeBefore = (execInfo, cb) ->
       execInfo.args = [roomName2]
       cb()
-    chatService = new ChatService { port : port, enableRoomsManagement : true }
-    , { 'roomGetWhitelistModeBefore' : beforeHook }
-    , state
+    chatService = startService { enableRoomsManagement : true }
+      , { roomGetWhitelistModeBefore }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed',  ->
       socket1.emit 'roomCreate', roomName2, false, ->
@@ -140,11 +132,9 @@ module.exports = ->
             done()
 
   it 'should support more arguments in after hooks', (done) ->
-    afterHook = (execInfo, cb) ->
+    listOwnSocketsAfter = (execInfo, cb) ->
       cb null, execInfo.results..., true
-    chatService = new ChatService { port : port }
-    , { 'listOwnSocketsAfter' : afterHook }
-    , state
+    chatService = startService null, { listOwnSocketsAfter }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u, data) ->
       sid = data.id
@@ -164,20 +154,15 @@ module.exports = ->
       expect(before).true
       cb()
       done()
-    chatService1 = new ChatService { port : port }
-    , { disconnectAfter : disconnectAfter
-      , disconnectBefore : disconnectBefore }
-    , state
+    chatService1 = startService null, { disconnectAfter, disconnectBefore }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       chatService1.close()
 
   it 'should stop commands on before hook data', (done) ->
     val = 'asdf'
-    beforeHook = (execInfo, cb) ->
-      cb null, val
-    chatService = new ChatService { port : port }
-    , { 'listOwnSocketsBefore' : beforeHook }, state
+    listOwnSocketsBefore = (execInfo, cb) -> cb null, val
+    chatService = startService null, { listOwnSocketsBefore }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket1.emit 'listOwnSockets', (error, data) ->
@@ -191,9 +176,7 @@ module.exports = ->
     directMessagesChecker = (msg, cb) ->
       cb()
     chatService =
-      new ChatService { port : port, enableDirectMessages : true }
-        , { directMessagesChecker : directMessagesChecker }
-        , state
+      startService { enableDirectMessages : true }, { directMessagesChecker }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket2 = clientConnect user2
@@ -209,11 +192,8 @@ module.exports = ->
   it 'should accept custom room messages with a hook', (done) ->
     html = '<b>HTML message.</b>'
     message = { htmlMessage : html }
-    roomMessagesChecker = (msg, cb) ->
-      cb()
-    chatService = new ChatService { port : port }
-    , { roomMessagesChecker : roomMessagesChecker }
-    , state
+    roomMessagesChecker = (msg, cb) -> cb()
+    chatService = startService null, { roomMessagesChecker }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->

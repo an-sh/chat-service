@@ -1,8 +1,11 @@
 
+ChatService = require('../index.js')
 Promise = require 'bluebird'
 Redis = require 'ioredis'
+_ = require 'lodash'
 config = require './config.coffee'
 ioClient = require 'socket.io-client'
+
 
 url = "http://localhost:#{config.port}/chat-service"
 
@@ -16,14 +19,24 @@ makeParams = (userName) ->
     delete params.query
   return params
 
-clientConnect = (name) ->
-  ioClient.connect url, makeParams(name)
 
 state = null
 setState = (s) -> state = s
-getState = -> state
 
 customCleanup = null
+setCustomCleanup = (fn) -> customCleanup = fn
+
+
+clientConnect = (name) ->
+  ioClient.connect url, makeParams(name)
+
+startService = (opts, hooks) ->
+  options = { port : config.port }
+  _.assign options, state
+  _.assign options, opts
+  new ChatService options, hooks
+
+
 redis = new Redis config.redisConnect
 
 cleanup = (chatService, sockets, done) ->
@@ -40,21 +53,18 @@ cleanup = (chatService, sockets, done) ->
     redis.flushall()
   .asCallback done
 
-setCustomCleanup = (fn) ->
-  customCleanup = fn
-
 checkDB = (done) ->
   redis.dbsize (error, data) ->
     if error then return done error
     if data then return done new Error 'Unclean Redis DB'
     done()
 
+
 module.exports = {
   checkDB
   cleanup
   clientConnect
-  getState
-  redis
   setCustomCleanup
   setState
+  startService
 }

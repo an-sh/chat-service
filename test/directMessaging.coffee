@@ -6,7 +6,7 @@ expect = require('chai').expect
 
 { cleanup
   clientConnect
-  getState
+  startService
 } = require './testutils.coffee'
 
 { port
@@ -23,7 +23,6 @@ module.exports = ->
   socket1 = null
   socket2 = null
   socket3 = null
-  state = getState()
 
   afterEach (cb) ->
     cleanup chatService, [socket1, socket2, socket3], cb
@@ -32,9 +31,7 @@ module.exports = ->
   it 'should send direct messages', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port
-      , enableDirectMessages : true }
-    , null, state
+    chatService = startService { enableDirectMessages : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket2 = clientConnect user2
@@ -50,8 +47,7 @@ module.exports = ->
   it 'should not send direct messages when the option is disabled', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port }
-    , null, state
+    chatService = startService()
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket2 = clientConnect user2
@@ -64,9 +60,7 @@ module.exports = ->
   it 'should not send self-direct messages', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port
-      , enableDirectMessages : true }
-    , null, state
+    chatService = startService { enableDirectMessages : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket1.emit 'directMessage', user1, message, (error, data) ->
@@ -77,9 +71,7 @@ module.exports = ->
   it 'should not send direct messages to offline users', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port
-      , enableDirectMessages : true }
-    , null, state
+    chatService = startService { enableDirectMessages : true }
     socket2 = clientConnect user2
     socket2.on 'loginConfirmed', ->
       socket2.disconnect()
@@ -93,9 +85,7 @@ module.exports = ->
   it 'should echo direct messages to user\'s sockets', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
-    chatService = new ChatService { port : port
-      , enableDirectMessages : true }
-    , null, state
+    chatService = startService { enableDirectMessages : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket3 = clientConnect user1
@@ -113,7 +103,7 @@ module.exports = ->
 
   it 'should echo system messages to user\'s sockets', (done) ->
     data = 'some data.'
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket2 = clientConnect user1

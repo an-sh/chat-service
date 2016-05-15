@@ -6,7 +6,7 @@ expect = require('chai').expect
 
 { cleanup
   clientConnect
-  getState
+  startService
 } = require './testutils.coffee'
 
 { port
@@ -23,14 +23,13 @@ module.exports = ->
   socket1 = null
   socket2 = null
   socket3 = null
-  state = getState()
 
   afterEach (cb) ->
     cleanup chatService, [socket1, socket2, socket3], cb
     chatService = socket1 = socket2 = socket3 = null
 
   it 'should send auth data with id', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u, data) ->
       expect(u).equal(user1)
@@ -38,13 +37,13 @@ module.exports = ->
       done()
 
   it 'should reject an empty user query', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     socket1 = clientConnect()
     socket1.on 'loginRejected', ->
       done()
 
   it 'should reject user names with illegal characters', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     socket1 = clientConnect 'user}1'
     socket1.on 'loginRejected', ->
       done()
@@ -53,8 +52,7 @@ module.exports = ->
     reason = 'some error'
     auth = (socket, cb) ->
       cb new Error reason
-    chatService = new ChatService { port : port }
-    , { middleware : auth }, state
+    chatService = startService null, { middleware : auth }
     socket1 = clientConnect()
     socket1.on 'error', (e) ->
       expect(e).deep.equal(reason)
@@ -68,8 +66,7 @@ module.exports = ->
       expect(id).a('string')
       err = new Error 'some error'
       cb null, name, data
-    chatService = new ChatService { port : port }
-      , { onConnect : onConnect }, state
+    chatService = startService null, { onConnect }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u, d) ->
       expect(u).equal(name)
@@ -84,15 +81,14 @@ module.exports = ->
       expect(id).a('string')
       err = new Error 'some error'
       cb err
-    chatService = new ChatService { port : port }
-      , { onConnect : onConnect }, state
+    chatService = startService null, { onConnect }
     socket1 = clientConnect user1
     socket1.on 'loginRejected', (e) ->
       expect(e).deep.equal(err.toString())
       done()
 
   it 'should support multiple sockets per user', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       socket2 = clientConnect user1
@@ -117,7 +113,7 @@ module.exports = ->
           done()
 
   it 'should disconnect all users on a server shutdown', (done) ->
-    chatService1 = new ChatService { port : port }, null, state
+    chatService1 = startService()
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
       async.parallel [

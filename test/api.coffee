@@ -6,7 +6,7 @@ expect = require('chai').expect
 
 { cleanup
   clientConnect
-  getState
+  startService
 } = require './testutils.coffee'
 
 { port
@@ -23,14 +23,13 @@ module.exports = ->
   socket1 = null
   socket2 = null
   socket3 = null
-  state = getState()
 
   afterEach (cb) ->
     cleanup chatService, [socket1, socket2, socket3], cb
     chatService = socket1 = socket2 = socket3 = null
 
   it 'should support a server side user disconnection', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u) ->
       expect(u).equal(user1)
@@ -51,7 +50,7 @@ module.exports = ->
         ], done
 
   it 'should support adding users', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addUser user1, { whitelistOnly : true }, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -61,14 +60,14 @@ module.exports = ->
           done()
 
   it 'should check user names before adding', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addUser 'user:1', null, (error, data) ->
       expect(error).ok
       expect(data).not.ok
       done()
 
   it 'should check existing users before adding new ones', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addUser user1, null, ->
       chatService.addUser user1, null, (error, data) ->
         expect(error).ok
@@ -76,21 +75,21 @@ module.exports = ->
         done()
 
   it 'should check commands names.', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addUser user1, null, ->
       chatService.execUserCommand user1, 'nocmd', (error) ->
         expect(error).ok
         done()
 
   it 'should check for socket ids if required.', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addUser user1, null, ->
       chatService.execUserCommand user1, 'roomJoin', (error) ->
         expect(error).ok
         done()
 
   it 'should support changing a room owner', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, { owner : user1 }, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -105,7 +104,7 @@ module.exports = ->
 
   it 'should support changing a room history limit', (done) ->
     sz = 100
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       chatService.changeRoomHistoryMaxSize roomName1, sz, (error, data) ->
         expect(error).not.ok

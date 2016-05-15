@@ -375,42 +375,40 @@ class ChatService extends EventEmitter
   # Crates an object and starts a new server instance.
   #
   #
-  # @option serviceOptions [Number] closeTimeout Maximum time in ms to
-  #   wait before a server disconnects all clients on shutdown,
-  #   default is `10000`.
+  # @option options [Number] closeTimeout Maximum time in ms to wait
+  #   before a server disconnects all clients on shutdown, default is
+  #   `10000`.
   #
-  # @option serviceOptions [Boolean] enableAccessListsUpdates Enables
+  # @option options [Boolean] enableAccessListsUpdates Enables
   #   {ServerMessages#roomModeChanged},
   #   {ServerMessages#roomAccessListAdded} and
   #   {ServerMessages#roomAccessListRemoved} messages, default is
   #   `false`.
   #
-  # @option serviceOptions [Boolean] enableDirectMessages Enables user
-  #   to user {UserCommands#directMessage} communication, default is
+  # @option options [Boolean] enableDirectMessages Enables user to
+  #   user {UserCommands#directMessage} communication, default is
   #   `false`.
   #
-  # @option serviceOptions [Boolean] enableRoomsManagement Allows to
-  #   use {UserCommands#roomCreate} and {UserCommands#roomDelete},
-  #   dafault is `false`.
+  # @option options [Boolean] enableRoomsManagement Allows to use
+  #   {UserCommands#roomCreate} and {UserCommands#roomDelete}, dafault
+  #   is `false`.
   #
-  # @option serviceOptions [Boolean] enableUserlistUpdates Enables
+  # @option options [Boolean] enableUserlistUpdates Enables
   #   {ServerMessages#roomUserJoined} and
   #   {ServerMessages#roomUserLeft} messages, default is `false`.
   #
-  # @option serviceOptions [Number] historyMaxGetMessages Room history
-  #   size available via {UserCommands#roomRecentHistory} or
+  # @option options [Number] historyMaxGetMessages Room history size
+  #   available via {UserCommands#roomRecentHistory} or
   #   {UserCommands#roomHistoryGet}, default is `100`.
   #
-  # @option serviceOptions [Number] defaultHistoryLimit Is used for
+  # @option options [Number] defaultHistoryLimit Is used for
   #   {UserCommands#roomCreate} or when {ServiceAPI~addRoom} is called
   #   without `historyMaxSize` option, default is `10000`.
   #
-  # @option serviceOptions [Number] port Server port, default is
-  #   `8000`.
+  # @option options [Number] port Server port, default is `8000`.
   #
-  # @option serviceOptions [Boolean] useRawErrorObjects Send error
-  #   objects instead of strings, default is `false`. See
-  #   {ChatServiceError}.
+  # @option options [Boolean] useRawErrorObjects Send error objects
+  #   instead of strings, default is `false`. See {ChatServiceError}.
   #
   #
   # @option hooks [Function<ChatService, socketId:String,
@@ -451,16 +449,15 @@ class ChatService extends EventEmitter
   #   to the command issuer, or with arguments to return arguments as
   #   results to the command issuer.
   #
-  #
-  # @option integrationOptions [String or Constructor] state Chat
+  # @option options [String or Constructor] state Chat
   #   state.  Can be either `'memory'` or `'redis'` for built-in state
   #   storages, or a custom state constructor function that implements
   #   the same API. Default is `'memory'`.
   #
-  # @option integrationOptions [String or Constructor] transport
+  # @option options [String or Constructor] transport
   #   Transport. Default is `'socket.io'`.
   #
-  # @option integrationOptions [String or Constructor] adapter
+  # @option options [String or Constructor] adapter
   #   Socket.io adapter, used only if no `io` object is passed in
   #   `transportOptions`. Can be either `'memory'` or `'redis`' for
   #   built-in adapter, or a custom state constructor function that
@@ -470,13 +467,13 @@ class ChatService extends EventEmitter
   #   NOT related, two separate clients are used with two different
   #   configurations, which can be set to use the same Redis server.
   #
-  # @option integrationOptions [Object] stateOptions Options for a
+  # @option options [Object] stateOptions Options for a
   #   redis state.
   #
-  # @option integrationOptions [Object] transportOptions Options for a
+  # @option options [Object] transportOptions Options for a
   #   socket.io transport.
   #
-  # @option integrationOptions [Object or Array<Object>]
+  # @option options [Object or Array<Object>]
   #   adapterOptions Socket.io adapter construnctor arguments, used
   #   only when no `io` object is passed in `transportOptions`.
   #
@@ -507,7 +504,7 @@ class ChatService extends EventEmitter
   #   as arguments for a Cluster client.
   #
   #
-  constructor : (@serviceOptions = {}, @hooks = {}, @integrationOptions = {}) ->
+  constructor : (@options = {}, @hooks = {}) ->
     @setOptions()
     @setServer()
     @startServer()
@@ -531,26 +528,26 @@ class ChatService extends EventEmitter
     @instanceUID = uid.sync 18
     @runningCommands = 0
 
-    @closeTimeout = @serviceOptions.closeTimeout || 10000
-    @enableAccessListsUpdates= @serviceOptions.enableAccessListsUpdates || false
-    @enableDirectMessages = @serviceOptions.enableDirectMessages || false
-    @enableRoomsManagement = @serviceOptions.enableRoomsManagement || false
-    @enableUserlistUpdates = @serviceOptions.enableUserlistUpdates || false
-    @historyMaxGetMessages = @serviceOptions.historyMaxGetMessages
+    @closeTimeout = @options.closeTimeout || 10000
+    @enableAccessListsUpdates= @options.enableAccessListsUpdates || false
+    @enableDirectMessages = @options.enableDirectMessages || false
+    @enableRoomsManagement = @options.enableRoomsManagement || false
+    @enableUserlistUpdates = @options.enableUserlistUpdates || false
+    @historyMaxGetMessages = @options.historyMaxGetMessages
     if not _.isNumber(@historyMaxGetMessages) or @historyMaxGetMessages < 0
       @historyMaxGetMessages = 100
-    @defaultHistoryLimit = @serviceOptions.defaultHistoryLimit
+    @defaultHistoryLimit = @options.defaultHistoryLimit
     if not _.isNumber(@defaultHistoryLimit) or @defaultHistoryLimit < 0
       @defaultHistoryLimit = 10000
-    @port = @serviceOptions.port || 8000
-    @useRawErrorObjects = @serviceOptions.useRawErrorObjects || false
+    @port = @options.port || 8000
+    @useRawErrorObjects = @options.useRawErrorObjects || false
 
-    @adapterConstructor = @integrationOptions.adapter || 'memory'
-    @adapterOptions = _.castArray @integrationOptions.adapterOptions
-    @stateConstructor = @integrationOptions.state || 'memory'
-    @stateOptions = @integrationOptions.stateOptions || {}
-    @transportConstructor = @integrationOptions.transport || 'socket.io'
-    @transportOptions = @integrationOptions.transportOptions || {}
+    @adapterConstructor = @options.adapter || 'memory'
+    @adapterOptions = _.castArray @options.adapterOptions
+    @stateConstructor = @options.state || 'memory'
+    @stateOptions = @options.stateOptions || {}
+    @transportConstructor = @options.transport || 'socket.io'
+    @transportOptions = @options.transportOptions || {}
 
     @directMessagesChecker = @hooks.directMessagesChecker
     @roomMessagesChecker = @hooks.roomMessagesChecker

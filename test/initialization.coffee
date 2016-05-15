@@ -9,8 +9,8 @@ socketIO = require 'socket.io'
 
 { cleanup
   clientConnect
-  getState
   setCustomCleanup
+  startService
 } = require './testutils.coffee'
 
 { port
@@ -28,7 +28,6 @@ module.exports = ->
   socket1 = null
   socket2 = null
   socket3 = null
-  state = getState()
 
   afterEach (cb) ->
     cleanup chatService, [socket1, socket2, socket3], cb
@@ -36,9 +35,7 @@ module.exports = ->
 
   it 'should integrate with a provided http server', (done) ->
     app = http.createServer (req, res) -> res.end()
-    s = _.clone state
-    s.transportOptions = { http : app }
-    chatService1 = new ChatService null, null, s
+    chatService1 = startService { transportOptions : { http : app } }
     app.listen port
     setCustomCleanup (cb) ->
       chatService1.close()
@@ -53,9 +50,7 @@ module.exports = ->
 
   it 'should integrate with an existing io', (done) ->
     io = socketIO port
-    s = _.clone state
-    s.transportOptions = { io : io }
-    chatService1 = new ChatService null, null, s
+    chatService1 = startService { transportOptions : { io } }
     setCustomCleanup (cb) ->
       chatService1.close()
       .finally ->
@@ -67,7 +62,7 @@ module.exports = ->
       done()
 
   it 'should spawn a new io server', (done) ->
-    chatService = new ChatService { port : port }, null, state
+    chatService = startService()
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u) ->
       expect(u).equal(user1)
@@ -75,8 +70,7 @@ module.exports = ->
 
   it 'should use a custom state constructor', (done) ->
     MemoryState = require '../lib/MemoryState.coffee'
-    chatService = new ChatService { port : port }, null
-    , { state : MemoryState }
+    chatService = startService { state : MemoryState }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u) ->
       expect(u).equal(user1)
@@ -84,8 +78,7 @@ module.exports = ->
 
   it 'should use a custom transport constructor', (done) ->
     Transport = require '../lib/SocketIOTransport.coffee'
-    chatService = new ChatService { port : port }, null
-    , { transport : Transport }
+    chatService = startService { transport : Transport }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u) ->
       expect(u).equal(user1)
@@ -93,8 +86,8 @@ module.exports = ->
 
   it 'should use a custom adapter constructor', (done) ->
     Adapter = require 'socket.io-redis'
-    chatService = new ChatService { port : port }, null
-    , { adapter : Adapter, adapterOptions : redisConnect }
+    chatService = startService { adapter : Adapter
+      , adapterOptions : redisConnect }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u) ->
       expect(u).equal(user1)
