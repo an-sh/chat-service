@@ -353,7 +353,7 @@ class RoomStateRedis extends ListsStateRedis
     .exec()
     .spread ([_0, historyMaxSize], [_1, historySize], [_2, lastMessageId]) =>
       historySize = parseInt historySize
-      historyMaxSize = parseInt historyMaxSize
+      historyMaxSize = parseFloat historyMaxSize
       lastMessageId = parseInt lastMessageId
       info = { historySize, historyMaxSize
         , @historyMaxGetMessages, lastMessageId }
