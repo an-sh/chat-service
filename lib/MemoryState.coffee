@@ -1,12 +1,16 @@
 
 ChatServiceError = require './ChatServiceError.coffee'
+FastMap = require 'collections/fast-map'
 FastSet = require 'collections/fast-set'
 List = require 'collections/list'
-FastMap = require 'collections/fast-map'
 Promise = require 'bluebird'
 Room = require './Room.coffee'
 User = require './User.coffee'
 _ = require 'lodash'
+promiseRetry = require 'promise-retry'
+uid = require 'uid-safe'
+
+{ extend } = require './utils.coffee'
 
 
 # @private
@@ -16,6 +20,31 @@ initState = (state, values) ->
     state.clear()
     if values
       state.addEach values
+
+
+# Memory lock operations.
+# @mixin
+# @private
+# @nodoc
+lockOperations =
+
+  # @private
+  lock : (key, val, ttl) ->
+    promiseRetry {minTimeout: 100, retries : 10, factor: 1.5, randomize : true}
+    , (retry, n) =>
+      if @locks.has key
+        err = new ChatServiceError 'timeout'
+        retry err
+      else
+        @locks.set key, val
+        Promise.resolve()
+
+  # @private
+  unlock : (key, val) ->
+    currentVal = @locks.get key
+    if currentVal == val
+      @locks.delete key
+    Promise.resolve()
 
 
 # Implements state API lists management.
@@ -241,10 +270,13 @@ class DirectMessagingStateMemory extends ListsStateMemory
 # @nodoc
 class UserStateMemory
 
+  extend @, lockOperations
+
   # @private
   constructor : (@server, @userName) ->
     @socketsToRooms = new FastMap
     @roomsToSockets = new FastMap
+    @locks = new FastMap
     @echoChannel = @makeEchoChannelName @userName
 
   # @private
@@ -323,8 +355,12 @@ class UserStateMemory
 
   # @private
   lockToRoom : (roomName, ttl) ->
-    Promise.resolve().disposer ->
-      Promise.resolve()
+    uid(18)
+    .then (val) =>
+      @lock roomName, val, ttl
+      .then =>
+        Promise.resolve().disposer =>
+          @unlock roomName, val
 
 
 # Implements global state API.
