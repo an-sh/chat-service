@@ -2,7 +2,7 @@
 path = require 'path'
 express = require 'express'
 http = require 'http'
-ChatServer = require('../../index.js').ChatService
+ChatService = require('../../index.js')
 Room = require('../../index.js').Room
 
 app = express()
@@ -17,20 +17,18 @@ else
   resources = path.join __dirname, '/public'
 
 
-chatOptions = { enableUserlistUpdates : true }
 auth = (data, next) ->
   unless data.handshake.query?.user
     next new Error 'No login data.'
   else
     next()
 
+
 server = require('http').Server app
-chat = new ChatServer chatOptions, {auth : auth}
-defaultRoom = new Room chat, 'default'
-admin = 'admin'
-chat.chatState.addRoom defaultRoom, ->
-  defaultRoom.roomState.ownerSet admin, ->
-    defaultRoom.roomState.addToList 'adminlist', [admin], ->
+chat = new ChatService { enableUserlistUpdates : true }, { auth }
+chat.addRoom 'default', { adminlist: ['admin'], owner : 'admin' }
+.catch (e) ->
+  console.error e
 
 app.set 'views', views
 app.set 'view engine', 'jade'

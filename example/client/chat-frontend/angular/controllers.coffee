@@ -4,7 +4,7 @@ require './services.coffee'
 chatControllers = angular.module 'chatControllers'
   , ['ngStorage', 'chatServices']
 
-getRandomString = (length=16)->
+getRandomString = (length=16) ->
   chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
   return Array length
   .join()

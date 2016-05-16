@@ -44,17 +44,17 @@ class ChatClient
         @_addMessage room, { textMessage : "#{user} joined." }
       @socket.on 'roomUserLeft', (room, user) =>
         @_addMessage room, { textMessage : "#{user} left." }
-      @socket.on 'roomJoinedEcho', (room, njoined) =>
+      @socket.on 'roomJoinedEcho', (room, id, njoined) =>
         @_addMessage room
-        , { textMessage : "Echo join room #{room}, sockets #{njoined}." }
-      @socket.on 'roomLeftEcho', (room, njoined) =>
+        , { textMessage : "Echo join #{room}, sockets #{njoined}." }
+      @socket.on 'roomLeftEcho', (room, id, njoined) =>
         @_addMessage room
-        , { textMessage : "Echo left room #{room}, sockets #{njoined}." }
+        , { textMessage : "Echo left #{room}, sockets #{njoined}." }
       @socket.on 'roomAccessRemoved', (room) =>
         @_removeRoom room
         @_addMessage room
         , { textMessage : "You have no longer access to #{room}." }
-      @socket.on 'roomMessage', (room, user, msg) =>
+      @socket.on 'roomMessage', (room, msg) =>
         @_addMessage room, msg
       @socket.on 'error', (error) =>
         @disconnect()
