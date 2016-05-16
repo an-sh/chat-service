@@ -76,7 +76,8 @@ UserAssociations =
     @removeSocketFromRoom id, roomName
     .then (njoined) =>
       unless njoined then @leaveRoom roomName, room
-    .return error
+    .then ->
+      Promise.reject error
 
   # @private
   leaveRoom : (roomName, room = null) ->
@@ -96,17 +97,17 @@ UserAssociations =
       @state.getRoom roomName
       .then (room) =>
         room.join @userName
-      .then =>
-        @userState.addSocketToRoom id, roomName
-        .then (njoined) =>
-          @transport.joinChannel id, roomName
-          .then =>
-            if njoined == 1
-              @userJoinRoomReport @userName, roomName
-            @socketJoinEcho id, roomName, njoined
-          .return njoined
-        .catch (e) =>
-          @rollbackRoomJoin e, id, room
+        .then =>
+          @userState.addSocketToRoom id, roomName
+          .then (njoined) =>
+            @transport.joinChannel id, roomName
+            .then =>
+              if njoined == 1
+                @userJoinRoomReport @userName, roomName
+              @socketJoinEcho id, roomName, njoined
+            .return njoined
+          .catch (e) =>
+            @rollbackRoomJoin e, id, room
 
   # @private
   leaveSocketFromRoom : (id, roomName) ->

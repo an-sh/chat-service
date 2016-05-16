@@ -34,4 +34,6 @@ describe 'Chat service.', ->
 
       describe 'API permissions', require './apiPermissions.coffee'
 
-      describe 'Validation and errors', require './validation.coffee'
+      describe 'Validation', require './validation.coffee'
+
+  describe 'Errors handling', require './errorsHandling.coffee'
