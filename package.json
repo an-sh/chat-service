@@ -31,9 +31,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "async": "^1.5.2",
     "bluebird": "^3.3.5",
-    "check-types": "^6.0.0",
+    "check-types": "^7.0.0",
     "coffee-script": "^1.10.0",
     "collections": "^3.0.0",
     "ioredis": "^1.15.1",
@@ -44,6 +43,7 @@
     "uid-safe": "^2.1.0"
   },
   "devDependencies": {
+    "async": "^1.5.2",
     "chai": "^3.5.0",
     "coffee-coverage": "^1.0.1",
     "coveralls": "^2.11.8",
