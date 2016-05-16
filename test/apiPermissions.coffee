@@ -174,3 +174,34 @@ module.exports = ->
               expect(msg).ownProperty('timestamp')
               expect(msg).ownProperty('id')
               done()
+
+  it 'should send room messages without an user', (done) ->
+    txt = 'Test message.'
+    message = { textMessage : txt }
+    chatService = startService()
+    chatService.addRoom roomName1, null, ->
+      socket1 = clientConnect user1
+      socket1.on 'loginConfirmed', ->
+        socket1.emit 'roomJoin', roomName1, ->
+          chatService.execUserCommand true, 'roomMessage', roomName1, message
+          , (error, data) ->
+            expect(error).not.ok
+          socket1.on 'roomMessage', (room, msg) ->
+            expect(room).equal(roomName1)
+            expect(room).equal(roomName1)
+            expect(msg.author).undefined
+            expect(msg.textMessage).equal(txt)
+            expect(msg).ownProperty('timestamp')
+            expect(msg).ownProperty('id')
+            done()
+
+  it 'should not allow using non-existing users', (done) ->
+    txt = 'Test message.'
+    message = { textMessage : txt }
+    chatService = startService()
+    chatService.addRoom roomName1, null, ->
+      chatService.execUserCommand user1, 'roomMessage', roomName1, message
+      , (error, data) ->
+        expect(error).ok
+        expect(data).not.ok
+        done()
