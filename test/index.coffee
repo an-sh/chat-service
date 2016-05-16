@@ -1,17 +1,18 @@
 
 testutils = require './testutils.coffee'
 config = require './config.coffee'
+_ = require 'lodash'
 
 
 before testutils.checkDB
 
 describe 'Chat service.', ->
 
-  for state in config.states
-
-    testutils.setState state
+  _.forEach config.states, (state) ->
 
     describe "State: '#{state.state}', adapter: '#{state.adapter}'.", ->
+
+      before -> testutils.setState state
 
       describe 'Initialization', require './initialization.coffee'
 
