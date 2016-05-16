@@ -12,31 +12,31 @@ ServiceAPI =
 
   # Executes {UserCommands}.
   #
-  # @param params [String or Boolean or Object] Is a `username` if
+  # @param context [String or Boolean or Object] Is a `username` if
   #   String, or a `bypassPermissions` if Boolean, or an options hash if
   #   Object.
   # @param command [String] Command name.
   # @param args [Rest...] Command arguments with an optional callback.
   #
-  # @option params [String] username User name.
-  # @option params [String] id Socket id, it is required for
+  # @option context [String] username User name.
+  # @option context [String] id Socket id, it is required for
   #   {UserCommands#disconnect}, {UserCommands#roomJoin},
   #   {UserCommands#roomLeave} commands.
-  # @option params [Boolean] bypassHooks If `false` executes command
+  # @option context [Boolean] bypassHooks If `false` executes command
   #   without before and after hooks, default is `false`.
-  # @option params [Boolean] bypassPermissions If `true` executes
+  # @option context [Boolean] bypassPermissions If `true` executes
   #   command (except {UserCommands#roomJoin}) bypassing any
   #   permissions checking, default is `false`.
   #
   # @return [Promise]
-  execUserCommand : (params, command, args...) ->
-    if _.isObject params
-      userName = params.userName
-    else if _.isBoolean params
-      params = {bypassPermissions : params}
+  execUserCommand : (context, command, args...) ->
+    if _.isObject context
+      userName = context.userName
+    else if _.isBoolean context
+      context = {bypassPermissions : context}
     else
-      userName = params
-      params = null
+      userName = context
+      context = null
     [args, cb] = possiblyCallback args
     Promise.try =>
       if userName
@@ -44,7 +44,7 @@ ServiceAPI =
       else
         new User @
     .then (user) ->
-      user.exec command, params, args...
+      user.exec command, context, args...
     .asCallback cb, { spread : true }
 
   # Adds an user with a state.

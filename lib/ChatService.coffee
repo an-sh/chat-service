@@ -22,7 +22,9 @@ uid = require 'uid-safe'
 #       # just the same as any event. no reply is required.
 #
 class ServerMessages
-  # Direct message.
+  # Direct message. A message will have timestamp and author fields,
+  # but other fields can be used if {ChatService#constructor}
+  # `directMessagesChecker` hook is set.
   # @param fromUser [String] Message sender.
   # @param msg [Object<textMessage:String, timestamp:Number, author:String>]
   #   Message.
@@ -92,7 +94,9 @@ class ServerMessages
   # @see UserCommands#roomLeave
   roomLeftEcho : (roomName, id, njoined) ->
 
-  # Room message.
+  # Room message. A message will have timestamp, id and author fields,
+  # but other fields can be used if {ChatService#constructor}
+  # `roomMessagesChecker` hook is set.
   # @param roomName [String] Rooms name.
   # @param msg [Object<textMessage:String, timestamp:Number,
   #   author:String, id:Number>] Message.
@@ -117,17 +121,18 @@ class ServerMessages
   # @see UserCommands#roomLeave
   roomUserLeft : (roomName, userName) ->
 
-  # Indicates connection of an another socket with the same user.
+  # Indicates a connection of an another socket with the same user.
   # @param id [String] Socket id.
   # @param nconnected [Number] Total number of users's sockets.
   socketConnectEcho : (id, nconnected) ->
 
-  # Indicates disconnection of an another socket with the same user.
+  # Indicates a disconnection of an another socket with the same user.
   # @param id [String] Socket id.
   # @param nconnected [Number] Total number of users's sockets.
   socketDisconnectEcho : (id, nconnected) ->
 
-  # Custom message from a server or an users's socket.
+  # Custom message from a server or from an another socket of the same
+  #   user.
   # @param data [Object] Arbitrary data.
   systemMessage : (data) ->
 
@@ -135,20 +140,20 @@ class ServerMessages
 # @note This class describes socket.io incoming messages, not methods.
 #
 # List of commands that are sent from a client. Result is sent back as
-# a socket.io ack with in the standard (error, data) callback
-# parameters format. Error is ether a String or an Object, depending
-# on {ChatService} `useRawErrorObjects` option. See {ChatServiceError}
-# for an errors list. Some messages will echo {ServerMessages} to
-# other user's sockets or trigger sending {ServerMessages} to other
-# users.
+# a socket.io ack with the standard (error, data) callback parameters
+# format. Error is ether a String or an Object, depending on
+# {ChatService#constructor} `useRawErrorObjects` option. See
+# {ChatServiceError} for an errors list. Some messages will echo
+# {ServerMessages} to other user's sockets or trigger sending
+# {ServerMessages} to other users.
 #
 # @example Socket.io client example
 #   socket = ioClient.connect url, params
 #   socket.on 'loginConfirmed', (userName, authData) ->
 #     socket.emit 'roomJoin', roomName, (error, data) ->
 #       # this is a socket.io ack waiting callback. socket is joined
-#       # the room, or an error occurred. we get here only when the
-#       # server has finished a message processing.
+#       # the room, or an error occurred, we get here only when the
+#       # server has finished roomJoin command processing.
 #
 class UserCommands
   # Adds userNames to user's direct messaging blacklist or whitelist.
@@ -173,12 +178,15 @@ class UserCommands
   directGetWhitelistMode : (cb) ->
 
   # Sends {ServerMessages#directMessage} to an another user, if
-  # {ChatService} `enableDirectMessages` option is true. Also sends
-  # {ServerMessages#directMessageEcho} to other senders's sockets.
+  # {ChatService#constructor} `enableDirectMessages` option is
+  # true. Also sends {ServerMessages#directMessageEcho} to other
+  # senders's sockets.
   # @see ServerMessages#directMessage
   # @see ServerMessages#directMessageEcho
   # @param toUser [String] Message receiver.
-  # @param msg [Object<textMessage : String>] Message.
+  # @param msg [Object<textMessage : String>] Message. Other fields
+  #   can be used if {ChatService#constructor} `directMessagesChecker`
+  #   hook is set.
   # @param cb [Function<error, Object<textMessage:String,
   #   timestamp:Number, author:String>>] Sends ack with an error or
   #   a processed message.
@@ -216,7 +224,8 @@ class UserCommands
   # removes users that have lost an access permission in the result of
   # an operation, sending {ServerMessages#roomAccessRemoved}. Also
   # sends {ServerMessages#roomAccessListAdded} to all room users if
-  # {ChatService} `enableAccessListsUpdates` option is true.
+  # {ChatService#constructor} `enableAccessListsUpdates` option is
+  # true.
   # @param roomName [String] Room name.
   # @param listName [String] 'blacklist', 'adminlist' or 'whitelist'.
   # @param userNames [Array<String>] User names to add to the list.
@@ -225,15 +234,17 @@ class UserCommands
   # @see ServerMessages#roomAccessListAdded
   roomAddToList : (roomName, listName, userNames, cb) ->
 
-  # Creates a room if {ChatService} `enableRoomsManagement` option is true.
+  # Creates a room if {ChatService#constructor}
+  # `enableRoomsManagement` option is true.
   # @param roomName [String] Rooms name.
   # @param mode [bool] Room mode.
   # @param cb [Function<error, null>] Sends ack with an error or an empty data.
   roomCreate : (roomName, mode, cb) ->
 
-  # Deletes a room if {ChatService} `enableRoomsManagement` is true
-  # and the user has an owner status. Sends
-  # {ServerMessages#roomAccessRemoved} to all room users.
+  # Deletes a room if {ChatService#constructor}
+  # `enableRoomsManagement` is true and the user has an owner
+  # status. Sends {ServerMessages#roomAccessRemoved} to all room
+  # users.
   # @param roomName [String] Rooms name.
   # @param cb [Function<error, null>] Sends ack with an error or an empty data.
   roomDelete : (roomName, cb) ->
@@ -261,7 +272,7 @@ class UserCommands
   roomGetWhitelistMode : (roomName, cb) ->
 
   # Gets latest room messages. The maximum size is set by
-  # {ChatService} `historyMaxGetMessages` option.
+  # {ChatService#constructor} `historyMaxGetMessages` option.
   # @param roomName [String] Room name.
   # @param cb [Function<error, Array<Object>>] Sends ack with an
   #   error or array of messages.
@@ -270,14 +281,15 @@ class UserCommands
 
   # Returns messages that were sent after a message with the specified
   # id. The returned number of messages is limited by the limit
-  # parameter. The maximum limit is bounded by {ChatService}
-  # `historyMaxGetMessages` option. If the specified id was deleted
-  # due to history limit, it returns messages starting from the oldest
-  # available.
+  # parameter. The maximum limit is bounded by
+  # {ChatService#constructor} `historyMaxGetMessages` option. If the
+  # specified id was deleted due to history limit, it returns messages
+  # starting from the oldest available.
   # @param roomName [String] Room name.
   # @param id [Number] Message id.
-  # @param limit [Number] Maximum number of messages to return. The maximum
-  #   number is limited by {ChatService} `historyMaxGetMessages` option.
+  # @param limit [Number] Maximum number of messages to return. The
+  #   maximum number is limited by {ChatService#constructor}
+  #   `historyMaxGetMessages` option.
   # @param cb [Function<error, Array<Object>>] Sends ack with an
   #   error or array of messages.
   # @see UserCommands#roomHistoryLastId
@@ -296,7 +308,7 @@ class UserCommands
   # Joins room, an user must join the room to receive messages or
   # execute room commands. Sends {ServerMessages#roomJoinedEcho} to other
   # user's sockets. Also sends {ServerMessages#roomUserJoined} to other
-  # room users if {ChatService} `enableUserlistUpdates` option is
+  # room users if {ChatService#constructor} `enableUserlistUpdates` option is
   # true.
   # @see ServerMessages#roomJoinedEcho
   # @see ServerMessages#roomUserJoined
@@ -318,7 +330,9 @@ class UserCommands
   # Sends {ServerMessages#roomMessage} to all room users.
   # @see ServerMessages#roomMessage
   # @param roomName [String] Room name.
-  # @param msg [Object<textMessage : String>] Message.
+  # @param msg [Object<textMessage : String>] Message. Other fields
+  #   can be used if {ChatService#constructor} `roomMessagesChecker`
+  #   hook is set.
   # @param cb [Function<error, Number>] Sends ack with an error or the
   #   message id.
   roomMessage : (roomName, msg, cb) ->
@@ -328,7 +342,8 @@ class UserCommands
   # in the result of an operation, sending
   # {ServerMessages#roomAccessRemoved}. Also sends
   # {ServerMessages#roomAccessListRemoved} to all room users if
-  # {ChatService} `enableAccessListsUpdates` option is true.
+  # {ChatService#constructor} `enableAccessListsUpdates` option is
+  # true.
   # @param roomName [String] Room name.
   # @param listName [String] 'blacklist', 'adminlist' or 'whitelist'.
   # @param userNames [Array<String>] UserNames to remove from the list.
@@ -355,7 +370,7 @@ class UserCommands
   # @param cb [Function<error, Object<timestamp:Number,
   #   joined:Boolean> >] Sends ack with an error or an object with a
   #   joined state and a state switch timestamp.
-  roomUserSeen : (roomName, userName) ->
+  roomUserSeen : (roomName, userName, cb) ->
 
   # Send data to other connected users's sockets. Or can be used with
   # {ServiceAPI~execUserCommand} and the null id to send data from a
@@ -411,13 +426,13 @@ class ChatService extends EventEmitter
   #   instead of strings, default is `false`. See {ChatServiceError}.
   #
   #
-  # @option hooks [Function<ChatService, socketId:String,
+  # @option hooks [Function<ChatService, socketid:String,
   #   Callback<Error, username:String, authData:Object>>] onConnect
-  #   Client connection hook. Has a server instance, a socket id and a
-  #   callback as arguments. Must call a callback with either an error
-  #   or an user name and an auth data. User name and auth data are
-  #   send back with a {ServerMessages#loginConfirmed} message. Error
-  #   is sent as a {ServerMessages#loginRejected} message.
+  #   Client connection hook. Must call a callback with either an
+  #   error or an user name and an auth data. User name and auth data
+  #   are send back with a {ServerMessages#loginConfirmed}
+  #   message. Error is sent as a {ServerMessages#loginRejected}
+  #   message.
   #
   # @option hooks [Function<ChatService, Callback<Error>>]
   #   onStart Executes when server is started. Must call a callback.
@@ -449,10 +464,10 @@ class ChatService extends EventEmitter
   #   to the command issuer, or with arguments to return arguments as
   #   results to the command issuer.
   #
-  # @option options [String or Constructor] state Chat
-  #   state.  Can be either `'memory'` or `'redis'` for built-in state
-  #   storages, or a custom state constructor function that implements
-  #   the same API. Default is `'memory'`.
+  #
+  # @option options [String or Constructor] state Chat state. Can be
+  #   either `'memory'` or `'redis'` for built-in states. Default is
+  #   `'memory'`.
   #
   # @option options [String or Constructor] transport
   #   Transport. Default is `'socket.io'`.
@@ -473,9 +488,9 @@ class ChatService extends EventEmitter
   # @option options [Object] transportOptions Options for a
   #   socket.io transport.
   #
-  # @option options [Object or Array<Object>]
-  #   adapterOptions Socket.io adapter construnctor arguments, used
-  #   only when no `io` object is passed in `transportOptions`.
+  # @option options [Object or Array<Object>] adapterOptions Socket.io
+  #   adapter constructor arguments, used only when no `io` object is
+  #   passed in `transportOptions`.
   #
   #
   # @option transportOptions [String] namespace Socket.io namespace,
@@ -583,6 +598,8 @@ class ChatService extends EventEmitter
       @transport.setEvents()
 
   # Closes server.
+  # @note __MUST__ be called before node process shutdown to correctly
+  #   update the state.
   # @param done [callback] Optional callback.
   # @return [Promise]
   close : (done) ->
