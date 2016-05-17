@@ -384,7 +384,7 @@ class MemoryState
     Promise.resolve()
 
   # @private
-  getRoom : (name) ->
+  getRoom : (name, nocheck) ->
     r = @rooms[name]
     unless r
       error = new ChatServiceError 'noRoom', name

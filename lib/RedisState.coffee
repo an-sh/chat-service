@@ -601,7 +601,10 @@ class RedisState
     Promise.resolve()
 
   # @private
-  getRoom : (name) ->
+  getRoom : (name, nocheck) ->
+    if nocheck
+      room = new Room @server, name
+      return Promise.resolve room
     @hasRoom name
     .then (exists) =>
       unless exists

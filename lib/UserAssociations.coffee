@@ -75,21 +75,18 @@ UserAssociations =
     roomName = room.roomName
     @removeSocketFromRoom id, roomName
     .then (njoined) =>
-      unless njoined then @leaveRoom roomName, room
+      unless njoined then @leaveRoom roomName
     .then ->
       Promise.reject error
 
   # @private
-  leaveRoom : (roomName, room = null) ->
+  leaveRoom : (roomName) ->
     Promise.try =>
-      unless room
-        @state.getRoom roomName
-      else
-        room
+      @state.getRoom roomName, true
     .then (room) =>
       room.leave @userName
-      .catch (e) =>
-        @consistencyFailure e, { roomName, op : 'leaveRoom' }
+    .catch (e) =>
+      @consistencyFailure e, { roomName, op : 'leaveRoom' }
 
   # @private
   joinSocketToRoom : (id, roomName) ->
@@ -139,11 +136,15 @@ UserAssociations =
     .spread (roomsRemoved = [], joinedSockets = [], nconnected = 0) =>
       @socketLeaveChannels id, roomsRemoved
       .then =>
-        for roomName, idx in roomsRemoved
+        Promise.map roomsRemoved, (roomName, idx) =>
           njoined = joinedSockets[idx]
           @socketLeftEcho id, roomName, njoined
-          unless njoined then @userLeftRoomReport @userName, roomName
-        @socketDisconnectEcho id, nconnected
+          unless njoined
+            @leaveRoom roomName
+            .then =>
+              @userLeftRoomReport @userName, roomName
+        , { concurrency : asyncLimit }
+        .then => @socketDisconnectEcho id, nconnected
 
   # @private
   removeUserSocketsFromRoom : (roomName) ->

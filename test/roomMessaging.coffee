@@ -94,6 +94,36 @@ module.exports = ->
             expect(njoined).equal(0)
             done()
 
+  it 'should update userlist on join and leave', (done) ->
+    chatService = startService()
+    chatService.addRoom roomName1, null, ->
+      async.parallel [
+        (cb) ->
+          socket1 = clientConnect user1
+          socket1.on 'loginConfirmed', ->
+            socket1.emit 'roomJoin', roomName1, cb
+        (cb) ->
+          socket2 = clientConnect user2
+          socket2.on 'loginConfirmed', ->
+            socket2.emit 'roomJoin', roomName1, cb
+      ], (error) ->
+        expect(error).not.ok
+        socket1.emit 'roomGetAccessList', roomName1, 'userlist'
+        , (error, data) ->
+          expect(error).not.ok
+          expect(data).lengthOf(2)
+          expect(data).include(user1)
+          expect(data).include(user2)
+          socket2.emit 'roomLeave', roomName1, (error, data) ->
+            expect(error).not.ok
+            socket1.emit 'roomGetAccessList', roomName1, 'userlist'
+            , (error, data) ->
+              expect(error).not.ok
+              expect(data).lengthOf(1)
+              expect(data).include(user1)
+              expect(data).not.include(user2)
+              done()
+
   it 'should broadcast join and leave room messages', (done) ->
     chatService = startService { enableUserlistUpdates : true }
     chatService.addRoom roomName1, null, ->
@@ -113,6 +143,36 @@ module.exports = ->
                 expect(room).equal(roomName1)
                 expect(user).equal(user2)
                 done()
+
+  it 'should update userlist on disconnect', (done) ->
+    chatService = startService { enableUserlistUpdates : true }
+    chatService.addRoom roomName1, null, ->
+      async.parallel [
+        (cb) ->
+          socket1 = clientConnect user1
+          socket1.on 'loginConfirmed', ->
+            socket1.emit 'roomJoin', roomName1, cb
+        (cb) ->
+          socket2 = clientConnect user2
+          socket2.on 'loginConfirmed', ->
+            socket2.emit 'roomJoin', roomName1, cb
+      ], (error) ->
+        expect(error).not.ok
+        socket1.emit 'roomGetAccessList', roomName1, 'userlist'
+        , (error, data) ->
+          expect(error).not.ok
+          expect(data).lengthOf(2)
+          expect(data).include(user1)
+          expect(data).include(user2)
+          socket2.disconnect()
+          socket1.once 'roomUserLeft', ->
+            socket1.emit 'roomGetAccessList', roomName1, 'userlist'
+            , (error, data) ->
+              expect(error).not.ok
+              expect(data).lengthOf(1)
+              expect(data).include(user1)
+              expect(data).not.include(user2)
+              done()
 
   it 'should store and send room history', (done) ->
     txt = 'Test message.'
