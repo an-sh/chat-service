@@ -101,7 +101,7 @@ class SocketIOTransport
         @server.once 'close', cb
 
   # @private
-  close : () ->
+  close : ->
     if @closed then return Promise.resolve()
     @closed = true
     @nsp.removeAllListeners 'connection'

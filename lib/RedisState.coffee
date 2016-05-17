@@ -281,7 +281,7 @@ class ListsStateRedis
     @redis.set @makeKeyName('whitelistMode'), whitelistOnly
 
   # @private
-  whitelistOnlyGet : () ->
+  whitelistOnlyGet : ->
     @redis.get @makeKeyName('whitelistMode')
     .then (data) ->
       result = if data then true else false
@@ -330,7 +330,7 @@ class RoomStateRedis extends ListsStateRedis
     return listName in [ 'adminlist', 'whitelist', 'blacklist', 'userlist' ]
 
   # @private
-  ownerGet : () ->
+  ownerGet : ->
     @redis.get @makeKeyName('owner')
 
   # @private
@@ -345,7 +345,7 @@ class RoomStateRedis extends ListsStateRedis
       @redis.set(@makeKeyName('historyMaxSize'), @server.defaultHistoryLimit)
 
   # @private
-  historyInfo : () ->
+  historyInfo : ->
     @redis.multi()
     .get @makeKeyName('historyMaxSize')
     .llen @makeKeyName('messagesHistory')
@@ -360,7 +360,7 @@ class RoomStateRedis extends ListsStateRedis
       Promise.resolve info
 
   # @private
-  getCommonUsers : () ->
+  getCommonUsers : ->
     @redis.sdiff @makeKeyName('userlist'), @makeKeyName('whitelist')
     , @makeKeyName('adminlist')
 
@@ -390,7 +390,7 @@ class RoomStateRedis extends ListsStateRedis
     Promise.resolve data
 
   # @private
-  messagesGetRecent : () ->
+  messagesGetRecent : ->
     if @historyMaxGetMessages <= 0
       return Promise.resolve []
     @redis.multi()
@@ -503,11 +503,11 @@ class UserStateRedis
       Promise.resolve nconnected
 
   # @private
-  getAllSockets : () ->
+  getAllSockets : ->
     @redis.smembers @makeKeyName('sockets')
 
   # @private
-  getSocketsToRooms : () ->
+  getSocketsToRooms : ->
     @redis.getSocketsToRooms @makeKeyName('sockets'), @makeSocketToRooms()
     .spread (result) ->
       data = JSON.parse result
@@ -596,7 +596,7 @@ class RedisState
     @redis.get @makeKeyName('user', name, 'isInit')
 
   # @private
-  close : () ->
+  close : ->
     @redis.disconnect()
     Promise.resolve()
 

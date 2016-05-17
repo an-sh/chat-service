@@ -1,6 +1,6 @@
 
 ChatServiceError = require './ChatServiceError.coffee'
-Map = require 'collections/fast-map'
+FastMap = require 'collections/fast-map'
 Promise = require 'bluebird'
 _ = require 'lodash'
 check = require 'check-types'
@@ -14,7 +14,7 @@ class ArgumentsValidator
   # @private
   # @nodoc
   constructor : (@server) ->
-    @checkers = new Map
+    @checkers = new FastMap
     @directMessagesChecker = @server.directMessagesChecker
     @roomMessagesChecker = @server.roomMessagesChecker
     @customCheckers =
@@ -63,11 +63,8 @@ class ArgumentsValidator
   # @private
   # @nodoc
   checkMessage : (msg) ->
-    passed = check.object msg
-    unless passed then return false
-    passed = check.string msg.textMessage
-    unless passed then return false
-    _.keys(msg).length == 1
+    check.object(msg) and
+      check.string(msg.textMessage) and _.keys(msg).length == 1
 
   # @private
   # @nodoc

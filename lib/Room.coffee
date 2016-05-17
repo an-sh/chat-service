@@ -130,11 +130,11 @@ class Room
     @roomState.initState state
 
   # @private
-  removeState : () ->
+  removeState : ->
     @roomState.removeState()
 
   # @private
-  startRemoving : () ->
+  startRemoving : ->
     @roomState.startRemoving()
 
   # @private
@@ -144,7 +144,7 @@ class Room
     return
 
   # @private
-  getUsers: () ->
+  getUsers : ->
     @roomState.getList 'userlist'
 
   # @private

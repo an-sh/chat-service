@@ -23,9 +23,9 @@ CommandBinder =
       data = null unless data?
       if process.env.BLUEBIRD_DEBUG
         if error and not (error instanceof ChatServiceError)
-          console.error error?.stack || error?.toString() || error
+          console.error error.stack || error.toString?() || error
       unless useRawErrorObjects
-        error = error?.toString()
+        error = error?.toString?()
       cb error, data, rest...
 
   # @private
@@ -60,7 +60,7 @@ CommandBinder =
           fn.apply self, [execInfo.args..., execInfo]
           .then (result) ->
             execInfo.results = [result]
-          .catch (error) ->
+          , (error) ->
             execInfo.error = error
           .then ->
             if afterHook and not execInfo.bypassHooks

@@ -87,7 +87,7 @@ class User extends DirectMessaging
       [ @, nconnected ]
 
   # @private
-  disconnectInstanceSockets : () ->
+  disconnectInstanceSockets : ->
     @userState.getAllSockets()
     .then (sockets) =>
       Promise.map sockets, (sid) =>
@@ -104,7 +104,7 @@ class User extends DirectMessaging
     @getList @userName, listName
 
   # @private
-  directGetWhitelistMode: () ->
+  directGetWhitelistMode : ->
     @getMode @userName
 
   # @private
@@ -140,7 +140,7 @@ class User extends DirectMessaging
     @removeSocketFromServer id
 
   # @private
-  listOwnSockets : () ->
+  listOwnSockets : ->
     @userState.getSocketsToRooms()
 
   # @private

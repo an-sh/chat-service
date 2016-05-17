@@ -95,7 +95,7 @@ class ListsStateMemory
     Promise.resolve()
 
   # @private
-  whitelistOnlyGet : () ->
+  whitelistOnlyGet : ->
     wl = @whitelistOnly || false
     Promise.resolve @whitelistOnly
 
@@ -137,11 +137,11 @@ class RoomStateMemory extends ListsStateMemory
     @historyMaxSizeSet historyMaxSize
 
   # @private
-  removeState : () ->
+  removeState : ->
     Promise.resolve()
 
   # @private
-  startRemoving : () ->
+  startRemoving : ->
     Promise.resolve()
 
   # @private
@@ -149,7 +149,7 @@ class RoomStateMemory extends ListsStateMemory
     return listName in [ 'adminlist', 'whitelist', 'blacklist', 'userlist' ]
 
   # @private
-  ownerGet : () ->
+  ownerGet : ->
     Promise.resolve @owner
 
   # @private
@@ -164,14 +164,14 @@ class RoomStateMemory extends ListsStateMemory
     Promise.resolve()
 
   # @private
-  historyInfo : () ->
+  historyInfo : ->
     historySize = @messagesHistory.length
     info = { historySize, @historyMaxSize
       , @historyMaxGetMessages, @lastMessageId }
     Promise.resolve info
 
   # @private
-  getCommonUsers : () ->
+  getCommonUsers : ->
     diff = (@userlist.difference @whitelist).difference @adminlist
     data = diff.toArray()
     Promise.resolve data
@@ -196,7 +196,7 @@ class RoomStateMemory extends ListsStateMemory
     makeResult()
 
   # @private
-  messagesGetRecent : () ->
+  messagesGetRecent : ->
     msgs = @messagesHistory.slice 0, @historyMaxGetMessages
     tss = @messagesTimestamps.slice 0, @historyMaxGetMessages
     ids = @messagesIds.slice 0, @historyMaxGetMessages
@@ -291,12 +291,12 @@ class UserStateMemory
     Promise.resolve nconnected
 
   # @private
-  getAllSockets : () ->
+  getAllSockets : ->
     sockets = @socketsToRooms.keys()
     Promise.resolve sockets
 
   # @private
-  getSocketsToRooms : () ->
+  getSocketsToRooms : ->
     result = {}
     sockets = @socketsToRooms.keys()
     for id in sockets
@@ -380,7 +380,7 @@ class MemoryState
     @lockTTL = @options.lockTTL || 5000
 
   # @private
-  close : () ->
+  close : ->
     Promise.resolve()
 
   # @private
