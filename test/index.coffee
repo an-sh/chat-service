@@ -37,3 +37,5 @@ describe 'Chat service.', ->
       describe 'Validation', require './validation.coffee'
 
   describe 'Errors handling', require './errorsHandling.coffee'
+
+  describe 'Consistency failures', require './consistencyFailures.coffee'
