@@ -391,8 +391,7 @@ class RoomStateRedis extends ListsStateRedis
 
   # @private
   messagesGetRecent : ->
-    if @historyMaxGetMessages <= 0
-      return Promise.resolve []
+    if @historyMaxGetMessages <= 0 then return Promise.resolve []
     @redis.multi()
     .lrange @makeKeyName('messagesHistory'), 0, @historyMaxGetMessages - 1
     .lrange @makeKeyName('messagesTimestamps'), 0, @historyMaxGetMessages - 1
@@ -403,8 +402,8 @@ class RoomStateRedis extends ListsStateRedis
 
   # @private
   messagesGet : (id, maxMessages = @historyMaxGetMessages) ->
-    if maxMessages <= 0
-      return Promise.resolve []
+    if maxMessages <= 0 then return Promise.resolve []
+    id = _.max [0, id]
     @redis.messagesGet @makeKeyName('lastMessageId')
     , @makeKeyName('historyMaxSize'), @makeKeyName('messagesIds')
     , @makeKeyName('messagesTimestamps'),  @makeKeyName('messagesHistory')
@@ -567,6 +566,7 @@ class RedisState
 
   # @private
   constructor : (@server, @options = {}) ->
+    @closed = false
     redisOptions = _.castArray @options.redisOptions
     if @options.useCluster
       @redis = new Redis.Cluster redisOptions...
@@ -597,20 +597,19 @@ class RedisState
 
   # @private
   close : ->
+    @closed = true
     @redis.disconnect()
     Promise.resolve()
 
   # @private
   getRoom : (name, nocheck) ->
-    if nocheck
-      room = new Room @server, name
-      return Promise.resolve room
+    room = new Room @server, name
+    if nocheck then return Promise.resolve room
     @hasRoom name
-    .then (exists) =>
+    .then (exists) ->
       unless exists
         error = new ChatServiceError 'noRoom', name
         return Promise.reject error
-      room = new Room @server, name
       Promise.resolve room
 
   # @private

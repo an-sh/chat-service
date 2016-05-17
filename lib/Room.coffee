@@ -209,7 +209,7 @@ class Room
     @checkRead author, bypassPermissions
     .then =>
       unless bypassPermissions
-        limit = _.min limit, @server.historyMaxGetMessages
+        limit = _.min [ limit, @server.historyMaxGetMessages ]
       @roomState.messagesGet id, limit
 
   # @private

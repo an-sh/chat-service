@@ -210,8 +210,8 @@ class RoomStateMemory extends ListsStateMemory
 
   # @private
   messagesGet : (id, maxMessages = @historyMaxGetMessages) ->
-    if maxMessages <= 0
-      return Promise.resolve []
+    if maxMessages <= 0 then return Promise.resolve []
+    id = _.max [0, id]
     nmessages = @messagesIds.length
     lastid = @lastMessageId
     id = _.min [ id, lastid ]
@@ -370,6 +370,7 @@ class MemoryState
 
   # @private
   constructor : (@server, @options = {}) ->
+    @closed = false
     @users = {}
     @rooms = {}
     @sockets = {}
@@ -381,6 +382,7 @@ class MemoryState
 
   # @private
   close : ->
+    @closed = true
     Promise.resolve()
 
   # @private

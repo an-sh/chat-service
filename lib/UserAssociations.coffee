@@ -169,7 +169,7 @@ UserAssociations =
       @state.getUser userName
       .then (user) ->
         user.removeFromRoom roomName
-      .catch -> Promise.resolve()
+      .catch ->
     , { concurrency : asyncLimit }
 
 

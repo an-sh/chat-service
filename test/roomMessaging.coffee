@@ -259,7 +259,10 @@ module.exports = ->
             socket1.emit 'roomRecentHistory', roomName1, (error, data) ->
               expect(error).not.ok
               expect(data).empty
-              done()
+              socket1.emit 'roomHistoryGet', roomName1, 0, 10, (error, data) ->
+                expect(error).not.ok
+                expect(data).empty
+                done()
 
   it 'should send room history maximum size', (done) ->
     sz = 1000

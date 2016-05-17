@@ -6,7 +6,6 @@ rewire = require 'rewire'
 
 { cleanup
   clientConnect
-  startService
 } = require './testutils.coffee'
 
 { port
@@ -99,6 +98,19 @@ module.exports = ->
         expect(error).not.ok
         expect(data).empty
         done()
+
+  it 'should not join a disconnected socket', (done) ->
+    ChatService = rewire '../index.js'
+    chatService = new ChatService { port }
+    chatService.addRoom roomName1, null, ->
+      socket1 = clientConnect user1
+      socket1.on 'loginConfirmed', ->
+        orig = chatService.transport.getSocketObject
+        chatService.transport.getSocketObject = (id) ->
+          return null
+        socket1.emit 'roomJoin', roomName1, (error, data) ->
+          expect(error).ok
+          done()
 
   it 'should emit onStartError on onStart hook error', (done) ->
     ChatService = rewire '../index.js'
