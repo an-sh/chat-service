@@ -542,6 +542,7 @@ class ChatService extends EventEmitter
   setOptions : ->
     @instanceUID = uid.sync 18
     @runningCommands = 0
+    @closed = false
 
     @closeTimeout = @options.closeTimeout || 10000
     @enableAccessListsUpdates= @options.enableAccessListsUpdates || false
@@ -592,8 +593,11 @@ class ChatService extends EventEmitter
   startServer : ->
     if @hooks.onStart
       @hooks.onStart @, (error) =>
-        if error then throw error
-        else @transport.setEvents()
+        if error
+          @state.close()
+          .finally => @emit 'onStartError', error
+        else
+          @transport.setEvents()
     else
       @transport.setEvents()
 
@@ -603,15 +607,22 @@ class ChatService extends EventEmitter
   # @param done [callback] Optional callback.
   # @return [Promise]
   close : (done) ->
+    if @closed then return Promise.resolve()
+    @closed = true
     @transport.close()
-    .asCallback (error) =>
+    .then =>
+      if @hooks.onClose
+        Promise.fromCallback (cb) =>
+          @hooks.onClose @, null, cb
+    , (error) =>
       if @hooks.onClose
         Promise.fromCallback (cb) =>
           @hooks.onClose @, error, cb
-      else if error
+      else
         Promise.reject error
     .finally =>
       @state.close()
+      .finally => @emit 'closed'
     .asCallback done
 
 

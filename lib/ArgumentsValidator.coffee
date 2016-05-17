@@ -49,8 +49,7 @@ class ArgumentsValidator
   # @nodoc
   getArgsCount : (name) ->
     checker = @checkers.get name
-    unless checker then return 0
-    return checker.length || 0
+    return checker?.length || 0
 
   # @private
   # @nodoc

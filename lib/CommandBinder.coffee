@@ -34,7 +34,7 @@ CommandBinder =
     Promise.resolve().disposer =>
       @server.runningCommands--
       if @transport.closed and @server.runningCommands <= 0
-        @server.emit 'close'
+        @server.emit 'commandsFinished'
 
   # @private
   makeCommand : (name, fn) ->

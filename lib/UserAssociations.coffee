@@ -88,8 +88,8 @@ UserAssociations =
         room
     .then (room) =>
       room.leave @userName
-    .catch (e) =>
-      @consistencyFailure e, { roomName, op : 'leaveRoom' }
+      .catch (e) =>
+        @consistencyFailure e, { roomName, op : 'leaveRoom' }
 
   # @private
   joinSocketToRoom : (id, roomName) ->

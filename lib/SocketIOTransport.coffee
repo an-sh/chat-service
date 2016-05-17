@@ -46,7 +46,7 @@ class SocketIOTransport
   rejectLogin : (socket, error) ->
     useRawErrorObjects = @server.useRawErrorObjects
     unless useRawErrorObjects
-      error = error?.toString()
+      error = error?.toString?()
     socket.emit 'loginRejected', error
     socket.disconnect()
 
@@ -98,7 +98,7 @@ class SocketIOTransport
   waitCommands : ->
     if @server.runningCommands > 0
       Promise.fromCallback (cb) =>
-        @server.once 'close', cb
+        @server.once 'commandsFinished', cb
 
   # @private
   close : ->

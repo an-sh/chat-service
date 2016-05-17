@@ -70,3 +70,84 @@ module.exports = ->
             expect(data).an('Array')
             expect(data).lengthOf(0)
             chatService.close done
+
+  it 'should rollback a failed socket connect', (done) ->
+    ChatService = rewire '../index.js'
+    chatService = new ChatService { port }
+    orig = chatService.transport.joinChannel
+    chatService.transport.joinChannel = ->
+      orig.apply chatService.transport, arguments
+      .then -> throw new Error()
+    socket1 = clientConnect user1
+    socket1.on 'loginRejected', (error) ->
+      expect(error).ok
+      chatService.execUserCommand user1, 'listOwnSockets', (error, data) ->
+        expect(error).not.ok
+        expect(data).empty
+        done()
+
+  it 'should rollback a disconnected socket connection', (done) ->
+    ChatService = rewire '../index.js'
+    chatService = new ChatService { port }
+    orig = chatService.state.addSocket
+    chatService.state.addSocket = (id) ->
+      orig.apply chatService.state, arguments
+      .finally -> chatService.transport.disconnectClient id
+    socket1 = clientConnect user1
+    socket1.on 'disconnect', ->
+      chatService.execUserCommand user1, 'listOwnSockets', (error, data) ->
+        expect(error).not.ok
+        expect(data).empty
+        done()
+
+  it 'should emit onStartError on onStart hook error', (done) ->
+    ChatService = rewire '../index.js'
+    onStart = (chatService, cb) ->
+      expect(chatService).instanceof(ChatService)
+      cb new Error()
+    chatService = new ChatService { port }, { onStart }
+    chatService.on 'onStartError', (error) ->
+      expect(error).ok
+      done()
+
+  it 'should propagate transport close errors', (done) ->
+    ChatService = rewire '../index.js'
+    chatService = new ChatService { port }
+    orig = chatService.transport.close
+    chatService.transport.close = ->
+      orig.apply chatService.transport, arguments
+      .then -> throw new Error()
+    process.nextTick ->
+      chatService.close()
+      .catch  (error) ->
+        expect(error).ok
+        done()
+
+  it 'should propagate onClose errors', (done) ->
+    ChatService = rewire '../index.js'
+    onClose = (chatService, error, cb) ->
+      expect(chatService).instanceof(ChatService)
+      expect(error).not.ok
+      cb new Error
+    chatService = new ChatService { port }, { onClose }
+    process.nextTick ->
+      chatService.close()
+      .catch (error) ->
+        expect(error).ok
+        done()
+
+  it 'should propagate transport close errors to onClose hook', (done) ->
+    ChatService = rewire '../index.js'
+    onClose = (chatService, error, cb) ->
+      expect(error).ok
+      cb error
+    chatService = new ChatService { port }, { onClose }
+    orig = chatService.transport.close
+    chatService.transport.close = ->
+      orig.apply chatService.transport, arguments
+      .then -> throw new Error()
+    process.nextTick ->
+      chatService.close()
+      .catch  (error) ->
+        expect(error).ok
+        done()
