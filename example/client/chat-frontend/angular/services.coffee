@@ -11,10 +11,10 @@ class ChatClient
     @historyLength = 50
     @isConnected = false
 
-  _addMessage : (room, message, refresh = true) ->
-    unless @messages[room]
-      @messages[room] = []
-    @messages[room].push message
+  _addMessage : (roomName, message, refresh = true) ->
+    unless @messages[roomName]
+      @messages[roomName] = [roomName]
+    @messages[roomName].push message
     if refresh then @_refresh()
 
   _addError : (error) ->
@@ -142,6 +142,13 @@ class ChatClient
             @adminRooms.push roomName
           @_addMessage roomName
           , { textMessage : "You are a room administrator." }
+      @socket.emit 'roomRecentHistory', roomName, (error, data) =>
+        if data?.length
+          unless @messages[roomName]
+            @messages[roomName] = []
+          rdata = data.reverse()
+          @messages[roomName].unshift rdata...
+          @_refresh()
       cb()
 
   roomLeave : (roomName, cb = ->) ->
