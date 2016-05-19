@@ -52,7 +52,7 @@ module.exports = ->
                 expect(data.roomName).equal(roomName1)
                 expect(data.userName).equal(user1)
                 expect(data.id).equal(id)
-                expect(data.type).equal('channel')
+                expect(data.type).equal('transportChannel')
                 chatService.transport.leaveChannel = orig
                 cb()
           ], done
@@ -129,7 +129,7 @@ module.exports = ->
                   expect(data.roomName).equal(roomName1)
                   expect(data.userName).equal(user1)
                   expect(data.id).equal(id)
-                  expect(data.type).equal('socket')
+                  expect(data.type).equal('userSockets')
                   user.userState.removeSocketFromRoom = orig
                   cb()
             ], done
@@ -184,7 +184,7 @@ module.exports = ->
               expect(data).include.keys 'userName', 'id', 'type'
               expect(data.userName).equal(user1)
               expect(data.id).equal(id)
-              expect(data.type).equal('socket')
+              expect(data.type).equal('userSockets')
               user.userState.removeSocket = orig
               done()
 

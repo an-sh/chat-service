@@ -1,6 +1,7 @@
 
 ArgumentsValidator = require './ArgumentsValidator.coffee'
 EventEmitter = require('events').EventEmitter
+MaintenanceAPI = require './MaintenanceAPI.coffee'
 MemoryState = require './MemoryState.coffee'
 Promise = require 'bluebird'
 RedisState = require './RedisState.coffee'
@@ -383,9 +384,10 @@ class UserCommands
 
 # Service object.
 # @extend ServiceAPI
+# @extend MaintenanceAPI
 class ChatService extends EventEmitter
 
-  extend @, ServiceAPI
+  extend @, ServiceAPI, MaintenanceAPI
 
   # Crates an object and starts a new server instance.
   #

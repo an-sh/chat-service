@@ -49,7 +49,7 @@ UserAssociations =
   leaveChannel : (id, channel) ->
     @transport.leaveChannel id, channel
     .catch (e) =>
-      @consistencyFailure e, {roomName : channel, id, type : 'channel'}
+      @consistencyFailure e, {roomName : channel, id, type : 'transportChannel'}
 
   # @private
   socketLeaveChannels : (id, channels) ->
@@ -67,7 +67,7 @@ UserAssociations =
   removeSocketFromRoom : (id, roomName) ->
     @userState.removeSocketFromRoom id, roomName
     .catch (e) =>
-      @consistencyFailure e, { roomName, id, type : 'socket' }
+      @consistencyFailure e, { roomName, id, type : 'userSockets' }
       return 1
 
   # @private
@@ -143,7 +143,7 @@ UserAssociations =
   removeSocketFromServer : (id) ->
     @removeUserSocket id
     .catch (e) =>
-      @consistencyFailure e, { id, type : 'socket' }
+      @consistencyFailure e, { id, type : 'userSockets' }
 
   # @private
   removeUserSocketsFromRoom : (roomName) ->
