@@ -49,7 +49,7 @@ UserAssociations =
   leaveChannel : (id, channel) ->
     @transport.leaveChannel id, channel
     .catch (e) =>
-      @consistencyFailure e, {roomName : channel, id, op : 'leaveChannel'}
+      @consistencyFailure e, {roomName : channel, id, type : 'channel'}
 
   # @private
   socketLeaveChannels : (id, channels) ->
@@ -67,7 +67,7 @@ UserAssociations =
   removeSocketFromRoom : (id, roomName) ->
     @userState.removeSocketFromRoom id, roomName
     .catch (e) =>
-      @consistencyFailure e, { roomName, id, op : 'removeSocketFromRoom' }
+      @consistencyFailure e, { roomName, id, type : 'socket' }
       return 1
 
   # @private
@@ -86,7 +86,7 @@ UserAssociations =
     .then (room) =>
       room.leave @userName
     .catch (e) =>
-      @consistencyFailure e, { roomName, op : 'leaveRoom' }
+      @consistencyFailure e, { roomName, type : 'roomUserlist' }
 
   # @private
   joinSocketToRoom : (id, roomName) ->
@@ -123,16 +123,6 @@ UserAssociations =
   # @private
   removeUserSocket : (id) ->
     @userState.removeSocket id
-    .then (res) =>
-      @state.removeSocket id
-      .return res
-    .catch (e) =>
-      @consistencyFailure e, { id, op : 'removeUserSocket' }
-      return []
-
-  # @private
-  removeSocketFromServer : (id) ->
-    @removeUserSocket id
     .spread (roomsRemoved = [], joinedSockets = [], nconnected = 0) =>
       @socketLeaveChannels id, roomsRemoved
       .then =>
@@ -144,13 +134,22 @@ UserAssociations =
             .then =>
               @userLeftRoomReport @userName, roomName
         , { concurrency : asyncLimit }
-        .then => @socketDisconnectEcho id, nconnected
+        .then =>
+          @socketDisconnectEcho id, nconnected
+    .then =>
+      @state.removeSocket id
+
+  # @private
+  removeSocketFromServer : (id) ->
+    @removeUserSocket id
+    .catch (e) =>
+      @consistencyFailure e, { id, type : 'socket' }
 
   # @private
   removeUserSocketsFromRoom : (roomName) ->
     @userState.removeAllSocketsFromRoom roomName
     .catch (e) =>
-      @consistencyFailure e, { roomName, op : 'removeUserSocketsFromRoom' }
+      @consistencyFailure e, { roomName, type : 'userSockets' }
 
   # @private
   removeFromRoom : (roomName) ->

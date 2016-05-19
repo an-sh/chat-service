@@ -80,7 +80,7 @@ CommandBinder =
   bindCommand : (id, name, fn) ->
     cmd = @makeCommand name, fn
     info = { id : id }
-    @transport.bind id, name, ->
+    @transport.bindHandler id, name, ->
       [args, cb] = possiblyCallback arguments
       cmd args..., info, cb
 

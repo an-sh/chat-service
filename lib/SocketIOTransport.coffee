@@ -118,7 +118,7 @@ class SocketIOTransport
     .timeout 5000
 
   # @private
-  bind : (id, name, fn) ->
+  bindHandler : (id, name, fn) ->
     socket = @getSocketObject id
     if socket
       socket.on name, fn
@@ -126,6 +126,12 @@ class SocketIOTransport
   # @private
   getSocketObject : (id) ->
     @nsp.connected[id]
+
+  # @private
+  getSocketRooms : (id) ->
+    socket = @getSocketObject id
+    unless socket then return
+    return socket.rooms()
 
   # @private
   sendToChannel : (channel, args...) ->

@@ -27,7 +27,7 @@ module.exports = ->
     cleanup chatService, [socket1, socket2, socket3], cb
     chatService = socket1 = socket2 = socket3 = null
 
-  it 'should emit consistencyFailure on leaveChannel errors', (done) ->
+  it 'should emit consistencyFailure on leave channel errors', (done) ->
     ChatService = rewire '../index.js'
     chatService = new ChatService { port }
     orig = chatService.transport.leaveChannel
@@ -36,7 +36,7 @@ module.exports = ->
       .then -> throw new Error()
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
-      socket1.on 'loginConfirmed', ->
+      socket1.on 'loginConfirmed', (userName, { id }) ->
         socket1.emit 'roomJoin', roomName1, (error) ->
           expect(error).not.ok
           async.parallel [
@@ -48,12 +48,16 @@ module.exports = ->
               chatService.on 'consistencyFailure', (error, data) ->
                 expect(error).ok
                 expect(data).an('Object')
-                expect(data).include.keys 'roomName', 'userName', 'id', 'op'
+                expect(data).include.keys 'roomName', 'userName', 'id', 'type'
+                expect(data.roomName).equal(roomName1)
+                expect(data.userName).equal(user1)
+                expect(data.id).equal(id)
+                expect(data.type).equal('channel')
                 chatService.transport.leaveChannel = orig
                 cb()
           ], done
 
-  it 'should emit consistencyFailure on roomAccessCheck errors', (done) ->
+  it 'should emit consistencyFailure on room access check errors', (done) ->
     ChatService = rewire '../index.js'
     chatService = new ChatService { port }
     chatService.addRoom roomName1, null, ->
@@ -73,7 +77,10 @@ module.exports = ->
             chatService.once 'consistencyFailure', (error, data) ->
               expect(error).ok
               expect(data).an('Object')
-              expect(data).include.keys 'roomName', 'userName', 'op'
+              expect(data).include.keys 'roomName', 'userName', 'type'
+              expect(data.roomName).equal(roomName1)
+              expect(data.userName).equal(user1)
+              expect(data.type).equal('roomUserlist')
               cb()
         ], (error) ->
           expect(error).not.ok
@@ -88,17 +95,20 @@ module.exports = ->
               chatService.once 'consistencyFailure', (error, data) ->
                 expect(error).ok
                 expect(data).an('Object')
-                expect(data).include.keys 'roomName', 'userName', 'op'
+                expect(data).include.keys 'roomName', 'userName', 'type'
+                expect(data.roomName).equal(roomName1)
+                expect(data.userName).equal(user1)
+                expect(data.type).equal('roomUserlist')
                 room.roomState.hasInList = orig
                 cb()
           ], done
 
-  it 'should emit consistencyFailure on removeSocketFromRoom errors', (done) ->
+  it 'should emit consistencyFailure on socket leave errors', (done) ->
     ChatService = rewire '../index.js'
     chatService = new ChatService { port }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
-      socket1.on 'loginConfirmed', ->
+      socket1.on 'loginConfirmed', (userName, { id }) ->
         socket1.emit 'roomJoin', roomName1, ->
           chatService.state.getUser user1
           .then (user) ->
@@ -115,12 +125,16 @@ module.exports = ->
                 chatService.on 'consistencyFailure', (error, data) ->
                   expect(error).ok
                   expect(data).an('Object')
-                  expect(data).include.keys 'roomName', 'userName', 'op', 'id'
+                  expect(data).include.keys 'roomName', 'userName', 'id', 'type'
+                  expect(data.roomName).equal(roomName1)
+                  expect(data.userName).equal(user1)
+                  expect(data.id).equal(id)
+                  expect(data.type).equal('socket')
                   user.userState.removeSocketFromRoom = orig
                   cb()
             ], done
 
-  it 'should emit consistencyFailure on leaveRoom errors', (done) ->
+  it 'should emit consistencyFailure on leave room errors', (done) ->
     ChatService = rewire '../index.js'
     chatService = new ChatService { port }
     chatService.addRoom roomName1, null, ->
@@ -142,17 +156,20 @@ module.exports = ->
                 chatService.on 'consistencyFailure', (error, data) ->
                   expect(error).ok
                   expect(data).an('Object')
-                  expect(data).include.keys 'roomName', 'userName', 'op'
+                  expect(data).include.keys 'roomName', 'userName', 'type'
+                  expect(data.roomName).equal(roomName1)
+                  expect(data.userName).equal(user1)
+                  expect(data.type).equal('roomUserlist')
                   room.leave = orig
                   cb()
             ], done
 
-  it 'should emit consistencyFailure on removeUserSocket errors', (done) ->
+  it 'should emit consistencyFailure on remove socket errors', (done) ->
     ChatService = rewire '../index.js'
     chatService = new ChatService { port }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
-      socket1.on 'loginConfirmed', ->
+      socket1.on 'loginConfirmed', (userName, { id }) ->
         socket1.emit 'roomJoin', roomName1, ->
           chatService.state.getUser user1
           .then (user) ->
@@ -164,12 +181,14 @@ module.exports = ->
             chatService.on 'consistencyFailure', (error, data) ->
               expect(error).ok
               expect(data).an('Object')
-              expect(data).include.keys 'userName', 'op', 'id'
+              expect(data).include.keys 'userName', 'id', 'type'
+              expect(data.userName).equal(user1)
+              expect(data.id).equal(id)
+              expect(data.type).equal('socket')
               user.userState.removeSocket = orig
               done()
 
-  it 'should emit consistencyFailure on removeUserSocketsFromRoom errors'
-  , (done) ->
+  it 'should emit consistencyFailure on on remove from room errors', (done) ->
     ChatService = rewire '../index.js'
     chatService = new ChatService { port }
     chatService.addRoom roomName1, null, ->
@@ -189,6 +208,9 @@ module.exports = ->
             chatService.on 'consistencyFailure', (error, data) ->
               expect(error).ok
               expect(data).an('Object')
-              expect(data).include.keys 'roomName', 'userName', 'op'
+              expect(data).include.keys 'roomName', 'userName', 'type'
+              expect(data.roomName).equal(roomName1)
+              expect(data.userName).equal(user1)
+              expect(data.type).equal('userSockets')
               user.userState.removeAllSocketsFromRoom = orig
               done()

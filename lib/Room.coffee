@@ -32,7 +32,7 @@ RoomPermissions =
         else
           @roomState.whitelistOnlyGet()
     .catch (e) =>
-      @consistencyFailure e, { userName, op : 'roomAccessCheck' }
+      @consistencyFailure e, { userName }
 
   # @private
   hasAddChangedCurrentAccess : (userName, listName) ->
@@ -46,7 +46,7 @@ RoomPermissions =
         else
           true
     .catch (e) =>
-      @consistencyFailure e, { userName, op : 'roomAccessCheck' }
+      @consistencyFailure e, { userName }
 
   # @private
   getModeChangedCurrentAccess : (value) ->
@@ -140,6 +140,7 @@ class Room
   # @private
   consistencyFailure : (error, operationInfo = {}) ->
     operationInfo.roomName = @roomName
+    operationInfo.type = 'roomUserlist'
     @server.emit 'consistencyFailure', error, operationInfo
     return
 
