@@ -66,7 +66,7 @@ ServiceAPI =
     .return()
     .asCallback cb
 
-  # Disconnects all user sockets for this service instance.
+  # Disconnects user's sockets for this service instance.
   #
   # @param userName [String] User name.
   # @param cb [Callback] Optional callback.

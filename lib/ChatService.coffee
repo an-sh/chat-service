@@ -146,7 +146,8 @@ class ServerMessages
 # {ChatService#constructor} `useRawErrorObjects` option. See
 # {ChatServiceError} for an errors list. Some messages will echo
 # {ServerMessages} to other user's sockets or trigger sending
-# {ServerMessages} to other users.
+# {ServerMessages} to other users. It is also possible to run this
+# commands server-side using {ServiceAPI~execUserCommand}.
 #
 # @example Socket.io client example
 #   socket = ioClient.connect url, params
