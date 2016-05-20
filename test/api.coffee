@@ -59,6 +59,43 @@ module.exports = ->
           expect(data).true
           done()
 
+  it 'should support deleting users', (done) ->
+    chatService = startService()
+    socket1 = clientConnect user1
+    socket1.on 'loginConfirmed', ->
+      chatService.disconnectUserSockets user1
+      socket1.on 'disconnect', ->
+        chatService.hasUser user1, (error, data) ->
+          expect(error).not.ok
+          expect(data).true
+          chatService.deleteUser user1, (error) ->
+            expect(error).not.ok
+            chatService.hasUser user1, (error, data) ->
+              expect(error).not.ok
+              expect(data).false
+              done()
+
+  it 'should not delete connected users', (done) ->
+    chatService = startService()
+    socket1 = clientConnect user1
+    socket1.on 'loginConfirmed', ->
+      chatService.deleteUser user1, (error) ->
+        expect(error).ok
+        done()
+
+  it 'should support deleting rooms', (done) ->
+    chatService = startService()
+    chatService.addRoom roomName1, { owner : user1 }, ->
+      chatService.hasRoom roomName1, (error, data) ->
+        expect(error).not.ok
+        expect(data).true
+        chatService.deleteRoom roomName1, (error, data) ->
+          expect(error).not.ok
+          chatService.hasRoom roomName1, (error, data) ->
+            expect(error).not.ok
+            expect(data).false
+            done()
+
   it 'should check user names before adding', (done) ->
     chatService = startService()
     chatService.addUser 'user:1', null, (error, data) ->

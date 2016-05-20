@@ -64,6 +64,9 @@ class DirectMessaging
   initState : (state) ->
     @directMessagingState.initState state
 
+  removeState : ->
+    @directMessagingState.removeState()
+
   # @private
   message : (author, msg, bypassPermissions) ->
     @checkAcess author, bypassPermissions

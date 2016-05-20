@@ -261,6 +261,10 @@ class DirectMessagingStateMemory extends ListsStateMemory
     Promise.resolve()
 
   # @private
+  removeState : ->
+    Promise.resolve()
+
+  # @private
   hasList : (listName) ->
     return listName in [ 'whitelist', 'blacklist' ]
 
@@ -451,6 +455,12 @@ class MemoryState
       .return user
     else
       Promise.resolve user
+
+  # @private
+  removeUser : (name) ->
+    if @users[name]
+      delete @users[name]
+    Promise.resolve()
 
 
 module.exports = MemoryState

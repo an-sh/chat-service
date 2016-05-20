@@ -6,8 +6,9 @@ class ChatServiceError extends Error
 
   # @property [Object] Error strings.
   @::errorStrings =
-    badArgument : 'Bad argument %s value %j'
+    badArgument : 'Bad argument at position %d, value %j'
     invalidName : 'String %s contains invalid characters'
+    invalidSocket : 'Socket %s is not connected'
     noCommand : 'No such command %s'
     noList : 'No such list %s'
     noLogin : 'No login provided'
@@ -22,6 +23,7 @@ class ChatServiceError extends Error
     timeout : 'Server operation timeout'
     unknownError : 'Unknown error %s occurred'
     userExists : 'User %s already exists'
+    userOnline : 'User %s is online'
     wrongArgumentsCount : 'Expected %s arguments, got %s'
 
   # @property [String] Error key in errorStrings.

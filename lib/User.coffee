@@ -22,7 +22,7 @@ class User extends DirectMessaging
 
   # @private
   constructor : (@server, @userName) ->
-    super @server, @userName
+    super
     @state = @server.state
     @transport = @server.transport
     @validator = @server.validator
@@ -35,6 +35,14 @@ class User extends DirectMessaging
     @userState = new State @server, @userName
     @lockTTL = @state.lockTTL
     @echoChannel = @userState.echoChannel
+
+  # @private
+  initState : (state) ->
+    super
+
+  # @private
+  removeState : ->
+    super
 
   # @private
   processMessage : (msg, setTimestamp = false) ->

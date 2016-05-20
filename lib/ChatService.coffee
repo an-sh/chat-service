@@ -288,7 +288,7 @@ class UserCommands
   # specified id was deleted due to history limit, it returns messages
   # starting from the oldest available.
   # @param roomName [String] Room name.
-  # @param id [Number] Message id.
+  # @param id [Number] Starting message id.
   # @param limit [Number] Maximum number of messages to return. The
   #   maximum number is limited by {ChatService#constructor}
   #   `historyMaxGetMessages` option.

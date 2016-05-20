@@ -47,7 +47,7 @@ stateOperations =
   removeState : ->
     @stateReset null
     .then =>
-      @redis.del @makeKeyName('exists')
+      @redis.del @makeKeyName('exists'), @makeKeyName('isInit')
 
   # @private
   startRemoving : ->
@@ -655,6 +655,10 @@ class RedisState
     user = new User @server, name
     user.initState state
     .return user
+
+  # @private
+  removeUser : (name) ->
+    Promise.resolve()
 
 
 module.exports = RedisState

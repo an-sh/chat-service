@@ -28,7 +28,7 @@ ServiceAPI =
   #   command (except {UserCommands#roomJoin}) bypassing any
   #   permissions checking, default is `false`.
   #
-  # @return [Promise]
+  # @return [Promise<Array>] Array of a command results.
   execUserCommand : (context, command, args...) ->
     if _.isObject context
       userName = context.userName
@@ -64,6 +64,41 @@ ServiceAPI =
     .then =>
       @state.addUser userName, state
     .return()
+    .asCallback cb
+
+  # Deletes an offline user. Will raise an error if user has online
+  # sockets.
+  #
+  # @param userName [String] User name.
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise]
+  deleteUser : (userName, cb) ->
+    @state.getUser userName
+    .then (user) =>
+      user.listOwnSockets()
+      .then (sockets) =>
+        if sockets and _.size(sockets) > 0
+          error = new ChatServiceError 'userOnline', userName
+          Promise.reject error
+        else
+          Promise.all [
+            user.removeState()
+            @state.removeUser userName
+          ]
+    .return()
+    .asCallback cb
+
+  # Checks user existence, returns false on errors.
+  #
+  # @param userName [String] User name.
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise<Boolean>]
+  hasUser : (userName, cb) ->
+    @state.getUser userName
+    .then -> true
+    .catch -> false
     .asCallback cb
 
   # Disconnects user's sockets for this service instance.
@@ -110,6 +145,18 @@ ServiceAPI =
   deleteRoom : (roomName, cb) ->
     @execUserCommand true, 'roomDelete', roomName
     .return()
+    .asCallback cb
+
+  # Checks room existence, returns false on errors.
+  #
+  # @param roomName [String] Room name.
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise<Boolean>]
+  hasRoom : (roomName, cb) ->
+    @state.getRoom roomName
+    .then -> true
+    .catch -> false
     .asCallback cb
 
   # Changes a room owner.

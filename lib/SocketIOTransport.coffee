@@ -151,7 +151,7 @@ class SocketIOTransport
   joinChannel : (id, channel) ->
     socket = @getSocketObject id
     unless socket
-      Promise.reject new ChatServiceError 'serverError', 500
+      Promise.reject new ChatServiceError 'invalidSocket', id
     else
       Promise.fromCallback (fn) ->
         socket.join channel, fn
