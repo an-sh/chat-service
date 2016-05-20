@@ -6,6 +6,7 @@ rewire = require 'rewire'
 
 { cleanup
   clientConnect
+  setCustomCleanup
 } = require './testutils.coffee'
 
 { port
@@ -54,13 +55,16 @@ module.exports = ->
   it 'should rollback a failed room join', (done) ->
     ChatService = rewire '../index.js'
     chatService = new ChatService { port }
-    orig = chatService.transport.joinChannel
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
+        orig = chatService.transport.joinChannel
         chatService.transport.joinChannel = ->
           orig.apply chatService.transport, arguments
           .then -> throw new Error()
+        setCustomCleanup (cb) ->
+          chatService.transport.joinChannel = orig
+          chatService.close cb
         socket1.emit 'roomJoin', roomName1, (error) ->
           expect(error).ok
           chatService.execUserCommand true, 'roomGetAccessList'
@@ -68,7 +72,7 @@ module.exports = ->
             expect(error).not.ok
             expect(data).an('Array')
             expect(data).lengthOf(0)
-            chatService.close done
+            done()
 
   it 'should rollback a failed socket connect', (done) ->
     ChatService = rewire '../index.js'
@@ -77,6 +81,9 @@ module.exports = ->
     chatService.transport.joinChannel = ->
       orig.apply chatService.transport, arguments
       .then -> throw new Error()
+    setCustomCleanup (cb) ->
+      chatService.transport.joinChannel = orig
+      chatService.close cb
     socket1 = clientConnect user1
     socket1.on 'loginRejected', (error) ->
       expect(error).ok
@@ -160,6 +167,6 @@ module.exports = ->
       .then -> throw new Error()
     process.nextTick ->
       chatService.close()
-      .catch  (error) ->
+      .catch (error) ->
         expect(error).ok
         done()

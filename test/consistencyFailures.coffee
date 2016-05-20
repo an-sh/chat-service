@@ -6,6 +6,7 @@ rewire = require 'rewire'
 
 { cleanup
   clientConnect
+  setCustomCleanup
 } = require './testutils.coffee'
 
 { port
@@ -34,6 +35,9 @@ module.exports = ->
     chatService.transport.leaveChannel = ->
       orig.apply chatService.transport, arguments
       .then -> throw new Error()
+    setCustomCleanup (cb) ->
+      chatService.transport.leaveChannel = orig
+      chatService.close cb
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (userName, { id }) ->
@@ -53,7 +57,6 @@ module.exports = ->
                 expect(data.userName).equal(user1)
                 expect(data.id).equal(id)
                 expect(data.type).equal('transportChannel')
-                chatService.transport.leaveChannel = orig
                 cb()
           ], done
 
@@ -66,6 +69,9 @@ module.exports = ->
         room.roomState.hasInList = ->
           orig.apply room.roomState, arguments
           .then -> throw new Error()
+        setCustomCleanup (cb) ->
+          room.roomState.hasInList = orig
+          chatService.close cb
         async.parallel [
           (cb) ->
             chatService.execUserCommand true
@@ -99,7 +105,6 @@ module.exports = ->
                 expect(data.roomName).equal(roomName1)
                 expect(data.userName).equal(user1)
                 expect(data.type).equal('roomUserlist')
-                room.roomState.hasInList = orig
                 cb()
           ], done
 
@@ -116,6 +121,9 @@ module.exports = ->
             user.userState.removeSocketFromRoom = ->
               orig.apply user.userState, arguments
               .then -> throw new Error()
+            setCustomCleanup (cb) ->
+              user.userState.removeSocketFromRoom =  orig
+              chatService.close cb
             async.parallel [
               (cb) ->
                 socket1.emit 'roomLeave', roomName1, (error, data) ->
@@ -130,7 +138,6 @@ module.exports = ->
                   expect(data.userName).equal(user1)
                   expect(data.id).equal(id)
                   expect(data.type).equal('userSockets')
-                  user.userState.removeSocketFromRoom = orig
                   cb()
             ], done
 
@@ -147,6 +154,9 @@ module.exports = ->
             room.leave = ->
               orig.apply room, arguments
               .then -> throw new Error()
+            setCustomCleanup (cb) ->
+              room.leave = orig
+              chatService.close cb
             async.parallel [
               (cb) ->
                 socket1.emit 'roomLeave', roomName1, (error, data) ->
@@ -160,7 +170,6 @@ module.exports = ->
                   expect(data.roomName).equal(roomName1)
                   expect(data.userName).equal(user1)
                   expect(data.type).equal('roomUserlist')
-                  room.leave = orig
                   cb()
             ], done
 
@@ -177,6 +186,9 @@ module.exports = ->
             user.userState.removeSocket = ->
               orig.apply user.userState, arguments
               .then -> throw new Error()
+            setCustomCleanup (cb) ->
+              user.userState.removeSocket = orig
+              chatService.close cb
             socket1.disconnect()
             chatService.on 'consistencyFailure', (error, data) ->
               expect(error).ok
@@ -185,7 +197,6 @@ module.exports = ->
               expect(data.userName).equal(user1)
               expect(data.id).equal(id)
               expect(data.type).equal('userSockets')
-              user.userState.removeSocket = orig
               done()
 
   it 'should emit consistencyFailure on on remove from room errors', (done) ->
@@ -201,6 +212,9 @@ module.exports = ->
             user.userState.removeAllSocketsFromRoom = ->
               orig.apply user.userState, arguments
               .then -> throw new Error()
+            setCustomCleanup (cb) ->
+              user.userState.removeAllSocketsFromRoom = orig
+              chatService.close cb
             chatService.execUserCommand true
             , 'roomAddToList', roomName1, 'blacklist', [user1]
             , (error) ->
@@ -212,5 +226,4 @@ module.exports = ->
               expect(data.roomName).equal(roomName1)
               expect(data.userName).equal(user1)
               expect(data.type).equal('userSockets')
-              user.userState.removeAllSocketsFromRoom = orig
               done()

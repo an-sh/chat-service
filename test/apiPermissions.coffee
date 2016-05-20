@@ -58,14 +58,6 @@ module.exports = ->
       expect(data).not.ok
       done()
 
-  it 'should allow deleting rooms', (done) ->
-    chatService = startService()
-    chatService.addRoom roomName1, null, (error, data) ->
-      chatService.deleteRoom roomName1, (error, data) ->
-        expect(error).not.ok
-        expect(data).not.ok
-        done()
-
   it 'should get a room mode', (done) ->
     chatService = startService()
     chatService.addRoom roomName1, { whitelistOnly : true }, ->

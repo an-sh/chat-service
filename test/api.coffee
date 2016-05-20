@@ -91,6 +91,7 @@ module.exports = ->
         expect(data).true
         chatService.deleteRoom roomName1, (error, data) ->
           expect(error).not.ok
+          expect(data).not.ok
           chatService.hasRoom roomName1, (error, data) ->
             expect(error).not.ok
             expect(data).false

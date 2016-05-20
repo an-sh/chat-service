@@ -131,7 +131,7 @@ module.exports = ->
           expect(data).null
           done()
 
-  it 'should allow not existing deleting from lists' , (done) ->
+  it 'should allow non-existing deleting from lists' , (done) ->
     chatService = startService { enableDirectMessages : true }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
