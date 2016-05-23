@@ -3,21 +3,22 @@ Promise = require 'bluebird'
 _ = require 'lodash'
 
 
+# @private
 # @mixin
-# API for service maintenance.
-MaintenanceAPI =
+# TODO API for a service maintenance.
+MaintenanceAPI = {}
 
   # TODO
-  roomUserlistSync : (roomName, userName = null) ->
+  # roomUserlistSync : (roomName, userName = null) ->
 
   # TODO
-  userSocketsSync : (userName, socket = null) ->
+  # userSocketsSync : (userName, socket = null) ->
 
   # TODO
-  instanceRecover : (id) ->
+  # instanceRecover : (id) ->
 
   # TODO
-  getInstanceHeartbeat : (id) ->
+  # getInstanceHeartbeat : (id) ->
 
 
 

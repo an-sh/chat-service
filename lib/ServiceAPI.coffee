@@ -79,8 +79,7 @@ ServiceAPI =
       user.listOwnSockets()
       .then (sockets) =>
         if sockets and _.size(sockets) > 0
-          error = new ChatServiceError 'userOnline', userName
-          Promise.reject error
+          Promise.reject new ChatServiceError 'userOnline', userName
         else
           Promise.all [
             user.removeState()

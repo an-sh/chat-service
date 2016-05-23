@@ -385,7 +385,6 @@ class UserCommands
 
 # Service object.
 # @extend ServiceAPI
-# @extend MaintenanceAPI
 class ChatService extends EventEmitter
 
   extend @, ServiceAPI, MaintenanceAPI
