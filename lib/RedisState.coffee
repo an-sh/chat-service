@@ -204,7 +204,9 @@ local id = KEYS[1]
 local sockets = KEYS[2]
 local prefix = ARGV[1]
 local socketid = ARGV[2]
+
 local rooms = redis.call('SMEMBERS', id)
+redis.call('DEL', id)
 
 redis.call('SREM', sockets, socketid)
 local nconnected = redis.call('SCARD', sockets)
@@ -438,7 +440,7 @@ class DirectMessagingStateRedis extends ListsStateRedis
   # @private
   constructor : (@server, @userName) ->
     @name = @userName
-    @prefix = 'user'
+    @prefix = 'users'
     @exitsErrorName = 'userExists'
     @redis = @server.redis
 
@@ -468,7 +470,7 @@ class UserStateRedis
   # @private
   constructor : (@server, @userName) ->
     @name = @userName
-    @prefix = 'user'
+    @prefix = 'users'
     @redis = @server.redis
     @echoChannel = @makeEchoChannelName @userName
 
@@ -593,7 +595,7 @@ class RedisState
 
   # @private
   hasUser : (name) ->
-    @redis.get @makeKeyName('user', name, 'isInit')
+    @redis.get @makeKeyName('users', name, 'isInit')
 
   # @private
   close : ->
@@ -624,11 +626,11 @@ class RedisState
 
   # @private
   addSocket : (id, userName) ->
-    @redis.hset @makeKeyName('instance', @instanceUID, 'sockets'), id, userName
+    @redis.hset @makeKeyName('instances', @instanceUID, 'sockets'), id, userName
 
   # @private
   removeSocket : (id) ->
-    @redis.hdel @makeKeyName('instance', @instanceUID, 'sockets'), id
+    @redis.hdel @makeKeyName('instances', @instanceUID, 'sockets'), id
 
   # @private
   getOrAddUser : (name, state) ->
