@@ -37,7 +37,25 @@ startService = (opts, hooks) ->
   new ChatService options, hooks
 
 
-redis = new Redis config.redisConnect
+if process.env.TEST_REDIS_CLUSTER == 'true'
+  redis = new Redis.Cluster config.redisClusterConnect
+  checkDB = (done) ->
+    redis.to('masters').call('dbsize').then (data) ->
+      if data and data.length
+        Promise.reject new Error 'Unclean Redis DB'
+    .asCallback done
+  cleanDB = ->
+    redis.to('masters').call('flushdb')
+else
+  redis = new Redis config.redisConnect
+  checkDB = (done) ->
+    redis.dbsize (error, data) ->
+      if error then return done error
+      if data then return done new Error 'Unclean Redis DB'
+      done()
+  cleanDB = ->
+    redis.flushall()
+
 
 cleanup = (chatService, sockets, done) ->
   Promise.try ->
@@ -50,14 +68,8 @@ cleanup = (chatService, sockets, done) ->
       chatService.close()
   .finally ->
     customCleanup = null
-    redis.flushall()
+    cleanDB()
   .asCallback done
-
-checkDB = (done) ->
-  redis.dbsize (error, data) ->
-    if error then return done error
-    if data then return done new Error 'Unclean Redis DB'
-    done()
 
 
 module.exports = {

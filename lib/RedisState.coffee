@@ -567,10 +567,10 @@ class RedisState
   # @private
   constructor : (@server, @options = {}) ->
     @closed = false
-    redisOptions = _.castArray @options.redisOptions
     if @options.useCluster
-      @redis = new Redis.Cluster redisOptions...
+      @redis = new Redis.Cluster @options.redisOptions...
     else
+      redisOptions = _.castArray @options.redisOptions
       @redis = new Redis redisOptions...
     @RoomState = RoomStateRedis
     @UserState = UserStateRedis
