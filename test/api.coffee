@@ -155,3 +155,29 @@ module.exports = ->
               expect(data).ownProperty('historyMaxSize')
               expect(data.historyMaxSize).equal(sz)
               done()
+
+  it 'should support room list checking', (done) ->
+    chatService = startService()
+    chatService.addRoom roomName1, { adminlist : [user1] }, ->
+      chatService.roomHasInList roomName1, 'adminlist', user1
+      , (error, data) ->
+        expect(error).not.ok
+        expect(data).true
+        chatService.roomHasInList roomName1, 'adminlist', user2
+        , (error, data) ->
+          expect(error).not.ok
+          expect(data).false
+          done()
+
+  it 'should support user list checking', (done) ->
+    chatService = startService()
+    chatService.addUser user1, { blacklist : [user2] }, ->
+      chatService.userHasInList user1, 'blacklist', user2
+      , (error, data) ->
+        expect(error).not.ok
+        expect(data).true
+        chatService.userHasInList user1, 'blacklist', user3
+        , (error, data) ->
+          expect(error).not.ok
+          expect(data).false
+          done()

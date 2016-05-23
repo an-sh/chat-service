@@ -28,7 +28,7 @@ ServiceAPI =
   #   command (except {UserCommands#roomJoin}) bypassing any
   #   permissions checking, default is `false`.
   #
-  # @return [Promise<Array>] Array of a command results.
+  # @return [Promise<Array>] Array of command results.
   execUserCommand : (context, command, args...) ->
     if _.isObject context
       userName = context.userName
@@ -101,6 +101,20 @@ ServiceAPI =
     .catch -> false
     .asCallback cb
 
+  # Checks for a name existence in an user list.
+  #
+  # @param userName [String] User name.
+  # @param listName [String] List name.
+  # @param item [String] List element.
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise<Boolean>]
+  userHasInList : (userName, listName, item, cb) ->
+    @state.getUser userName
+    .then (user) ->
+      user.directMessagingState.hasInList listName, item
+    .asCallback cb
+
   # Disconnects user's sockets for this service instance.
   #
   # @param userName [String] User name.
@@ -157,6 +171,20 @@ ServiceAPI =
     @state.getRoom roomName
     .then -> true
     .catch -> false
+    .asCallback cb
+
+  # Checks for a name existence in a room list.
+  #
+  # @param roomName [String] Room name.
+  # @param listName [String] List name.
+  # @param item [String] List element.
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise<Boolean>]
+  roomHasInList : (roomName, listName, item, cb) ->
+    @state.getRoom roomName
+    .then (room) ->
+      room.roomState.hasInList listName, item
     .asCallback cb
 
   # Changes a room owner.

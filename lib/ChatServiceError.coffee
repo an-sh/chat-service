@@ -19,7 +19,6 @@ class ChatServiceError extends Error
     notAllowed : 'Action is not allowed'
     notJoined : 'Not joined to room %s'
     roomExists : 'Room %s already exists'
-    serverError : 'Server error %s'
     timeout : 'Server operation timeout'
     unknownError : 'Unknown error %s occurred'
     userExists : 'User %s already exists'
