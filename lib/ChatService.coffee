@@ -596,9 +596,10 @@ class ChatService extends EventEmitter
   startServer : ->
     if @hooks.onStart
       @hooks.onStart @, (error) =>
-        if error
-          @state.close()
-          .finally => @emit 'onStartError', error
+        if error and not @closed
+          @closed = true
+          Promise.join @transport.close(), @state.close(), =>
+            @emit 'closed', error
         else
           @transport.setEvents()
     else
@@ -625,7 +626,7 @@ class ChatService extends EventEmitter
         Promise.reject error
     .finally =>
       @state.close()
-      .finally => @emit 'closed'
+      .finally => @emit 'closed', null
     .asCallback done
 
 

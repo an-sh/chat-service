@@ -119,13 +119,13 @@ module.exports = ->
           expect(error).ok
           done()
 
-  it 'should emit onStartError on onStart hook error', (done) ->
+  it 'should emit closed on onStart hook error', (done) ->
     ChatService = rewire '../index.js'
     onStart = (chatService, cb) ->
       expect(chatService).instanceof(ChatService)
       cb new Error()
     chatService = new ChatService { port }, { onStart }
-    chatService.on 'onStartError', (error) ->
+    chatService.on 'closed', (error) ->
       expect(error).ok
       done()
 
@@ -138,7 +138,7 @@ module.exports = ->
       .then -> throw new Error()
     process.nextTick ->
       chatService.close()
-      .catch  (error) ->
+      .catch (error) ->
         expect(error).ok
         done()
 
