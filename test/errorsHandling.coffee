@@ -151,3 +151,34 @@ module.exports = ->
       .catch (error) ->
         expect(error).ok
         done()
+
+  it 'should cleanup instance data', (done) ->
+    chatService = startService()
+    uid = chatService.instanceUID
+    chatService.addRoom roomName1, null, ->
+      socket1 = clientConnect user1
+      socket1.on 'loginConfirmed', ->
+        socket1.emit 'roomJoin', roomName1, ->
+          socket2 = clientConnect user2
+          socket2.on 'loginConfirmed', ->
+            chatService.instanceRecover uid, (error) ->
+              expect(error).not.ok
+              async.parallel [
+                (cb) ->
+                  chatService.execUserCommand user1, 'listOwnSockets'
+                  , (error, data) ->
+                    expect(error).not.ok
+                    expect(data).empty
+                    cb()
+                (cb) ->
+                  chatService.execUserCommand user2, 'listOwnSockets'
+                  , (error, data) ->
+                    expect(error).not.ok
+                    expect(data).empty
+                    cb()
+                (cb) ->
+                  chatService.execUserCommand true, 'roomGetAccessList'
+                  , roomName1, 'userlist', (error, data) ->
+                    expect(error).not.ok
+                    cb()
+              ] , done

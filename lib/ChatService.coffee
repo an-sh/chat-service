@@ -541,6 +541,9 @@ class ChatService extends EventEmitter
   # @property [Object or null] State ioredis instance.
   redis: null
 
+  # @property [String] Service instance UID.
+  instanceUID: ''
+
   # @private
   # @nodoc
   setOptions : ->

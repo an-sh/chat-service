@@ -352,7 +352,6 @@ class UserStateMemory
       socketsset.delete id
       njoined = socketsset.length
       joinedSockets[idx] = njoined
-    roomsset = roomsset.difference removedRooms
     @socketsToRooms.delete id
     nconnected = @socketsToRooms.length
     Promise.resolve [ removedRooms, joinedSockets, nconnected ]
@@ -430,7 +429,7 @@ class MemoryState
 
   # @private
   getInstanceSockets : (uid) ->
-    @sockets.toObject()
+    Promise.resolve @sockets.toObject()
 
   # @private
   getOrAddUser : (name, state) ->
