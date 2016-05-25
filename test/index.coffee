@@ -1,7 +1,7 @@
 
-testutils = require './testutils.coffee'
-config = require './config.coffee'
 _ = require 'lodash'
+config = require './config.coffee'
+testutils = require './testutils.coffee'
 
 
 before testutils.checkDB
@@ -36,6 +36,6 @@ describe 'Chat service.', ->
 
       describe 'Validation', require './validation.coffee'
 
-  describe 'Errors handling', require './errorsHandling.coffee'
+      describe 'Errors handling', require './errorsHandling.coffee'
 
   describe 'Consistency failures', require './consistencyFailures.coffee'

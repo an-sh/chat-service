@@ -1,12 +1,13 @@
 
+ChatService = require('../index.js')
 _ = require 'lodash'
 async = require 'async'
 expect = require('chai').expect
-rewire = require 'rewire'
 
 { cleanup
   clientConnect
   setCustomCleanup
+  startService
 } = require './testutils.coffee'
 
 { port
@@ -29,42 +30,33 @@ module.exports = ->
     chatService = socket1 = socket2 = socket3 = null
 
   it 'should check state constructor type', (done) ->
-    ChatService = rewire '../index.js'
     try
-      chatService = new ChatService { port, state : {} }
+      chatService = startService { state : {} }, null
     catch error
       expect(error).ok
       process.nextTick -> done()
 
   it 'should check transport constructor type', (done) ->
-    ChatService = rewire '../index.js'
     try
-      chatService = new ChatService { port, transport : {} }
+      chatService = startService { transport : {} }, null
     catch error
       expect(error).ok
       process.nextTick -> done()
 
   it 'should check adapter constructor type', (done) ->
-    ChatService = rewire '../index.js'
     try
-      chatService = new ChatService { port, adapter : {} }
+      chatService = startService { adapter : {} }, null
     catch error
       expect(error).ok
       process.nextTick -> done()
 
   it 'should rollback a failed room join', (done) ->
-    ChatService = rewire '../index.js'
-    chatService = new ChatService { port }
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
-        orig = chatService.transport.joinChannel
         chatService.transport.joinChannel = ->
-          orig.apply chatService.transport, arguments
-          .then -> throw new Error()
-        setCustomCleanup (cb) ->
-          chatService.transport.joinChannel = orig
-          chatService.close cb
+          throw new Error()
         socket1.emit 'roomJoin', roomName1, (error) ->
           expect(error).ok
           chatService.execUserCommand true, 'roomGetAccessList'
@@ -75,15 +67,9 @@ module.exports = ->
             done()
 
   it 'should rollback a failed socket connect', (done) ->
-    ChatService = rewire '../index.js'
-    chatService = new ChatService { port }
-    orig = chatService.transport.joinChannel
+    chatService = startService()
     chatService.transport.joinChannel = ->
-      orig.apply chatService.transport, arguments
-      .then -> throw new Error()
-    setCustomCleanup (cb) ->
-      chatService.transport.joinChannel = orig
-      chatService.close cb
+      throw new Error()
     socket1 = clientConnect user1
     socket1.on 'loginRejected', (error) ->
       expect(error).ok
@@ -93,26 +79,25 @@ module.exports = ->
         done()
 
   it 'should rollback a disconnected socket connection', (done) ->
-    ChatService = rewire '../index.js'
-    chatService = new ChatService { port }
+    chatService = startService()
     orig = chatService.state.addSocket
     chatService.state.addSocket = (id) ->
       orig.apply chatService.state, arguments
       .finally -> chatService.transport.disconnectClient id
-    socket1 = clientConnect user1
-    socket1.on 'disconnect', ->
+    tst = chatService.transport.rejectLogin
+    chatService.transport.rejectLogin = ->
+      tst.apply chatService.transport, arguments
       chatService.execUserCommand user1, 'listOwnSockets', (error, data) ->
         expect(error).not.ok
         expect(data).empty
         done()
+    socket1 = clientConnect user1
 
   it 'should not join a disconnected socket', (done) ->
-    ChatService = rewire '../index.js'
-    chatService = new ChatService { port }
+    chatService = startService()
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
-        orig = chatService.transport.getSocketObject
         chatService.transport.getSocketObject = (id) ->
           return null
         socket1.emit 'roomJoin', roomName1, (error, data) ->
@@ -120,18 +105,16 @@ module.exports = ->
           done()
 
   it 'should emit closed on onStart hook error', (done) ->
-    ChatService = rewire '../index.js'
     onStart = (chatService, cb) ->
       expect(chatService).instanceof(ChatService)
       cb new Error()
-    chatService = new ChatService { port }, { onStart }
+    chatService = startService null, { onStart }
     chatService.on 'closed', (error) ->
       expect(error).ok
       done()
 
   it 'should propagate transport close errors', (done) ->
-    ChatService = rewire '../index.js'
-    chatService = new ChatService { port }
+    chatService = startService()
     orig = chatService.transport.close
     chatService.transport.close = ->
       orig.apply chatService.transport, arguments
@@ -143,12 +126,11 @@ module.exports = ->
         done()
 
   it 'should propagate onClose errors', (done) ->
-    ChatService = rewire '../index.js'
     onClose = (chatService, error, cb) ->
       expect(chatService).instanceof(ChatService)
       expect(error).not.ok
       cb new Error
-    chatService = new ChatService { port }, { onClose }
+    chatService = startService null, { onClose }
     process.nextTick ->
       chatService.close()
       .catch (error) ->
@@ -156,11 +138,10 @@ module.exports = ->
         done()
 
   it 'should propagate transport close errors to onClose hook', (done) ->
-    ChatService = rewire '../index.js'
     onClose = (chatService, error, cb) ->
       expect(error).ok
       cb error
-    chatService = new ChatService { port }, { onClose }
+    chatService = startService null, { onClose }
     orig = chatService.transport.close
     chatService.transport.close = ->
       orig.apply chatService.transport, arguments

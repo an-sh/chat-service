@@ -2,11 +2,11 @@
 _ = require 'lodash'
 async = require 'async'
 expect = require('chai').expect
-rewire = require 'rewire'
 
 { cleanup
   clientConnect
   setCustomCleanup
+  startService
 } = require './testutils.coffee'
 
 { port
@@ -29,8 +29,7 @@ module.exports = ->
     chatService = socket1 = socket2 = socket3 = null
 
   it 'should emit consistencyFailure on leave channel errors', (done) ->
-    ChatService = rewire '../index.js'
-    chatService = new ChatService { port }
+    chatService = startService { state : 'memory' }
     orig = chatService.transport.leaveChannel
     chatService.transport.leaveChannel = ->
       orig.apply chatService.transport, arguments
@@ -61,8 +60,7 @@ module.exports = ->
           ], done
 
   it 'should emit consistencyFailure on room access check errors', (done) ->
-    ChatService = rewire '../index.js'
-    chatService = new ChatService { port }
+    chatService = startService { state : 'memory' }
     chatService.addRoom roomName1, null, ->
       chatService.state.getRoom(roomName1).then (room) ->
         orig = room.roomState.hasInList
@@ -109,8 +107,7 @@ module.exports = ->
           ], done
 
   it 'should emit consistencyFailure on socket leave errors', (done) ->
-    ChatService = rewire '../index.js'
-    chatService = new ChatService { port }
+    chatService = startService { state : 'memory' }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (userName, { id }) ->
@@ -142,8 +139,7 @@ module.exports = ->
             ], done
 
   it 'should emit consistencyFailure on leave room errors', (done) ->
-    ChatService = rewire '../index.js'
-    chatService = new ChatService { port }
+    chatService = startService { state : 'memory' }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -174,8 +170,7 @@ module.exports = ->
             ], done
 
   it 'should emit consistencyFailure on remove socket errors', (done) ->
-    ChatService = rewire '../index.js'
-    chatService = new ChatService { port }
+    chatService = startService { state : 'memory' }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (userName, { id }) ->
@@ -200,8 +195,7 @@ module.exports = ->
               done()
 
   it 'should emit consistencyFailure on on remove from room errors', (done) ->
-    ChatService = rewire '../index.js'
-    chatService = new ChatService { port }
+    chatService = startService { state : 'memory' }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
