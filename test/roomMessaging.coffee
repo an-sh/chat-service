@@ -328,6 +328,7 @@ module.exports = ->
               expect(data[0].author).equal(user1)
               expect(data[0].timestamp).a('Number')
               expect(data[0].id).equal(2)
+              expect(data[1].id).equal(1)
               cb()
           (cb) ->
             socket1.emit 'roomHistoryGet', roomName1, 1, 10, (error, data) ->
@@ -366,12 +367,14 @@ module.exports = ->
               expect(error).not.ok
               expect(data).lengthOf(2)
               expect(data[0].id).equal(2)
+              expect(data[1].id).equal(1)
               cb()
           (cb) ->
             socket1.emit 'roomHistoryGet', roomName1, 1, 10, (error, data) ->
               expect(error).not.ok
               expect(data).lengthOf(2)
               expect(data[0].id).equal(3)
+              expect(data[1].id).equal(2)
               cb()
           (cb) ->
             socket1.emit 'roomHistoryGet', roomName1, 2, 10, (error, data) ->

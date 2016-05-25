@@ -274,7 +274,8 @@ class UserCommands
   roomGetWhitelistMode : (roomName, cb) ->
 
   # Gets latest room messages. The maximum size is set by
-  # {ChatService#constructor} `historyMaxGetMessages` option.
+  # {ChatService#constructor} `historyMaxGetMessages` option. Messages
+  # are sorted as newest first.
   # @param roomName [String] Room name.
   # @param cb [Function<error, Array<Object>>] Sends ack with an
   #   error or array of messages.
@@ -286,7 +287,8 @@ class UserCommands
   # parameter. The maximum limit is bounded by
   # {ChatService#constructor} `historyMaxGetMessages` option. If the
   # specified id was deleted due to history limit, it returns messages
-  # starting from the oldest available.
+  # starting from the oldest available. Messages are sorted as newest
+  # first.
   # @param roomName [String] Room name.
   # @param id [Number] Starting message id.
   # @param limit [Number] Maximum number of messages to return. The
