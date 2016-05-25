@@ -89,10 +89,12 @@ class User extends DirectMessaging
     .then (nconnected) =>
       unless @transport.getSocketObject id
         @removeUserSocket id
-        return Promise.reject new ChatServiceError 'noSocket', 'connection'
-      for cmd of @server.userCommands
-        @bindCommand id, cmd, @[cmd]
-      [ @, nconnected ]
+        .then ->
+          Promise.reject new ChatServiceError 'noSocket', 'connection'
+      else
+        for cmd of @server.userCommands
+          @bindCommand id, cmd, @[cmd]
+        [ @, nconnected ]
 
   # @private
   disconnectInstanceSockets : ->

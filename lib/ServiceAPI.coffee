@@ -12,13 +12,13 @@ ServiceAPI =
 
   # Executes {UserCommands}.
   #
-  # @param context [String or Boolean or Object] Is a `username` if
+  # @param context [String or Boolean or Object] Is a `userName` if
   #   String, or a `bypassPermissions` if Boolean, or an options hash if
   #   Object.
   # @param command [String] Command name.
   # @param args [Rest...] Command arguments with an optional callback.
   #
-  # @option context [String] username User name.
+  # @option context [String] userName User name.
   # @option context [String] id Socket id, it is required for
   #   {UserCommands#disconnect}, {UserCommands#roomJoin},
   #   {UserCommands#roomLeave} commands.

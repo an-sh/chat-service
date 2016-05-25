@@ -511,7 +511,7 @@ class UserStateRedis
   getSocketsToRooms : ->
     @redis.getSocketsToRooms @makeKeyName('sockets'), @makeSocketToRooms()
     .spread (result) ->
-      data = JSON.parse result
+      data = JSON.parse(result) || {}
       for k, v of data
         if _.isEmpty v
           data[k] = []
@@ -631,6 +631,10 @@ class RedisState
   # @private
   removeSocket : (id) ->
     @redis.hdel @makeKeyName('instances', @instanceUID, 'sockets'), id
+
+  # @private
+  getInstanceSockets : (uid = @instanceUID) ->
+    @redis.hgetall @makeKeyName('instances', uid, 'sockets')
 
   # @private
   getOrAddUser : (name, state) ->

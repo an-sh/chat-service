@@ -375,9 +375,9 @@ class MemoryState
   # @private
   constructor : (@server, @options = {}) ->
     @closed = false
-    @users = {}
-    @rooms = {}
-    @sockets = {}
+    @users = new FastMap
+    @rooms = new FastMap
+    @sockets = new FastMap
     @RoomState = RoomStateMemory
     @UserState = UserStateMemory
     @DirectMessagingState = DirectMessagingStateMemory
@@ -391,7 +391,7 @@ class MemoryState
 
   # @private
   getRoom : (name, nocheck) ->
-    r = @rooms[name]
+    r = @rooms.get name
     unless r
       error = new ChatServiceError 'noRoom', name
       return Promise.reject error
@@ -400,8 +400,8 @@ class MemoryState
   # @private
   addRoom : (name, state) ->
     room = new Room @server, name
-    unless @rooms[name]
-      @rooms[name] = room
+    unless @rooms.get name
+      @rooms.set name, room
     else
       error = new ChatServiceError 'roomExists', name
       return Promise.reject error
@@ -413,29 +413,34 @@ class MemoryState
 
   # @private
   removeRoom : (name) ->
-    if @rooms[name]
-      delete @rooms[name]
+    if @rooms.get name
+      @rooms.delete name
     Promise.resolve()
 
   # @private
   addSocket : (id, userName) ->
-    @sockets[id] = userName
+    @sockets.set id, userName
     Promise.resolve()
 
   # @private
   removeSocket : (id) ->
-    delete @sockets[id]
+    if @sockets.get id
+      @sockets.delete id
     Promise.resolve()
 
   # @private
+  getInstanceSockets : (uid) ->
+    @sockets.toObject()
+
+  # @private
   getOrAddUser : (name, state) ->
-    user = @users[name]
+    user = @users.get name
     if user then return Promise.resolve user
     @addUser name, state
 
   # @private
   getUser : (name) ->
-    user = @users[name]
+    user = @users.get name
     unless user
       error = new ChatServiceError 'noUser', name
       Promise.reject error
@@ -444,12 +449,12 @@ class MemoryState
 
   # @private
   addUser : (name, state) ->
-    user = @users[name]
+    user = @users.get name
     if user
       error = new ChatServiceError 'userExists', name
       return Promise.reject error
     user = new User @server, name
-    @users[name] = user
+    @users.set name, user
     if state
       user.initState state
       .return user
@@ -458,8 +463,8 @@ class MemoryState
 
   # @private
   removeUser : (name) ->
-    if @users[name]
-      delete @users[name]
+    if @users.get name
+      @users.delete name
     Promise.resolve()
 
 
