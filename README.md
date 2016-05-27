@@ -36,13 +36,14 @@ protocol/API tunnelling for IoT devices.
   including a reasonable amount of user's action notifications from
   other sockets.
 
-- Written as a microservice, using Redis as a state store allows easy
-  service scaling. Also supports Redis in cluster configurations as a
-  store.
+- Written as a stateless microservice, using Redis as a state store,
+  can be easily scaled across many machines. Also supports Redis in
+  cluster configurations as a store.
 
 - Extensive customisation support. Custom functionality can be added
-  via hooks before/after any client message (UserCommand). And client
-  messages handlers can be invoked server side as simple functions.
+  via hooks before/after any client message (command). And client
+  messages (commands) handlers can be invoked server side as simple
+  functions.
 
 - Simple networking using only socket.io library with JSON
   messages. Just a socket.io client implementation is required, making
@@ -50,13 +51,11 @@ protocol/API tunnelling for IoT devices.
   clients.
 
 
-### Basic usage
+### Tutorial
 
-Here is a very basic example.
-
-On a server, lets define the user authentication function, the service
-is relying on an extern auth function. A user just needs to pass an
-auth check, no explicit user adding step is required.
+On a server, lets define the user authentication function, as the
+service is relying on an extern auth function. A user just needs to
+pass an auth check, no explicit user adding step is required.
 
 ```javascript
 function onConnect(service, id, cb) {
@@ -138,7 +137,16 @@ build the application and start a server (by default on port 3000).
 
 Is available online at [gitpages](http://an-sh.github.io/chat-service/0.7/).
 
-Run `npm install -g codo` and `codo` to generate documentation.
+- `ServerMessages` class describes socket.io messages that are sent
+  from the server to client.
+
+- `UserCommands` class describes socket.io messages that client sends to
+  a server and receives reply as socket.io ack.
+
+- `ChatService` class is the server constructor, describes options and
+  customisation hooks.
+
+Run `npm install -g codo` and `codo` to generate local documentation.
 
 
 ### License

@@ -1,5 +1,5 @@
 
-### 0.7.0 (unreleased)
+### 0.7.0 (2016/05/27)
 
 - Added ServiceAPI for scripting.
 - Added hooks for checking custom content in message objects.
