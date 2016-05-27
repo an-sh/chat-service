@@ -83,16 +83,17 @@ const chatService = new ChatService({port}, {onConnect});
 process.on('SIGINT', chatService.close().finally(() => process.exit()));
 ```
 
-Server is now running on port `8000`, using memory state. Now adding a
-room, that has an `admin` login as owner.
+Server is now running on port `8000`, using memory state. Adding a
+room with `admin` user as an owner.
 
 ```javascript
 chatService.addRoom('default', { owner : 'admin' });
 ```
 
-On a client. To send a command use `emit` method, the result (or an
-error) will be returned in socket.io ack callback. To listen to server
-messages use `on` method.
+On a client just a `socket.io-client` implementation is required. To
+send a command use `emit` method, the result (or an error) will be
+returned in socket.io ack callback. To listen to server messages use
+`on` method.
 
 ```javascript
 let io = require('socket.io-client');
@@ -101,6 +102,7 @@ let user = 'someLogin';
 let password = 'somePassword';
 let query = 'user=' + user + '&password=' + password;
 let params =  { query };
+// Connect to server.
 let socket = io.connect(url, params);
 socket.on('loginConfirmed', (userName) => {
   // Auth success.
@@ -109,8 +111,10 @@ socket.on('loginConfirmed', (userName) => {
   });
   // Join room 'default'
   socket.emit('roomJoin', 'default', (error, data) => {
+    // Check for a command error.
+    if(error) return;
     // Now we will receive 'default' room messages in 'roomMessage' handler.
-    // To send a message to 'default' room:
+    // Now we can also send a message to 'default' room:
     // socket.emit('roomMessage', 'default', { textMessage : 'Hello!' });
   });
 });
@@ -120,7 +124,7 @@ socket.on('loginRejected', (error) => {
 ```
 
 
-### Frontend application example
+### Frontend example
 
 An angular single page chat application example is in `example`
 directory. From this directory run `npm install && gulp && bin/www` to
@@ -132,7 +136,7 @@ build the application and start a server (by default on port 3000).
 ### Documentation
 
 
-Is available at [gitpages](http://an-sh.github.io/chat-service/0.7/)
+Is available online at [gitpages](http://an-sh.github.io/chat-service/0.7/).
 
 Run `npm install -g codo` and `codo` to generate documentation.
 
