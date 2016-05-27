@@ -12,7 +12,8 @@ uid = require 'uid-safe'
 
 { extend } = require './utils.coffee'
 
-# @note This class describes socket.io outgoing messages, not methods.
+# @note This class describes socket.io server outgoing messages, not
+#   actual methods.
 #
 # List of server messages that are sent to a client.
 #
@@ -138,7 +139,8 @@ class ServerMessages
   systemMessage : (data) ->
 
 
-# @note This class describes socket.io incoming messages, not methods.
+# @note This class describes socket.io server incoming messages, not
+#   actual methods.
 #
 # List of commands that are sent from a client. Result is sent back as
 # a socket.io ack with the standard (error, data) callback parameters
@@ -385,8 +387,9 @@ class UserCommands
   systemMessage : (data, cb) ->
 
 
-# Service object.
+# Service class, is the package exported object.
 # @extend ServiceAPI
+# @extend MaintenanceAPI
 class ChatService extends EventEmitter
 
   extend @, ServiceAPI, MaintenanceAPI
@@ -438,12 +441,15 @@ class ChatService extends EventEmitter
   #   message. Error is sent as a {ServerMessages#loginRejected}
   #   message.
   #
-  # @option hooks [Function<ChatService, Callback<Error>>]
-  #   onStart Executes when server is started. Must call a callback.
+  # @option hooks [Function<ChatService, Callback<Error>>] onStart
+  #   Executes when server is started (after a state and a transport
+  #   are up, but before message processing is started). Must call a
+  #   callback.
   #
-  # @option hooks [Function<ChatService, Error,
-  #   Callback<Error>>] onClose Executes when server is
-  #   closed. Must call a callback.
+  # @option hooks [Function<ChatService, Error, Callback<Error>>]
+  #   onClose Executes when server is closed (after a transport is
+  #   closed and all clients are disconnected, but a state is still
+  #   up). Must call a callback.
   #
   # @option hooks [Function<Object, Callback<Error>>]
   #   directMessagesChecker Validator for {UserCommands#directMessage}

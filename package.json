@@ -2,7 +2,7 @@
   "name": "chat-service",
   "version": "0.6.1",
   "private": false,
-  "description": "Server side chat based on top of socket.io focused on scalability and extensibility.",
+  "description": "Chat like messaging on top of socket.io, focused on scalability and extensibility.",
   "main": "index.js",
   "scripts": {
     "test": "mocha --require ./coffee-coverage-loader.js && istanbul report text-summary lcov",
@@ -23,6 +23,7 @@
     "IoT",
     "service",
     "microservice",
+    "cluster",
     "socket.io",
     "redis"
   ],
