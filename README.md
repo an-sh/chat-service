@@ -126,9 +126,9 @@ socket.on('loginRejected', (error) => {
 ### Frontend example
 
 An angular single page chat application with basic features
-demonstration is in `example` directory. From this directory run `npm
-install && gulp && bin/www` to build the application and start a
-server (by default on port 3000).
+demonstration is in `example` directory. You can also run this example
+as a cluster with several node processes. Check readme in that
+directory for more information.
 
 ![Example](http://an-sh.github.io/chat-service/example.png "Example")
 
@@ -141,11 +141,12 @@ Is available online at [gitpages](http://an-sh.github.io/chat-service/0.7/).
 - `ServerMessages` class describes socket.io messages that are sent
   from the server to a client.
 
-- `UserCommands` class describes socket.io messages that client sends to
-  a server and receives reply as a socket.io ack.
+- `UserCommands` class describes socket.io messages that a client
+  sends to a server and receives reply as a socket.io ack.
 
 - `ChatService` class is the server constructor, describes options and
-  customisation hooks.
+  customisation hooks. It also contains mixin methods for using server
+  side API.
 
 Run `npm install -g codo` and `codo` to generate local documentation.
 

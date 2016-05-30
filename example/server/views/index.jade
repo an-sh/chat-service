@@ -10,6 +10,8 @@ html
         document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] +
           ':35729/livereload.js?snipver=1"></' + 'script>')
     include dependencies
+    script(type='text/javascript').
+      CHAT_PORT = #{CHAT_PORT}
     script(src='javascripts/chat.js')
     link(rel='stylesheet', href='stylesheets/chat.css')
   body

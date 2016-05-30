@@ -17,3 +17,11 @@ a Redis connect string.
 export CHAT_REDIS_CONNECT="localhost:6379"
 bin/www
 ```
+
+To run several instances of application use:
+
+```sh
+export CHAT_REDIS_CONNECT="localhost:6379"
+NODE_ENV=production PORT=3000 CHAT_PORT=8000 bin/www &
+NODE_ENV=production PORT=3001 CHAT_PORT=8001 bin/www &
+```

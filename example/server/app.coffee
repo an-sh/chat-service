@@ -43,7 +43,10 @@ else
   state = 'memory'
   adapter = 'memory'
 
-options =  { enableUserlistUpdates : true
+port = process.env.CHAT_PORT || 8000
+app.locals.CHAT_PORT = port
+
+options =  { enableUserlistUpdates : true, port
   , state, stateOptions, adapter, adapterOptions }
 
 chat = new ChatService options, { onConnect }
@@ -58,4 +61,4 @@ chat.addRoom 'default', { adminlist: ['admin'], owner : 'admin' }
 .catch (e) -> console.error e
 
 
-module.exports = server
+module.exports = app

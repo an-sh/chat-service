@@ -42,7 +42,7 @@ chatControllers.controller 'messagesController'
     else
       login = $sessionStorage.login
       chatService.connect login, null
-      , { namespace : '/chat-service' }
+      , { port : CHAT_PORT, namespace : '/chat-service' }
       , fn
 
 chatControllers.controller 'usersController'
@@ -90,7 +90,7 @@ chatControllers.controller 'loginController'
     $scope.functions = {}
     $scope.functions.connect = (path, opts) ->
       chatService.connect $scope.data.login, null
-      , { namespace : '/chat-service' }
+      , {  port : CHAT_PORT, namespace : '/chat-service' }
       , (error) ->
         if error
           $scope.data.error = error
