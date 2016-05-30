@@ -1,16 +1,16 @@
 
-ArgumentsValidator = require './ArgumentsValidator.coffee'
+ArgumentsValidator = require './ArgumentsValidator'
 EventEmitter = require('events').EventEmitter
-MaintenanceAPI = require './MaintenanceAPI.coffee'
-MemoryState = require './MemoryState.coffee'
+MaintenanceAPI = require './MaintenanceAPI'
+MemoryState = require './MemoryState'
 Promise = require 'bluebird'
-RedisState = require './RedisState.coffee'
-ServiceAPI = require './ServiceAPI.coffee'
-SocketIOTransport = require './SocketIOTransport.coffee'
+RedisState = require './RedisState'
+ServiceAPI = require './ServiceAPI'
+SocketIOTransport = require './SocketIOTransport'
 _ = require 'lodash'
 uid = require 'uid-safe'
 
-{ extend } = require './utils.coffee'
+{ extend } = require './utils'
 
 # @note This class describes socket.io server outgoing messages, not
 #   actual methods.

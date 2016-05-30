@@ -2,7 +2,7 @@
 Promise = require 'bluebird'
 _ = require 'lodash'
 
-{ asyncLimit } = require './utils.coffee'
+{ asyncLimit } = require './utils'
 
 
 # @private

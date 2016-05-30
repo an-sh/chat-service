@@ -1,12 +1,12 @@
 
-ChatServiceError = require './ChatServiceError.coffee'
+ChatServiceError = require './ChatServiceError'
 Promise = require 'bluebird'
 RedisAdapter = require 'socket.io-redis'
 SocketServer = require 'socket.io'
 _ = require 'lodash'
 EventEmitter = require('events').EventEmitter
 
-{ checkNameSymbols } = require './utils.coffee'
+{ checkNameSymbols } = require './utils'
 
 
 # @private

@@ -1,16 +1,16 @@
 
-ChatServiceError = require './ChatServiceError.coffee'
+ChatServiceError = require './ChatServiceError'
 FastMap = require 'collections/fast-map'
 FastSet = require 'collections/fast-set'
 List = require 'collections/list'
 Promise = require 'bluebird'
-Room = require './Room.coffee'
-User = require './User.coffee'
+Room = require './Room'
+User = require './User'
 _ = require 'lodash'
 promiseRetry = require 'promise-retry'
 uid = require 'uid-safe'
 
-{ extend } = require './utils.coffee'
+{ extend } = require './utils'
 
 
 # @private

@@ -1,8 +1,8 @@
 
-ChatServiceError = require './ChatServiceError.coffee'
+ChatServiceError = require './ChatServiceError'
 Promise = require 'bluebird'
 
-{ extend } = require './utils.coffee'
+{ extend } = require './utils'
 
 
 # @private

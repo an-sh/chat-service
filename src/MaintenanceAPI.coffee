@@ -1,6 +1,6 @@
 
 Promise = require 'bluebird'
-User = require './User.coffee'
+User = require './User'
 _ = require 'lodash'
 
 

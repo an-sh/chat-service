@@ -1,5 +1,5 @@
 
-ChatServiceError = require './ChatServiceError.coffee'
+ChatServiceError = require './ChatServiceError'
 CommandBinder = require './CommandBinder'
 DirectMessaging = require './DirectMessaging'
 Promise = require 'bluebird'
@@ -9,7 +9,7 @@ _ = require 'lodash'
 { asyncLimit
   checkNameSymbols
   extend
-} = require './utils.coffee'
+} = require './utils'
 
 
 # @private

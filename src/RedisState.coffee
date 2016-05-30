@@ -1,14 +1,14 @@
 
-ChatServiceError = require './ChatServiceError.coffee'
+ChatServiceError = require './ChatServiceError'
 Promise = require 'bluebird'
 Redis = require 'ioredis'
-Room = require './Room.coffee'
-User = require './User.coffee'
+Room = require './Room'
+User = require './User'
 _ = require 'lodash'
 promiseRetry = require 'promise-retry'
 uid = require 'uid-safe'
 
-{ extend } = require './utils.coffee'
+{ extend } = require './utils'
 
 
 # @private

@@ -69,7 +69,7 @@ module.exports = ->
       done()
 
   it 'should use a custom state constructor', (done) ->
-    MemoryState = require '../lib/MemoryState.coffee'
+    MemoryState = require '../lib/MemoryState'
     chatService = startService { state : MemoryState }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u) ->
@@ -77,7 +77,7 @@ module.exports = ->
       done()
 
   it 'should use a custom transport constructor', (done) ->
-    Transport = require '../lib/SocketIOTransport.coffee'
+    Transport = require '../lib/SocketIOTransport'
     chatService = startService { transport : Transport }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u) ->

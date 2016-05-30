@@ -1,9 +1,9 @@
 
-ChatServiceError = require './ChatServiceError.coffee'
+ChatServiceError = require './ChatServiceError'
 Promise = require 'bluebird'
 _ = require 'lodash'
 
-{ extend, asyncLimit } = require './utils.coffee'
+{ extend, asyncLimit } = require './utils'
 
 # @private
 # @mixin

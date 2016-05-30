@@ -1,11 +1,11 @@
 
-ChatServiceError = require './ChatServiceError.coffee'
+ChatServiceError = require './ChatServiceError'
 FastMap = require 'collections/fast-map'
 Promise = require 'bluebird'
 _ = require 'lodash'
 check = require 'check-types'
 
-{ possiblyCallback } = require './utils.coffee'
+{ possiblyCallback } = require './utils'
 
 
 # Commands arguments type and count validation.

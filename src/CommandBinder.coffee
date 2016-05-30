@@ -1,10 +1,10 @@
 
-ChatServiceError = require './ChatServiceError.coffee'
+ChatServiceError = require './ChatServiceError'
 Promise = require 'bluebird'
 _ = require 'lodash'
-ExecInfo = require './ExecInfo.coffee'
+ExecInfo = require './ExecInfo'
 
-{ possiblyCallback } = require './utils.coffee'
+{ possiblyCallback } = require './utils'
 
 
 # @private

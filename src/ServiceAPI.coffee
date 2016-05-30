@@ -2,7 +2,7 @@
 Promise = require 'bluebird'
 _ = require 'lodash'
 
-{ checkNameSymbols, possiblyCallback } = require './utils.coffee'
+{ checkNameSymbols, possiblyCallback } = require './utils'
 
 User = require './User'
 
