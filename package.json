@@ -5,8 +5,10 @@
   "description": "Chat like messaging on top of socket.io, focused on scalability and extensibility.",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --require ./coffee-coverage-loader.js && istanbul report text-summary lcov",
-    "test-debug": "BLUEBIRD_DEBUG=1 mocha",
+    "pretest": "coffee -cm --output lib/ src/",
+    "prepublish": "coffee -cm --output lib/ src/",
+    "test": "BLUEBIRD_DEBUG=1 mocha",
+    "coverage": "mocha --require ./coffee-coverage-loader.js && istanbul report text-summary lcov",
     "pipe-coverage": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js --verbose"
   },
   "author": {
@@ -34,7 +36,6 @@
   "dependencies": {
     "bluebird": "^3.3.5",
     "check-types": "^7.0.0",
-    "coffee-script": "^1.10.0",
     "collections": "^3.0.0",
     "ioredis": "^1.15.1",
     "lodash": "^4.11.1",
@@ -47,6 +48,7 @@
     "async": "^1.5.2",
     "chai": "^3.5.0",
     "coffee-coverage": "^1.0.1",
+    "coffee-script": "^1.10.0",
     "coveralls": "^2.11.8",
     "istanbul": "^0.4.2",
     "mocha": "^2.4.5",

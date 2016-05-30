@@ -8,7 +8,7 @@ var writeOnExit = (coverageVar == null) ? (projectRoot + '/coverage/coverage-cof
 coffeeCoverage.register({
   instrumentor: 'istanbul',
   basePath: projectRoot,
-  exclude: ['/test', '/node_modules', '/.git', '/example'],
+  exclude: ['/test', '/node_modules', '/.git', '/example', '/lib', '/doc'],
   coverageVar: coverageVar,
   writeOnExit: writeOnExit,
   initAll: true

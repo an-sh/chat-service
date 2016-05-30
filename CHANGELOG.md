@@ -1,4 +1,8 @@
 
+### 0.8.0
+
+- Fixed coffee script compilation (use compiled js for npm).
+
 ### 0.7.0 (2016/05/27)
 
 - Added ServiceAPI for scripting.
