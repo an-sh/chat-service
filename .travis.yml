@@ -5,6 +5,7 @@ node_js:
   - "0.12"
 script:
   - npm test
+  - npm run-script coverage
   - npm run-script pipe-coverage
 services:
   - redis-server

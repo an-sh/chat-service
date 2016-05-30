@@ -1,5 +1,9 @@
 
-ChatService = require('../index.js')
+if process.env.COVERAGE
+  ChatService = require('../src/ChatService.coffee')
+else
+  ChatService = require('../index.js')
+
 Promise = require 'bluebird'
 Redis = require 'ioredis'
 _ = require 'lodash'
@@ -73,6 +77,7 @@ cleanup = (chatService, sockets, done) ->
 
 
 module.exports = {
+  ChatService
   checkDB
   cleanup
   clientConnect

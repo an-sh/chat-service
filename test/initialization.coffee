@@ -1,5 +1,4 @@
 
-ChatService = require('../index.js')
 Promise = require 'bluebird'
 _ = require 'lodash'
 async = require 'async'

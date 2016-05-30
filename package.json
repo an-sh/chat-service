@@ -7,8 +7,8 @@
   "scripts": {
     "pretest": "coffee -cm --output lib/ src/",
     "prepublish": "coffee -cm --output lib/ src/",
-    "test": "BLUEBIRD_DEBUG=1 mocha",
-    "coverage": "mocha --require ./coffee-coverage-loader.js && istanbul report text-summary lcov",
+    "test": "mocha",
+    "coverage": "COVERAGE=1 mocha --require ./coffee-coverage-loader.js && istanbul report text-summary lcov",
     "pipe-coverage": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js --verbose"
   },
   "author": {
