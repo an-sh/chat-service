@@ -483,7 +483,7 @@ module.exports = ->
                 expect(info2.joined).false
                 expect(info2.timestamp).a('Number')
                 expect(info2.timestamp).within(ts, tsmax)
-                expect(info2.timestamp).above(info1.timestamp)
+                expect(info2.timestamp).least(info1.timestamp)
                 done()
 
   it 'should get empty seen info for unseen users', (done) ->
