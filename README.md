@@ -3,6 +3,7 @@
 
 [![NPM Version](https://badge.fury.io/js/chat-service.svg)](https://badge.fury.io/js/chat-service)
 [![Build Status](https://travis-ci.org/an-sh/chat-service.svg?branch=master)](https://travis-ci.org/an-sh/chat-service)
+[![Appveyor status](https://ci.appveyor.com/api/projects/status/qy7v2maica2urkss?svg=true)](https://ci.appveyor.com/project/an-sh/chat-service)
 [![Coverage Status](https://coveralls.io/repos/an-sh/chat-service/badge.svg?branch=master&service=github)](https://coveralls.io/github/an-sh/chat-service?branch=master)
 [![Dependency Status](https://david-dm.org/an-sh/chat-service.svg)](https://david-dm.org/an-sh/chat-service)
 
