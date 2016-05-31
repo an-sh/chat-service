@@ -608,7 +608,10 @@ class ChatService extends EventEmitter
       @hooks.onStart @, (error) =>
         if error and not @closed
           @closed = true
-          Promise.join @transport.close(), @state.close(), =>
+          @transport.close()
+          .then =>
+            @state.close()
+          .finally =>
             @emit 'closed', error
         else
           @transport.setEvents()

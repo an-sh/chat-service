@@ -600,8 +600,8 @@ class RedisState
   # @private
   close : ->
     @closed = true
-    @redis.disconnect()
-    Promise.resolve()
+    @redis.quit()
+    .return()
 
   # @private
   getRoom : (name, nocheck) ->
