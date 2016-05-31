@@ -44,12 +44,14 @@ startService = (opts, hooks) ->
 if process.env.TEST_REDIS_CLUSTER == 'true'
   redis = new Redis.Cluster config.redisClusterConnect
   checkDB = (done) ->
-    redis.to('masters').call('dbsize').then (data) ->
-      if data and data.length
-        Promise.reject new Error 'Unclean Redis DB'
+    Promise.map redis.nodes('master'), (node) ->
+      node.dbsize (error, data) ->
+        if error then return done error
+        if data then return done new Error 'Unclean Redis DB'
     .asCallback done
   cleanDB = ->
-    redis.to('masters').call('flushdb')
+    Promise.map redis.nodes('master'), (node) ->
+      node.flushall()
 else
   redis = new Redis config.redisConnect
   checkDB = (done) ->

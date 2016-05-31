@@ -37,7 +37,7 @@
     "bluebird": "^3.3.5",
     "check-types": "^7.0.0",
     "collections": "^3.0.0",
-    "ioredis": "^1.15.1",
+    "ioredis": "^2.0.0",
     "lodash": "^4.11.1",
     "promise-retry": "^1.1.0",
     "socket.io": "^1.4.5",
