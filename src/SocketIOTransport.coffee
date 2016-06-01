@@ -115,7 +115,7 @@ class SocketIOTransport
       return
     .then =>
       @waitCommands()
-    .timeout 5000
+    .timeout @server.closeTimeout
 
   # @private
   bindHandler : (id, name, fn) ->

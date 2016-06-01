@@ -4,6 +4,7 @@
 - Changed ioredis version to ^2.0.0.
 - Fixed coffee script compilation (use compiled js for npm).
 - Fixed redis state graceful shutdown.
+- Fixed closeTimeout option passing.
 
 ### 0.7.0 (2016/05/27)
 
