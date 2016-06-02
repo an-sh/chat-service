@@ -63,15 +63,18 @@ else
     redis.flushall()
 
 
-cleanup = (chatService, sockets, done) ->
+cleanup = (services, sockets, done) ->
+  services = _.castArray services
+  sockets = _.castArray sockets
   Promise.try ->
     for socket in sockets
       socket?.disconnect()
     if customCleanup
       Promise.fromCallback (cb) ->
         customCleanup cb
-    else if chatService
-      chatService.close()
+    else
+      Promise.each services, (service) ->
+        service?.close()
   .finally ->
     customCleanup = null
     cleanDB()

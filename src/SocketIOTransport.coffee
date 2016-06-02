@@ -1,12 +1,45 @@
 
 ChatServiceError = require './ChatServiceError'
+EventEmitter = require('events').EventEmitter
 Promise = require 'bluebird'
 RedisAdapter = require 'socket.io-redis'
 SocketServer = require 'socket.io'
 _ = require 'lodash'
-EventEmitter = require('events').EventEmitter
+hasBinary = require 'has-binary'
 
 { checkNameSymbols } = require './utils'
+
+
+# @private
+# @nodoc
+# Cluster bus.
+class ClusterBus extends EventEmitter
+
+  # @private
+  constructor : (@server, @adapter) ->
+    @channel = 'cluster:bus'
+    @intenalEvents = ['disconnectSocket', 'socketDisconnected'
+    , 'roomLeaveSocket', 'socketRoomLeft']
+    @types = [ 2, 5 ]
+    @customMessageName = 'custom'
+    @adapter.add @server.instanceUID, @channel
+
+  # @private
+  emit : (ev, args...) ->
+    packet = type : (if hasBinary(args) then 5 else 2)
+    , data : [ @customMessageName, @server.instanceUID, ev, args... ]
+    opts = rooms : [ @channel ]
+    @adapter.broadcast packet, opts, false
+
+  # @private
+  onPacket : (packet) ->
+    [ev, uid, args...] = packet.data
+    if uid == @server.instanceUID then return
+    emit = @.constructor.__super__.emit.bind @
+    if _.find ev, @intenalEvents
+      return emit ev, args...
+    if ev == @customMessageName
+      return emit args...
 
 
 # @private
@@ -40,7 +73,26 @@ class SocketIOTransport
     @nsp = @io.of @namespace
     @server.io = @io
     @server.nsp = @nsp
+    @clusterBus = new ClusterBus @server, @nsp.adapter
+    @injectBusHook()
+    @server.clusterBus = @clusterBus
     @closed = false
+
+  # @private
+  broadcastHook : (packet, opts) ->
+    if( _.indexOf(opts.rooms, @clusterBus.channel) >= 0 and
+    _.indexOf(@clusterBus.types, packet.type) >= 0 )
+      @clusterBus.onPacket packet
+
+  # @private
+  # TODO: Use an API from socket.io if(when) it will be available.
+  injectBusHook : ->
+    broadcastHook = @broadcastHook.bind @
+    adapter = @nsp.adapter
+    orig = adapter.broadcast
+    adapter.broadcast = (args...) ->
+      broadcastHook args...
+      orig.apply adapter, args
 
   # @private
   rejectLogin : (socket, error) ->

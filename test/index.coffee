@@ -3,6 +3,8 @@ _ = require 'lodash'
 config = require './config.coffee'
 testutils = require './testutils.coffee'
 
+require('source-map-support').install()
+
 
 before testutils.checkDB
 
@@ -37,5 +39,7 @@ describe 'Chat service.', ->
       describe 'Validation', require './validation.coffee'
 
       describe 'Errors handling', require './errorsHandling.coffee'
+
+  describe 'Node cluster communication', require './nodeCluster.coffee'
 
   describe 'Consistency failures', require './consistencyFailures.coffee'
