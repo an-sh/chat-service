@@ -1,6 +1,9 @@
 
 # Frontend example
 
+![Example](http://an-sh.github.io/chat-service/example.png "Example")
+
+
 ### Build and run
 
 From this directory execute:
@@ -24,4 +27,10 @@ To run several instances of application use:
 export CHAT_REDIS_CONNECT="localhost:6379"
 NODE_ENV=production PORT=3000 CHAT_PORT=8000 bin/www &
 NODE_ENV=production PORT=3001 CHAT_PORT=8001 bin/www &
+```
+
+To correctly shutdown instances use:
+
+```sh
+kill -2 <PID>
 ```

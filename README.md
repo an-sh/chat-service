@@ -122,15 +122,16 @@ socket.on('loginRejected', (error) => {
 });
 ```
 
+Look in the documentation for details about custom messages format,
+management and presence APIs.
+
 
 ### Frontend example
 
 An angular single page chat application with basic features
 demonstration is in `example` directory. You can also run this example
-as a cluster with several node processes. Check readme in that
+as a cluster with several node processes. Check README in that
 directory for more information.
-
-![Example](http://an-sh.github.io/chat-service/example.png "Example")
 
 
 ### Documentation
