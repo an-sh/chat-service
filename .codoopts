@@ -2,7 +2,7 @@
 --readme README.md
 --title "Chat service Documentation"
 --output ./doc
-./lib
+./src
 -
 LICENSE
 CHANGELOG.md
