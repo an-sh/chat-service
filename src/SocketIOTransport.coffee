@@ -21,7 +21,7 @@ class ClusterBus extends EventEmitter
     @intenalEvents = ['disconnectSocket', 'socketDisconnected'
     , 'roomLeaveSocket', 'socketRoomLeft']
     @types = [ 2, 5 ]
-    @customMessageName = 'custom'
+    @customMessageName = 'ext'
 
   # @private
   listen : ->
@@ -43,7 +43,8 @@ class ClusterBus extends EventEmitter
     if _.find ev, @intenalEvents
       return emit ev, args...
     if ev == @customMessageName
-      return emit args...
+      [name, data...] = args
+      return emit name, uid, data...
 
 
 # @private

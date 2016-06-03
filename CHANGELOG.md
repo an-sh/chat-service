@@ -2,6 +2,7 @@
 ### 0.8.0
 
 - Added ready and error ChatService events.
+- Added ChatService clusterBus.
 - Changed ioredis version to ^2.0.0.
 - Fixed closeTimeout option passing.
 - Fixed coffee script compilation (use compiled js for npm).

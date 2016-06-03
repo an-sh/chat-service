@@ -29,12 +29,13 @@ module.exports = ->
     cleanup [instance1, instance2], [socket1, socket2, socket3], cb
     chatService = socket1 = socket2 = socket3 = null
 
-  it 'should send cluster bus custom messages', (done) ->
+  it.only 'should send cluster bus custom messages', (done) ->
     event = 'someEvent'
     data = { key : 'value' }
     instance1 = startService _.assign {port : port}, redisConfig
     instance2 = startService _.assign {port : port+1}, redisConfig
-    instance2.clusterBus.on event, (d) ->
+    instance2.clusterBus.on event, (uid, d) ->
+      expect(uid).equal(instance1.instanceUID)
       expect(d).deep.equal(data)
       done()
     instance1.clusterBus.on event, ->

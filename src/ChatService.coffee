@@ -547,8 +547,13 @@ class ChatService extends EventEmitter
   # @property [Object or null] State ioredis instance.
   redis: null
 
+  # @property [EventEmitter] Cluster communication via adapter. Emits
+  # messages only to other services nodes, prepending sender
+  # instanceUID as the first argument.
+  clusterBus: null
+
   # @property [String] Service instance UID.
-  instanceUID: ''
+  instanceUID: null
 
   # @private
   # @nodoc
