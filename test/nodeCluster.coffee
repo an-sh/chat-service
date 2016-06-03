@@ -14,6 +14,7 @@ expect = require('chai').expect
   user3
   roomName1
   roomName2
+  redisConfig
 } = require './config.coffee'
 
 module.exports = ->
@@ -31,13 +32,18 @@ module.exports = ->
   it 'should send cluster bus custom messages', (done) ->
     event = 'someEvent'
     data = { key : 'value' }
-    instance1 = startService {port : port, state : 'redis', adapter : 'redis'}
-    instance2 = startService {port : port+1, state : 'redis', adapter : 'redis'}
+    instance1 = startService _.assign {port : port}, redisConfig
+    instance2 = startService _.assign {port : port+1}, redisConfig
     instance2.clusterBus.on event, (d) ->
       expect(d).deep.equal(data)
       done()
     instance1.clusterBus.on event, ->
       done new Error 'Should not emit cluster messages to itself'
-    setTimeout ->
+    async.parallel [
+      (cb) ->
+        instance1.on 'ready', cb
+      (cb) ->
+        instance2.on 'ready', cb
+    ], (error) ->
+      expect(error).not.ok
       instance1.clusterBus.emit event, data
-    , 1000

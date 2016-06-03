@@ -1,10 +1,12 @@
 
 ### 0.8.0
 
+- Added ready and error ChatService events.
 - Changed ioredis version to ^2.0.0.
+- Fixed closeTimeout option passing.
 - Fixed coffee script compilation (use compiled js for npm).
 - Fixed redis state graceful shutdown.
-- Fixed closeTimeout option passing.
+- Removed closed ChatService event.
 
 ### 0.7.0 (2016/05/27)
 

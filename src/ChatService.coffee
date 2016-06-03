@@ -531,7 +531,7 @@ class ChatService extends EventEmitter
   #
   constructor : (@options = {}, @hooks = {}) ->
     @setOptions()
-    @setServer()
+    @setComponents()
     @startServer()
 
 
@@ -584,7 +584,7 @@ class ChatService extends EventEmitter
 
   # @private
   # @nodoc
-  setServer : ->
+  setComponents : ->
     State = switch true
       when @stateConstructor == 'memory' then MemoryState
       when @stateConstructor == 'redis' then RedisState
@@ -601,22 +601,26 @@ class ChatService extends EventEmitter
     @transport = new Transport @, @transportOptions
     , @adapterConstructor, @adapterOptions
 
+
   # @private
   # @nodoc
   startServer : ->
-    if @hooks.onStart
-      @hooks.onStart @, (error) =>
-        if error and not @closed
-          @closed = true
-          @transport.close()
-          .then =>
-            @state.close()
-          .finally =>
-            @emit 'closed', error
-        else
-          @transport.setEvents()
-    else
+    Promise.try =>
+      unless @hooks.onStart then return
+      Promise.fromCallback (cb) =>
+        @hooks.onStart @, cb
+    .then =>
       @transport.setEvents()
+    .then =>
+      @emit 'ready'
+    .catch (error) =>
+      @closed = true
+      @transport.close()
+      .then =>
+        @state.close()
+      .finally =>
+        @emit 'error', error
+
 
   # Closes server.
   # @note __MUST__ be called before node process shutdown to correctly

@@ -22,7 +22,11 @@ class ClusterBus extends EventEmitter
     , 'roomLeaveSocket', 'socketRoomLeft']
     @types = [ 2, 5 ]
     @customMessageName = 'custom'
-    @adapter.add @server.instanceUID, @channel
+
+  # @private
+  listen : ->
+    Promise.fromCallback (cb) =>
+      @adapter.add @server.instanceUID, @channel, cb
 
   # @private
   emit : (ev, args...) ->
@@ -134,17 +138,19 @@ class SocketIOTransport
 
   # @private
   setEvents : ->
-    if @hooks.middleware
-      middleware = _.castArray @hooks.middleware
-      for fn in middleware
-        @nsp.use fn
-    if @hooks.onConnect
-      @nsp.on 'connection', (socket) =>
-        @hooks.onConnect @server, socket.id, (error, userName, authData) =>
-          @addClient error, socket, userName, authData
-    else
-      @nsp.on 'connection', (socket) =>
-        @addClient null, socket
+    @clusterBus.listen()
+    .then =>
+      if @hooks.middleware
+        middleware = _.castArray @hooks.middleware
+        for fn in middleware
+          @nsp.use fn
+      if @hooks.onConnect
+        @nsp.on 'connection', (socket) =>
+          @hooks.onConnect @server, socket.id, (error, userName, authData) =>
+            @addClient error, socket, userName, authData
+      else
+        @nsp.on 'connection', (socket) =>
+          @addClient null, socket
 
   # @private
   waitCommands : ->
