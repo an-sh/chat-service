@@ -129,7 +129,7 @@ class User extends DirectMessaging
       recipient.message @userName, msg, bypassPermissions
       .then ->
         recipient.checkOnline()
-      .then (recipientSockets) =>
+      .then =>
         @transport.sendToChannel channel, 'directMessage', msg
         @transport.sendToOthers id, @echoChannel, 'directMessageEcho'
         , recipientName, msg

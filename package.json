@@ -7,6 +7,7 @@
   "scripts": {
     "pretest": "coffee -cm --output lib/ src/",
     "prepublish": "coffee -cm --output lib/ src/",
+    "precoverage": "coffee -cm --output lib/ src/",
     "test": "mocha",
     "coverage": "COVERAGE=1 mocha --require ./coffee-coverage-loader.js && istanbul report text-summary lcov",
     "pipe-coverage": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js --verbose"

@@ -29,7 +29,7 @@ module.exports = ->
     cleanup [instance1, instance2], [socket1, socket2, socket3], cb
     chatService = socket1 = socket2 = socket3 = null
 
-  it.only 'should send cluster bus custom messages', (done) ->
+  it 'should send cluster bus custom messages', (done) ->
     event = 'someEvent'
     data = { key : 'value' }
     instance1 = startService _.assign {port : port}, redisConfig
