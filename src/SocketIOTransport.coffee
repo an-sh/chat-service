@@ -139,19 +139,18 @@ class SocketIOTransport
 
   # @private
   setEvents : ->
-    @clusterBus.listen()
-    .then =>
-      if @hooks.middleware
-        middleware = _.castArray @hooks.middleware
-        for fn in middleware
-          @nsp.use fn
-      if @hooks.onConnect
-        @nsp.on 'connection', (socket) =>
-          @hooks.onConnect @server, socket.id, (error, userName, authData) =>
-            @addClient error, socket, userName, authData
-      else
-        @nsp.on 'connection', (socket) =>
-          @addClient null, socket
+    if @hooks.middleware
+      middleware = _.castArray @hooks.middleware
+      for fn in middleware
+        @nsp.use fn
+    if @hooks.onConnect
+      @nsp.on 'connection', (socket) =>
+        @hooks.onConnect @server, socket.id, (error, userName, authData) =>
+          @addClient error, socket, userName, authData
+    else
+      @nsp.on 'connection', (socket) =>
+        @addClient null, socket
+    Promise.resolve()
 
   # @private
   waitCommands : ->

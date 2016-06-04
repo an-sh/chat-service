@@ -29,7 +29,13 @@ module.exports = ->
     chatService = socket1 = socket2 = socket3 = null
 
   it 'should execute onStart hook', (done) ->
-    fn = ->
+    onStart = (server, cb) ->
+      expect(server).instanceof(ChatService)
+      server.addRoom roomName1
+      , { whitelist : [ user1 ], owner : user2 }
+      , cb
+    chatService = startService null, { onStart }
+    chatService.on 'ready', ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
         socket1.emit 'roomJoin', roomName1, ->
@@ -41,14 +47,6 @@ module.exports = ->
               expect(error).not.ok
               expect(data).equal(user2)
               done()
-    onStart = (server, cb) ->
-      expect(server).instanceof(ChatService)
-      server.addRoom roomName1
-      , { whitelist : [ user1 ], owner : user2 }
-      , ->
-        cb()
-        fn()
-    chatService = startService null, { onStart }
 
   it 'should exectute onClose hook', (done) ->
     onClose = (server, error, cb) ->

@@ -611,11 +611,17 @@ class ChatService extends EventEmitter
   # @nodoc
   startServer : ->
     Promise.try =>
-      unless @hooks.onStart then return
-      Promise.fromCallback (cb) =>
-        @hooks.onStart @, cb
-    .then =>
-      @transport.setEvents()
+      if @hooks.onStart
+        @clusterBus.listen()
+        .then =>
+          Promise.fromCallback (cb) =>
+            @hooks.onStart @, cb
+        .then =>
+          @transport.setEvents()
+      else
+        @transport.setEvents()
+        .then =>
+          @clusterBus.listen()
     .then =>
       @emit 'ready'
     .catch (error) =>
