@@ -104,12 +104,12 @@ module.exports = ->
           expect(error).ok
           done()
 
-  it 'should emit error on onStart hook error', (done) ->
+  it 'should emit closed on onStart hook error', (done) ->
     onStart = (chatService, cb) ->
       expect(chatService).instanceof(ChatService)
       cb new Error()
     chatService = startService null, { onStart }
-    chatService.on 'error', (error) ->
+    chatService.on 'closed', (error) ->
       expect(error).ok
       done()
 

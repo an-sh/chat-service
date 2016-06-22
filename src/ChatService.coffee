@@ -1,6 +1,6 @@
 
 ArgumentsValidator = require './ArgumentsValidator'
-EventEmitter = require('events').EventEmitter
+ChatServiceEvents = require './ChatServiceEvents'
 MaintenanceAPI = require './MaintenanceAPI'
 MemoryState = require './MemoryState'
 Promise = require 'bluebird'
@@ -18,8 +18,8 @@ uid = require 'uid-safe'
 # List of server messages that are sent to a client.
 #
 # @example Socket.io client example
-#   socket = ioClient.connect url, params
-#   socket.on 'loginConfirmed', (userName) ->
+#   socket = io.connect url, params
+#   socket.once 'loginConfirmed', (userName) ->
 #     socket.on 'directMessage', (fromUser, msg) ->
 #       # just the same as any event. no reply is required.
 #
@@ -152,8 +152,8 @@ class ServerMessages
 # commands server-side using {ServiceAPI~execUserCommand}.
 #
 # @example Socket.io client example
-#   socket = ioClient.connect url, params
-#   socket.on 'loginConfirmed', (userName, authData) ->
+#   socket = io.connect url, params
+#   socket.once 'loginConfirmed', (userName, authData) ->
 #     socket.emit 'roomJoin', roomName, (error, data) ->
 #       # this is a socket.io ack waiting callback. socket is joined
 #       # the room, or an error occurred, we get here only when the
@@ -390,7 +390,7 @@ class UserCommands
 # Service class, is the package exported object.
 # @extend ServiceAPI
 # @extend MaintenanceAPI
-class ChatService extends EventEmitter
+class ChatService extends ChatServiceEvents
 
   extend @, ServiceAPI, MaintenanceAPI
 
@@ -530,6 +530,7 @@ class ChatService extends EventEmitter
   #
   #
   constructor : (@options = {}, @hooks = {}) ->
+    super
     @setOptions()
     @setComponents()
     @startServer()
@@ -630,7 +631,7 @@ class ChatService extends EventEmitter
       .then =>
         @state.close()
       .finally =>
-        @emit 'error', error
+        @emit 'closed', error
 
 
   # Closes server.
