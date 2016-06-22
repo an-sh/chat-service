@@ -82,8 +82,9 @@ const chatService = new ChatService({port}, {onConnect});
 process.on('SIGINT', chatService.close().finally(() => process.exit()));
 ```
 
-Server is now running on port `8000`, using memory state. Adding a
-room with `admin` user as an owner.
+Server is now running on port `8000`, using memory state. By default
+`'/chat-service'` socket.io namespace is used. Adding a room with
+`admin` user as an owner.
 
 ```javascript
 chatService.addRoom('default', { owner : 'admin' });
@@ -96,10 +97,10 @@ returned in socket.io ack callback. To listen to server messages use
 
 ```javascript
 let io = require('socket.io-client');
-let url = 'localhost:8000';
+let url = 'localhost:8000/chat-service';
 let user = 'someLogin';
 let password = 'somePassword';
-let query = 'user=' + user + '&password=' + password;
+let query = `user=${user}&password=${password}`;
 let params =  { query };
 // Connect to server.
 let socket = io.connect(url, params);
