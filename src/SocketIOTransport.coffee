@@ -29,6 +29,28 @@ class ClusterBus extends EventEmitter
       @adapter.add @server.instanceUID, @channel, cb
 
   # @private
+  makeSocketDisconnectedName : (id) ->
+    "socketDisconnected:#{id}"
+
+  # @private
+  makeSocketRoomLeftName : (id, roomName) ->
+    "socketRoomLeft:#{id}:#{roomName}"
+
+  # @private
+  mergeEventName : (ev, args) ->
+    switch ev
+      when 'socketDisconnected'
+        [ id, nargs... ] = args
+        nev = @makeScketDisconnectedName id
+        [nev, nargs]
+      when 'socketRoomLeft'
+        [ id, roomName, nargs... ] = args
+        nev = @makeSocketRoomLeftName id, roomName
+        [nev, nargs]
+      else
+        [ev, args]
+
+  # @private
   emit : (ev, args...) ->
     packet = type : (if hasBinary(args) then 5 else 2)
     , data : [ @customMessageName, @server.instanceUID, ev, args... ]
@@ -41,7 +63,8 @@ class ClusterBus extends EventEmitter
     if uid == @server.instanceUID then return
     emit = @.constructor.__super__.emit.bind @
     if _.find ev, @intenalEvents
-      return emit ev, args...
+      [nev, nargs] = @mergeEventName ev, args
+      return emit nev, nargs...
     if ev == @customMessageName
       [name, data...] = args
       return emit name, uid, data...
