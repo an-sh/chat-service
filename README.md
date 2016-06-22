@@ -60,13 +60,13 @@ pass an auth check, no explicit user adding step is required.
 ```javascript
 function onConnect(service, id, cb) {
   // Assuming that auth data is passed in a query string.
-  let socket = service.nsp.connected[id];
-  let query = socket.handshake.query;
-  let userName = query.user;
+  let socket = service.nsp.connected[id]
+  let query = socket.handshake.query
+  let userName = query.user
   // Check query data.
-  cb(null, userName);
+  cb(null, userName)
   // Or reject auth on error:
-  // cb(error);
+  // cb(error)
 }
 ```
 
@@ -76,10 +76,10 @@ redis state is used). To fix an incorrect instance shutdown use
 `instanceRecover` method.
 
 ```javascript
-const port = 8000;
-const ChatService = require('chat-service');
-const chatService = new ChatService({port}, {onConnect});
-process.on('SIGINT', chatService.close().finally(() => process.exit()));
+const port = 8000
+const ChatService = require('chat-service')
+const chatService = new ChatService({port}, {onConnect})
+process.on('SIGINT', chatService.close().finally(() => process.exit()))
 ```
 
 Server is now running on port `8000`, using memory state. By default
@@ -87,7 +87,7 @@ Server is now running on port `8000`, using memory state. By default
 `admin` user as an owner.
 
 ```javascript
-chatService.addRoom('default', { owner : 'admin' });
+chatService.addRoom('default', { owner: 'admin' })
 ```
 
 On a client just a `socket.io-client` implementation is required. To
@@ -96,31 +96,31 @@ returned in socket.io ack callback. To listen to server messages use
 `on` method.
 
 ```javascript
-let io = require('socket.io-client');
-let url = 'localhost:8000/chat-service';
-let user = 'someLogin';
-let password = 'somePassword';
-let query = `user=${user}&password=${password}`;
-let params =  { query };
+let io = require('socket.io-client')
+let url = 'localhost:8000/chat-service'
+let user = 'someLogin'
+let password = 'somePassword'
+let query = `user=${user}&password=${password}`
+let params = { query }
 // Connect to server.
-let socket = io.connect(url, params);
+let socket = io.connect(url, params)
 socket.on('loginConfirmed', (userName) => {
   // Auth success.
   socket.on('roomMessage', (room, msg) => {
     // Room message handler.
-  });
+  })
   // Join room 'default'
   socket.emit('roomJoin', 'default', (error, data) => {
     // Check for a command error.
-    if(error) return;
+    if (error) return
     // Now we will receive 'default' room messages in 'roomMessage' handler.
     // Now we can also send a message to 'default' room:
-    // socket.emit('roomMessage', 'default', { textMessage : 'Hello!' });
-  });
-});
+    // socket.emit('roomMessage', 'default', { textMessage: 'Hello!' })
+  })
+})
 socket.on('loginRejected', (error) => {
   // Auth error handler.
-});
+})
 ```
 
 Look in the documentation for details about custom messages format,
