@@ -13,7 +13,7 @@ ioClient = require 'socket.io-client'
 
 makeURL = (port) ->
   port = port || config.port
-  "http://localhost:#{port}/chat-service"
+  "#{config.host}:#{port}#{config.namespace}"
 
 makeParams = (userName) ->
   params =
@@ -35,7 +35,8 @@ setCustomCleanup = (fn) -> customCleanup = fn
 
 clientConnect = (name, port) ->
   url = makeURL port
-  ioClient.connect url, makeParams(name)
+  params = makeParams(name)
+  ioClient.connect url, params
 
 startService = (opts, hooks) ->
   options = { port : config.port }
@@ -44,7 +45,7 @@ startService = (opts, hooks) ->
   new ChatService options, hooks
 
 
-if process.env.TEST_REDIS_CLUSTER == 'true'
+if process.env.TEST_REDIS_CLUSTER
   redis = new Redis.Cluster config.redisClusterConnect
   checkDB = (done) ->
     Promise.map redis.nodes('master'), (node) ->

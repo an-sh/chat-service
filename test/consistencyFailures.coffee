@@ -16,6 +16,7 @@ expect = require('chai').expect
   user3
   roomName1
   roomName2
+  redisConfig
 } = require './config.coffee'
 
 module.exports = ->
@@ -30,7 +31,7 @@ module.exports = ->
     chatService = socket1 = socket2 = socket3 = null
 
   it 'should emit consistencyFailure on leave channel errors', (done) ->
-    chatService = startService { state : 'redis' }
+    chatService = startService redisConfig
     orig = chatService.transport.leaveChannel
     chatService.transport.__proto__.leaveChannel = ->
       Promise.reject new Error()
@@ -60,7 +61,7 @@ module.exports = ->
           ], done
 
   it 'should emit consistencyFailure on room access check errors', (done) ->
-    chatService = startService { state : 'redis' }
+    chatService = startService redisConfig
     chatService.addRoom roomName1, null, ->
       chatService.state.getRoom(roomName1).then (room) ->
         orig = room.roomState.hasInList
@@ -106,7 +107,7 @@ module.exports = ->
           ], done
 
   it 'should emit consistencyFailure on socket leave errors', (done) ->
-    chatService = startService { state : 'redis' }
+    chatService = startService redisConfig
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (userName, { id }) ->
@@ -137,7 +138,7 @@ module.exports = ->
             ], done
 
   it 'should emit consistencyFailure on leave room errors', (done) ->
-    chatService = startService { state : 'redis' }
+    chatService = startService redisConfig
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -167,7 +168,7 @@ module.exports = ->
             ], done
 
   it 'should emit consistencyFailure on remove socket errors', (done) ->
-    chatService = startService { state : 'redis' }
+    chatService = startService redisConfig
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (userName, { id }) ->
@@ -191,7 +192,7 @@ module.exports = ->
               done()
 
   it 'should emit consistencyFailure on on remove from room errors', (done) ->
-    chatService = startService { state : 'redis' }
+    chatService = startService redisConfig
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->

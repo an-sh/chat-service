@@ -1,26 +1,25 @@
 
 redisClusterConnect = [ { port : 30001, host : '127.0.0.1' } ]
-redisConnect = ''
+redisConnect = 'localhost:6379'
 
-memoryConfig = { state : 'memory', adapter : 'memory' }
 
-redisConfig = { state : 'redis', stateOptions : { redisOptions : redisConnect }
-  , adapter : 'redis', adpterOptions : redisConnect }
-
-redisClusterConfig = { state : 'redis'
-  , stateOptions : { useCluster : true, redisOptions : [ redisClusterConnect ] }
-  , adapter : 'redis', adpterOptions : redisConnect }
-
-if process.env.TEST_REDIS_CLUSTER == 'true'
-  states = [ redisClusterConfig ]
+if process.env.TEST_REDIS_CLUSTER
+  redisConfig = { state : 'redis'
+    , stateOptions : {useCluster : true, redisOptions : [ redisClusterConnect ]}
+    , adapter : 'redis', adpterOptions : redisConnect }
+  states = [ redisConfig ]
 else
+  memoryConfig = { state : 'memory', adapter : 'memory' }
+  redisConfig = {state : 'redis', stateOptions : { redisOptions : redisConnect}
+    , adapter : 'redis', adpterOptions : redisConnect }
   states = [ memoryConfig, redisConfig ]
 
 
 module.exports= {
+  host : 'ws://localhost'
   memoryConfig
+  namespace : '/chat-service'
   port : 8000
-  redisClusterConfig
   redisClusterConnect
   redisConfig
   redisConnect
