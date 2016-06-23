@@ -11,7 +11,9 @@ config = require './config.coffee'
 ioClient = require 'socket.io-client'
 
 
-url = "http://localhost:#{config.port}/chat-service"
+makeURL = (port) ->
+  port = port || config.port
+  "http://localhost:#{port}/chat-service"
 
 makeParams = (userName) ->
   params =
@@ -31,7 +33,8 @@ customCleanup = null
 setCustomCleanup = (fn) -> customCleanup = fn
 
 
-clientConnect = (name) ->
+clientConnect = (name, port) ->
+  url = makeURL port
   ioClient.connect url, makeParams(name)
 
 startService = (opts, hooks) ->

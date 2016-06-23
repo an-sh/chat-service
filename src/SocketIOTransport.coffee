@@ -21,7 +21,6 @@ class ClusterBus extends EventEmitter
     @intenalEvents = ['disconnectSocket', 'socketDisconnected'
     , 'roomLeaveSocket', 'socketRoomLeft']
     @types = [ 2, 5 ]
-    @customMessageName = 'ext'
 
   # @private
   listen : ->
@@ -51,9 +50,11 @@ class ClusterBus extends EventEmitter
         [ev, args]
 
   # @private
+  # TODO: Use an API from socket.io if(when) it will be available.
   emit : (ev, args...) ->
+    data = [ ev, @server.instanceUID, args... ]
     packet = type : (if hasBinary(args) then 5 else 2)
-    , data : [ @customMessageName, @server.instanceUID, ev, args... ]
+    , data : data
     opts = rooms : [ @channel ]
     @adapter.broadcast packet, opts, false
 
@@ -62,12 +63,11 @@ class ClusterBus extends EventEmitter
     [ev, uid, args...] = packet.data
     if uid == @server.instanceUID then return
     emit = @.constructor.__super__.emit.bind @
-    if _.find ev, @intenalEvents
+    if _.includes @intenalEvents, ev
       [nev, nargs] = @mergeEventName ev, args
-      return emit nev, nargs...
-    if ev == @customMessageName
-      [name, data...] = args
-      return emit name, uid, data...
+      emit nev, nargs...
+    else
+      emit ev, uid, args...
 
 
 # @private
@@ -103,6 +103,7 @@ class SocketIOTransport
     @server.nsp = @nsp
     @clusterBus = new ClusterBus @server, @nsp.adapter
     @injectBusHook()
+    @attachBusListeners()
     @server.clusterBus = @clusterBus
     @closed = false
 
@@ -121,6 +122,14 @@ class SocketIOTransport
     adapter.broadcast = (args...) ->
       broadcastHook args...
       orig.apply adapter, args
+
+  # @private
+  attachBusListeners : ->
+    @clusterBus.on 'roomLeaveSocket', (id, roomName) =>
+      @leaveChannel id, roomName
+      .then =>
+        @clusterBus.emit 'socketRoomLeft', id, roomName
+      .catchReturn()
 
   # @private
   rejectLogin : (socket, error) ->
@@ -185,6 +194,7 @@ class SocketIOTransport
   close : ->
     @closed = true
     @nsp.removeAllListeners 'connection'
+    @clusterBus.removeAllListeners()
     Promise.try =>
       unless @dontCloseIO
         @io.close()

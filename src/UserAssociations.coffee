@@ -1,7 +1,7 @@
 
 Promise = require 'bluebird'
 _ = require 'lodash'
-
+eventToPromise = require 'event-to-promise'
 { asyncLimit } = require './utils'
 
 
@@ -58,9 +58,22 @@ UserAssociations =
     , { concurrency : asyncLimit }
 
   # @private
+  leaveChannelOtherInstance : (id, channel) ->
+    bus = @transport.clusterBus
+    Promise.try ->
+      bus.emit 'roomLeaveSocket', id, channel
+      eventToPromise bus, bus.makeSocketRoomLeftName(id, channel)
+    .catch (e) =>
+      @consistencyFailure e, {roomName : channel, id, type : 'transportChannel'}
+    .timeout @server.busAckTimeout
+
+  # @private
   channelLeaveSockets : (channel, ids) ->
     Promise.map ids, (id) =>
-      @leaveChannel id, channel
+      if @transport.getSocketObject id
+        @leaveChannel id, channel
+      else
+        @leaveChannelOtherInstance id, channel
     , { concurrency : asyncLimit }
 
   # @private
@@ -76,8 +89,7 @@ UserAssociations =
     @removeSocketFromRoom id, roomName
     .then (njoined) =>
       unless njoined then @leaveRoom roomName
-    .then ->
-      Promise.reject error
+    .thenThrow error
 
   # @private
   leaveRoom : (roomName) ->
@@ -168,7 +180,7 @@ UserAssociations =
       @state.getUser userName
       .then (user) ->
         user.removeFromRoom roomName
-      .catch ->
+      .catchReturn()
     , { concurrency : asyncLimit }
 
 

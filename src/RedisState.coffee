@@ -419,7 +419,7 @@ class RoomStateRedis extends ListsStateRedis
     .hget @makeKeyName('usersseen'), userName
     .sismember @makeKeyName('userlist'), userName
     .exec()
-    .spread ([_1, ts], [_2, isjoined] ) ->
+    .spread ([_1, ts], [_2, isjoined]) ->
       joined = if isjoined then true else false
       timestamp = if ts then parseInt ts else null
       { joined, timestamp }
@@ -577,7 +577,7 @@ class RedisState
     @RoomState = RoomStateRedis
     @UserState = UserStateRedis
     @DirectMessagingState = DirectMessagingStateRedis
-    @lockTTL = @options.lockTTL || 5000
+    @lockTTL = @options.lockTTL || 10000
     @instanceUID = @server.instanceUID
     @server.redis = @redis
     for cmd, def of luaCommands

@@ -522,7 +522,7 @@ class ChatService extends ChatServiceEvents
   #   default is `false`.
   #
   # @option stateOptions [Number] lockTTL Locks timeout in ms,
-  #   default is `5000`.
+  #   default is `10000`.
   #
   # @option stateOptions [Object or Array<Object>] redisOptions
   #   ioredis client constructor arguments. If useCluster is set, used
@@ -563,7 +563,8 @@ class ChatService extends ChatServiceEvents
     @runningCommands = 0
     @closed = false
 
-    @closeTimeout = @options.closeTimeout || 10000
+    @closeTimeout = @options.closeTimeout || 15000
+    @busAckTimeout = @options.busAckTimeout || 5000
     @enableAccessListsUpdates= @options.enableAccessListsUpdates || false
     @enableDirectMessages = @options.enableDirectMessages || false
     @enableRoomsManagement = @options.enableRoomsManagement || false
