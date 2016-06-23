@@ -1,4 +1,5 @@
 
+Promise = require 'bluebird'
 _ = require 'lodash'
 async = require 'async'
 expect = require('chai').expect
@@ -29,13 +30,12 @@ module.exports = ->
     chatService = socket1 = socket2 = socket3 = null
 
   it 'should emit consistencyFailure on leave channel errors', (done) ->
-    chatService = startService { state : 'memory' }
+    chatService = startService { state : 'redis' }
     orig = chatService.transport.leaveChannel
-    chatService.transport.leaveChannel = ->
-      orig.apply chatService.transport, arguments
-      .then -> throw new Error()
+    chatService.transport.__proto__.leaveChannel = ->
+      Promise.reject new Error()
     setCustomCleanup (cb) ->
-      chatService.transport.leaveChannel = orig
+      chatService.transport.__proto__.leaveChannel = orig
       chatService.close cb
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
@@ -60,15 +60,14 @@ module.exports = ->
           ], done
 
   it 'should emit consistencyFailure on room access check errors', (done) ->
-    chatService = startService { state : 'memory' }
+    chatService = startService { state : 'redis' }
     chatService.addRoom roomName1, null, ->
       chatService.state.getRoom(roomName1).then (room) ->
         orig = room.roomState.hasInList
-        room.roomState.hasInList = ->
-          orig.apply room.roomState, arguments
-          .then -> throw new Error()
+        room.roomState.__proto__.hasInList = ->
+          Promise.reject new Error()
         setCustomCleanup (cb) ->
-          room.roomState.hasInList = orig
+          room.roomState.__proto__.hasInList = orig
           chatService.close cb
         async.parallel [
           (cb) ->
@@ -107,7 +106,7 @@ module.exports = ->
           ], done
 
   it 'should emit consistencyFailure on socket leave errors', (done) ->
-    chatService = startService { state : 'memory' }
+    chatService = startService { state : 'redis' }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (userName, { id }) ->
@@ -115,11 +114,10 @@ module.exports = ->
           chatService.state.getUser user1
           .then (user) ->
             orig = user.userState.removeSocketFromRoom
-            user.userState.removeSocketFromRoom = ->
-              orig.apply user.userState, arguments
-              .then -> throw new Error()
+            user.userState.__proto__.removeSocketFromRoom = ->
+              Promise.reject new Error()
             setCustomCleanup (cb) ->
-              user.userState.removeSocketFromRoom =  orig
+              user.userState.__proto__.removeSocketFromRoom =  orig
               chatService.close cb
             async.parallel [
               (cb) ->
@@ -139,7 +137,7 @@ module.exports = ->
             ], done
 
   it 'should emit consistencyFailure on leave room errors', (done) ->
-    chatService = startService { state : 'memory' }
+    chatService = startService { state : 'redis' }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -147,11 +145,10 @@ module.exports = ->
           chatService.state.getRoom roomName1
           .then (room) ->
             orig = room.leave
-            room.leave = ->
-              orig.apply room, arguments
-              .then -> throw new Error()
+            room.__proto__.leave = ->
+              Promise.reject new Error()
             setCustomCleanup (cb) ->
-              room.leave = orig
+              room.__proto__.leave = orig
               chatService.close cb
             async.parallel [
               (cb) ->
@@ -170,7 +167,7 @@ module.exports = ->
             ], done
 
   it 'should emit consistencyFailure on remove socket errors', (done) ->
-    chatService = startService { state : 'memory' }
+    chatService = startService { state : 'redis' }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (userName, { id }) ->
@@ -178,11 +175,10 @@ module.exports = ->
           chatService.state.getUser user1
           .then (user) ->
             orig = user.userState.removeSocket
-            user.userState.removeSocket = ->
-              orig.apply user.userState, arguments
-              .then -> throw new Error()
+            user.userState.__proto__.removeSocket = ->
+              Promise.reject new Error()
             setCustomCleanup (cb) ->
-              user.userState.removeSocket = orig
+              user.userState.__proto__.removeSocket = orig
               chatService.close cb
             socket1.disconnect()
             chatService.on 'consistencyFailure', (error, data) ->
@@ -195,7 +191,7 @@ module.exports = ->
               done()
 
   it 'should emit consistencyFailure on on remove from room errors', (done) ->
-    chatService = startService { state : 'memory' }
+    chatService = startService { state : 'redis' }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -203,11 +199,10 @@ module.exports = ->
           chatService.state.getUser user1
           .then (user) ->
             orig = user.userState.removeAllSocketsFromRoom
-            user.userState.removeAllSocketsFromRoom = ->
-              orig.apply user.userState, arguments
-              .then -> throw new Error()
+            user.userState.__proto__.removeAllSocketsFromRoom = ->
+              Promise.reject new Error()
             setCustomCleanup (cb) ->
-              user.userState.removeAllSocketsFromRoom = orig
+              user.userState.__proto__.removeAllSocketsFromRoom = orig
               chatService.close cb
             chatService.execUserCommand true
             , 'roomAddToList', roomName1, 'blacklist', [user1]
