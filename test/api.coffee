@@ -37,7 +37,8 @@ module.exports = ->
         expect(u).equal(user1)
         async.parallel [
           (cb) ->
-            chatService.disconnectUserSockets user1, cb
+            chatService.disconnectUserSockets user1
+            cb()
           (cb) ->
             socket1.on 'disconnect', ->
               expect(socket1.connected).not.ok

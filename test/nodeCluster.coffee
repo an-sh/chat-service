@@ -88,3 +88,29 @@ module.exports = ->
         socket3.emit 'roomAddToList', roomName1, 'blacklist', [user1], ->
           socket3.emit 'roomMessage', roomName1, {textMessage : 'hello'}
           setTimeout done, 1000
+
+  it 'should disconnect users sockets across all instances', (done) ->
+    instance1 = startService _.assign {port : port}, redisConfig
+    instance2 = startService _.assign {port : port+1}, redisConfig
+    socket1 = clientConnect user1, port
+    socket2 = clientConnect user2, port+1
+    async.parallel [
+      (cb) ->
+        socket1 = clientConnect user1, port
+        socket1.on 'loginConfirmed', ->
+          cb()
+      (cb) ->
+        socket2 = clientConnect user1, port+1
+        socket2.on 'loginConfirmed', ->
+          cb()
+    ], (error) ->
+      expect(error).not.ok
+      async.parallel [
+        (cb) ->
+          socket1.on 'disconnect', -> cb()
+        (cb) ->
+          socket2.on 'disconnect', -> cb()
+        (cb) ->
+          instance1.disconnectUserSockets user1
+          cb()
+      ], done

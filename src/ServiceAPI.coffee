@@ -114,18 +114,12 @@ ServiceAPI =
       user.directMessagingState.hasInList listName, item
     .asCallback cb
 
-  # Disconnects user's sockets for this service instance.
+  # Disconnects user's sockets for all service instances. Method is
+  # asynchronous, returns without waiting for the completion.
   #
   # @param userName [String] User name.
-  # @param cb [Callback] Optional callback.
-  #
-  # @return [Promise]
   disconnectUserSockets : (userName, cb) ->
-    @state.getUser userName
-    .then (user) ->
-      user.disconnectInstanceSockets()
-    .return()
-    .asCallback cb
+    @clusterBus.emit 'disconnectUserSockets', userName
 
   # Adds a room with a state.
   #

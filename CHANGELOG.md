@@ -4,10 +4,11 @@
 - Added ChatService clusterBus.
 - Added ready and error ChatService events.
 - Changed default timeouts values.
+- Changed disconnectUserSockets API method.
 - Changed ioredis version to ^2.0.0.
+- Fixed CoffeeScript compilation (use compiled js for npm).
 - Fixed channel leaving for sockets in other instances.
 - Fixed closeTimeout option passing.
-- Fixed coffee script compilation (use compiled js for npm).
 - Fixed redis state graceful shutdown.
 - Removed closed ChatService event.
 

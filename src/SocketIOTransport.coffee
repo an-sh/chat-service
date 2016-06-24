@@ -121,6 +121,11 @@ class SocketIOTransport
       .then =>
         @clusterBus.emit 'socketRoomLeft', id, roomName
       .catchReturn()
+    @clusterBus.on 'disconnectUserSockets', (id, userName) =>
+      @server.state.getUser userName
+      .then (user) ->
+        user.disconnectInstanceSockets()
+      .catchReturn()
 
   # @private
   rejectLogin : (socket, error) ->
