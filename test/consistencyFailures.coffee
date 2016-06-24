@@ -49,14 +49,14 @@ module.exports = ->
                 expect(error).not.ok
                 cb()
             (cb) ->
-              chatService.on 'consistencyFailure', (error, data) ->
+              chatService.on 'transportConsistencyFailure', (error, data) ->
                 expect(error).ok
                 expect(data).an('Object')
-                expect(data).include.keys 'roomName', 'userName', 'id', 'type'
+                expect(data).include.keys 'roomName', 'userName', 'id', 'opType'
                 expect(data.roomName).equal(roomName1)
                 expect(data.userName).equal(user1)
                 expect(data.id).equal(id)
-                expect(data.type).equal('transportChannel')
+                expect(data.opType).equal('transportChannel')
                 cb()
           ], done
 
@@ -78,13 +78,13 @@ module.exports = ->
               expect(error).not.ok
               cb()
           (cb) ->
-            chatService.once 'consistencyFailure', (error, data) ->
+            chatService.once 'storeConsistencyFailure', (error, data) ->
               expect(error).ok
               expect(data).an('Object')
-              expect(data).include.keys 'roomName', 'userName', 'type'
+              expect(data).include.keys 'roomName', 'userName', 'opType'
               expect(data.roomName).equal(roomName1)
               expect(data.userName).equal(user1)
-              expect(data.type).equal('roomUserlist')
+              expect(data.opType).equal('roomUserlist')
               cb()
         ], (error) ->
           expect(error).not.ok
@@ -96,13 +96,13 @@ module.exports = ->
                 expect(error).not.ok
                 cb()
             (cb) ->
-              chatService.once 'consistencyFailure', (error, data) ->
+              chatService.once 'storeConsistencyFailure', (error, data) ->
                 expect(error).ok
                 expect(data).an('Object')
-                expect(data).include.keys 'roomName', 'userName', 'type'
+                expect(data).include.keys 'roomName', 'userName', 'opType'
                 expect(data.roomName).equal(roomName1)
                 expect(data.userName).equal(user1)
-                expect(data.type).equal('roomUserlist')
+                expect(data.opType).equal('roomUserlist')
                 cb()
           ], done
 
@@ -126,14 +126,15 @@ module.exports = ->
                   expect(error).not.ok
                   cb()
               (cb) ->
-                chatService.on 'consistencyFailure', (error, data) ->
+                chatService.on 'storeConsistencyFailure', (error, data) ->
                   expect(error).ok
                   expect(data).an('Object')
-                  expect(data).include.keys 'roomName', 'userName', 'id', 'type'
+                  expect(data).include.keys 'roomName', 'userName'
+                    , 'id', 'opType'
                   expect(data.roomName).equal(roomName1)
                   expect(data.userName).equal(user1)
                   expect(data.id).equal(id)
-                  expect(data.type).equal('userSockets')
+                  expect(data.opType).equal('userSocket')
                   cb()
             ], done
 
@@ -157,13 +158,13 @@ module.exports = ->
                   expect(error).not.ok
                   cb()
               (cb) ->
-                chatService.on 'consistencyFailure', (error, data) ->
+                chatService.on 'storeConsistencyFailure', (error, data) ->
                   expect(error).ok
                   expect(data).an('Object')
-                  expect(data).include.keys 'roomName', 'userName', 'type'
+                  expect(data).include.keys 'roomName', 'userName', 'opType'
                   expect(data.roomName).equal(roomName1)
                   expect(data.userName).equal(user1)
-                  expect(data.type).equal('roomUserlist')
+                  expect(data.opType).equal('roomUserlist')
                   cb()
             ], done
 
@@ -182,13 +183,13 @@ module.exports = ->
               user.userState.__proto__.removeSocket = orig
               chatService.close cb
             socket1.disconnect()
-            chatService.on 'consistencyFailure', (error, data) ->
+            chatService.on 'storeConsistencyFailure', (error, data) ->
               expect(error).ok
               expect(data).an('Object')
-              expect(data).include.keys 'userName', 'id', 'type'
+              expect(data).include.keys 'userName', 'id', 'opType'
               expect(data.userName).equal(user1)
               expect(data.id).equal(id)
-              expect(data.type).equal('userSockets')
+              expect(data.opType).equal('userSocket')
               done()
 
   it 'should emit consistencyFailure on on remove from room errors', (done) ->
@@ -209,11 +210,11 @@ module.exports = ->
             , 'roomAddToList', roomName1, 'blacklist', [user1]
             , (error) ->
               expect(error).not.ok
-            chatService.on 'consistencyFailure', (error, data) ->
+            chatService.on 'storeConsistencyFailure', (error, data) ->
               expect(error).ok
               expect(data).an('Object')
-              expect(data).include.keys 'roomName', 'userName', 'type'
+              expect(data).include.keys 'roomName', 'userName', 'opType'
               expect(data.roomName).equal(roomName1)
               expect(data.userName).equal(user1)
-              expect(data.type).equal('userSockets')
+              expect(data.opType).equal('userRoomSockets')
               done()

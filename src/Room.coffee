@@ -140,8 +140,8 @@ class Room
   # @private
   consistencyFailure : (error, operationInfo = {}) ->
     operationInfo.roomName = @roomName
-    operationInfo.type = 'roomUserlist'
-    @server.emit 'consistencyFailure', error, operationInfo
+    operationInfo.opType = 'roomUserlist'
+    @server.emit 'storeConsistencyFailure', error, operationInfo
     return
 
   # @private

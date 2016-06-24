@@ -118,7 +118,7 @@ ServiceAPI =
   # asynchronous, returns without waiting for the completion.
   #
   # @param userName [String] User name.
-  disconnectUserSockets : (userName, cb) ->
+  disconnectUserSockets : (userName) ->
     @clusterBus.emit 'disconnectUserSockets', userName
 
   # Adds a room with a state.

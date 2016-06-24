@@ -49,7 +49,8 @@ UserAssociations =
   leaveChannel : (id, channel) ->
     @transport.leaveChannel id, channel
     .catch (e) =>
-      @consistencyFailure e, {roomName : channel, id, type : 'transportChannel'}
+      @consistencyFailure e, { roomName : channel
+        , id, opType : 'transportChannel' }
 
   # @private
   socketLeaveChannels : (id, channels) ->
@@ -63,9 +64,10 @@ UserAssociations =
     Promise.try ->
       bus.emit 'roomLeaveSocket', id, channel
       eventToPromise bus, bus.makeSocketRoomLeftName(id, channel)
-    .catch (e) =>
-      @consistencyFailure e, {roomName : channel, id, type : 'transportChannel'}
     .timeout @server.busAckTimeout
+    .catch (e) =>
+      @consistencyFailure e, { roomName : channel
+        , id, opType : 'transportChannel' }
 
   # @private
   channelLeaveSockets : (channel, ids) ->
@@ -77,7 +79,7 @@ UserAssociations =
   removeSocketFromRoom : (id, roomName) ->
     @userState.removeSocketFromRoom id, roomName
     .catch (e) =>
-      @consistencyFailure e, { roomName, id, type : 'userSockets' }
+      @consistencyFailure e, { roomName, id, opType : 'userSocket' }
       return 1
 
   # @private
@@ -95,7 +97,7 @@ UserAssociations =
     .then (room) =>
       room.leave @userName
     .catch (e) =>
-      @consistencyFailure e, { roomName, type : 'roomUserlist' }
+      @consistencyFailure e, { roomName, opType : 'roomUserlist' }
 
   # @private
   joinSocketToRoom : (id, roomName) ->
@@ -152,13 +154,13 @@ UserAssociations =
   removeSocketFromServer : (id) ->
     @removeUserSocket id
     .catch (e) =>
-      @consistencyFailure e, { id, type : 'userSockets' }
+      @consistencyFailure e, { id, opType : 'userSocket' }
 
   # @private
   removeUserSocketsFromRoom : (roomName) ->
     @userState.removeAllSocketsFromRoom roomName
     .catch (e) =>
-      @consistencyFailure e, { roomName, type : 'userSockets' }
+      @consistencyFailure e, { roomName, opType : 'userRoomSockets' }
 
   # @private
   removeFromRoom : (roomName) ->

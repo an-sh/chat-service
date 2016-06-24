@@ -2,7 +2,8 @@
 ### 0.8.0
 
 - Added ChatService clusterBus.
-- Added ready and error ChatService events.
+- Added ready and error ChatService lifecycle events.
+- Added storeConsistencyFailure and transportConsistencyFailure events.
 - Changed default timeouts values.
 - Changed disconnectUserSockets API method.
 - Changed ioredis version to ^2.0.0.

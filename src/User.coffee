@@ -78,7 +78,11 @@ class User extends DirectMessaging
   # @private
   consistencyFailure : (error, operationInfo = {}) ->
     operationInfo.userName = @userName
-    @server.emit 'consistencyFailure', error, operationInfo
+    name = if operationInfo.opType == 'transportChannel'
+      'transportConsistencyFailure'
+    else
+      'storeConsistencyFailure'
+    @server.emit name, error, operationInfo
     return
 
   # @private
