@@ -37,7 +37,7 @@
   "dependencies": {
     "bluebird": "^3.3.5",
     "check-types": "^7.0.0",
-    "collections": "^3.0.0",
+    "collections": "^5.0.1",
     "event-to-promise": "^0.7.0",
     "has-binary": "^0.1.7",
     "ioredis": "^2.0.0",

@@ -296,13 +296,13 @@ class UserStateMemory
 
   # @private
   getAllSockets : ->
-    sockets = @socketsToRooms.keys()
+    sockets = @socketsToRooms.keysArray()
     Promise.resolve sockets
 
   # @private
   getSocketsToRooms : ->
     result = {}
-    sockets = @socketsToRooms.keys()
+    sockets = @socketsToRooms.keysArray()
     for id in sockets
       socketsset = @socketsToRooms.get id
       result[id] = socketsset?.toArray() || []
@@ -331,7 +331,7 @@ class UserStateMemory
 
   # @private
   removeAllSocketsFromRoom : (roomName) ->
-    sockets = @socketsToRooms.keys()
+    sockets = @socketsToRooms.keysArray()
     socketsset = @roomsToSockets.get roomName
     removedSockets = socketsset?.toArray() || []
     for id in removedSockets
