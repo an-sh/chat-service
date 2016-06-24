@@ -49,9 +49,8 @@ if process.env.TEST_REDIS_CLUSTER
   redis = new Redis.Cluster config.redisClusterConnect
   checkDB = (done) ->
     Promise.map redis.nodes('master'), (node) ->
-      node.dbsize (error, data) ->
-        if error then return done error
-        if data then return done new Error 'Unclean Redis DB'
+      node.dbsize().then (data) ->
+        if data then throw new Error 'Unclean Redis DB'
     .asCallback done
   cleanDB = ->
     Promise.map redis.nodes('master'), (node) ->
@@ -59,10 +58,9 @@ if process.env.TEST_REDIS_CLUSTER
 else
   redis = new Redis config.redisConnect
   checkDB = (done) ->
-    redis.dbsize (error, data) ->
-      if error then return done error
-      if data then return done new Error 'Unclean Redis DB'
-      done()
+    redis.dbsize().then (data) ->
+      if data then throw new Error 'Unclean Redis DB'
+    .asCallback done
   cleanDB = ->
     redis.flushall()
 
