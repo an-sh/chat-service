@@ -58,7 +58,7 @@ UserAssociations =
     , { concurrency : asyncLimit }
 
   # @private
-  leaveChannelOtherInstance : (id, channel) ->
+  leaveChannelMessage : (id, channel) ->
     bus = @transport.clusterBus
     Promise.try ->
       bus.emit 'roomLeaveSocket', id, channel
@@ -70,10 +70,7 @@ UserAssociations =
   # @private
   channelLeaveSockets : (channel, ids) ->
     Promise.map ids, (id) =>
-      if @transport.getSocketObject id
-        @leaveChannel id, channel
-      else
-        @leaveChannelOtherInstance id, channel
+      @leaveChannelMessage id, channel
     , { concurrency : asyncLimit }
 
   # @private

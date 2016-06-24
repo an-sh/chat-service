@@ -37,12 +37,6 @@ module.exports = ->
     data = { key : 'value' }
     instance1 = startService _.assign {port : port}, redisConfig
     instance2 = startService _.assign {port : port+1}, redisConfig
-    instance2.clusterBus.on event, (uid, d) ->
-      expect(uid).equal(instance1.instanceUID)
-      expect(d).deep.equal(data)
-      done()
-    instance1.clusterBus.on event, ->
-      done new Error 'Should not emit cluster messages to itself'
     async.parallel [
       (cb) ->
         instance1.on 'ready', cb
@@ -50,7 +44,21 @@ module.exports = ->
         instance2.on 'ready', cb
     ], (error) ->
       expect(error).not.ok
-      instance1.clusterBus.emit event, data
+      async.parallel [
+        (cb) ->
+          instance2.clusterBus.on event, (uid, d) ->
+            expect(uid).equal(instance1.instanceUID)
+            expect(d).deep.equal(data)
+            cb()
+        (cb) ->
+          instance1.clusterBus.on event, (uid, d) ->
+            expect(uid).equal(instance1.instanceUID)
+            expect(d).deep.equal(data)
+            cb()
+        (cb) ->
+          instance1.clusterBus.emit event, data
+          cb()
+      ], done
 
   it 'should actually remove other instances sockets from channel', (done) ->
     instance1 = startService _.assign {port : port}, redisConfig

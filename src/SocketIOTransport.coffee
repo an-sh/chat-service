@@ -17,6 +17,7 @@ class ClusterBus extends EventEmitter
 
   # @private
   constructor : (@server, @adapter) ->
+    super()
     @channel = 'cluster:bus'
     @intenalEvents = ['roomLeaveSocket', 'socketRoomLeft']
     @types = [ 2, 5 ]
@@ -52,7 +53,6 @@ class ClusterBus extends EventEmitter
   # @private
   onPacket : (packet) ->
     [ev, uid, args...] = packet.data
-    if uid == @server.instanceUID then return
     emit = @.constructor.__super__.emit.bind @
     if _.includes @intenalEvents, ev
       [nev, nargs] = @mergeEventName ev, args
