@@ -18,8 +18,7 @@ class ClusterBus extends EventEmitter
   # @private
   constructor : (@server, @adapter) ->
     @channel = 'cluster:bus'
-    @intenalEvents = ['disconnectSocket', 'socketDisconnected'
-    , 'roomLeaveSocket', 'socketRoomLeft']
+    @intenalEvents = ['roomLeaveSocket', 'socketRoomLeft']
     @types = [ 2, 5 ]
 
   # @private
@@ -28,20 +27,12 @@ class ClusterBus extends EventEmitter
       @adapter.add @server.instanceUID, @channel, cb
 
   # @private
-  makeSocketDisconnectedName : (id) ->
-    "socketDisconnected:#{id}"
-
-  # @private
   makeSocketRoomLeftName : (id, roomName) ->
     "socketRoomLeft:#{id}:#{roomName}"
 
   # @private
   mergeEventName : (ev, args) ->
     switch ev
-      when 'socketDisconnected'
-        [ id, nargs... ] = args
-        nev = @makeScketDisconnectedName id
-        [nev, nargs]
       when 'socketRoomLeft'
         [ id, roomName, nargs... ] = args
         nev = @makeSocketRoomLeftName id, roomName
