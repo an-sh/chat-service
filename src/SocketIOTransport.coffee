@@ -19,7 +19,8 @@ class ClusterBus extends EventEmitter
   constructor : (@server, @adapter) ->
     super()
     @channel = 'cluster:bus'
-    @intenalEvents = ['roomLeaveSocket', 'socketRoomLeft']
+    @intenalEvents = ['roomLeaveSocket', 'socketRoomLeft'
+      , 'disconnectUserSockets']
     @types = [ 2, 5 ]
 
   # @private
@@ -44,7 +45,7 @@ class ClusterBus extends EventEmitter
   # @private
   # TODO: Use an API from socket.io if(when) it will be available.
   emit : (ev, args...) ->
-    data = [ ev, @server.instanceUID, args... ]
+    data = [ ev, args... ]
     packet = type : (if hasBinary(args) then 5 else 2)
     , data : data
     opts = rooms : [ @channel ]
@@ -52,13 +53,13 @@ class ClusterBus extends EventEmitter
 
   # @private
   onPacket : (packet) ->
-    [ev, uid, args...] = packet.data
+    [ev, args...] = packet.data
     emit = @.constructor.__super__.emit.bind @
     if _.includes @intenalEvents, ev
       [nev, nargs] = @mergeEventName ev, args
       emit nev, nargs...
     else
-      emit ev, uid, args...
+      emit ev, args...
 
 
 # @private
@@ -121,7 +122,7 @@ class SocketIOTransport
       .then =>
         @clusterBus.emit 'socketRoomLeft', id, roomName
       .catchReturn()
-    @clusterBus.on 'disconnectUserSockets', (id, userName) =>
+    @clusterBus.on 'disconnectUserSockets', (userName) =>
       @server.state.getUser userName
       .then (user) ->
         user.disconnectInstanceSockets()

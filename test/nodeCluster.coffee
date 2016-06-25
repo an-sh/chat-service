@@ -58,7 +58,7 @@ module.exports = ->
             expect(d).deep.equal(data)
             cb()
         (cb) ->
-          instance1.clusterBus.emit event, data
+          instance1.clusterBus.emit event, instance1.instanceUID, data
           cb()
       ], done
 
