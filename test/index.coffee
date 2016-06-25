@@ -3,8 +3,6 @@ _ = require 'lodash'
 config = require './config.coffee'
 testutils = require './testutils.coffee'
 
-require('source-map-support').install()
-
 
 before testutils.checkDB
 

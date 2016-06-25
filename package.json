@@ -9,7 +9,7 @@
     "prepublish": "coffee -cm --output lib/ src/",
     "precoverage": "coffee -cm --output lib/ src/",
     "test": "mocha",
-    "coverage": "COVERAGE=1 mocha --require ./coffee-coverage-loader.js && istanbul report text-summary lcov",
+    "coverage": "mocha --require ./coffee-coverage-loader.js && istanbul report text-summary lcov",
     "pipe-coverage": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js --verbose"
   },
   "author": {
@@ -55,7 +55,6 @@
     "coveralls": "^2.11.8",
     "istanbul": "^0.4.2",
     "mocha": "^2.4.5",
-    "socket.io-client": "^1.4.5",
-    "source-map-support": "^0.4.0"
+    "socket.io-client": "^1.4.5"
   }
 }

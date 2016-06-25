@@ -1,14 +1,10 @@
 
-if process.env.COVERAGE
-  ChatService = require('../src/ChatService.coffee')
-else
-  ChatService = require('../index.js')
-
+ChatService = require('../src/ChatService.coffee')
 Promise = require 'bluebird'
 Redis = require 'ioredis'
 _ = require 'lodash'
 config = require './config.coffee'
-ioClient = require 'socket.io-client'
+io = require 'socket.io-client'
 
 
 makeURL = (port) ->
@@ -36,7 +32,7 @@ setCustomCleanup = (fn) -> customCleanup = fn
 clientConnect = (name, port) ->
   url = makeURL port
   params = makeParams(name)
-  ioClient.connect url, params
+  io.connect url, params
 
 startService = (opts, hooks) ->
   options = { port : config.port }
