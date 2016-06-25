@@ -279,6 +279,7 @@ class UserStateMemory
   # @private
   constructor : (@server, @userName) ->
     @socketsToRooms = new FastMap
+    @socketsToInstances = new FastMap
     @roomsToSockets = new FastMap
     @locks = new FastMap
     @echoChannel = @makeEchoChannelName @userName
@@ -288,9 +289,10 @@ class UserStateMemory
     "echo:#{userName}"
 
   # @private
-  addSocket : (id) ->
+  addSocket : (id, uid) ->
     roomsset = new FastSet
     @socketsToRooms.set id, roomsset
+    @socketsToInstances.set id, uid
     nconnected = @socketsToRooms.length
     Promise.resolve nconnected
 
@@ -354,6 +356,7 @@ class UserStateMemory
       njoined = socketsset.length
       joinedSockets[idx] = njoined
     @socketsToRooms.delete id
+    @socketsToInstances.delete id
     nconnected = @socketsToRooms.length
     Promise.resolve [ removedRooms, joinedSockets, nconnected ]
 

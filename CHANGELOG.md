@@ -4,6 +4,7 @@
 - Added ChatService clusterBus.
 - Added ready and error ChatService lifecycle events.
 - Added storeConsistencyFailure and transportConsistencyFailure events.
+- Changed Redis user sockets schema.
 - Changed default timeouts values.
 - Changed disconnectUserSockets API method.
 - Changed ioredis version to ^2.0.0.

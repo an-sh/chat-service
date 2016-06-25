@@ -158,7 +158,7 @@ return {msgs, tss, ids}
 local result = {}
 local sockets = KEYS[1]
 local prefix = ARGV[1]
-local ids = redis.call('SMEMBERS', sockets)
+local ids = redis.call('HKEYS', sockets)
 
 if table.getn(ids) == 0 then
   local jsonResult = cjson.encode(cjson.null)
@@ -208,8 +208,8 @@ local socketid = ARGV[2]
 local rooms = redis.call('SMEMBERS', id)
 redis.call('DEL', id)
 
-redis.call('SREM', sockets, socketid)
-local nconnected = redis.call('SCARD', sockets)
+redis.call('HDEL', sockets, socketid)
+local nconnected = redis.call('HLEN', sockets)
 
 local removedRooms = {}
 local joinedSockets = {}
@@ -495,17 +495,17 @@ class UserStateRedis
     "echo:#{userName}"
 
   # @private
-  addSocket : (id) ->
+  addSocket : (id, uid) ->
     @redis.multi()
-    .sadd @makeKeyName('sockets'), id
-    .scard @makeKeyName('sockets')
+    .hset @makeKeyName('sockets'), id, uid
+    .hlen @makeKeyName('sockets')
     .exec()
     .spread (_0, [_1, nconnected]) ->
       Promise.resolve nconnected
 
   # @private
   getAllSockets : ->
-    @redis.smembers @makeKeyName('sockets')
+    @redis.hkeys @makeKeyName('sockets')
 
   # @private
   getSocketsToRooms : ->

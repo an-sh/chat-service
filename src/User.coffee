@@ -89,7 +89,7 @@ class User extends DirectMessaging
   registerSocket : (id) ->
     @state.addSocket id, @userName
     .then =>
-      @userState.addSocket id
+      @userState.addSocket id, @server.instanceUID
     .then (nconnected) =>
       unless @transport.getSocketObject id
         @removeUserSocket id
