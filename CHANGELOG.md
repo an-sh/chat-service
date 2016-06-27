@@ -4,6 +4,7 @@
 - Added ChatService clusterBus.
 - Added ready and error ChatService lifecycle events.
 - Added storeConsistencyFailure and transportConsistencyFailure events.
+- Added support of binary data in custom messages.
 - Changed Redis user sockets schema.
 - Changed default timeouts values.
 - Changed disconnectUserSockets API method.

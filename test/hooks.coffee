@@ -206,3 +206,27 @@ module.exports = ->
             expect(msg.timestamp).a('Number')
             expect(msg.id).equal(1)
             done()
+
+  it 'should correctly send room messages with binary data', (done) ->
+    data = new ArrayBuffer 1
+    view = new DataView data
+    view.setInt8 0, 5
+    message = { data : data }
+    roomMessagesChecker = (msg, cb) -> cb()
+    chatService = startService null, { roomMessagesChecker }
+    chatService.addRoom roomName1, null, ->
+      socket1 = clientConnect user1
+      socket1.on 'loginConfirmed', ->
+        socket1.emit 'roomJoin', roomName1, ->
+          socket1.emit 'roomMessage', roomName1, message
+          socket1.on 'roomMessage', (room, msg) ->
+            expect(room).equal(roomName1)
+            expect(msg).include.keys 'data', 'author'
+            , 'timestamp', 'id'
+            expect(msg.author).equal(user1)
+            expect(msg.timestamp).a('Number')
+            expect(msg.id).equal(1)
+            socket1.emit 'roomRecentHistory', roomName1, (error, data) ->
+              expect(error).not.ok
+              expect(data[0]).deep.equal(msg)
+              done()
