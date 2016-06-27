@@ -1,4 +1,5 @@
 
+Promise = require 'bluebird'
 _ = require 'lodash'
 async = require 'async'
 expect = require('chai').expect
