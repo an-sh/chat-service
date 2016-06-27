@@ -1,7 +1,7 @@
 
 # Frontend example
 
-![Example](http://an-sh.github.io/chat-service/example.png "Example")
+![Example](https://an-sh.github.io/chat-service/example.png "Example")
 
 
 ### Build and run
@@ -25,11 +25,13 @@ To run several instances of application use:
 
 ```sh
 export CHAT_REDIS_CONNECT="localhost:6379"
-NODE_ENV=production PORT=3000 CHAT_PORT=8000 bin/www &
-NODE_ENV=production PORT=3001 CHAT_PORT=8001 bin/www &
+export NODE_ENV=production
+PORT=3000 CHAT_PORT=8000 bin/www &
+PORT=3001 CHAT_PORT=8001 bin/www &
 ```
 
-To correctly shutdown instances use:
+This will start two separate node process, that will communicate and
+share data via a Redis server. To correctly shutdown instances use:
 
 ```sh
 kill -2 <PID>

@@ -21,7 +21,7 @@ protocol/API tunnelling for IoT devices.
 
 - Customisable JSON messages format via just a validation function
   (hook), allowing custom or heterogeneous room messages format
-  (including support a of binary data inside JSON).
+  (including support of a binary data inside JSON).
 
 - Per-room user presence API and notifications.
 
@@ -52,9 +52,9 @@ protocol/API tunnelling for IoT devices.
 
 ### Tutorial
 
-On a server, lets define the user authentication function, as the
-service is relying on an extern auth function. A user just needs to
-pass an auth check, no explicit user adding step is required.
+On a server, define the user authentication function, as the service
+is relying on an extern auth function. A user just needs to pass an
+auth check, no explicit user adding step is required.
 
 ```javascript
 function onConnect(service, id) {
@@ -64,7 +64,7 @@ function onConnect(service, id) {
   let query = socket.handshake.query
   // Check query data.
   // ...
-  // Return a promise that resolves with a login.
+  // Return a promise that resolves with a login string.
   Promise.resolve(userName)
 }
 ```
@@ -103,12 +103,12 @@ let query = `user=${user}&password=${password}`
 let params = { query }
 // Connect to server.
 let socket = io.connect(url, params)
-socket.on('loginConfirmed', (userName) => {
+socket.once('loginConfirmed', (userName) => {
   // Auth success.
   socket.on('roomMessage', (room, msg) => {
     // Room message handler.
   })
-  // Join room 'default'
+  // Join room 'default'.
   socket.emit('roomJoin', 'default', (error, data) => {
     // Check for a command error.
     if (error) return
@@ -117,39 +117,43 @@ socket.on('loginConfirmed', (userName) => {
     socket.emit('roomMessage', 'default', { textMessage: 'Hello!' })
   })
 })
-socket.on('loginRejected', (error) => {
+socket.once('loginRejected', (error) => {
   // Auth error handler.
 })
 ```
 
-Look in the API documentation for details about custom messages
-format, rooms management and users presence.
+Look in the API documentation for details about custom message
+formats, rooms management, rooms permission and users presence.
 
 
-### Frontend example
+### API documentation
 
-An angular single page chat application with basic features
-demonstration is in `example` directory. You can also run this example
-as a cluster with several node processes. Check `README.md` file in
-that directory for more information.
+Is available online at [gitpages](https://an-sh.github.io/chat-service/0.7/).
 
-
-### Documentation
-
-
-Is available online at [gitpages](http://an-sh.github.io/chat-service/0.7/).
-
-- `ServerMessages` - class describes socket.io messages that are sent
+- `ServerMessages` class describes socket.io messages that are sent
   from the server to a client.
 
-- `UserCommands` - class describes socket.io messages that a client
+- `UserCommands` class describes socket.io messages that a client
   sends to a server and receives reply as a socket.io ack.
 
-- `ChatService` - class is the package exported object and a service
+- `ChatService` class is the package exported object and a service
   instance constructor, describes options. It also contains mixin
   methods for using server side API.
 
 Run `npm install -g codo` and `codo` to generate local documentation.
+
+
+### Frontend example
+
+An Angular single page chat application with a basic features
+demonstration is in an `example` directory. You can also run this
+example as a cluster with several node processes. Check `README.md`
+file in that directory for more information.
+
+
+### Bug reporting
+
+Use [Github](https://github.com/an-sh/chat-service/issues).
 
 
 ### License

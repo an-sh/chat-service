@@ -1,5 +1,6 @@
 
-# ExecInfo is available for {UserCommands} hooks.
+# ExecInfo is available for {UserCommands} hooks. See
+# {HooksInterface}.
 class ExecInfo
 
   # @property [ChatService] Service instance.

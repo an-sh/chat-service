@@ -74,4 +74,6 @@ module.exports = ->
       fn()
     for k, fn of chatService.userCommands
       fn()
+    for k, fn of chatService.HooksInterface
+      fn()
     process.nextTick done

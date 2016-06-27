@@ -387,6 +387,90 @@ class UserCommands
   systemMessage : (data, cb) ->
 
 
+# Hooks interface. Hooks can either return a Promice or call a
+# callback (callback must be called from asynchronous code only,
+# e.g. `process.nextTick`).
+#
+# @mixin
+HooksInterface =
+
+  # Client connection hook.
+  #
+  # @param instance [ChatService] Service instance.
+  # @param id [String] Socket id.
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise<Array>] Returns an array with a login string
+  #   (user name) and an optional auth data object. User name and auth
+  #   data are send back with a {ServerMessages#loginConfirmed}
+  #   message. Error is sent as a {ServerMessages#loginRejected}
+  #   message.
+  onConnect : (instance, id, cb) ->
+
+  # Executes when server is started (after a state and a transport are
+  # up, but before message processing is started).
+  #
+  # @param instance [ChatService] Service instance.
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise]
+  onStart : (instance, cb) ->
+
+  # Executes when server is closed (after a transport is closed and
+  # all clients are disconnected, but a state is still up).
+  #
+  # @param instance [ChatService] Service instance.
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise]
+  onClose : (instance, cb) ->
+
+  # Validator for {UserCommands#directMessage} message objects. When
+  # is set allow a custom content in direct messages.
+  #
+  # @param msg [Object] Message object.
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise]
+  directMessagesChecker : (msg, cb) ->
+
+  # Validator for {UserCommands#roomMessage} message objects. When is
+  # set allow a custom content in room messages.
+  #
+  # @param msg [Object] Message object.
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise]
+  roomMessagesChecker : (msg, cb) ->
+
+  # Before hooks are available for all {UserCommands} and are executed
+  # after an arguments validation.
+  #
+  # @note Substitute `_COMMAND_` with one of {UserCommands}.
+  #
+  # @param [ExecInfo] execInfo
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise or Promise<Array>] Returns either no data to
+  #   continue a command execution, or an array to stop execution and
+  #   return array members as a command's ack arguments to the command
+  #   issuer.
+  _COMMAND_Before : (execInfo, cb) ->
+
+  # After hooks are available for all {UserCommands} and are executed
+  # after ChatService default event handlers.
+  #
+  # @note Substitute `_COMMAND_` with one of {UserCommands}.
+  #
+  # @param [ExecInfo] execInfo
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise or Promise<Array>] Returns either no data to
+  #   return unchanged command results, or an array to return it's
+  #   members as a command's ack arguments to the command issuer.
+  _COMMAND_After : (execInfo, cb) ->
+
+
 # Service class, is the package exported object.
 # @extend ServiceAPI
 # @extend MaintenanceAPI
@@ -396,10 +480,14 @@ class ChatService extends ChatServiceEvents
 
   # Crates an object and starts a new server instance.
   #
+  # @param options [Object] Service configuration options.
+  #
+  # @param hooks [HooksInterface] Service customisation hooks. See
+  #   {HooksInterface}.
   #
   # @option options [Number] closeTimeout Maximum time in ms to wait
   #   before a server disconnects all clients on shutdown, default is
-  #   `10000`.
+  #   `15000`.
   #
   # @option options [Boolean] enableAccessListsUpdates Enables
   #   {ServerMessages#roomModeChanged},
@@ -431,48 +519,6 @@ class ChatService extends ChatServiceEvents
   #
   # @option options [Boolean] useRawErrorObjects Send error objects
   #   instead of strings, default is `false`. See {ChatServiceError}.
-  #
-  #
-  # @option hooks [Function<ChatService, socketid:String,
-  #   Callback<Error, username:String, authData:Object>>] onConnect
-  #   Client connection hook. Must call a callback with either an
-  #   error or an user name and an auth data. User name and auth data
-  #   are send back with a {ServerMessages#loginConfirmed}
-  #   message. Error is sent as a {ServerMessages#loginRejected}
-  #   message.
-  #
-  # @option hooks [Function<ChatService, Callback<Error>>] onStart
-  #   Executes when server is started (after a state and a transport
-  #   are up, but before message processing is started). Must call a
-  #   callback.
-  #
-  # @option hooks [Function<ChatService, Error, Callback<Error>>]
-  #   onClose Executes when server is closed (after a transport is
-  #   closed and all clients are disconnected, but a state is still
-  #   up). Must call a callback.
-  #
-  # @option hooks [Function<Object, Callback<Error>>]
-  #   directMessagesChecker Validator for {UserCommands#directMessage}
-  #   message objects. When is set allow a custom content in direct
-  #   messages. Must call a callback.
-  #
-  # @option hooks [Function<Object, Callback<Error>>]
-  #   roomMessagesChecker Validator for {UserCommands#roomMessage}
-  #   message objects. When is set allow a custom content in room
-  #   messages. Must call a callback.
-  #
-  # @option hooks [Function<execInfo, Callback<Rest...>>] {cmd}Before
-  #   Before hooks are available for all {UserCommands} and executed
-  #   after an arguments validation. Callback must be called either
-  #   without arguments to continue command execution, or with
-  #   arguments to stop execution and return arguments as results to
-  #   the command issuer.
-  #
-  # @option hooks [Function<execInfo, Callback<Rest...>>] {cmd}After
-  #   After hooks are available for all {UserCommands}. Callback must
-  #   be called without arguments to return unchanged result or error
-  #   to the command issuer, or with arguments to return arguments as
-  #   results to the command issuer.
   #
   #
   # @option options [String or Constructor] state Chat state. Can be
@@ -619,6 +665,7 @@ class ChatService extends ChatServiceEvents
         .then =>
           @transport.setEvents()
       else
+        # tests spec compatibility
         @transport.setEvents()
         .then =>
           @clusterBus.listen()
