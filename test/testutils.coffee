@@ -78,12 +78,17 @@ cleanup = (services, sockets, done) ->
     cleanDB()
   .asCallback done
 
+# fix for node 0.12
+nextTick = (fn, args...) ->
+  process.nextTick ->
+    fn args...
 
 module.exports = {
   ChatService
   checkDB
   cleanup
   clientConnect
+  nextTick
   setCustomCleanup
   setState
   startService

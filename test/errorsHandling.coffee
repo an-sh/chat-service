@@ -5,6 +5,7 @@ expect = require('chai').expect
 
 { cleanup
   clientConnect
+  nextTick
   ChatService
   setCustomCleanup
   startService
@@ -34,21 +35,21 @@ module.exports = ->
       chatService = startService { state : {} }, null
     catch error
       expect(error).ok
-      process.nextTick -> done()
+      nextTick done
 
   it 'should check transport constructor type', (done) ->
     try
       chatService = startService { transport : {} }, null
     catch error
       expect(error).ok
-      process.nextTick -> done()
+      nextTick done
 
   it 'should check adapter constructor type', (done) ->
     try
       chatService = startService { adapter : {} }, null
     catch error
       expect(error).ok
-      process.nextTick -> done()
+      nextTick done
 
   it 'should rollback a failed room join', (done) ->
     chatService = startService()
@@ -107,7 +108,7 @@ module.exports = ->
   it 'should emit closed on onStart hook error', (done) ->
     onStart = (chatService, cb) ->
       expect(chatService).instanceof(ChatService)
-      process.nextTick cb, new Error()
+      nextTick cb, new Error()
     chatService = startService null, { onStart }
     chatService.on 'closed', (error) ->
       expect(error).ok
@@ -119,7 +120,7 @@ module.exports = ->
     chatService.transport.close = ->
       orig.apply chatService.transport, arguments
       .then -> throw new Error()
-    process.nextTick ->
+    nextTick ->
       chatService.close()
       .catch (error) ->
         expect(error).ok
@@ -129,9 +130,9 @@ module.exports = ->
     onClose = (chatService, error, cb) ->
       expect(chatService).instanceof(ChatService)
       expect(error).not.ok
-      process.nextTick cb, new Error
+      nextTick cb, new Error
     chatService = startService null, { onClose }
-    process.nextTick ->
+    nextTick ->
       chatService.close()
       .catch (error) ->
         expect(error).ok
@@ -140,13 +141,13 @@ module.exports = ->
   it 'should propagate transport close errors to onClose hook', (done) ->
     onClose = (chatService, error, cb) ->
       expect(error).ok
-      process.nextTick cb, error
+      nextTick cb, error
     chatService = startService null, { onClose }
     orig = chatService.transport.close
     chatService.transport.close = ->
       orig.apply chatService.transport, arguments
       .then -> throw new Error()
-    process.nextTick ->
+    nextTick ->
       chatService.close()
       .catch (error) ->
         expect(error).ok

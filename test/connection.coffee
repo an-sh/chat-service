@@ -5,6 +5,7 @@ expect = require('chai').expect
 
 { cleanup
   clientConnect
+  nextTick
   ChatService
   startService
 } = require './testutils.coffee'
@@ -51,7 +52,7 @@ module.exports = ->
   it 'should execute socket.io middleware', (done) ->
     reason = 'some error'
     auth = (socket, cb) ->
-      process.nextTick cb, new Error reason
+      nextTick cb, new Error reason
     chatService = startService null, { middleware : auth }
     socket1 = clientConnect()
     socket1.on 'error', (e) ->
@@ -65,7 +66,7 @@ module.exports = ->
       expect(server).instanceof(ChatService)
       expect(id).a('string')
       err = new Error 'some error'
-      process.nextTick cb, null, name, data
+      nextTick cb, null, name, data
     chatService = startService null, { onConnect }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u, d) ->
@@ -80,7 +81,7 @@ module.exports = ->
       expect(server).instanceof(ChatService)
       expect(id).a('string')
       err = new Error 'some error'
-      process.nextTick cb, err
+      nextTick cb, err
     chatService = startService null, { onConnect }
     socket1 = clientConnect user1
     socket1.on 'loginRejected', (e) ->

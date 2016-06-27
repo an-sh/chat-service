@@ -74,4 +74,4 @@ module.exports = ->
       fn()
     for k, fn of chatService.userCommands
       fn()
-    process.nextTick -> done()
+    process.nextTick done
