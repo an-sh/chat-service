@@ -8,3 +8,5 @@ script:
   - npm run-script pipe-coverage
 services:
   - redis-server
+git:
+  depth: 5

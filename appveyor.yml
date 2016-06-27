@@ -1,4 +1,6 @@
 
+clone_depth: 5
+
 environment:
   matrix:
   # node.js
