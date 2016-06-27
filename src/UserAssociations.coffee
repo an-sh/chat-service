@@ -65,9 +65,7 @@ UserAssociations =
       bus.emit 'roomLeaveSocket', id, channel
       eventToPromise bus, bus.makeSocketRoomLeftName(id, channel)
     .timeout @server.busAckTimeout
-    .catch (e) =>
-      @consistencyFailure e, { roomName : channel
-        , id, opType : 'transportChannel' }
+    .catchReturn()
 
   # @private
   channelLeaveSockets : (channel, ids) ->
