@@ -7,9 +7,8 @@
 [![Coverage Status](https://coveralls.io/repos/an-sh/chat-service/badge.svg?branch=master&service=github)](https://coveralls.io/github/an-sh/chat-service?branch=master)
 [![Dependency Status](https://david-dm.org/an-sh/chat-service.svg)](https://david-dm.org/an-sh/chat-service)
 
-Chat like messaging on top of socket.io, focused on scalability and
-extensibility. Designed not to be limited to just a room text chat,
-but to handle a vast variety of cases, including exchanging data in
+Messaging service designed to handle a vast variety of use cases that
+are fit into a chat-like pattern, including exchanging data in
 collaborative applications, logging with realtime updates, or a full
 protocol/API tunnelling for IoT devices.
 
@@ -20,8 +19,9 @@ protocol/API tunnelling for IoT devices.
 - Reliable room messaging using a server side history storage and a
   synchronisation API.
 
-- Customisable message format via just a validation function (hook),
-  allowing custom or heterogeneous room messages format.
+- Customisable JSON messages format via just a validation function
+  (hook), allowing custom or heterogeneous room messages format
+  (including support a of binary data inside JSON).
 
 - Per-room user presence API and notifications.
 
@@ -45,10 +45,9 @@ protocol/API tunnelling for IoT devices.
   messages (commands) handlers can be invoked server side as simple
   functions.
 
-- Simple networking using only socket.io library with JSON
-  messages. Just a socket.io client implementation is required, making
-  possible using the same server for web (SPA), mobile and desktop
-  clients.
+- Simple networking, only a socket.io client implementation is
+  required, making it possible to use the same server for web (SPA),
+  mobile and desktop clients.
 
 
 ### Tutorial
@@ -58,15 +57,15 @@ service is relying on an extern auth function. A user just needs to
 pass an auth check, no explicit user adding step is required.
 
 ```javascript
-function onConnect(service, id, cb) {
-  // Assuming that auth data is passed in a query string.
+function onConnect(service, id) {
+  // Get socket object using id.
   let socket = service.nsp.connected[id]
+  // Assuming that auth data is passed in a query string.
   let query = socket.handshake.query
-  let userName = query.user
   // Check query data.
-  cb(null, userName)
-  // Or reject auth on error:
-  // cb(error)
+  // ...
+  // Return a promise that resolves with a login.
+  Promise.resolve(userName)
 }
 ```
 
@@ -115,7 +114,7 @@ socket.on('loginConfirmed', (userName) => {
     if (error) return
     // Now we will receive 'default' room messages in 'roomMessage' handler.
     // Now we can also send a message to 'default' room:
-    // socket.emit('roomMessage', 'default', { textMessage: 'Hello!' })
+    socket.emit('roomMessage', 'default', { textMessage: 'Hello!' })
   })
 })
 socket.on('loginRejected', (error) => {
@@ -123,16 +122,16 @@ socket.on('loginRejected', (error) => {
 })
 ```
 
-Look in the documentation for details about custom messages format,
-management and presence APIs.
+Look in the API documentation for details about custom messages
+format, rooms management and users presence.
 
 
 ### Frontend example
 
 An angular single page chat application with basic features
 demonstration is in `example` directory. You can also run this example
-as a cluster with several node processes. Check README in that
-directory for more information.
+as a cluster with several node processes. Check `README.md` file in
+that directory for more information.
 
 
 ### Documentation
@@ -140,15 +139,15 @@ directory for more information.
 
 Is available online at [gitpages](http://an-sh.github.io/chat-service/0.7/).
 
-- `ServerMessages` class describes socket.io messages that are sent
+- `ServerMessages` - class describes socket.io messages that are sent
   from the server to a client.
 
-- `UserCommands` class describes socket.io messages that a client
+- `UserCommands` - class describes socket.io messages that a client
   sends to a server and receives reply as a socket.io ack.
 
-- `ChatService` class is the server constructor, describes options and
-  customisation hooks. It also contains mixin methods for using server
-  side API.
+- `ChatService` - class is the package exported object and a service
+  instance constructor, describes options. It also contains mixin
+  methods for using server side API.
 
 Run `npm install -g codo` and `codo` to generate local documentation.
 

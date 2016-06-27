@@ -216,12 +216,6 @@ class SocketIOTransport
     @nsp.connected[id]
 
   # @private
-  # getSocketRooms : (id) ->
-  #   socket = @getSocketObject id
-  #   unless socket then return
-  #   return socket.rooms()
-
-  # @private
   sendToChannel : (channel, args...) ->
     @nsp.to(channel).emit args...
     return
