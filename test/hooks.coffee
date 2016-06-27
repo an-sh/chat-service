@@ -248,13 +248,15 @@ module.exports = ->
           socket1.emit 'roomMessage', roomName1, message
           socket1.on 'roomMessage', (room, msg) ->
             expect(room).equal(roomName1)
-            expect(msg).include.keys 'data', 'author'
-            , 'timestamp', 'id'
-            expect(msg.data).deep.equal(data)
+            expect(data.equals(msg.data)).true
             expect(msg.author).equal(user1)
             expect(msg.timestamp).a('Number')
             expect(msg.id).equal(1)
-            socket1.emit 'roomRecentHistory', roomName1, (error, data) ->
+            socket1.emit 'roomRecentHistory', roomName1, (error, history) ->
               expect(error).not.ok
-              expect(data[0]).deep.equal(msg)
+              msg = history[0]
+              expect(data.equals(msg.data)).true
+              expect(msg.author).equal(user1)
+              expect(msg.timestamp).a('Number')
+              expect(msg.id).equal(1)
               done()
