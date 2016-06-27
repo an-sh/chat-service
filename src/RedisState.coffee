@@ -386,7 +386,7 @@ class RoomStateRedis extends ListsStateRedis
       return Promise.resolve data
     for msg, idx in msgs
       obj = JSON.parse msg, (key, val) ->
-        if val?.type == 'Buffer' then Buffer.from(val.data) else val
+        if val?.type == 'Buffer' then new Buffer(val.data) else val
       obj.timestamp = parseInt tss[idx]
       obj.id = parseInt ids[idx]
       data[idx] = obj
