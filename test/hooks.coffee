@@ -236,9 +236,7 @@ module.exports = ->
             done()
 
   it 'should correctly send room messages with binary data', (done) ->
-    data = new ArrayBuffer 1
-    view = new DataView data
-    view.setInt8 0, 5
+    data = new Buffer [5]
     message = { data : data }
     roomMessagesChecker = (msg, cb) ->
       nextTick cb
@@ -252,6 +250,7 @@ module.exports = ->
             expect(room).equal(roomName1)
             expect(msg).include.keys 'data', 'author'
             , 'timestamp', 'id'
+            expect(msg.data).deep.equal(data)
             expect(msg.author).equal(user1)
             expect(msg.timestamp).a('Number')
             expect(msg.id).equal(1)
