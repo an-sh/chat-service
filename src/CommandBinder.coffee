@@ -4,7 +4,7 @@ Promise = require 'bluebird'
 _ = require 'lodash'
 ExecInfo = require './ExecInfo'
 
-{ possiblyCallback } = require './utils'
+{ execHook, possiblyCallback } = require './utils'
 
 
 # @private
@@ -52,9 +52,7 @@ CommandBinder =
         validator.checkArguments name, execInfo.args...
         .then ->
           if beforeHook and not execInfo.bypassHooks
-            Promise.fromCallback (cb) ->
-              beforeHook execInfo, cb
-            , {multiArgs: true}
+            execHook beforeHook, execInfo
         .then (results) ->
           if results?.length then return results
           fn.apply self, [execInfo.args..., execInfo]
@@ -64,9 +62,7 @@ CommandBinder =
             execInfo.error = error
           .then ->
             if afterHook and not execInfo.bypassHooks
-              Promise.fromCallback (cb) ->
-                afterHook execInfo, cb
-              , {multiArgs: true}
+              execHook afterHook, execInfo
           .then (results) ->
             if results?.length
               results

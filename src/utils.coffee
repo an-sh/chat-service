@@ -38,10 +38,25 @@ checkNameSymbols = (name) ->
   else
     Promise.reject new ChatServiceError 'invalidName', name
 
+# @private
+# @nodoc
+execHook = (hook, args...) ->
+  unless hook then return Promise.resolve()
+  cb = null
+  wrapper = -> if cb then cb arguments...
+  res = hook args..., wrapper
+  if typeof res?.then is 'function'
+    res
+  else
+    Promise.fromCallback (fn) ->
+      cb = fn
+    , {multiArgs: true}
+
 
 module.exports = {
   asyncLimit
   checkNameSymbols
+  execHook
   extend
   nameChecker
   possiblyCallback

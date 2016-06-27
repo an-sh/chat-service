@@ -2,12 +2,14 @@
 ### 0.8.0
 
 - Added ChatService clusterBus.
+- Added hooks returning promises support.
 - Added ready and error ChatService lifecycle events.
 - Added storeConsistencyFailure and transportConsistencyFailure events.
 - Added support of binary data in custom messages.
 - Changed Redis user sockets schema.
 - Changed default timeouts values.
 - Changed disconnectUserSockets API method.
+- Changed hooks callbacks, now must be run async only.
 - Changed ioredis version to ^2.0.0.
 - Fixed CoffeeScript compilation (use compiled js for npm).
 - Fixed channel leaving for sockets in other instances.

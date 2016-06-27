@@ -52,7 +52,7 @@ module.exports = ->
     onClose = (server, error, cb) ->
       expect(server).instanceof(ChatService)
       expect(error).not.ok
-      cb()
+      process.nextTick cb
     chatService1 = startService null, { onClose }
     chatService1.close done
 
@@ -72,7 +72,7 @@ module.exports = ->
       expect(mode).a('boolean')
       expect(cb).instanceof(Function)
       before = true
-      cb()
+      process.nextTick cb
     roomCreateAfter = (execInfo, cb) ->
       { server, userName, id, args, results, error } = execInfo
       [ name , mode ] = args
@@ -86,7 +86,30 @@ module.exports = ->
       expect(error).null
       expect(cb).instanceof(Function)
       after = true
-      cb null, someData
+      process.nextTick cb, null, someData
+    chatService = startService { enableRoomsManagement : true }
+      , { roomCreateBefore, roomCreateAfter }
+    socket1 = clientConnect user1
+    socket1.on 'loginConfirmed', (u, data) ->
+      sid = data.id
+      socket1.emit 'roomCreate', roomName1, true, (error, data) ->
+        expect(error).not.ok
+        expect(before).true
+        expect(after).true
+        expect(data).equal(someData)
+        done()
+
+  it 'should execute hooks with promises', (done) ->
+    someData = 'data'
+    before = null
+    after = null
+    sid = null
+    roomCreateBefore = (execInfo, cb) ->
+      before = true
+      Promise.resolve()
+    roomCreateAfter = (execInfo, cb) ->
+      after = true
+      Promise.resolve someData
     chatService = startService { enableRoomsManagement : true }
       , { roomCreateBefore, roomCreateAfter }
     socket1 = clientConnect user1
@@ -105,7 +128,7 @@ module.exports = ->
       expect(restArgs).instanceof(Array)
       expect(restArgs).lengthOf(1)
       expect(restArgs[0]).true
-      cb()
+      process.nextTick cb
     chatService = startService null, { listOwnSocketsAfter }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u, data) ->
@@ -117,7 +140,7 @@ module.exports = ->
   it 'should support changing arguments in before hooks', (done) ->
     roomGetWhitelistModeBefore = (execInfo, cb) ->
       execInfo.args = [roomName2]
-      cb()
+      process.nextTick cb
     chatService = startService { enableRoomsManagement : true }
       , { roomGetWhitelistModeBefore }
     socket1 = clientConnect user1
@@ -131,7 +154,7 @@ module.exports = ->
 
   it 'should support more arguments in after hooks', (done) ->
     listOwnSocketsAfter = (execInfo, cb) ->
-      cb null, execInfo.results..., true
+      process.nextTick cb, null, execInfo.results..., true
     chatService = startService null, { listOwnSocketsAfter }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u, data) ->
@@ -147,11 +170,12 @@ module.exports = ->
     before = false
     disconnectBefore = (execInfo, cb) ->
       before = true
-      cb()
+      process.nextTick cb
     disconnectAfter = (execInfo, cb) ->
       expect(before).true
-      cb()
-      done()
+      process.nextTick ->
+        cb()
+        done()
     chatService1 = startService null, { disconnectAfter, disconnectBefore }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
@@ -159,7 +183,8 @@ module.exports = ->
 
   it 'should stop commands on before hook data', (done) ->
     val = 'asdf'
-    listOwnSocketsBefore = (execInfo, cb) -> cb null, val
+    listOwnSocketsBefore = (execInfo, cb) ->
+      process.nextTick cb, null, val
     chatService = startService null, { listOwnSocketsBefore }
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', ->
@@ -172,7 +197,7 @@ module.exports = ->
     html = '<b>HTML message.</b>'
     message = { htmlMessage : html }
     directMessagesChecker = (msg, cb) ->
-      cb()
+      process.nextTick cb
     chatService =
       startService { enableDirectMessages : true }, { directMessagesChecker }
     socket1 = clientConnect user1
@@ -190,7 +215,8 @@ module.exports = ->
   it 'should accept custom room messages with a hook', (done) ->
     html = '<b>HTML message.</b>'
     message = { htmlMessage : html }
-    roomMessagesChecker = (msg, cb) -> cb()
+    roomMessagesChecker = (msg, cb) ->
+      process.nextTick cb
     chatService = startService null, { roomMessagesChecker }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
@@ -212,7 +238,8 @@ module.exports = ->
     view = new DataView data
     view.setInt8 0, 5
     message = { data : data }
-    roomMessagesChecker = (msg, cb) -> cb()
+    roomMessagesChecker = (msg, cb) ->
+      process.nextTick cb
     chatService = startService null, { roomMessagesChecker }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1

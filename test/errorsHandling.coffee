@@ -107,7 +107,7 @@ module.exports = ->
   it 'should emit closed on onStart hook error', (done) ->
     onStart = (chatService, cb) ->
       expect(chatService).instanceof(ChatService)
-      cb new Error()
+      process.nextTick cb, new Error()
     chatService = startService null, { onStart }
     chatService.on 'closed', (error) ->
       expect(error).ok
@@ -129,7 +129,7 @@ module.exports = ->
     onClose = (chatService, error, cb) ->
       expect(chatService).instanceof(ChatService)
       expect(error).not.ok
-      cb new Error
+      process.nextTick cb, new Error
     chatService = startService null, { onClose }
     process.nextTick ->
       chatService.close()
@@ -140,7 +140,7 @@ module.exports = ->
   it 'should propagate transport close errors to onClose hook', (done) ->
     onClose = (chatService, error, cb) ->
       expect(error).ok
-      cb error
+      process.nextTick cb, error
     chatService = startService null, { onClose }
     orig = chatService.transport.close
     chatService.transport.close = ->

@@ -7,7 +7,7 @@ SocketServer = require 'socket.io'
 _ = require 'lodash'
 hasBinary = require 'has-binary'
 
-{ checkNameSymbols } = require './utils'
+{ execHook, checkNameSymbols } = require './utils'
 
 
 # @private
@@ -143,11 +143,9 @@ class SocketIOTransport
     Promise.resolve()
 
   # @private
-  addClient : (error, socket, userName, authData = {}) ->
+  addClient : (socket, userName, authData = {}) ->
     id = socket.id
     Promise.try ->
-      if error then Promise.reject error
-    .then ->
       unless userName
         userName = socket.handshake.query?.user
         unless userName
@@ -174,11 +172,13 @@ class SocketIOTransport
         @nsp.use fn
     if @hooks.onConnect
       @nsp.on 'connection', (socket) =>
-        @hooks.onConnect @server, socket.id, (error, userName, authData) =>
-          @addClient error, socket, userName, authData
+        execHook @hooks.onConnect, @server, socket.id
+        .then (loginData) =>
+          @addClient socket, loginData...
+        .catch (error) =>
+          @rejectLogin socket, error
     else
-      @nsp.on 'connection', (socket) =>
-        @addClient null, socket
+      @nsp.on 'connection', @addClient.bind @
     Promise.resolve()
 
   # @private

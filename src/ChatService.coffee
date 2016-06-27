@@ -10,7 +10,7 @@ SocketIOTransport = require './SocketIOTransport'
 _ = require 'lodash'
 uid = require 'uid-safe'
 
-{ extend } = require './utils'
+{ execHook, extend } = require './utils'
 
 # @note This class describes socket.io server outgoing messages, not
 #   actual methods.
@@ -615,8 +615,7 @@ class ChatService extends ChatServiceEvents
       if @hooks.onStart
         @clusterBus.listen()
         .then =>
-          Promise.fromCallback (cb) =>
-            @hooks.onStart @, cb
+          execHook @hooks.onStart, @
         .then =>
           @transport.setEvents()
       else
@@ -642,20 +641,19 @@ class ChatService extends ChatServiceEvents
   close : (done) ->
     if @closed then return Promise.resolve()
     @closed = true
+    closeError = null
     @transport.close()
     .then =>
-      if @hooks.onClose
-        Promise.fromCallback (cb) =>
-          @hooks.onClose @, null, cb
+      execHook @hooks.onClose, @, null
     , (error) =>
       if @hooks.onClose
-        Promise.fromCallback (cb) =>
-          @hooks.onClose @, error, cb
+        execHook @hooks.onClose, @, error
       else
         Promise.reject error
     .finally =>
       @state.close()
-      .finally => @emit 'closed', null
+      .finally =>
+        @emit 'closed', closeError
     .asCallback done
 
 
