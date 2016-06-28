@@ -1,7 +1,7 @@
 
 util = require 'util'
 
-# ChatService errors.
+# ChatService errors, that are returned to clients.
 class ChatServiceError extends Error
 
   # @property [Object] Error strings.

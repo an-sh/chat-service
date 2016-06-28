@@ -426,7 +426,9 @@ HooksInterface =
   onClose : (instance, cb) ->
 
   # Validator for {UserCommands#directMessage} message objects. When
-  # is set allow a custom content in direct messages.
+  # is set, a custom format in direct messages is enabled. When hooks
+  # resolves, than a message format is considered valid, and the other
+  # way around for the rejection case.
   #
   # @param msg [Object] Message object.
   # @param cb [Callback] Optional callback.
@@ -435,7 +437,9 @@ HooksInterface =
   directMessagesChecker : (msg, cb) ->
 
   # Validator for {UserCommands#roomMessage} message objects. When is
-  # set allow a custom content in room messages.
+  # set, a custom format in room messages is enabled. When hooks
+  # resolves, than a message format is considered valid, and the other
+  # way around for the rejection case.
   #
   # @param msg [Object] Message object.
   # @param cb [Callback] Optional callback.
@@ -485,9 +489,8 @@ class ChatService extends ChatServiceEvents
   # @param hooks [HooksInterface] Service customisation hooks. See
   #   {HooksInterface}.
   #
-  # @option options [Number] closeTimeout Maximum time in ms to wait
-  #   before a server disconnects all clients on shutdown, default is
-  #   `15000`.
+  #
+  # @option options [Number] port Server port, default is `8000`.
   #
   # @option options [Boolean] enableAccessListsUpdates Enables
   #   {ServerMessages#roomModeChanged},
@@ -508,17 +511,32 @@ class ChatService extends ChatServiceEvents
   #   {ServerMessages#roomUserLeft} messages, default is `false`.
   #
   # @option options [Number] historyMaxGetMessages Room history size
-  #   available via {UserCommands#roomRecentHistory} or
-  #   {UserCommands#roomHistoryGet}, default is `100`.
+  #   available via {UserCommands#roomRecentHistory} or via a single
+  #   invocation {UserCommands#roomHistoryGet}, default is `100`.
   #
   # @option options [Number] defaultHistoryLimit Is used for
   #   {UserCommands#roomCreate} or when {ServiceAPI~addRoom} is called
   #   without `historyMaxSize` option, default is `10000`.
   #
-  # @option options [Number] port Server port, default is `8000`.
-  #
   # @option options [Boolean] useRawErrorObjects Send error objects
   #   instead of strings, default is `false`. See {ChatServiceError}.
+  #
+  #
+  # @option options [Number] closeTimeout Maximum time in ms to wait
+  #   before a server disconnects all clients on shutdown, default is
+  #   `15000`.
+  #
+  # @option options [Number] heartbeatRate Server instance heartbeat
+  #   rate in ms, default is `10000`. (TODO)
+  #
+  # @option options [Number] heartbeatTimeout Server instance
+  #   heartbeat timeout in ms, after this interval instance is
+  #   considered inactive. Instances that have failed to update
+  #   heartbeat for a time period longer that this interval will be
+  #   automatically closed, default is `30000`. (TODO)
+  #
+  # @option options [Number] busAckTimeout Cluster bus ack waiting
+  #   timeout in ms, default is `5000`.
   #
   #
   # @option options [String or Constructor] state Chat state. Can be

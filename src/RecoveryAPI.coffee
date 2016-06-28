@@ -8,7 +8,7 @@ _ = require 'lodash'
 # API for a service state recovery.
 RecoveryAPI =
 
-  # Fix user state user association.
+  # Fix user state user association. (TODO)
   #
   # @param userName [String] Username.
   # @param cb [Callback] Optional callback.
