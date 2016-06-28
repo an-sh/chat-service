@@ -697,6 +697,9 @@ class ChatService extends ChatServiceEvents
         execHook @hooks.onClose, @, error
       else
         Promise.reject error
+    .catch (error) ->
+      closeError = error
+      Promise.reject error
     .finally =>
       @state.close()
       .finally =>
