@@ -387,9 +387,9 @@ class UserCommands
   systemMessage : (data, cb) ->
 
 
-# Hooks interface. Hooks can either return a Promice or call a
-# callback (callback must be called from asynchronous code only,
-# e.g. `process.nextTick`).
+# Hooks interface. Hooks can either return a Promise or call a
+# callback. The {ChatService#constructor} hooks parameter expects an
+# object that contains any of the described hooks.
 #
 # @mixin
 HooksInterface =
@@ -455,9 +455,9 @@ HooksInterface =
   # @param [ExecInfo] execInfo
   # @param cb [Callback] Optional callback.
   #
-  # @return [Promise or Promise<Array>] Returns either no data to
-  #   continue a command execution, or an array to stop execution and
-  #   return array members as a command's ack arguments to the command
+  # @return [Promise<null> or Promise<Array>] Resolves without a data
+  #   to continue a command execution. Rejections or a resolved array
+  #   will stop further execution, and return results to the command
   #   issuer.
   _COMMAND_Before : (execInfo, cb) ->
 
@@ -469,9 +469,10 @@ HooksInterface =
   # @param [ExecInfo] execInfo
   # @param cb [Callback] Optional callback.
   #
-  # @return [Promise or Promise<Array>] Returns either no data to
-  #   return unchanged command results, or an array to return it's
-  #   members as a command's ack arguments to the command issuer.
+  # @return [Promise<null> or Promise<Array>] Resolves without a data
+  #   to return unchanged command results to the command
+  #   issuer. Rejections or a resolved array will override command
+  #   results.
   _COMMAND_After : (execInfo, cb) ->
 
 

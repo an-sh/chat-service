@@ -43,14 +43,21 @@ checkNameSymbols = (name) ->
 execHook = (hook, args...) ->
   unless hook then return Promise.resolve()
   cb = null
-  wrapper = -> if cb then cb arguments...
+  callbackData = null
+  wrapper = (data...) ->
+    callbackData = data
+    cb data... if cb
   res = hook args..., wrapper
-  if typeof res?.then is 'function'
+  if callbackData
+    Promise.fromCallback (fn) ->
+      fn callbackData...
+    , {multiArgs : true}
+  else if typeof res?.then is 'function'
     res
   else
     Promise.fromCallback (fn) ->
       cb = fn
-    , {multiArgs: true}
+    , {multiArgs : true}
 
 
 module.exports = {

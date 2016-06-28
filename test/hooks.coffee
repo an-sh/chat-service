@@ -105,12 +105,35 @@ module.exports = ->
     before = null
     after = null
     sid = null
-    roomCreateBefore = (execInfo, cb) ->
+    roomCreateBefore = (execInfo) ->
       before = true
       Promise.resolve()
-    roomCreateAfter = (execInfo, cb) ->
+    roomCreateAfter = (execInfo) ->
       after = true
       Promise.resolve someData
+    chatService = startService { enableRoomsManagement : true }
+      , { roomCreateBefore, roomCreateAfter }
+    socket1 = clientConnect user1
+    socket1.on 'loginConfirmed', (u, data) ->
+      sid = data.id
+      socket1.emit 'roomCreate', roomName1, true, (error, data) ->
+        expect(error).not.ok
+        expect(before).true
+        expect(after).true
+        expect(data).equal(someData)
+        done()
+
+  it 'should execute hooks with sync callbacks', (done) ->
+    someData = 'data'
+    before = null
+    after = null
+    sid = null
+    roomCreateBefore = (execInfo, cb) ->
+      before = true
+      cb()
+    roomCreateAfter = (execInfo, cb) ->
+      after = true
+      cb null, someData
     chatService = startService { enableRoomsManagement : true }
       , { roomCreateBefore, roomCreateAfter }
     socket1 = clientConnect user1

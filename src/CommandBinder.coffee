@@ -1,10 +1,15 @@
 
 ChatServiceError = require './ChatServiceError'
+ExecInfo = require './ExecInfo'
 Promise = require 'bluebird'
 _ = require 'lodash'
-ExecInfo = require './ExecInfo'
+util = require 'util'
 
 { execHook, possiblyCallback } = require './utils'
+
+# @private
+# @nodoc
+debuglog = util.debuglog 'ChatService'
 
 
 # @private
@@ -19,9 +24,8 @@ CommandBinder =
   bindAck : (cb) ->
     useRawErrorObjects = @server.useRawErrorObjects
     (error, data, rest...) ->
-      # if process.env.BLUEBIRD_DEBUG
-      #   if error and not (error instanceof ChatServiceError)
-      #     console.error error.stack || error.toString?() || error
+      if error and not (error instanceof ChatServiceError)
+        debuglog error
       error = null unless error?
       data = null unless data?
       unless useRawErrorObjects
