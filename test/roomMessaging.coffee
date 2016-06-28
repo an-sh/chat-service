@@ -1,10 +1,11 @@
 
 _ = require 'lodash'
-async = require 'async'
 expect = require('chai').expect
 
 { cleanup
   clientConnect
+  parallel
+  series
   startService
 } = require './testutils.coffee'
 
@@ -55,7 +56,7 @@ module.exports = ->
     sid2 = null
     chatService = startService()
     chatService.addRoom roomName1, null, ->
-      async.parallel [
+      parallel [
         (cb) ->
           socket3 = clientConnect user1
           socket3.on 'loginConfirmed', -> cb()
@@ -72,7 +73,7 @@ module.exports = ->
       ], (error) ->
         expect(error).not.ok
         socket2.disconnect()
-        async.parallel [
+        parallel [
           (cb) ->
             socket1.once 'roomLeftEcho', (room, id, njoined) ->
               expect(room).equal(roomName1)
@@ -96,7 +97,7 @@ module.exports = ->
   it 'should update userlist on join and leave', (done) ->
     chatService = startService()
     chatService.addRoom roomName1, null, ->
-      async.parallel [
+      parallel [
         (cb) ->
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed', ->
@@ -146,7 +147,7 @@ module.exports = ->
   it 'should update userlist on disconnect', (done) ->
     chatService = startService { enableUserlistUpdates : true }
     chatService.addRoom roomName1, null, ->
-      async.parallel [
+      parallel [
         (cb) ->
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed', ->
@@ -200,7 +201,7 @@ module.exports = ->
     message = { textMessage : txt }
     chatService = startService()
     chatService.addRoom roomName1, null, ->
-      async.parallel [
+      parallel [
         (cb) ->
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed', ->
@@ -211,7 +212,7 @@ module.exports = ->
             socket2.emit 'roomJoin', roomName1, cb
         ], (error) ->
           expect(error).not.ok
-          async.parallel [
+          parallel [
             (cb) ->
               socket1.emit 'roomMessage', roomName1, message, cb
             (cb) ->
@@ -306,7 +307,7 @@ module.exports = ->
     chatService = startService()
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
-      async.series [
+      series [
         (cb) ->
           socket1.on 'loginConfirmed', ->
             socket1.emit 'roomJoin', roomName1, cb
@@ -316,7 +317,7 @@ module.exports = ->
           socket1.emit 'roomMessage', roomName1, message, cb
       ], (error) ->
         expect(error).not.ok
-        async.parallel [
+        parallel [
           (cb) ->
             socket1.emit 'roomHistoryGet', roomName1, 0, 10, (error, data) ->
               expect(error).not.ok
@@ -348,7 +349,7 @@ module.exports = ->
     chatService = startService { historyMaxGetMessages : 2 }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
-      async.series [
+      series [
         (cb) ->
           socket1.on 'loginConfirmed', ->
             socket1.emit 'roomJoin', roomName1, cb
@@ -360,7 +361,7 @@ module.exports = ->
           socket1.emit 'roomMessage', roomName1, message, cb
       ], (error) ->
         expect(error).not.ok
-        async.parallel [
+        parallel [
           (cb) ->
             socket1.emit 'roomHistoryGet', roomName1, 0, 10, (error, data) ->
               expect(error).not.ok
@@ -394,7 +395,7 @@ module.exports = ->
     chatService = startService { defaultHistoryLimit : 2 }
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
-      async.series [
+      series [
         (cb) ->
           socket1.on 'loginConfirmed', ->
             socket1.emit 'roomJoin', roomName1, cb
@@ -406,7 +407,7 @@ module.exports = ->
           socket1.emit 'roomMessage', roomName1, message, cb
       ], (error) ->
         expect(error).not.ok
-        async.parallel [
+        parallel [
           (cb) ->
             socket1.emit 'roomHistoryGet', roomName1, 0, 10, (error, data) ->
               expect(error).not.ok
@@ -460,7 +461,7 @@ module.exports = ->
     chatService.addRoom roomName1, null, ->
       ts = new Date().getTime()
       tsmax = ts + 2000
-      async.parallel [
+      parallel [
         (cb) ->
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed', ->
@@ -504,7 +505,7 @@ module.exports = ->
     { sid1, sid2, sid3 } = {}
     chatService.addRoom roomName1, null, ->
       chatService.addRoom roomName2, null, ->
-        async.parallel [
+        parallel [
           (cb) ->
             socket1 = clientConnect user1
             socket1.on 'loginConfirmed', (u, data) ->

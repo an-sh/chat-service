@@ -1,10 +1,10 @@
 
 _ = require 'lodash'
-async = require 'async'
 expect = require('chai').expect
 
 { cleanup
   clientConnect
+  parallel
   startService
 } = require './testutils.coffee'
 
@@ -39,14 +39,14 @@ module.exports = ->
     data = { key : 'value' }
     instance1 = startService _.assign {port : port}, redisConfig
     instance2 = startService _.assign {port : port+1}, redisConfig
-    async.parallel [
+    parallel [
       (cb) ->
         instance1.on 'ready', cb
       (cb) ->
         instance2.on 'ready', cb
     ], (error) ->
       expect(error).not.ok
-      async.parallel [
+      parallel [
         (cb) ->
           instance2.clusterBus.on event, (uid, d) ->
             expect(uid).equal(instance1.instanceUID)
@@ -66,7 +66,7 @@ module.exports = ->
     instance1 = startService _.assign {port : port}, redisConfig
     instance2 = startService _.assign {port : port+1}, redisConfig
     instance1.addRoom roomName1, { owner : user2 }, ->
-      async.parallel [
+      parallel [
         (cb) ->
           socket1 = clientConnect user1, port
           socket1.on 'roomMessage', ->
@@ -92,7 +92,7 @@ module.exports = ->
   it 'should disconnect users sockets across all instances', (done) ->
     instance1 = startService _.assign {port : port}, redisConfig
     instance2 = startService _.assign {port : port+1}, redisConfig
-    async.parallel [
+    parallel [
       (cb) ->
         socket1 = clientConnect user1, port
         socket1.on 'loginConfirmed', ->
@@ -103,7 +103,7 @@ module.exports = ->
           cb()
     ], (error) ->
       expect(error).not.ok
-      async.parallel [
+      parallel [
         (cb) ->
           socket1.on 'disconnect', -> cb()
         (cb) ->
@@ -118,7 +118,7 @@ module.exports = ->
     instance2 = startService _.assign {port : port+1}, redisConfig
     ids = {}
     instance1.addRoom roomName1, null, ->
-      async.parallel [
+      parallel [
         (cb) ->
           socket1 = clientConnect user1, port
           socket1.on 'loginConfirmed', ->
@@ -143,7 +143,7 @@ module.exports = ->
             socket5.emit 'roomJoin', roomName1, cb
       ], (error) ->
         expect(error).not.ok
-        async.parallel [
+        parallel [
           (cb) ->
             socket2.on 'roomLeftEcho', (roomName, id, njoined) ->
               expect(roomName).equal(roomName1)
@@ -165,7 +165,7 @@ module.exports = ->
             instance2.close cb
         ], (error) ->
           expect(error).not.ok
-          async.parallel [
+          parallel [
             (cb) ->
               instance1.execUserCommand user2, 'listOwnSockets'
               , (error, sockets) ->

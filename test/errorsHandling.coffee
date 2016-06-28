@@ -1,12 +1,12 @@
 
 _ = require 'lodash'
-async = require 'async'
 expect = require('chai').expect
 
-{ cleanup
+{ ChatService
+  cleanup
   clientConnect
   nextTick
-  ChatService
+  parallel
   setCustomCleanup
   startService
 } = require './testutils.coffee'
@@ -164,7 +164,7 @@ module.exports = ->
           socket2.on 'loginConfirmed', ->
             chatService.instanceRecovery uid, (error) ->
               expect(error).not.ok
-              async.parallel [
+              parallel [
                 (cb) ->
                   chatService.execUserCommand user1, 'listOwnSockets'
                   , (error, data) ->

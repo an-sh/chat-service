@@ -1,11 +1,11 @@
 
 Promise = require 'bluebird'
 _ = require 'lodash'
-async = require 'async'
 expect = require('chai').expect
 
 { cleanup
   clientConnect
+  parallel
   setCustomCleanup
   startService
 } = require './testutils.coffee'
@@ -43,7 +43,7 @@ module.exports = ->
       socket1.on 'loginConfirmed', (userName, { id }) ->
         socket1.emit 'roomJoin', roomName1, (error) ->
           expect(error).not.ok
-          async.parallel [
+          parallel [
             (cb) ->
               socket1.emit 'roomLeave', roomName1, (error) ->
                 expect(error).not.ok
@@ -70,7 +70,7 @@ module.exports = ->
         setCustomCleanup (cb) ->
           room.roomState.__proto__.hasInList = orig
           chatService.close cb
-        async.parallel [
+        parallel [
           (cb) ->
             chatService.execUserCommand true
             , 'roomRemoveFromList', roomName1, 'whitelist', [user1]
@@ -88,7 +88,7 @@ module.exports = ->
               cb()
         ], (error) ->
           expect(error).not.ok
-          async.parallel [
+          parallel [
             (cb) ->
               chatService.execUserCommand true
               , 'roomAddToList', roomName1, 'whitelist', [user1]
@@ -120,7 +120,7 @@ module.exports = ->
             setCustomCleanup (cb) ->
               user.userState.__proto__.removeSocketFromRoom =  orig
               chatService.close cb
-            async.parallel [
+            parallel [
               (cb) ->
                 socket1.emit 'roomLeave', roomName1, (error, data) ->
                   expect(error).not.ok
@@ -152,7 +152,7 @@ module.exports = ->
             setCustomCleanup (cb) ->
               room.__proto__.leave = orig
               chatService.close cb
-            async.parallel [
+            parallel [
               (cb) ->
                 socket1.emit 'roomLeave', roomName1, (error, data) ->
                   expect(error).not.ok

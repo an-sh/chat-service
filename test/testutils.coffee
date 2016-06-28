@@ -83,12 +83,24 @@ nextTick = (fn, args...) ->
   process.nextTick ->
     fn args...
 
+parallel = (fns, cb) ->
+  promises = _.map fns, (fn) ->
+    Promise.fromCallback fn
+  Promise.all(promises).asCallback(cb)
+
+series = (fns, cb) ->
+  Promise.each fns, (fn) ->
+    Promise.fromCallback fn
+  .asCallback(cb)
+
 module.exports = {
   ChatService
   checkDB
   cleanup
   clientConnect
   nextTick
+  parallel
+  series
   setCustomCleanup
   setState
   startService

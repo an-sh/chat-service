@@ -1,10 +1,10 @@
 
 _ = require 'lodash'
-async = require 'async'
 expect = require('chai').expect
 
 { cleanup
   clientConnect
+  parallel
   startService
 } = require './testutils.coffee'
 
@@ -277,7 +277,7 @@ module.exports = ->
   it 'should remove users on permissions changes', (done) ->
     chatService = startService()
     chatService.addRoom roomName1, { adminlist: [user1, user3] }, ->
-      async.parallel [
+      parallel [
         (cb) ->
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed', ->
@@ -294,7 +294,7 @@ module.exports = ->
         expect(error).not.ok
         socket3.on 'roomAccessRemoved', ->
           done new Error 'Wrong user removed.'
-        async.parallel [
+        parallel [
           (cb) ->
             socket1.emit 'roomAddToList', roomName1, 'blacklist'
             , [user2, user3, 'nouser'], cb

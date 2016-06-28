@@ -1,10 +1,10 @@
 
 _ = require 'lodash'
-async = require 'async'
 expect = require('chai').expect
 
 { cleanup
   clientConnect
+  parallel
   startService
 } = require './testutils.coffee'
 
@@ -83,7 +83,7 @@ module.exports = ->
   it 'should send access removed on a room deletion', (done) ->
     chatService = startService { enableRoomsManagement : true }
     chatService.addRoom roomName1, { owner : user1 }, ->
-      async.parallel [
+      parallel [
         (cb) ->
           socket1 = clientConnect user1
           socket1.on 'loginConfirmed', ->
@@ -94,7 +94,7 @@ module.exports = ->
             socket2.emit 'roomJoin', roomName1, cb
       ], (error) ->
         expect(error).not.ok
-        async.parallel [
+        parallel [
           (cb) ->
             socket1.emit 'roomDelete', roomName1, cb
           (cb) ->
