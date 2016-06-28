@@ -72,7 +72,7 @@ function onConnect(service, id) {
 Creating a server is a simple object instantiation. __Note:__ that a
 `close` method must be called to correctly shutdown a service (if
 redis state is used). To fix an incorrect instance shutdown use
-`instanceRecover` method.
+`instanceRecovery` method.
 
 ```javascript
 const port = 8000

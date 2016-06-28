@@ -10,6 +10,7 @@
 - Changed default timeouts values.
 - Changed disconnectUserSockets API method.
 - Changed hooks callbacks, now must be run async only.
+- Changed instanceRecover name to instanceRecovery.
 - Changed ioredis version to ^2.0.0.
 - Fixed CoffeeScript compilation (use compiled js for npm).
 - Fixed channel leaving for sockets in other instances.

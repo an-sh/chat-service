@@ -109,6 +109,14 @@ RoomPermissions =
         unless hasAuthor
           Promise.reject new ChatServiceError 'notJoined', @roomName
 
+  # @private
+  checkIsOwner : (author, bypassPermissions) ->
+    if bypassPermissions then return Promise.resolve()
+    @roomState.ownerGet()
+    .then (owner) ->
+      if owner == author then return
+      Promise.reject new ChatServiceError 'notAllowed'
+
 
 # @private
 # @nodoc
@@ -147,14 +155,6 @@ class Room
   # @private
   getUsers : ->
     @roomState.getList 'userlist'
-
-  # @private
-  checkIsOwner : (author, bypassPermissions) ->
-    if bypassPermissions then return Promise.resolve()
-    @roomState.ownerGet()
-    .then (owner) ->
-      if owner == author then return
-      Promise.reject new ChatServiceError 'notAllowed'
 
   # @private
   leave : (author) ->

@@ -5,22 +5,24 @@ _ = require 'lodash'
 
 
 # @mixin
-# TODO API for a service maintenance.
-MaintenanceAPI =
+# API for a service state recovery.
+RecoveryAPI =
 
-  # TODO
-  # roomUserlistSync : (roomName, userName = null) ->
+  # Fix user state user association.
+  #
+  # @param userName [String] Username.
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise]
+  userStateSync : (userName) ->
 
-  # TODO
-  # userSocketsSync : (userName, socket = null) ->
-
-  # Fix instance data after a crash.
+  # Fix instance data after an incorrect service shutdown.
   #
   # @param id [String] Instance id.
   # @param cb [Callback] Optional callback.
   #
   # @return [Promise]
-  instanceRecover : (id, cb) ->
+  instanceRecovery : (id, cb) ->
     @state.getInstanceSockets id
     .then (sockets) =>
       Promise.each _.toPairs(sockets), ([id, userName]) =>
@@ -28,4 +30,4 @@ MaintenanceAPI =
     .asCallback cb
 
 
-module.exports = MaintenanceAPI
+module.exports = RecoveryAPI

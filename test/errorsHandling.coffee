@@ -162,7 +162,7 @@ module.exports = ->
         socket1.emit 'roomJoin', roomName1, ->
           socket2 = clientConnect user2
           socket2.on 'loginConfirmed', ->
-            chatService.instanceRecover uid, (error) ->
+            chatService.instanceRecovery uid, (error) ->
               expect(error).not.ok
               async.parallel [
                 (cb) ->

@@ -172,7 +172,8 @@ class SocketIOTransport
         @nsp.use fn
     if @hooks.onConnect
       @nsp.on 'connection', (socket) =>
-        execHook @hooks.onConnect, @server, socket.id
+        Promise.try =>
+          execHook @hooks.onConnect, @server, socket.id
         .then (loginData) =>
           @addClient socket, loginData...
         .catch (error) =>

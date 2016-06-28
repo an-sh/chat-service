@@ -1,9 +1,9 @@
 
 ArgumentsValidator = require './ArgumentsValidator'
 ChatServiceEvents = require './ChatServiceEvents'
-MaintenanceAPI = require './MaintenanceAPI'
 MemoryState = require './MemoryState'
 Promise = require 'bluebird'
+RecoveryAPI = require './RecoveryAPI'
 RedisState = require './RedisState'
 ServiceAPI = require './ServiceAPI'
 SocketIOTransport = require './SocketIOTransport'
@@ -473,10 +473,10 @@ HooksInterface =
 
 # Service class, is the package exported object.
 # @extend ServiceAPI
-# @extend MaintenanceAPI
+# @extend RecoveryAPI
 class ChatService extends ChatServiceEvents
 
-  extend @, ServiceAPI, MaintenanceAPI
+  extend @, ServiceAPI, RecoveryAPI
 
   # Crates an object and starts a new server instance.
   #
