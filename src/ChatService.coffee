@@ -396,7 +396,7 @@ HooksInterface =
 
   # Client connection hook.
   #
-  # @param instance [ChatService] Service instance.
+  # @param server [ChatService] Service instance.
   # @param id [String] Socket id.
   # @param cb [Callback] Optional callback.
   #
@@ -405,25 +405,25 @@ HooksInterface =
   #   data are send back with a {ServerMessages#loginConfirmed}
   #   message. Error is sent as a {ServerMessages#loginRejected}
   #   message.
-  onConnect : (instance, id, cb) ->
+  onConnect : (server, id, cb) ->
 
   # Executes when server is started (after a state and a transport are
   # up, but before message processing is started).
   #
-  # @param instance [ChatService] Service instance.
+  # @param server [ChatService] Service instance.
   # @param cb [Callback] Optional callback.
   #
   # @return [Promise]
-  onStart : (instance, cb) ->
+  onStart : (server, cb) ->
 
   # Executes when server is closed (after a transport is closed and
   # all clients are disconnected, but a state is still up).
   #
-  # @param instance [ChatService] Service instance.
+  # @param server [ChatService] Service instance.
   # @param cb [Callback] Optional callback.
   #
   # @return [Promise]
-  onClose : (instance, cb) ->
+  onClose : (server, cb) ->
 
   # Validator for {UserCommands#directMessage} message objects. When
   # is set, a custom format in direct messages is enabled. When hooks
@@ -483,7 +483,7 @@ class ChatService extends ChatServiceEvents
 
   extend @, ServiceAPI, RecoveryAPI
 
-  # Crates an object and starts a new server instance.
+  # Crates an object and starts a new service instance.
   #
   # @param options [Object] Service configuration options.
   #
@@ -527,10 +527,10 @@ class ChatService extends ChatServiceEvents
   #   before a server disconnects all clients on shutdown, default is
   #   `15000`.
   #
-  # @option options [Number] heartbeatRate Server instance heartbeat
+  # @option options [Number] heartbeatRate Service instance heartbeat
   #   rate in ms, default is `10000`. (TODO)
   #
-  # @option options [Number] heartbeatTimeout Server instance
+  # @option options [Number] heartbeatTimeout Service instance
   #   heartbeat timeout in ms, after this interval instance is
   #   considered inactive. Instances that have failed to update
   #   heartbeat for a time period longer that this interval will be
