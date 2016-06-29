@@ -61,6 +61,16 @@ else
     redis.flushall()
 
 
+closeInstance = (service) ->
+  unless service then return
+  service.close()
+  .timeout 1500
+  .catch (e) ->
+    console.log 'Service closing error: ', e
+    service?.redis.disconnect()
+    service?.io.engine.close()
+  .catchReturn()
+
 cleanup = (services, sockets, done) ->
   services = _.castArray services
   sockets = _.castArray sockets
@@ -71,8 +81,7 @@ cleanup = (services, sockets, done) ->
       Promise.fromCallback (cb) ->
         customCleanup cb
     else
-      Promise.each services, (service) ->
-        service?.close()
+      Promise.map services, closeInstance
   .finally ->
     customCleanup = null
     cleanDB()
