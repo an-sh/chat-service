@@ -74,16 +74,10 @@ UserAssociations =
     , { concurrency : asyncLimit }
 
   # @private
-  removeSocketFromRoom : (id, roomName) ->
+  rollbackRoomJoin : (error, roomName, id) ->
     @userState.removeSocketFromRoom id, roomName
     .catch (e) =>
       @consistencyFailure e, { roomName, id, opType : 'userSocket' }
-      return 1
-
-  # @private
-  rollbackRoomJoin : (error, id, room) ->
-    roomName = room.roomName
-    @removeSocketFromRoom id, roomName
     .then (njoined) =>
       unless njoined then @leaveRoom roomName
     .thenThrow error
@@ -113,12 +107,12 @@ UserAssociations =
               @socketJoinEcho id, roomName, njoined
             .return njoined
           .catch (e) =>
-            @rollbackRoomJoin e, id, room
+            @rollbackRoomJoin e, roomName, id
 
   # @private
   leaveSocketFromRoom : (id, roomName) ->
     Promise.using @userState.lockToRoom(roomName, @lockTTL), =>
-      @removeSocketFromRoom id, roomName
+      @userState.removeSocketFromRoom id, roomName
       .then (njoined) =>
         @leaveChannel id, roomName
         .then =>

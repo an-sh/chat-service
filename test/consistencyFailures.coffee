@@ -106,37 +106,40 @@ module.exports = ->
                 cb()
           ], done
 
-  it 'should emit consistencyFailure on socket leave errors', (done) ->
+  it 'should emit consistencyFailure on rollback room join errors', (done) ->
     chatService = startService redisConfig
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (userName, { id }) ->
-        socket1.emit 'roomJoin', roomName1, ->
-          chatService.state.getUser user1
-          .then (user) ->
-            orig = user.userState.removeSocketFromRoom
-            user.userState.__proto__.removeSocketFromRoom = ->
-              Promise.reject new Error()
-            setCustomCleanup (cb) ->
-              user.userState.__proto__.removeSocketFromRoom =  orig
-              chatService.close cb
-            parallel [
-              (cb) ->
-                socket1.emit 'roomLeave', roomName1, (error, data) ->
-                  expect(error).not.ok
-                  cb()
-              (cb) ->
-                chatService.on 'storeConsistencyFailure', (error, data) ->
-                  expect(error).ok
-                  expect(data).an('Object')
-                  expect(data).include.keys 'roomName', 'userName'
-                    , 'id', 'opType'
-                  expect(data.roomName).equal(roomName1)
-                  expect(data.userName).equal(user1)
-                  expect(data.id).equal(id)
-                  expect(data.opType).equal('userSocket')
-                  cb()
-            ], done
+        chatService.state.getUser user1
+        .then (user) ->
+          orig1 = user.userState.removeSocketFromRoom
+          orig2 = chatService.transport.joinChannel
+          user.userState.__proto__.removeSocketFromRoom = ->
+            Promise.reject new Error()
+          chatService.transport.joinChannel = ->
+            Promise.reject new Error()
+          setCustomCleanup (cb) ->
+            user.userState.__proto__.removeSocketFromRoom =  orig1
+            chatService.transport.joinChannel = orig2
+            chatService.close cb
+          parallel [
+            (cb) ->
+              socket1.emit 'roomJoin', roomName1, (error, data) ->
+                expect(error).ok
+                cb()
+            (cb) ->
+              chatService.on 'storeConsistencyFailure', (error, data) ->
+                expect(error).ok
+                expect(data).an('Object')
+                expect(data).include.keys 'roomName', 'userName'
+                  , 'id', 'opType'
+                expect(data.roomName).equal(roomName1)
+                expect(data.userName).equal(user1)
+                expect(data.id).equal(id)
+                expect(data.opType).equal('userSocket')
+                cb()
+          ], done
 
   it 'should emit consistencyFailure on leave room errors', (done) ->
     chatService = startService redisConfig
