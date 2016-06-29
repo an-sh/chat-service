@@ -508,6 +508,10 @@ class UserStateRedis
   getAllSockets : ->
     @redis.hkeys @makeKeyName('sockets')
 
+  # @privete
+  getSocketsToInstance : ->
+    @redis.hgetall @makeKeyName('sockets')
+
   # @private
   getSocketsToRooms : ->
     @redis.getSocketsToRooms @makeKeyName('sockets'), @makeSocketToRooms()
@@ -636,6 +640,16 @@ class RedisState
   # @private
   getInstanceSockets : (uid = @instanceUID) ->
     @redis.hgetall @makeKeyName('instances', uid, 'sockets')
+
+  # @private
+  updateHeartbeat : ->
+    @redis.set @makeKeyName('instances', @instanceUID, 'heartbeat')
+
+  # @private
+  getInstanceHeartbeat : (uid = @instanceUID) ->
+    @redis.get @makeKeyName('instances', uid, 'heartbeat')
+    .then (ts) ->
+      if ts then parseInt ts else null
 
   # @private
   getOrAddUser : (name, state) ->

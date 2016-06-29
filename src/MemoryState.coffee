@@ -302,6 +302,11 @@ class UserStateMemory
     Promise.resolve sockets
 
   # @private
+  getSocketsToInstance : ->
+    data = @socketsToRooms.toObject()
+    Promise.resolve data
+
+  # @private
   getSocketsToRooms : ->
     result = {}
     sockets = @socketsToRooms.keysArray()
@@ -385,6 +390,7 @@ class MemoryState
     @UserState = UserStateMemory
     @DirectMessagingState = DirectMessagingStateMemory
     @instanceUID = @server.instanceUID
+    @heartbeatStamp = null
     @lockTTL = @options.lockTTL || 5000
 
   # @private
@@ -434,6 +440,16 @@ class MemoryState
   # @private
   getInstanceSockets : (uid) ->
     Promise.resolve @sockets.toObject()
+
+  # @private
+  updateHeartbeat : ->
+    @heartbeatStamp = _.now()
+    Promise.resolve()
+
+  # @private
+  getInstanceHeartbeat : (uid = @instanceUID) ->
+    if uid != @instanceUID then return null
+    Promise.resolve @heartbeatStamp
 
   # @private
   getOrAddUser : (name, state) ->

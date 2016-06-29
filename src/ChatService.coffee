@@ -528,13 +528,11 @@ class ChatService extends ChatServiceEvents
   #   `15000`.
   #
   # @option options [Number] heartbeatRate Service instance heartbeat
-  #   rate in ms, default is `10000`. (TODO)
+  #   rate in ms, default is `10000`.
   #
   # @option options [Number] heartbeatTimeout Service instance
   #   heartbeat timeout in ms, after this interval instance is
-  #   considered inactive. Instances that have failed to update
-  #   heartbeat for a time period longer that this interval will be
-  #   automatically closed, default is `30000`. (TODO)
+  #   considered inactive, default is `30000`.
   #
   # @option options [Number] busAckTimeout Cluster bus ack waiting
   #   timeout in ms, default is `5000`.
@@ -629,6 +627,8 @@ class ChatService extends ChatServiceEvents
 
     @closeTimeout = @options.closeTimeout || 15000
     @busAckTimeout = @options.busAckTimeout || 5000
+    @heartbeatRate = @options.heartbeatRate || 10000
+    @heartbeatTimeout = @options.heartbeatTimeout || 30000
     @enableAccessListsUpdates= @options.enableAccessListsUpdates || false
     @enableDirectMessages = @options.enableDirectMessages || false
     @enableRoomsManagement = @options.enableRoomsManagement || false

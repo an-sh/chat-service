@@ -8,13 +8,52 @@ _ = require 'lodash'
 # API for a service state recovery.
 RecoveryAPI =
 
-  # Fix user state user association. (TODO)
+  # @private
+  # @nodoc
+  checkSocketsAlive : (user) ->
+    user.state.getSocketsToInstance()
+    .then (sockets) =>
+      Promise.each sockets, ({socket, instance}) =>
+        if instance == @instanceUID and not @getSocketObject socket
+          user.state.removeSocket socket
+        else
+          @state.getInstanceHeartbeat instance
+          .then (ts) =>
+            if ts is null or ts < _.now() + @heartbeatTimeout
+              user.state.removeSocket socket
+
+  # @private
+  # @nodoc
+  checkRoomJoined : (room) ->
+
+  # @private
+  # @nodoc
+  checkRoomPermissions : (room) ->
+
+  # Sync user to sockets associations.
   #
-  # @param userName [String] Username.
+  # @param userName [String] User name.
   # @param cb [Callback] Optional callback.
   #
   # @return [Promise]
   userStateSync : (userName) ->
+    @state.getUser userName
+    .then (user) =>
+      @checkSocketsAlive user
+
+  # Sync room to users associations.
+  #
+  # @param roomName [String] Room name.
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise]
+  roomStateSync : (roomName) ->
+    @state.getRoom roomName
+    .then (room) =>
+      Promise.all [
+        @checkRoomJoined room
+        @checkRoomPermissions room
+      ]
 
   # Fix instance data after an incorrect service shutdown.
   #
