@@ -36,10 +36,11 @@ RecoveryAPI =
   # @param cb [Callback] Optional callback.
   #
   # @return [Promise]
-  userStateSync : (userName) ->
+  userStateSync : (userName, cb) ->
     @state.getUser userName
     .then (user) =>
       @checkSocketsAlive user
+    .asCallback cb
 
   # Sync room to users associations.
   #
@@ -47,13 +48,14 @@ RecoveryAPI =
   # @param cb [Callback] Optional callback.
   #
   # @return [Promise]
-  roomStateSync : (roomName) ->
+  roomStateSync : (roomName, cb) ->
     @state.getRoom roomName
     .then (room) =>
       Promise.all [
         @checkRoomJoined room
         @checkRoomPermissions room
       ]
+    .asCallback cb
 
   # Fix instance data after an incorrect service shutdown.
   #

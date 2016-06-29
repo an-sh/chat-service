@@ -7,7 +7,7 @@ SocketServer = require 'socket.io'
 _ = require 'lodash'
 hasBinary = require 'has-binary'
 
-{ execHook, checkNameSymbols } = require './utils'
+{ debuglog, execHook, checkNameSymbols } = require './utils'
 
 
 # @private
@@ -131,6 +131,8 @@ class SocketIOTransport
   # @private
   rejectLogin : (socket, error) ->
     useRawErrorObjects = @server.useRawErrorObjects
+    if error and not (error instanceof ChatServiceError)
+      debuglog error
     unless useRawErrorObjects
       error = error?.toString?()
     socket.emit 'loginRejected', error

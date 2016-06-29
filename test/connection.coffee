@@ -66,7 +66,6 @@ module.exports = ->
     onConnect = (server, id, cb) ->
       expect(server).instanceof(ChatService)
       expect(id).a('string')
-      err = new Error 'some error'
       nextTick cb, null, name, data
     chatService = startService null, { onConnect }
     socket1 = clientConnect user1
@@ -81,8 +80,8 @@ module.exports = ->
     onConnect = (server, id, cb) ->
       expect(server).instanceof(ChatService)
       expect(id).a('string')
-      err = new Error 'some error'
-      nextTick cb, err
+      err = new ChatService.ChatServiceError 'some error'
+      throw err
     chatService = startService null, { onConnect }
     socket1 = clientConnect user1
     socket1.on 'loginRejected', (e) ->

@@ -1,5 +1,6 @@
 
 ArgumentsValidator = require './ArgumentsValidator'
+ChatServiceError = require './ChatServiceError'
 ChatServiceEvents = require './ChatServiceEvents'
 MemoryState = require './MemoryState'
 Promise = require 'bluebird'
@@ -617,6 +618,9 @@ class ChatService extends ChatServiceEvents
 
   # @property [String] Service instance UID.
   instanceUID: null
+
+  # @property [Class] {ChatServiceError} class.
+  @ChatServiceError: ChatServiceError
 
   # @private
   # @nodoc

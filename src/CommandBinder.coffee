@@ -3,13 +3,8 @@ ChatServiceError = require './ChatServiceError'
 ExecInfo = require './ExecInfo'
 Promise = require 'bluebird'
 _ = require 'lodash'
-util = require 'util'
 
-{ execHook, possiblyCallback } = require './utils'
-
-# @private
-# @nodoc
-debuglog = util.debuglog 'ChatService'
+{ debuglog, execHook, possiblyCallback } = require './utils'
 
 
 # @private

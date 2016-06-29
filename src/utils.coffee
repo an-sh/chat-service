@@ -2,7 +2,11 @@
 ChatServiceError = require './ChatServiceError'
 Promise = require 'bluebird'
 _ = require 'lodash'
+util = require 'util'
 
+# @private
+# @nodoc
+debuglog = util.debuglog 'ChatService'
 
 # @private
 # @nodoc
@@ -63,6 +67,7 @@ execHook = (hook, args...) ->
 module.exports = {
   asyncLimit
   checkNameSymbols
+  debuglog
   execHook
   extend
   nameChecker

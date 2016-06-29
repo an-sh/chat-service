@@ -52,8 +52,8 @@ protocol/API tunnelling for IoT devices.
 
 ### Tutorial
 
-On a server, define the user authentication function, as the service
-is relying on an extern auth function. A user just needs to pass an
+On a server, define a socket connection hook, as the service is
+relying on an extern auth implementation. A user just needs to pass an
 auth check, no explicit user adding step is required.
 
 ```javascript
@@ -151,9 +151,19 @@ example as a cluster with several node processes. Check `README.md`
 file in that directory for more information.
 
 
-### Bug reporting
+### Bug reporting and debugging
 
-Use [Github](https://github.com/an-sh/chat-service/issues).
+In normal circumstances all errors that are returned to a service user
+(via commands ack, or loginConfirmed/loginRejected messages) should be
+instances of `ChatServiceError`. All other errors mean a bug, or some
+failures in the service infrastructure. To enable debug logging of
+such errors use `export NODE_DEBUG=ChatService`. The library is using
+bluebird `^3.0.0` promises implementation, so to enable long stack
+traces use `export BLUEBIRD_DEBUG=1`. It is highly recommended to
+follow this conventions for extension hooks development.
+
+If you encounter a bug in this package, please submit a bug report at
+github repo [issues](https://github.com/an-sh/chat-service/issues).
 
 
 ### License

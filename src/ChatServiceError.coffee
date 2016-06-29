@@ -20,7 +20,6 @@ class ChatServiceError extends Error
     notJoined : 'Not joined to room %s'
     roomExists : 'Room %s already exists'
     timeout : 'Server operation timeout'
-    unknownError : 'Unknown error %s occurred'
     userExists : 'User %s already exists'
     userOnline : 'User %s is online'
     wrongArgumentsCount : 'Expected %s arguments, got %s'
@@ -38,8 +37,11 @@ class ChatServiceError extends Error
   # @private
   # @nodoc
   toString : ->
-    str = @errorStrings[@name] || @errorStrings.unknownError
-    util.format "ChatServiceError: #{str}", @args...
+    str = @errorStrings[@name]
+    if str
+      util.format "ChatServiceError: #{str}", @args...
+    else
+      super
 
 
 module.exports = ChatServiceError
