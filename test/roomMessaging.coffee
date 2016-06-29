@@ -28,7 +28,7 @@ module.exports = ->
     cleanup chatService, [socket1, socket2, socket3], cb
     chatService = socket1 = socket2 = socket3 = null
 
-  it 'should emit join and leave echo for all user\'s sockets', (done) ->
+  it 'should emit echos for other sockets of the same user', (done) ->
     txt = 'Test message.'
     message = { textMessage : txt }
     chatService = startService()
@@ -44,11 +44,11 @@ module.exports = ->
             expect(room).equal(roomName1)
             expect(id).equal(sid2)
             expect(njoined).equal(1)
-            socket1.emit 'roomLeave', roomName1
-            socket2.on 'roomLeftEcho', (room, id, njoined) ->
+            socket2.emit 'roomLeave', roomName1
+            socket1.on 'roomLeftEcho', (room, id, njoined) ->
               expect(room).equal(roomName1)
-              expect(id).equal(sid1)
-              expect(njoined).equal(1)
+              expect(id).equal(sid2)
+              expect(njoined).equal(0)
               done()
 
   it 'should emit leave echo on disconnect', (done) ->
