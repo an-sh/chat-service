@@ -67,8 +67,9 @@ closeInstance = (service) ->
   .timeout 1500
   .catch (e) ->
     console.log 'Service closing error: ', e
-    service.redis.disconnect()
-    service.io.engine.close()
+    service.redis.disconnect().catchReturn()
+  .then ->
+    service.io.httpServer.close()
   .catchReturn()
 
 cleanup = (services, sockets, done) ->

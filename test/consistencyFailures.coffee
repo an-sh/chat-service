@@ -22,24 +22,60 @@ expect = require('chai').expect
 
 module.exports = ->
 
-  chatService = null
+  instance1 = null
+  instance2 = null
   socket1 = null
   socket2 = null
   socket3 = null
 
   afterEach (cb) ->
-    cleanup chatService, [socket1, socket2, socket3], cb
-    chatService = socket1 = socket2 = socket3 = null
+    cleanup [instance1, instance2], [socket1, socket2, socket3], cb
+    instance1 = socket1 = socket2 = socket3 = null
+
+  it 'should cleanup incorrectly shutdown instance data', (done) ->
+    instance1 = startService redisConfig
+    instance2 = startService _.assign {port : port+1}, redisConfig
+    uid = instance1.instanceUID
+    instance1.addRoom roomName1, null, ->
+      socket1 = clientConnect user1
+      socket1.on 'loginConfirmed', ->
+        socket1.emit 'roomJoin', roomName1, ->
+          socket2 = clientConnect user2
+          socket2.on 'loginConfirmed', ->
+            instance1.redis.disconnect()
+            instance1.io.httpServer.close()
+            instance1 = null
+            instance2.instanceRecovery uid, (error) ->
+              expect(error).not.ok
+              parallel [
+                (cb) ->
+                  instance2.execUserCommand user1, 'listOwnSockets'
+                  , (error, data) ->
+                    expect(error).not.ok
+                    expect(data).empty
+                    cb()
+                (cb) ->
+                  instance2.execUserCommand user2, 'listOwnSockets'
+                  , (error, data) ->
+                    expect(error).not.ok
+                    expect(data).empty
+                    cb()
+                (cb) ->
+                  instance2.execUserCommand true, 'roomGetAccessList'
+                  , roomName1, 'userlist', (error, data) ->
+                    expect(error).not.ok
+                    cb()
+              ], done
 
   it 'should emit consistencyFailure on leave channel errors', (done) ->
-    chatService = startService redisConfig
-    orig = chatService.transport.leaveChannel
-    chatService.transport.__proto__.leaveChannel = ->
+    instance1 = startService redisConfig
+    orig = instance1.transport.leaveChannel
+    instance1.transport.__proto__.leaveChannel = ->
       Promise.reject new Error()
     setCustomCleanup (cb) ->
-      chatService.transport.__proto__.leaveChannel = orig
-      chatService.close cb
-    chatService.addRoom roomName1, null, ->
+      instance1.transport.__proto__.leaveChannel = orig
+      instance1.close cb
+    instance1.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (userName, { id }) ->
         socket1.emit 'roomJoin', roomName1, (error) ->
@@ -50,7 +86,7 @@ module.exports = ->
                 expect(error).not.ok
                 cb()
             (cb) ->
-              chatService.on 'transportConsistencyFailure', (error, data) ->
+              instance1.on 'transportConsistencyFailure', (error, data) ->
                 nextTick ->
                   expect(error).ok
                   expect(data).an('Object')
@@ -64,24 +100,24 @@ module.exports = ->
           ], done
 
   it 'should emit consistencyFailure on room access check errors', (done) ->
-    chatService = startService redisConfig
-    chatService.addRoom roomName1, null, ->
-      chatService.state.getRoom(roomName1).then (room) ->
+    instance1 = startService redisConfig
+    instance1.addRoom roomName1, null, ->
+      instance1.state.getRoom(roomName1).then (room) ->
         orig = room.roomState.hasInList
         room.roomState.__proto__.hasInList = ->
           Promise.reject new Error()
         setCustomCleanup (cb) ->
           room.roomState.__proto__.hasInList = orig
-          chatService.close cb
+          instance1.close cb
         parallel [
           (cb) ->
-            chatService.execUserCommand true
+            instance1.execUserCommand true
             , 'roomRemoveFromList', roomName1, 'whitelist', [user1]
             , (error) ->
               expect(error).not.ok
               cb()
           (cb) ->
-            chatService.once 'storeConsistencyFailure', (error, data) ->
+            instance1.once 'storeConsistencyFailure', (error, data) ->
               nextTick ->
                 expect(error).ok
                 expect(data).an('Object')
@@ -94,13 +130,13 @@ module.exports = ->
           expect(error).not.ok
           parallel [
             (cb) ->
-              chatService.execUserCommand true
+              instance1.execUserCommand true
               , 'roomAddToList', roomName1, 'whitelist', [user1]
               , (error) ->
                 expect(error).not.ok
                 cb()
             (cb) ->
-              chatService.once 'storeConsistencyFailure', (error, data) ->
+              instance1.once 'storeConsistencyFailure', (error, data) ->
                 nextTick ->
                   expect(error).ok
                   expect(data).an('Object')
@@ -112,29 +148,29 @@ module.exports = ->
           ], done
 
   it 'should emit consistencyFailure on rollback room join errors', (done) ->
-    chatService = startService redisConfig
-    chatService.addRoom roomName1, null, ->
+    instance1 = startService redisConfig
+    instance1.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (userName, { id }) ->
-        chatService.state.getUser user1
+        instance1.state.getUser user1
         .then (user) ->
           orig1 = user.userState.removeSocketFromRoom
-          orig2 = chatService.transport.joinChannel
+          orig2 = instance1.transport.joinChannel
           user.userState.__proto__.removeSocketFromRoom = ->
             Promise.reject new Error()
-          chatService.transport.joinChannel = ->
+          instance1.transport.joinChannel = ->
             Promise.reject new Error()
           setCustomCleanup (cb) ->
             user.userState.__proto__.removeSocketFromRoom =  orig1
-            chatService.transport.joinChannel = orig2
-            chatService.close cb
+            instance1.transport.joinChannel = orig2
+            instance1.close cb
           parallel [
             (cb) ->
               socket1.emit 'roomJoin', roomName1, (error, data) ->
                 expect(error).ok
                 cb()
             (cb) ->
-              chatService.on 'storeConsistencyFailure', (error, data) ->
+              instance1.on 'storeConsistencyFailure', (error, data) ->
                 nextTick ->
                   expect(error).ok
                   expect(data).an('Object')
@@ -146,26 +182,26 @@ module.exports = ->
           ], done
 
   it 'should emit consistencyFailure on leave room errors', (done) ->
-    chatService = startService redisConfig
-    chatService.addRoom roomName1, null, ->
+    instance1 = startService redisConfig
+    instance1.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
         socket1.emit 'roomJoin', roomName1, ->
-          chatService.state.getRoom roomName1
+          instance1.state.getRoom roomName1
           .then (room) ->
             orig = room.leave
             room.__proto__.leave = ->
               Promise.reject new Error()
             setCustomCleanup (cb) ->
               room.__proto__.leave = orig
-              chatService.close cb
+              instance1.close cb
             parallel [
               (cb) ->
                 socket1.emit 'roomLeave', roomName1, (error, data) ->
                   expect(error).not.ok
                   cb()
               (cb) ->
-                chatService.on 'storeConsistencyFailure', (error, data) ->
+                instance1.on 'storeConsistencyFailure', (error, data) ->
                   nextTick ->
                     expect(error).ok
                     expect(data).an('Object')
@@ -177,21 +213,21 @@ module.exports = ->
             ], done
 
   it 'should emit consistencyFailure on remove socket errors', (done) ->
-    chatService = startService redisConfig
-    chatService.addRoom roomName1, null, ->
+    instance1 = startService redisConfig
+    instance1.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (userName, { id }) ->
         socket1.emit 'roomJoin', roomName1, ->
-          chatService.state.getUser user1
+          instance1.state.getUser user1
           .then (user) ->
             orig = user.userState.removeSocket
             user.userState.__proto__.removeSocket = ->
               Promise.reject new Error()
             setCustomCleanup (cb) ->
               user.userState.__proto__.removeSocket = orig
-              chatService.close cb
+              instance1.close cb
             socket1.disconnect()
-            chatService.on 'storeConsistencyFailure', (error, data) ->
+            instance1.on 'storeConsistencyFailure', (error, data) ->
               nextTick ->
                 expect(error).ok
                 expect(data).an('Object')
@@ -202,24 +238,24 @@ module.exports = ->
                 done()
 
   it 'should emit consistencyFailure on on remove from room errors', (done) ->
-    chatService = startService redisConfig
-    chatService.addRoom roomName1, null, ->
+    instance1 = startService redisConfig
+    instance1.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
         socket1.emit 'roomJoin', roomName1, ->
-          chatService.state.getUser user1
+          instance1.state.getUser user1
           .then (user) ->
             orig = user.userState.removeAllSocketsFromRoom
             user.userState.__proto__.removeAllSocketsFromRoom = ->
               Promise.reject new Error()
             setCustomCleanup (cb) ->
               user.userState.__proto__.removeAllSocketsFromRoom = orig
-              chatService.close cb
-            chatService.execUserCommand true
+              instance1.close cb
+            instance1.execUserCommand true
             , 'roomAddToList', roomName1, 'blacklist', [user1]
             , (error) ->
               expect(error).not.ok
-            chatService.on 'storeConsistencyFailure', (error, data) ->
+            instance1.on 'storeConsistencyFailure', (error, data) ->
               nextTick ->
                 expect(error).ok
                 expect(data).an('Object')
