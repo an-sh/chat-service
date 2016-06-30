@@ -40,4 +40,4 @@ describe 'Chat service.', ->
 
   describe 'Node cluster communication', require './nodeCluster.coffee'
 
-  describe 'Consistency failures', require './consistencyFailures.coffee'
+  describe 'Consistency recovery', require './consistencyRecovery.coffee'
