@@ -11,11 +11,11 @@ RecoveryAPI =
   # @private
   # @nodoc
   checkSocketsAlive : (user) ->
-    user.state.getSocketsToInstance()
+    user.userState.getSocketsToInstance()
     .then (sockets) =>
-      Promise.each sockets, ({socket, instance}) =>
-        if instance == @instanceUID and not @getSocketObject socket
-          user.state.removeSocket socket
+      Promise.each _.toPairs(sockets), ([socket, instance]) =>
+        if instance == @instanceUID and not @transport.getSocketObject socket
+          user.userState.removeSocket socket
         else
           @state.getInstanceHeartbeat instance
           .then (ts) =>
@@ -31,7 +31,7 @@ RecoveryAPI =
       Promise.each userlist, (userName) =>
         @state.getUser userName
         .then (user) ->
-          user.state.getRoomToSockets roomName
+          user.userState.getRoomToSockets roomName
           .then (sockets) ->
             unless sockets?.length
               user.removeFromRoom roomName
