@@ -5,6 +5,7 @@ expect = require('chai').expect
 
 { cleanup
   clientConnect
+  nextTick
   parallel
   setCustomCleanup
   startService
@@ -50,13 +51,15 @@ module.exports = ->
                 cb()
             (cb) ->
               chatService.on 'transportConsistencyFailure', (error, data) ->
-                expect(error).ok
-                expect(data).an('Object')
-                expect(data).include.keys 'roomName', 'userName', 'id', 'opType'
-                expect(data.roomName).equal(roomName1)
-                expect(data.userName).equal(user1)
-                expect(data.id).equal(id)
-                expect(data.opType).equal('transportChannel')
+                nextTick ->
+                  expect(error).ok
+                  expect(data).an('Object')
+                  expect(data).include.keys 'roomName', 'userName'
+                  , 'id', 'opType'
+                  expect(data.roomName).equal(roomName1)
+                  expect(data.userName).equal(user1)
+                  expect(data.id).equal(id)
+                  expect(data.opType).equal('transportChannel')
                 cb()
           ], done
 
@@ -79,13 +82,14 @@ module.exports = ->
               cb()
           (cb) ->
             chatService.once 'storeConsistencyFailure', (error, data) ->
-              expect(error).ok
-              expect(data).an('Object')
-              expect(data).include.keys 'roomName', 'userName', 'opType'
-              expect(data.roomName).equal(roomName1)
-              expect(data.userName).equal(user1)
-              expect(data.opType).equal('roomUserlist')
-              cb()
+              nextTick ->
+                expect(error).ok
+                expect(data).an('Object')
+                expect(data).include.keys 'roomName', 'userName', 'opType'
+                expect(data.roomName).equal(roomName1)
+                expect(data.userName).equal(user1)
+                expect(data.opType).equal('roomUserlist')
+                cb()
         ], (error) ->
           expect(error).not.ok
           parallel [
@@ -97,13 +101,14 @@ module.exports = ->
                 cb()
             (cb) ->
               chatService.once 'storeConsistencyFailure', (error, data) ->
-                expect(error).ok
-                expect(data).an('Object')
-                expect(data).include.keys 'roomName', 'userName', 'opType'
-                expect(data.roomName).equal(roomName1)
-                expect(data.userName).equal(user1)
-                expect(data.opType).equal('roomUserlist')
-                cb()
+                nextTick ->
+                  expect(error).ok
+                  expect(data).an('Object')
+                  expect(data).include.keys 'roomName', 'userName', 'opType'
+                  expect(data.roomName).equal(roomName1)
+                  expect(data.userName).equal(user1)
+                  expect(data.opType).equal('roomUserlist')
+                  cb()
           ], done
 
   it 'should emit consistencyFailure on rollback room join errors', (done) ->
@@ -130,14 +135,13 @@ module.exports = ->
                 cb()
             (cb) ->
               chatService.on 'storeConsistencyFailure', (error, data) ->
-                expect(error).ok
-                expect(data).an('Object')
-                expect(data).include.keys 'roomName', 'userName'
-                  , 'id', 'opType'
-                expect(data.roomName).equal(roomName1)
-                expect(data.userName).equal(user1)
-                expect(data.id).equal(id)
-                expect(data.opType).equal('userSocket')
+                nextTick ->
+                  expect(error).ok
+                  expect(data).an('Object')
+                  expect(data).include.keys 'roomName', 'userName', 'opType'
+                  expect(data.roomName).equal(roomName1)
+                  expect(data.userName).equal(user1)
+                  expect(data.opType).equal('userRooms')
                 cb()
           ], done
 
@@ -162,13 +166,14 @@ module.exports = ->
                   cb()
               (cb) ->
                 chatService.on 'storeConsistencyFailure', (error, data) ->
-                  expect(error).ok
-                  expect(data).an('Object')
-                  expect(data).include.keys 'roomName', 'userName', 'opType'
-                  expect(data.roomName).equal(roomName1)
-                  expect(data.userName).equal(user1)
-                  expect(data.opType).equal('roomUserlist')
-                  cb()
+                  nextTick ->
+                    expect(error).ok
+                    expect(data).an('Object')
+                    expect(data).include.keys 'roomName', 'userName', 'opType'
+                    expect(data.roomName).equal(roomName1)
+                    expect(data.userName).equal(user1)
+                    expect(data.opType).equal('roomUserlist')
+                    cb()
             ], done
 
   it 'should emit consistencyFailure on remove socket errors', (done) ->
@@ -187,13 +192,14 @@ module.exports = ->
               chatService.close cb
             socket1.disconnect()
             chatService.on 'storeConsistencyFailure', (error, data) ->
-              expect(error).ok
-              expect(data).an('Object')
-              expect(data).include.keys 'userName', 'id', 'opType'
-              expect(data.userName).equal(user1)
-              expect(data.id).equal(id)
-              expect(data.opType).equal('userSocket')
-              done()
+              nextTick ->
+                expect(error).ok
+                expect(data).an('Object')
+                expect(data).include.keys 'userName', 'id', 'opType'
+                expect(data.userName).equal(user1)
+                expect(data.id).equal(id)
+                expect(data.opType).equal('userSockets')
+                done()
 
   it 'should emit consistencyFailure on on remove from room errors', (done) ->
     chatService = startService redisConfig
@@ -214,10 +220,11 @@ module.exports = ->
             , (error) ->
               expect(error).not.ok
             chatService.on 'storeConsistencyFailure', (error, data) ->
-              expect(error).ok
-              expect(data).an('Object')
-              expect(data).include.keys 'roomName', 'userName', 'opType'
-              expect(data.roomName).equal(roomName1)
-              expect(data.userName).equal(user1)
-              expect(data.opType).equal('userRoomSockets')
-              done()
+              nextTick ->
+                expect(error).ok
+                expect(data).an('Object')
+                expect(data).include.keys 'roomName', 'userName', 'opType'
+                expect(data.roomName).equal(roomName1)
+                expect(data.userName).equal(user1)
+                expect(data.opType).equal('roomUserlist')
+                done()

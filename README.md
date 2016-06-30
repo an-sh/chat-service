@@ -154,13 +154,14 @@ file in that directory for more information.
 ### Bug reporting and debugging
 
 In normal circumstances all errors that are returned to a service user
-(via commands ack, or loginConfirmed/loginRejected messages) should be
-instances of `ChatServiceError`. All other errors mean a bug, or some
-failures in the service infrastructure. To enable debug logging of
-such errors use `export NODE_DEBUG=ChatService`. The library is using
-bluebird `^3.0.0` promises implementation, so to enable long stack
-traces use `export BLUEBIRD_DEBUG=1`. It is highly recommended to
-follow this conventions for extension hooks development.
+(via commands ack, or `loginConfirmed`/`loginRejected` messages)
+should be instances of `ChatServiceError`. All other errors mean a
+bug, or some failures in the service infrastructure. To enable debug
+logging of such errors use `export NODE_DEBUG=ChatService`. The
+library is using bluebird `^3.0.0` promises implementation, so to
+enable long stack traces use `export BLUEBIRD_DEBUG=1`. It is highly
+recommended to follow this conventions for extension hooks
+development.
 
 If you encounter a bug in this package, please submit a bug report at
 github repo [issues](https://github.com/an-sh/chat-service/issues).

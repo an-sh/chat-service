@@ -25,10 +25,22 @@ RecoveryAPI =
   # @private
   # @nodoc
   checkRoomJoined : (room) ->
-
-  # @private
-  # @nodoc
-  checkRoomPermissions : (room) ->
+    roomName = room.roomName
+    room.getList null, 'userlist', true
+    .then (userlist) =>
+      Promise.each userlist, (userName) =>
+        @state.getUser userName
+        .then (user) ->
+          user.state.getRoomToSockets roomName
+          .then (sockets) ->
+            unless sockets?.length
+              user.removeFromRoom roomName
+          .catchReturn()
+          .then ->
+            room.checkAcess userName
+          .catch ->
+            user.removeFromRoom roomName
+        .catchReturn()
 
   # Sync user to sockets associations.
   #
@@ -51,10 +63,7 @@ RecoveryAPI =
   roomStateSync : (roomName, cb) ->
     @state.getRoom roomName
     .then (room) =>
-      Promise.all [
-        @checkRoomJoined room
-        @checkRoomPermissions room
-      ]
+      @checkRoomJoined room
     .asCallback cb
 
   # Fix instance data after an incorrect service shutdown.

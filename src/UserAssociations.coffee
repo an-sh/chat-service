@@ -77,7 +77,8 @@ UserAssociations =
   rollbackRoomJoin : (error, roomName, id) ->
     @userState.removeSocketFromRoom id, roomName
     .catch (e) =>
-      @consistencyFailure e, { roomName, id, opType : 'userSocket' }
+      @consistencyFailure e, { roomName, opType : 'userRooms' }
+      return 1
     .then (njoined) =>
       unless njoined then @leaveRoom roomName
     .thenThrow error
@@ -146,13 +147,13 @@ UserAssociations =
   removeSocketFromServer : (id) ->
     @removeUserSocket id
     .catch (e) =>
-      @consistencyFailure e, { id, opType : 'userSocket' }
+      @consistencyFailure e, { id, opType : 'userSockets' }
 
   # @private
   removeUserSocketsFromRoom : (roomName) ->
     @userState.removeAllSocketsFromRoom roomName
     .catch (e) =>
-      @consistencyFailure e, { roomName, opType : 'userRoomSockets' }
+      @consistencyFailure e, { roomName, opType : 'roomUserlist' }
 
   # @private
   removeFromRoom : (roomName) ->

@@ -508,9 +508,13 @@ class UserStateRedis
   getAllSockets : ->
     @redis.hkeys @makeKeyName('sockets')
 
-  # @privete
+  # @private
   getSocketsToInstance : ->
     @redis.hgetall @makeKeyName('sockets')
+
+  # @private
+  geRoomToSockets : (roomName) ->
+    @redis.smembers @makeRoomToSockets(roomName)
 
   # @private
   getSocketsToRooms : ->
