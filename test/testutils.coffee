@@ -67,8 +67,8 @@ closeInstance = (service) ->
   .timeout 1500
   .catch (e) ->
     console.log 'Service closing error: ', e
-    service?.redis.disconnect()
-    service?.io.engine.close()
+    service.redis.disconnect()
+    service.io.engine.close()
   .catchReturn()
 
 cleanup = (services, sockets, done) ->
@@ -78,8 +78,7 @@ cleanup = (services, sockets, done) ->
     for socket in sockets
       socket?.disconnect()
     if customCleanup
-      Promise.fromCallback (cb) ->
-        customCleanup cb
+      Promise.fromCallback customCleanup
     else
       Promise.map services, closeInstance
   .finally ->
@@ -92,10 +91,10 @@ nextTick = (fn, args...) ->
   process.nextTick -> fn args...
 
 parallel = (fns, cb) ->
-  Promise.all(_.map fns, Promise.fromCallback).asCallback(cb)
+  Promise.map(fns, Promise.fromCallback).asCallback(cb)
 
 series = (fns, cb) ->
-  Promise.each(fns, Promise.fromCallback).asCallback(cb)
+  Promise.mapSeries(fns, Promise.fromCallback).asCallback(cb)
 
 
 module.exports = {
