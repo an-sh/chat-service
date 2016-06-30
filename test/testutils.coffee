@@ -89,18 +89,14 @@ cleanup = (services, sockets, done) ->
 
 # fix for node 0.12
 nextTick = (fn, args...) ->
-  process.nextTick ->
-    fn args...
+  process.nextTick -> fn args...
 
 parallel = (fns, cb) ->
-  promises = _.map fns, (fn) ->
-    Promise.fromCallback fn
-  Promise.all(promises).asCallback(cb)
+  Promise.all(_.map fns, Promise.fromCallback).asCallback(cb)
 
 series = (fns, cb) ->
-  Promise.each fns, (fn) ->
-    Promise.fromCallback fn
-  .asCallback(cb)
+  Promise.each(fns, Promise.fromCallback).asCallback(cb)
+
 
 module.exports = {
   ChatService
