@@ -307,7 +307,7 @@ class UserStateMemory
     Promise.resolve data
 
   # @private
-  geRoomToSockets : (roomName) ->
+  getRoomToSockets : (roomName) ->
     socketsset = @roomsToSockets.get roomName
     data = socketsset?.toObject() || {}
     Promise.resolve data
