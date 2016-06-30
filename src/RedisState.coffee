@@ -647,7 +647,8 @@ class RedisState
 
   # @private
   updateHeartbeat : ->
-    @redis.set @makeKeyName('instances', @instanceUID, 'heartbeat')
+    @redis.set @makeKeyName('instances', @instanceUID, 'heartbeat'), _.now()
+    .catchReturn()
 
   # @private
   getInstanceHeartbeat : (uid = @instanceUID) ->

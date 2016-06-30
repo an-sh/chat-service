@@ -693,6 +693,8 @@ class ChatService extends ChatServiceEvents
         .then =>
           @clusterBus.listen()
     .then =>
+      @state.updateHeartbeat()
+      @hbtimer = setInterval @state.updateHeartbeat.bind(@state), @heartbeatRate
       @emit 'ready'
     .catch (error) =>
       @closed = true
@@ -711,6 +713,7 @@ class ChatService extends ChatServiceEvents
   close : (done) ->
     if @closed then return Promise.resolve()
     @closed = true
+    clearInterval @hbtimer
     closeError = null
     @transport.close()
     .then =>

@@ -90,3 +90,15 @@ module.exports = ->
     socket1.on 'loginConfirmed', (u) ->
       expect(u).equal(user1)
       done()
+
+  it 'should update instance heartbeat', (done) ->
+    chatService = startService { heartbeatRate : 500 }
+    start = _.now()
+    setTimeout ->
+      chatService.getInstanceHeartbeat chatService.instanceUID
+      .then (ts) ->
+        expect(ts).within(start, start + 2000)
+        done()
+    , 1000
+  .timeout 3000
+  .slow 2500

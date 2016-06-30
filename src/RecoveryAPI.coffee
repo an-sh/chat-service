@@ -79,5 +79,13 @@ RecoveryAPI =
         @execUserCommand {userName, id}, 'disconnect', 'instance recovery'
     .asCallback cb
 
+  # Get instance heartbeat.
+  #
+  # @param id [String] Instance id.
+  # @param cb [Callback] Optional callback.
+  getInstanceHeartbeat : (id, cb) ->
+    @state.getInstanceHeartbeat id
+    .asCallback cb
+
 
 module.exports = RecoveryAPI

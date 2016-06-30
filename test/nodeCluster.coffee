@@ -19,9 +19,6 @@ expect = require('chai').expect
 
 module.exports = ->
 
-  @timeout 5000
-  @slow 2500
-
   instance1 = null
   instance2 = null
   socket1 = null
@@ -88,6 +85,8 @@ module.exports = ->
         socket3.emit 'roomAddToList', roomName1, 'blacklist', [user1], ->
           socket3.emit 'roomMessage', roomName1, {textMessage : 'hello'}
           setTimeout done, 1000
+  .timeout 3000
+  .slow 2500
 
   it 'should disconnect users sockets across all instances', (done) ->
     instance1 = startService _.assign {port : port}, redisConfig
