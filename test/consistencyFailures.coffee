@@ -159,7 +159,7 @@ module.exports = ->
           user.userState.__proto__.removeSocketFromRoom = ->
             Promise.reject new Error()
           instance1.transport.joinChannel = ->
-            Promise.reject new Error()
+            Promise.reject new Error 'This is an error mockup for testing.'
           setCustomCleanup (cb) ->
             user.userState.__proto__.removeSocketFromRoom =  orig1
             instance1.transport.joinChannel = orig2

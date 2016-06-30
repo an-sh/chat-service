@@ -57,7 +57,7 @@ module.exports = ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
         chatService.transport.joinChannel = ->
-          throw new Error()
+          throw new Error 'This is an error mockup for testing.'
         socket1.emit 'roomJoin', roomName1, (error) ->
           expect(error).ok
           chatService.execUserCommand true, 'roomGetAccessList'
@@ -70,7 +70,7 @@ module.exports = ->
   it 'should rollback a failed socket connect', (done) ->
     chatService = startService()
     chatService.transport.joinChannel = ->
-      throw new Error()
+      throw new Error 'This is an error mockup for testing.'
     socket1 = clientConnect user1
     socket1.on 'loginRejected', (error) ->
       expect(error).ok
