@@ -17,6 +17,7 @@
 - Fixed closeTimeout option passing.
 - Fixed redis state graceful shutdown.
 - Removed closed ChatService event.
+- Removed example application to a separate repo.
 
 ### 0.7.0 (2016/05/27)
 

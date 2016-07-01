@@ -128,7 +128,8 @@ formats, rooms management, rooms permission and users presence.
 
 ### API documentation
 
-Is available online at [gitpages](https://an-sh.github.io/chat-service/0.7/).
+Is available online at
+[gitpages](https://an-sh.github.io/chat-service/0.8/).
 
 - `ServerMessages` class describes socket.io messages that are sent
   from the server to a client.
@@ -146,9 +147,11 @@ Run `npm install -g codo` and `codo` to generate local documentation.
 ### Frontend example
 
 An Angular single page chat application with a basic features
-demonstration is in an `example` directory. You can also run this
-example as a cluster with several node processes. Check `README.md`
-file in that directory for more information.
+demonstration is now in a separate
+[repo](https://github.com/an-sh/chat-service-frontend-angular1). You
+can also run this example as a cluster with several node
+processes. Check `README.md` file in that repository for more
+information.
 
 
 ### Bug reporting and debugging
