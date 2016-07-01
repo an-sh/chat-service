@@ -1,6 +1,6 @@
 {
   "name": "chat-service",
-  "version": "0.7.0",
+  "version": "0.8.0-rc.1",
   "private": false,
   "description": "Chat like messaging on top of socket.io, focused on scalability and extensibility.",
   "main": "index.js",
