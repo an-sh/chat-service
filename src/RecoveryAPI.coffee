@@ -10,17 +10,27 @@ RecoveryAPI =
 
   # @private
   # @nodoc
-  checkSocketsAlive : (user) ->
+  checkUserSockets : (user) ->
+    userName = user.userName
     user.userState.getSocketsToInstance()
     .then (sockets) =>
       Promise.each _.toPairs(sockets), ([socket, instance]) =>
         if instance == @instanceUID and not @transport.getSocketObject socket
           user.userState.removeSocket socket
-        else
-          @state.getInstanceHeartbeat instance
-          .then (ts) =>
-            if ts is null or ts < _.now() + @heartbeatTimeout
-              user.state.removeSocket socket
+    .then ->
+      user.userState.getSocketsToRooms()
+    .then (data) ->
+      args = _.values data
+      _.intersection args...
+    .then (rooms) =>
+      Promise.each rooms, (roomName) =>
+        @state.getRoom roomName
+        .then (room) ->
+          room.roomState.hasInList 'userlist', userName
+        .then (isPresent) ->
+          unless isPresent
+            user.removeFromRoom roomName
+        .catchReturn()
 
   # @private
   # @nodoc
@@ -51,7 +61,7 @@ RecoveryAPI =
   userStateSync : (userName, cb) ->
     @state.getUser userName
     .then (user) =>
-      @checkSocketsAlive user
+      @checkUserSockets user
     .asCallback cb
 
   # Sync room to users associations.

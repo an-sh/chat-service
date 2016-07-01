@@ -81,8 +81,8 @@ module.exports = ->
     instance1 = startService()
     instance1.addRoom roomName1, null, ->
       socket1 = clientConnect user1
-      socket1.on 'loginConfirmed', ->
-        socket1.emit 'roomJoin', roomName1, (userName, { id }) ->
+      socket1.on 'loginConfirmed',(userName, { id })  ->
+        socket1.emit 'roomJoin', roomName1, ->
           instance1.state.getRoom roomName1
           .then (room) ->
             orig = room.leave
@@ -147,7 +147,7 @@ module.exports = ->
                 instance1.userStateSync user1
                 .then ->
                   instance1.execUserCommand user1, 'listOwnSockets'
-                .then ([sockets]) ->
+                .spread (sockets) ->
                   expect(sockets).empty
                 .asCallback done
 
@@ -155,8 +155,8 @@ module.exports = ->
     instance1 = startService()
     instance1.addRoom roomName1, null, ->
       socket1 = clientConnect user1
-      socket1.on 'loginConfirmed', ->
-        socket1.emit 'roomJoin', roomName1, (userName, { id }) ->
+      socket1.on 'loginConfirmed', (userName, { id }) ->
+        socket1.emit 'roomJoin', roomName1, ->
           instance1.state.getUser user1
           .then (user) ->
             orig = user.userState.removeAllSocketsFromRoom
@@ -178,7 +178,7 @@ module.exports = ->
                 expect(data.roomName).equal(roomName1)
                 expect(data.userName).equal(user1)
                 expect(data.opType).equal('roomUserlist')
-                instance1.roomStateSync roomName1
+                instance1.userStateSync user1
                 .then ->
                   Promise.join instance1.execUserCommand(user1,'listOwnSockets')
                   , instance1.execUserCommand(true, 'roomGetAccessList'
@@ -188,6 +188,46 @@ module.exports = ->
                     expect(sockets[id]).empty
                     expect(list).empty
                 .asCallback done
+
+  it 'should recover from room access check errors', (done) ->
+    instance1 = startService()
+    instance1.addRoom roomName1, null, ->
+      instance1.state.getRoom(roomName1).then (room) ->
+        socket1 = clientConnect user1
+        socket1.on 'loginConfirmed', (userName, { id }) ->
+          socket1.emit 'roomJoin', roomName1, ->
+            orig = room.roomState.hasInList
+            room.roomState.__proto__.hasInList = ->
+              Promise.reject new Error()
+            setCustomCleanup (cb) ->
+              room.roomState.__proto__.hasInList = orig
+              instance1.close cb
+            parallel [
+              (cb) ->
+                instance1.execUserCommand true
+                , 'roomAddToList', roomName1, 'blacklist', [user1]
+                , (error) ->
+                  expect(error).not.ok
+                  cb()
+              (cb) ->
+                instance1.once 'storeConsistencyFailure', (error, data) ->
+                  nextTick ->
+                    room.roomState.__proto__.hasInList = orig
+                    expect(error).ok
+                    expect(data).an('Object')
+                    expect(data).include.keys 'roomName', 'userName', 'opType'
+                    expect(data.roomName).equal(roomName1)
+                    expect(data.userName).equal(user1)
+                    expect(data.opType).equal('roomUserlist')
+                    instance1.roomStateSync roomName1
+                    .then ->
+                      instance1.execUserCommand true, 'roomGetAccessList'
+                      , roomName1, 'userlist'
+                    .spread (list) ->
+                      expect(list).an('Array')
+                      expect(list).empty
+                    .asCallback cb
+              ], done
 
   it 'should emit consistencyFailure on leave channel errors', (done) ->
     instance1 = startService()
@@ -219,52 +259,4 @@ module.exports = ->
                   expect(data.id).equal(id)
                   expect(data.opType).equal('transportChannel')
                 cb()
-          ], done
-
-  it 'should emit consistencyFailure on room access check errors', (done) ->
-    instance1 = startService()
-    instance1.addRoom roomName1, null, ->
-      instance1.state.getRoom(roomName1).then (room) ->
-        orig = room.roomState.hasInList
-        room.roomState.__proto__.hasInList = ->
-          Promise.reject new Error()
-        setCustomCleanup (cb) ->
-          room.roomState.__proto__.hasInList = orig
-          instance1.close cb
-        parallel [
-          (cb) ->
-            instance1.execUserCommand true
-            , 'roomRemoveFromList', roomName1, 'whitelist', [user1]
-            , (error) ->
-              expect(error).not.ok
-              cb()
-          (cb) ->
-            instance1.once 'storeConsistencyFailure', (error, data) ->
-              nextTick ->
-                expect(error).ok
-                expect(data).an('Object')
-                expect(data).include.keys 'roomName', 'userName', 'opType'
-                expect(data.roomName).equal(roomName1)
-                expect(data.userName).equal(user1)
-                expect(data.opType).equal('roomUserlist')
-                cb()
-        ], (error) ->
-          expect(error).not.ok
-          parallel [
-            (cb) ->
-              instance1.execUserCommand true
-              , 'roomAddToList', roomName1, 'whitelist', [user1]
-              , (error) ->
-                expect(error).not.ok
-                cb()
-            (cb) ->
-              instance1.once 'storeConsistencyFailure', (error, data) ->
-                nextTick ->
-                  expect(error).ok
-                  expect(data).an('Object')
-                  expect(data).include.keys 'roomName', 'userName', 'opType'
-                  expect(data.roomName).equal(roomName1)
-                  expect(data.userName).equal(user1)
-                  expect(data.opType).equal('roomUserlist')
-                  cb()
           ], done
