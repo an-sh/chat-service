@@ -30,6 +30,15 @@ class ChatServiceEvents extends EventEmitter
   #   @option operationInfo [String] opType Operation type.
   #   @option operationInfo [String or undefined] roomName Room name.
   #   @option operationInfo [String or undefined] id Socket id.
+  #
+  # @event lockTimeExceeded
+  #   Lock was hold longer than a lock ttl.
+  #
+  #   @param [String] id Lock id.
+  #   @param [Object] lockInfo Lock resource details.
+  #   @option lockInfo [String] userName User name.
+  #   @option lockInfo [String] roomName Room name.
+  #
   constructor : ->
     super
 

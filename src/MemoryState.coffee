@@ -375,9 +375,12 @@ class UserStateMemory
   lockToRoom : (roomName, ttl) ->
     uid(18)
     .then (val) =>
+      start = _.now()
       @lock roomName, val, ttl
       .then =>
         Promise.resolve().disposer =>
+          if start + ttl < _.now()
+            @server.emit 'lockTimeExceeded', val, {@userName, roomName}
           @unlock roomName, val
 
 

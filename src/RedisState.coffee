@@ -564,9 +564,12 @@ class UserStateRedis
   lockToRoom : (roomName, ttl) ->
     uid(18)
     .then (val) =>
+      start = _.now()
       @lock @makeRoomLock(roomName), val, ttl
       .then =>
         Promise.resolve().disposer =>
+          if start + ttl < _.now()
+            @server.emit 'lockTimeExceeded', val, {@userName, roomName}
           @unlock @makeRoomLock(roomName), val
 
 

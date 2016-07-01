@@ -93,6 +93,8 @@ RecoveryAPI =
   #
   # @param id [String] Instance id.
   # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise<Number>] Heartbeat timestamp.
   getInstanceHeartbeat : (id, cb) ->
     @state.getInstanceHeartbeat id
     .asCallback cb
