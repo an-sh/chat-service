@@ -401,11 +401,11 @@ HooksInterface =
   # @param id [String] Socket id.
   # @param cb [Callback] Optional callback.
   #
-  # @return [Promise<Array>] Returns an array with a login string
-  #   (user name) and an optional auth data object. User name and auth
-  #   data are send back with a {ServerMessages#loginConfirmed}
-  #   message. Error is sent as a {ServerMessages#loginRejected}
-  #   message.
+  # @return [Promise<Array or String>] Resolves either a login string
+  #   (user name) or an array with a login string and an optional auth
+  #   data object. User name and auth data are send back with a
+  #   {ServerMessages#loginConfirmed} message. Error is sent as a
+  #   {ServerMessages#loginRejected} message.
   onConnect : (server, id, cb) ->
 
   # Executes when server is started (after a state and a transport are

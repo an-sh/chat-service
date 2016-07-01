@@ -177,6 +177,7 @@ class SocketIOTransport
         Promise.try =>
           execHook @hooks.onConnect, @server, socket.id
         .then (loginData) =>
+          loginData = _.castArray loginData
           @addClient socket, loginData...
         .catch (error) =>
           @rejectLogin socket, error
