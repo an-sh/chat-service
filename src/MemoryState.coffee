@@ -428,8 +428,7 @@ class MemoryState
 
   # @private
   removeRoom : (name) ->
-    if @rooms.get name
-      @rooms.delete name
+    @rooms.delete name
     Promise.resolve()
 
   # @private
@@ -439,8 +438,7 @@ class MemoryState
 
   # @private
   removeSocket : (id) ->
-    if @sockets.get id
-      @sockets.delete id
+    @sockets.delete id
     Promise.resolve()
 
   # @private
@@ -488,8 +486,7 @@ class MemoryState
 
   # @private
   removeUser : (name) ->
-    if @users.get name
-      @users.delete name
+    @users.delete name
     Promise.resolve()
 
 
