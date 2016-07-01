@@ -186,3 +186,39 @@ module.exports = ->
                 expect(list).include(user2)
                 cb()
           ], done
+
+  it 'should cleanup incorrectly shutdown instance data', (done) ->
+    instance1 = startService redisConfig
+    instance2 = startService _.assign {port : port+1}, redisConfig
+    uid = instance1.instanceUID
+    instance1.addRoom roomName1, null, ->
+      socket1 = clientConnect user1
+      socket1.on 'loginConfirmed', ->
+        socket1.emit 'roomJoin', roomName1, ->
+          socket2 = clientConnect user2
+          socket2.on 'loginConfirmed', ->
+            instance1.redis.disconnect()
+            instance1.io.httpServer.close()
+            clearInterval instance1.hbtimer
+            instance1 = null
+            instance2.instanceRecovery uid, (error) ->
+              expect(error).not.ok
+              parallel [
+                (cb) ->
+                  instance2.execUserCommand user1, 'listOwnSockets'
+                  , (error, data) ->
+                    expect(error).not.ok
+                    expect(data).empty
+                    cb()
+                (cb) ->
+                  instance2.execUserCommand user2, 'listOwnSockets'
+                  , (error, data) ->
+                    expect(error).not.ok
+                    expect(data).empty
+                    cb()
+                (cb) ->
+                  instance2.execUserCommand true, 'roomGetAccessList'
+                  , roomName1, 'userlist', (error, data) ->
+                    expect(error).not.ok
+                    cb()
+              ], done

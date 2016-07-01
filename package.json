@@ -5,6 +5,7 @@
   "description": "Chat like messaging on top of socket.io, focused on scalability and extensibility.",
   "main": "index.js",
   "scripts": {
+    "compile": "coffee -cm --output lib/ src/",
     "prepublish": "coffee -cm --output lib/ src/",
     "test": "mocha",
     "coverage": "mocha --require ./coffee-coverage-loader.js && istanbul report text-summary lcov",

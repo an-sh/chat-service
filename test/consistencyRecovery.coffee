@@ -17,59 +17,21 @@ expect = require('chai').expect
   user3
   roomName1
   roomName2
-  redisConfig
 } = require './config.coffee'
 
 module.exports = ->
 
   instance1 = null
-  instance2 = null
   socket1 = null
   socket2 = null
   socket3 = null
 
   afterEach (cb) ->
-    cleanup [instance1, instance2], [socket1, socket2, socket3], cb
+    cleanup [instance1], [socket1, socket2, socket3], cb
     instance1 = socket1 = socket2 = socket3 = null
 
-  it 'should cleanup incorrectly shutdown instance data', (done) ->
-    instance1 = startService redisConfig
-    instance2 = startService _.assign {port : port+1}, redisConfig
-    uid = instance1.instanceUID
-    instance1.addRoom roomName1, null, ->
-      socket1 = clientConnect user1
-      socket1.on 'loginConfirmed', ->
-        socket1.emit 'roomJoin', roomName1, ->
-          socket2 = clientConnect user2
-          socket2.on 'loginConfirmed', ->
-            instance1.redis.disconnect()
-            instance1.io.httpServer.close()
-            clearInterval instance1.hbtimer
-            instance1 = null
-            instance2.instanceRecovery uid, (error) ->
-              expect(error).not.ok
-              parallel [
-                (cb) ->
-                  instance2.execUserCommand user1, 'listOwnSockets'
-                  , (error, data) ->
-                    expect(error).not.ok
-                    expect(data).empty
-                    cb()
-                (cb) ->
-                  instance2.execUserCommand user2, 'listOwnSockets'
-                  , (error, data) ->
-                    expect(error).not.ok
-                    expect(data).empty
-                    cb()
-                (cb) ->
-                  instance2.execUserCommand true, 'roomGetAccessList'
-                  , roomName1, 'userlist', (error, data) ->
-                    expect(error).not.ok
-                    cb()
-              ], done
-
   it 'should recover from rollback room join errors', (done) ->
-    instance1 = startService redisConfig
+    instance1 = startService()
     instance1.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (userName, { id }) ->
@@ -77,6 +39,10 @@ module.exports = ->
         .then (user) ->
           orig1 = user.userState.removeSocketFromRoom
           orig2 = user.userState.addSocketToRoom
+          setCustomCleanup (cb) ->
+            user.userState.__proto__.removeSocketFromRoom = orig1
+            user.userState.__proto__.addSocketToRoom = orig2
+            instance1.close cb
           user.userState.__proto__.removeSocketFromRoom = ->
             Promise.reject new Error()
           user.userState.__proto__.addSocketToRoom = ->
@@ -112,7 +78,7 @@ module.exports = ->
               .asCallback done
 
   it 'should recover from leave room errors', (done) ->
-    instance1 = startService redisConfig
+    instance1 = startService()
     instance1.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -120,6 +86,9 @@ module.exports = ->
           instance1.state.getRoom roomName1
           .then (room) ->
             orig = room.leave
+            setCustomCleanup (cb) ->
+              room.__proto__.leave = orig
+              instance1.close cb
             room.__proto__.leave = ->
               Promise.reject new Error()
             parallel [
@@ -152,7 +121,7 @@ module.exports = ->
                 .asCallback done
 
   it 'should recover from remove socket errors', (done) ->
-    instance1 = startService redisConfig
+    instance1 = startService()
     instance1.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (userName, { id }) ->
@@ -160,6 +129,9 @@ module.exports = ->
           instance1.state.getUser user1
           .then (user) ->
             orig = user.userState.removeSocket
+            setCustomCleanup (cb) ->
+              user.userState.__proto__.removeSocket = orig
+              instance1.close cb
             user.userState.__proto__.removeSocket = ->
               Promise.reject new Error()
             socket1.disconnect()
@@ -180,7 +152,7 @@ module.exports = ->
                 .asCallback done
 
   it 'should recover from remove from room errors', (done) ->
-    instance1 = startService redisConfig
+    instance1 = startService()
     instance1.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
@@ -188,6 +160,9 @@ module.exports = ->
           instance1.state.getUser user1
           .then (user) ->
             orig = user.userState.removeAllSocketsFromRoom
+            setCustomCleanup (cb) ->
+              user.userState.__proto__.removeAllSocketsFromRoom = orig
+              instance1.close cb
             user.userState.__proto__.removeAllSocketsFromRoom = ->
               Promise.reject new Error()
             instance1.execUserCommand true
@@ -215,7 +190,7 @@ module.exports = ->
                 .asCallback done
 
   it 'should emit consistencyFailure on leave channel errors', (done) ->
-    instance1 = startService redisConfig
+    instance1 = startService()
     orig = instance1.transport.leaveChannel
     instance1.transport.__proto__.leaveChannel = ->
       Promise.reject new Error()
@@ -247,7 +222,7 @@ module.exports = ->
           ], done
 
   it 'should emit consistencyFailure on room access check errors', (done) ->
-    instance1 = startService redisConfig
+    instance1 = startService()
     instance1.addRoom roomName1, null, ->
       instance1.state.getRoom(roomName1).then (room) ->
         orig = room.roomState.hasInList

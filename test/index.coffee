@@ -38,6 +38,6 @@ describe 'Chat service.', ->
 
       describe 'Errors handling', require './errorsHandling.coffee'
 
-  describe 'Node cluster communication', require './nodeCluster.coffee'
+      describe 'Consistency recovery', require './consistencyRecovery.coffee'
 
-  describe 'Consistency recovery', require './consistencyRecovery.coffee'
+  describe 'Service cluster', require './serviceCluster.coffee'
