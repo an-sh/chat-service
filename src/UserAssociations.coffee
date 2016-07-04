@@ -14,35 +14,35 @@ UserAssociations =
 
   # @private
   userJoinRoomReport : (userName, roomName) ->
-    @transport.sendToChannel roomName, 'roomUserJoined', roomName, userName
+    @transport.emitToChannel roomName, 'roomUserJoined', roomName, userName
 
   # @private
   userLeftRoomReport : (userName, roomName) ->
-    @transport.sendToChannel roomName, 'roomUserLeft', roomName, userName
+    @transport.emitToChannel roomName, 'roomUserLeft', roomName, userName
 
   # @private
   userRemovedReport : (userName, roomName) ->
-    @transport.sendToChannel @echoChannel, 'roomAccessRemoved', roomName
+    @transport.emitToChannel @echoChannel, 'roomAccessRemoved', roomName
     @userLeftRoomReport userName, roomName
 
   # @private
   socketJoinEcho : (id, roomName, njoined) ->
-    @transport.sendToOthers id, @echoChannel, 'roomJoinedEcho'
+    @transport.sendToChannel id, @echoChannel, 'roomJoinedEcho'
     , roomName, id, njoined
 
   # @private
   socketLeftEcho : (id, roomName, njoined) ->
-    @transport.sendToOthers id, @echoChannel, 'roomLeftEcho'
+    @transport.sendToChannel id, @echoChannel, 'roomLeftEcho'
     , roomName, id, njoined
 
   # @private
   socketConnectEcho : (id, nconnected) ->
-    @transport.sendToOthers id, @echoChannel, 'socketConnectEcho', id
+    @transport.sendToChannel id, @echoChannel, 'socketConnectEcho', id
     , nconnected
 
   # @private
   socketDisconnectEcho : (id, nconnected) ->
-    @transport.sendToOthers id, @echoChannel, 'socketDisconnectEcho', id
+    @transport.sendToChannel id, @echoChannel, 'socketDisconnectEcho', id
     , nconnected
 
   # @private

@@ -134,8 +134,8 @@ class User extends DirectMessaging
       .then ->
         recipient.checkOnline()
       .then =>
-        @transport.sendToChannel channel, 'directMessage', msg
-        @transport.sendToOthers id, @echoChannel, 'directMessageEcho'
+        @transport.emitToChannel channel, 'directMessage', msg
+        @transport.sendToChannel id, @echoChannel, 'directMessageEcho'
         , recipientName, msg
         msg
 
@@ -164,7 +164,7 @@ class User extends DirectMessaging
       room.addToList @userName, listName, values, bypassPermissions
     .then (userNames) =>
       if @enableAccessListsUpdates
-        @transport.sendToChannel roomName, 'roomAccessListAdded'
+        @transport.emitToChannel roomName, 'roomAccessListAdded'
         , roomName, listName, values
       @removeRoomUsers roomName, userNames
       .return()
@@ -255,7 +255,7 @@ class User extends DirectMessaging
       @processMessage msg
       room.message @userName, msg, bypassPermissions
     .then (pmsg) =>
-      @transport.sendToChannel roomName, 'roomMessage', roomName, pmsg
+      @transport.emitToChannel roomName, 'roomMessage', roomName, pmsg
       pmsg.id
 
   # @private
@@ -265,7 +265,7 @@ class User extends DirectMessaging
       room.removeFromList @userName, listName, values, bypassPermissions
     .then (userNames) =>
       if @enableAccessListsUpdates
-        @transport.sendToChannel roomName, 'roomAccessListRemoved',
+        @transport.emitToChannel roomName, 'roomAccessListRemoved',
         roomName, listName, values
       @removeRoomUsers roomName, userNames
     .return()
@@ -277,7 +277,7 @@ class User extends DirectMessaging
       room.changeMode @userName, mode, bypassPermissions
     .spread (userNames, mode) =>
       if @enableAccessListsUpdates
-        @transport.sendToChannel roomName, 'roomModeChanged', roomName, mode
+        @transport.emitToChannel roomName, 'roomModeChanged', roomName, mode
       @removeRoomUsers roomName, userNames
 
   # @private
@@ -288,7 +288,7 @@ class User extends DirectMessaging
 
   # @private
   systemMessage : (data, {id}) ->
-    @transport.sendToOthers id, @echoChannel, 'systemMessage', data
+    @transport.sendToChannel id, @echoChannel, 'systemMessage', data
     Promise.resolve()
 
 

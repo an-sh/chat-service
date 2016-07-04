@@ -603,6 +603,9 @@ class ChatService extends ChatServiceEvents
   # @property [Object] {ArgumentsValidator} instance.
   validator: null
 
+  # @property [Object] {Transport} instance.
+  transport: null
+
   # @property [Object or null] Socket.io server.
   io: null
 

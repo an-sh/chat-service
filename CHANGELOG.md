@@ -4,6 +4,7 @@
 - Added ChatService clusterBus.
 - Added hooks returning promises support.
 - Added ready and error ChatService lifecycle events.
+- Added some Transport public API methods.
 - Added storeConsistencyFailure and transportConsistencyFailure events.
 - Added support of binary data in custom messages.
 - Changed Redis user sockets schema.

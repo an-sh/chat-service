@@ -65,7 +65,7 @@ function onConnect(service, id) {
   // Check query data.
   // ...
   // Return a promise that resolves with a login string.
-  Promise.resolve(userName)
+  return Promise.resolve(userName)
 }
 ```
 

@@ -4,6 +4,7 @@ EventEmitter = require('events').EventEmitter
 Promise = require 'bluebird'
 RedisAdapter = require 'socket.io-redis'
 SocketServer = require 'socket.io'
+Transport = require './Transport'
 _ = require 'lodash'
 hasBinary = require 'has-binary'
 
@@ -65,10 +66,11 @@ class ClusterBus extends EventEmitter
 # @private
 # @nodoc
 # Socket.io transport.
-class SocketIOTransport
+class SocketIOTransport extends Transport
 
   # @private
   constructor : (@server, @options, @adapterConstructor, @adapterOptions) ->
+    super
     @hooks = @server.hooks
     @io = @options.io
     @namespace = @options.namespace || '/chat-service'
@@ -220,17 +222,19 @@ class SocketIOTransport
     @nsp.connected[id]
 
   # @private
-  sendToChannel : (channel, args...) ->
-    @nsp.to(channel).emit args...
+  emitToChannel : (channel, messageName, messageData...) ->
+    super
+    @nsp.to(channel).emit messageName, messageData...
     return
 
   # @private
-  sendToOthers : (id, channel, args...) ->
+  sendToChannel : (id, channel, messageName, messageData...) ->
+    super
     socket = @getSocketObject id
     unless socket
-      @sendToChannel channel, args...
+      @emitToChannel channel, messageName, messageData...
     else
-      socket.to(channel).emit args...
+      socket.to(channel).emit messageName, messageData...
     return
 
   # @private
