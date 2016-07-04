@@ -88,16 +88,15 @@ ServiceAPI =
     .return()
     .asCallback cb
 
-  # Checks user existence, returns false on errors.
+  # Checks user existence.
   #
   # @param userName [String] User name.
   # @param cb [Callback] Optional callback.
   #
   # @return [Promise<Boolean>]
   hasUser : (userName, cb) ->
-    @state.getUser userName
-    .then -> true
-    .catch -> false
+    @state.getUser userName, true
+    .then (user) -> if user then true else false
     .asCallback cb
 
   # Checks for a name existence in an user list.
@@ -154,16 +153,15 @@ ServiceAPI =
     .return()
     .asCallback cb
 
-  # Checks room existence, returns false on errors.
+  # Checks room existence.
   #
   # @param roomName [String] Room name.
   # @param cb [Callback] Optional callback.
   #
   # @return [Promise<Boolean>]
   hasRoom : (roomName, cb) ->
-    @state.getRoom roomName
-    .then -> true
-    .catch -> false
+    @state.getRoom roomName, true
+    .then (room) -> if room then true else false
     .asCallback cb
 
   # Checks for a name existence in a room list.

@@ -616,14 +616,16 @@ class RedisState
     .return()
 
   # @private
-  getRoom : (name, nocheck) ->
+  getRoom : (name, isPredicate = false) ->
     room = new Room @server, name
-    if nocheck then return Promise.resolve room
     @hasRoom name
     .then (exists) ->
       unless exists
-        error = new ChatServiceError 'noRoom', name
-        return Promise.reject error
+        if isPredicate
+          return Promise.resolve null
+        else
+          error = new ChatServiceError 'noRoom', name
+          return Promise.reject error
       Promise.resolve room
 
   # @private
@@ -670,13 +672,16 @@ class RedisState
     .return user
 
   # @private
-  getUser : (name) ->
+  getUser : (name, isPredicate = false) ->
     user = new User @server, name
     @hasUser name
     .then (exists) ->
       unless exists
-        error = new ChatServiceError 'noUser', name
-        return Promise.reject error
+        if isPredicate
+          return Promise.resolve null
+        else
+          error = new ChatServiceError 'noUser', name
+          return Promise.reject error
       Promise.resolve user
 
   # @private

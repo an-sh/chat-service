@@ -4,10 +4,12 @@
 - Added ChatService clusterBus.
 - Added hooks returning promises support.
 - Added ready and error ChatService lifecycle events.
+- Added room and user states recovery APIs.
 - Added some Transport public API methods.
 - Added storeConsistencyFailure and transportConsistencyFailure events.
 - Added support of binary data in custom messages.
 - Changed Redis user sockets schema.
+- Changed closed ChatService event.
 - Changed default timeouts values.
 - Changed disconnectUserSockets API method.
 - Changed hooks callbacks, now must be run async only.
@@ -16,9 +18,9 @@
 - Fixed CoffeeScript compilation (use compiled js for npm).
 - Fixed channel leaving for sockets in other instances.
 - Fixed closeTimeout option passing.
+- Fixed hasRoom and hasUser errors propagation.
 - Fixed redis state graceful shutdown.
-- Removed closed ChatService event.
-- Removed example application to a separate repo.
+- Moved example application to a separate repo.
 
 ### 0.7.0 (2016/05/27)
 

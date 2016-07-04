@@ -408,11 +408,14 @@ class MemoryState
     Promise.resolve()
 
   # @private
-  getRoom : (name, nocheck) ->
+  getRoom : (name, isPredicate = false) ->
     r = @rooms.get name
     unless r
-      error = new ChatServiceError 'noRoom', name
-      return Promise.reject error
+      if isPredicate
+        return Promise.resolve null
+      else
+        error = new ChatServiceError 'noRoom', name
+        return Promise.reject error
     Promise.resolve r
 
   # @private
@@ -465,11 +468,14 @@ class MemoryState
     @addUser name, state
 
   # @private
-  getUser : (name) ->
+  getUser : (name, isPredicate = false) ->
     user = @users.get name
     unless user
-      error = new ChatServiceError 'noUser', name
-      Promise.reject error
+      if isPredicate
+        return Promise.resolve null
+      else
+        error = new ChatServiceError 'noUser', name
+        Promise.reject error
     else
       Promise.resolve user
 

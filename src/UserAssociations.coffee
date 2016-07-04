@@ -86,7 +86,7 @@ UserAssociations =
   # @private
   leaveRoom : (roomName) ->
     Promise.try =>
-      @state.getRoom roomName, true
+      @state.getRoom roomName
     .then (room) =>
       room.leave @userName
     .catch (e) =>
