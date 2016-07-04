@@ -2,6 +2,7 @@
 ### 0.8.0
 
 - Added ChatService clusterBus.
+- Added hasDirectAccess and hasRoomAccess serviceAPI methods.
 - Added hooks returning promises support.
 - Added ready and error ChatService lifecycle events.
 - Added room and user states recovery APIs.

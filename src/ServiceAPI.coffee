@@ -1,5 +1,7 @@
 
 Promise = require 'bluebird'
+ChatServiceError = require './ChatServiceError'
+
 _ = require 'lodash'
 
 { checkNameSymbols, possiblyCallback } = require './utils'
@@ -113,6 +115,21 @@ ServiceAPI =
       user.directMessagingState.hasInList listName, item
     .asCallback cb
 
+  # Checks for a direct messaging permission.
+  #
+  # @param recipient [String] Recipient name.
+  # @param sender [String] Sender name.
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise<Boolean>]
+  hasDirectAccess : (recipient, sender, cb) ->
+    @state.getUser recipient
+    .then (user) ->
+      user.checkAcess sender
+      .return true
+      .catchReturn ChatServiceError, false
+    .asCallback cb
+
   # Disconnects user's sockets for all service instances. Method is
   # asynchronous, returns without waiting for the completion.
   #
@@ -176,6 +193,21 @@ ServiceAPI =
     @state.getRoom roomName
     .then (room) ->
       room.roomState.hasInList listName, item
+    .asCallback cb
+
+  # Checks for a room access permission.
+  #
+  # @param roomName [String] Room name.
+  # @param userName [String] User name.
+  # @param cb [Callback] Optional callback.
+  #
+  # @return [Promise<Boolean>]
+  hasRoomAccess : (roomName, userName, cb) ->
+    @state.getRoom roomName
+    .then (room) ->
+      room.checkAcess userName
+      .return true
+      .catchReturn ChatServiceError, false
     .asCallback cb
 
   # Changes a room owner.

@@ -42,7 +42,7 @@ module.exports = ->
       chatService.execUserCommand user1
       , 'directAddToList', 'whitelist', [user2], (error, data) ->
         expect(error).not.ok
-        expect(error).not.ok
+        expect(data).null
         chatService.execUserCommand user1
         , 'directGetAccessList', 'whitelist', (error, data) ->
           expect(error).not.ok
@@ -196,3 +196,36 @@ module.exports = ->
         expect(error).ok
         expect(data).not.ok
         done()
+
+  it 'should check for direct messaging permissions', (done) ->
+    chatService = startService()
+    socket1 = clientConnect user1
+    socket1.on 'loginConfirmed', ->
+      socket1.emit 'directAddToList', 'blacklist', [user3], (error) ->
+        expect(error).not.ok
+        parallel [
+          (cb) ->
+            chatService.hasDirectAccess user1, user2, (error, data) ->
+              expect(error).not.ok
+              expect(data).true
+              cb()
+            chatService.hasDirectAccess user1, user3, (error, data) ->
+              expect(error).not.ok
+              expect(data).false
+              cb()
+        ], done
+
+  it 'should check for room messaging permissions', (done) ->
+    chatService = startService()
+    chatService.addRoom roomName1, {blacklist : [user3]}, ->
+      parallel [
+        (cb) ->
+          chatService.hasRoomAccess roomName1, user2, (error, data) ->
+            expect(error).not.ok
+            expect(data).true
+            cb()
+          chatService.hasRoomAccess roomName1, user3, (error, data) ->
+            expect(error).not.ok
+            expect(data).false
+            cb()
+      ], done
