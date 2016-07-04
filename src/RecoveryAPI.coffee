@@ -15,7 +15,7 @@ RecoveryAPI =
     user.userState.getSocketsToInstance()
     .then (sockets) =>
       Promise.each _.toPairs(sockets), ([socket, instance]) =>
-        if instance == @instanceUID and not @transport.getSocketObject socket
+        if instance == @instanceUID and ! @transport.getConnectionObject socket
           user.userState.removeSocket socket
     .then ->
       user.userState.getSocketsToRooms()

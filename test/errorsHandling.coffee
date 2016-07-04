@@ -99,7 +99,7 @@ module.exports = ->
     chatService.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', ->
-        chatService.transport.getSocketObject = (id) ->
+        chatService.transport.getConnectionObject = (id) ->
           return null
         socket1.emit 'roomJoin', roomName1, (error, data) ->
           expect(error).ok

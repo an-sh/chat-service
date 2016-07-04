@@ -8,7 +8,8 @@ _ = require 'lodash'
 class Transport
 
   # Sends a message to a channel (each room has a channels with the
-  # same name).
+  # same name). This messages are sent directly, bypassing room
+  # history and permissions.
   #
   # @param channel [String] A channel.
   # @param messageName [String] Message name.
@@ -18,7 +19,8 @@ class Transport
   emitToChannel : (channel, messageName, messageData...) ->
 
   # Sends a message to a channel (each room has a channels with the
-  # same name), excluding the sender socket.
+  # same name), excluding the sender socket. This messages are sent
+  # directly, bypassing room history and permissions.
   #
   # @param id [String] Sender socket id.
   # @param channel [String] A channel.
@@ -27,5 +29,14 @@ class Transport
   #
   # @return [null]
   sendToChannel : (id, channel, messageName, messageData...) ->
+
+  # Get an underlying connection object by id.
+  #
+  # @param id [String] Socket id.
+  #
+  # @return [Object or null] Connection object corresponding to the
+  #   socket id. Returns `null` if the connection was closed.
+  getConnectionObject : (id) ->
+
 
 module.exports = Transport

@@ -91,7 +91,7 @@ class User extends DirectMessaging
     .then =>
       @userState.addSocket id, @server.instanceUID
     .then (nconnected) =>
-      unless @transport.getSocketObject id
+      unless @transport.getConnectionObject id
         @removeUserSocket id
         .then ->
           Promise.reject new ChatServiceError 'noSocket', 'connection'

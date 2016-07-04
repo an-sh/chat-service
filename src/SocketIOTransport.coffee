@@ -213,12 +213,13 @@ class SocketIOTransport extends Transport
 
   # @private
   bindHandler : (id, name, fn) ->
-    socket = @getSocketObject id
+    socket = @getConnectionObject id
     if socket
       socket.on name, fn
 
   # @private
-  getSocketObject : (id) ->
+  getConnectionObject : (id) ->
+    super
     @nsp.connected[id]
 
   # @private
@@ -230,7 +231,7 @@ class SocketIOTransport extends Transport
   # @private
   sendToChannel : (id, channel, messageName, messageData...) ->
     super
-    socket = @getSocketObject id
+    socket = @getConnectionObject id
     unless socket
       @emitToChannel channel, messageName, messageData...
     else
@@ -239,7 +240,7 @@ class SocketIOTransport extends Transport
 
   # @private
   joinChannel : (id, channel) ->
-    socket = @getSocketObject id
+    socket = @getConnectionObject id
     unless socket
       Promise.reject new ChatServiceError 'invalidSocket', id
     else
@@ -248,14 +249,14 @@ class SocketIOTransport extends Transport
 
   # @private
   leaveChannel : (id, channel) ->
-    socket = @getSocketObject id
+    socket = @getConnectionObject id
     unless socket then return Promise.resolve()
     Promise.fromCallback (fn) ->
       socket.leave channel, fn
 
   # @private
   disconnectClient : (id) ->
-    socket = @getSocketObject id
+    socket = @getConnectionObject id
     if socket
       socket.disconnect()
     Promise.resolve()
