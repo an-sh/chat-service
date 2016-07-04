@@ -8,7 +8,9 @@ check = require 'check-types'
 { possiblyCallback } = require './utils'
 
 
-# Commands arguments type and count validation.
+# Commands arguments type and count validation. Can be used for hooks
+# development, an instance of {ArgumentsValidator} implementation is
+# available as a member of {ChatService} instance.
 class ArgumentsValidator
 
   # @private

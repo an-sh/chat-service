@@ -1,7 +1,10 @@
 
 util = require 'util'
 
-# ChatService errors, that are returned to clients.
+# ChatService errors, that are intended to be returned to clients as a
+# part of a normal service functioning. {ChatServiceError} constructor
+# is available as a static member of {ChatService} class. Can be used
+# to create custom error subclasses.
 class ChatServiceError extends Error
 
   # @property [Object] Error strings.

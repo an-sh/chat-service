@@ -6,6 +6,7 @@ _ = require 'lodash'
 
 # @mixin
 # API for a service state recovery.
+# @see ChatServiceEvents
 RecoveryAPI =
 
   # @private

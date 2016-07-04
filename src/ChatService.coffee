@@ -622,7 +622,7 @@ class ChatService extends ChatServiceEvents
   # @property [String] Service instance UID.
   instanceUID: null
 
-  # @property [Class] {ChatServiceError} class.
+  # @property [Constructor] {ChatServiceError} class constructor.
   @ChatServiceError: ChatServiceError
 
   # @private

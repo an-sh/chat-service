@@ -4,10 +4,10 @@ Promise = require 'bluebird'
 _ = require 'lodash'
 
 # Transport public API interface. An instance of {Transport}
-# implementation is available in a {ChatService} instance.
+# implementation is available as a member of {ChatService} instance.
 class Transport
 
-  # Sends a message to a channel (each room has a channels with the
+  # Sends a message to a channel (each room has a channel with the
   # same name). This messages are sent directly, bypassing room
   # history and permissions.
   #
@@ -18,7 +18,7 @@ class Transport
   # @return [null]
   emitToChannel : (channel, messageName, messageData...) ->
 
-  # Sends a message to a channel (each room has a channels with the
+  # Sends a message to a channel (each room has a channel with the
   # same name), excluding the sender socket. This messages are sent
   # directly, bypassing room history and permissions.
   #

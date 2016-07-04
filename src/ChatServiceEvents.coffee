@@ -2,6 +2,7 @@
 EventEmitter = require('events').EventEmitter
 
 # ChatService operational events.
+# @see RecoveryAPI
 class ChatServiceEvents extends EventEmitter
 
   # @event ready Service is ready, state and transport are up.
