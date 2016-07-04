@@ -5,6 +5,7 @@ expect = require('chai').expect
 
 { cleanup
   clientConnect
+  closeInstance
   nextTick
   ChatService
   startService
@@ -55,7 +56,7 @@ module.exports = ->
       expect(error).not.ok
       nextTick cb
     chatService1 = startService null, { onClose }
-    chatService1.close done
+    closeInstance(chatService1).asCallback(done)
 
   it 'should execute before and after hooks', (done) ->
     someData = 'data'

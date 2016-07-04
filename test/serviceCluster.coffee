@@ -4,6 +4,7 @@ expect = require('chai').expect
 
 { cleanup
   clientConnect
+  closeInstance
   parallel
   startService
 } = require './testutils.coffee'
@@ -161,7 +162,7 @@ module.exports = ->
               expect(userName).equal(user3)
               cb()
           (cb) ->
-            instance2.close cb
+            closeInstance(instance2).asCallback(cb)
         ], (error) ->
           expect(error).not.ok
           parallel [

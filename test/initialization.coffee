@@ -7,6 +7,7 @@ socketIO = require 'socket.io'
 
 { cleanup
   clientConnect
+  closeInstance
   setCustomCleanup
   startService
 } = require './testutils.coffee'
@@ -36,10 +37,11 @@ module.exports = ->
     chatService1 = startService { transportOptions : { http : app } }
     app.listen port
     setCustomCleanup (cb) ->
-      chatService1.close()
+      closeInstance chatService1
       .finally ->
         Promise.fromCallback (fn) ->
           app.close fn
+        .catchReturn()
       .asCallback cb
     socket1 = clientConnect user1
     socket1.on 'loginConfirmed', (u) ->
@@ -50,7 +52,7 @@ module.exports = ->
     io = socketIO port
     chatService1 = startService { transportOptions : { io } }
     setCustomCleanup (cb) ->
-      chatService1.close()
+      closeInstance chatService1
       .finally ->
         io.close()
       .asCallback cb

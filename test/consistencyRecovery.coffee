@@ -5,6 +5,7 @@ expect = require('chai').expect
 
 { cleanup
   clientConnect
+  closeInstance
   nextTick
   parallel
   setCustomCleanup
@@ -42,7 +43,7 @@ module.exports = ->
           setCustomCleanup (cb) ->
             user.userState.__proto__.removeSocketFromRoom = orig1
             user.userState.__proto__.addSocketToRoom = orig2
-            instance1.close cb
+            closeInstance(instance1).asCallback(cb)
           user.userState.__proto__.removeSocketFromRoom = ->
             Promise.reject new Error()
           user.userState.__proto__.addSocketToRoom = ->
@@ -88,7 +89,7 @@ module.exports = ->
             orig = room.leave
             setCustomCleanup (cb) ->
               room.__proto__.leave = orig
-              instance1.close cb
+              closeInstance(instance1).asCallback(cb)
             room.__proto__.leave = ->
               Promise.reject new Error()
             parallel [
@@ -131,7 +132,7 @@ module.exports = ->
             orig = user.userState.removeSocket
             setCustomCleanup (cb) ->
               user.userState.__proto__.removeSocket = orig
-              instance1.close cb
+              closeInstance(instance1).asCallback(cb)
             user.userState.__proto__.removeSocket = ->
               Promise.reject new Error()
             socket1.disconnect()
@@ -162,7 +163,7 @@ module.exports = ->
             orig = user.userState.removeAllSocketsFromRoom
             setCustomCleanup (cb) ->
               user.userState.__proto__.removeAllSocketsFromRoom = orig
-              instance1.close cb
+              closeInstance(instance1).asCallback(cb)
             user.userState.__proto__.removeAllSocketsFromRoom = ->
               Promise.reject new Error()
             instance1.execUserCommand true
@@ -201,7 +202,7 @@ module.exports = ->
               Promise.reject new Error()
             setCustomCleanup (cb) ->
               room.roomState.__proto__.hasInList = orig
-              instance1.close cb
+              closeInstance(instance1).asCallback(cb)
             parallel [
               (cb) ->
                 instance1.execUserCommand true
@@ -236,7 +237,7 @@ module.exports = ->
       Promise.reject new Error()
     setCustomCleanup (cb) ->
       instance1.transport.__proto__.leaveChannel = orig
-      instance1.close cb
+      closeInstance(instance1).asCallback(cb)
     instance1.addRoom roomName1, null, ->
       socket1 = clientConnect user1
       socket1.on 'loginConfirmed', (userName, { id }) ->

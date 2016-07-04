@@ -67,7 +67,7 @@ closeInstance = (service) ->
   .timeout 1500
   .catch (e) ->
     console.log 'Service closing error: ', e
-    service.redis.disconnect().catchReturn()
+    service.redis?.disconnect().catchReturn()
   .then ->
     service.io.httpServer.close()
   .catchReturn()
@@ -103,6 +103,7 @@ module.exports = {
   checkDB
   cleanup
   clientConnect
+  closeInstance
   nextTick
   parallel
   series
