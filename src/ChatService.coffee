@@ -13,8 +13,8 @@ uid = require 'uid-safe'
 
 { execHook, extend } = require './utils'
 
-# @note This class describes socket.io server outgoing messages, not
-#   actual methods.
+# @note This class describes server outgoing messages, not actual
+#   methods.
 #
 # List of server messages that are sent to a client.
 #
@@ -44,13 +44,13 @@ class ServerMessages
   directMessageEcho : (toUser, msg) ->
 
   # Disconnected from a server.
-  # @note Socket.io system event.
-  # @param reason [Object] Socket.io disconnect info.
+  # @note Client system event.
+  # @param reason [Object] Disconnect info.
   disconnect : (reason) ->
 
   # Error events, like socket.io middleware error.
-  # @note Socket.io system event.
-  # @param error [Object]
+  # @note Client system event.
+  # @param error [Object] Error.
   error : (error) ->
 
   # Indicates a successful login.
@@ -140,11 +140,11 @@ class ServerMessages
   systemMessage : (data) ->
 
 
-# @note This class describes socket.io server incoming messages, not
-#   actual methods.
+# @note This class describes server incoming messages, not actual
+#   methods.
 #
 # List of commands that are sent from a client. Result is sent back as
-# a socket.io ack with the standard (error, data) callback parameters
+# a command ack with the standard (error, data) callback parameters
 # format. Error is ether a String or an Object, depending on
 # {ChatService#constructor} `useRawErrorObjects` option. See
 # {ChatServiceError} for an errors list. Some messages will echo
@@ -205,13 +205,13 @@ class UserCommands
 
   # Sets direct messaging whitelist only mode.
   # @see UserCommands#directGetWhitelistMode
-  # @param mode [Boolean]
+  # @param mode [Boolean] Room mode.
   # @param cb [Function<error, null>] Sends ack with an error or an empty data.
   directSetWhitelistMode : (mode, cb) ->
 
   # Emitted when a socket disconnects from the server.
-  # @note Can't be send by a client as a Socket.io message, use
-  #   socket.disconnect() instead.
+  # @note Can't be send by a client as a service message, use
+  #   underlying transport API instead.
   # @param reason [String] Reason.
   # @param cb [Function<error, null>] Callback.
   disconnect : (reason, cb) ->

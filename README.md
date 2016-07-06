@@ -13,7 +13,7 @@ collaborative applications, logging with realtime updates, or a full
 protocol/API tunnelling for IoT devices.
 
 
-### Features
+## Features
 
 
 - Reliable room messaging using a server side history storage and a
@@ -50,7 +50,7 @@ protocol/API tunnelling for IoT devices.
   mobile and desktop clients.
 
 
-### Tutorial
+## Tutorial
 
 On a server, define a socket connection hook, as the service is
 relying on an extern auth implementation. A user just needs to pass an
@@ -58,7 +58,7 @@ auth check, no explicit user adding step is required.
 
 ```javascript
 function onConnect(service, id) {
-  // Get socket object using id.
+  // Get socket object by id, assuming socket.io transport.
   let socket = service.nsp.connected[id]
   // Assuming that auth data is passed in a query string.
   let query = socket.handshake.query
@@ -70,9 +70,8 @@ function onConnect(service, id) {
 ```
 
 Creating a server is a simple object instantiation. __Note:__ that a
-`close` method must be called to correctly shutdown a service (if
-redis state is used). To fix an incorrect instance shutdown use
-`instanceRecovery` method.
+`close` method _must_ be called to correctly shutdown a service (see
+[Failures recovery](#failures-recovery)).
 
 ```javascript
 const port = 8000
@@ -106,7 +105,7 @@ let socket = io.connect(url, params)
 socket.once('loginConfirmed', (userName) => {
   // Auth success.
   socket.on('roomMessage', (room, msg) => {
-    // Room message handler.
+    // Rooms messages handler (own messages are here too).
   })
   // Join room 'default'.
   socket.emit('roomJoin', 'default', (error, data) => {
@@ -126,7 +125,115 @@ Look in the API documentation for details about custom message
 formats, rooms management, rooms permission and users presence.
 
 
-### API documentation
+## Concepts overview
+
+### User multiple connections
+
+Service completely abstracts a connection concept from a user concept,
+so a single user can have more than one connection (including
+connections across different nodes). For the user presence the number
+of joined sockets must be just greater than zero. All APIs designed to
+work on the user level, handling seamlessly user's multiple
+connections.
+
+Connections are completely independent, no additional client side
+support is required. But there are info messages and commands that can
+be used to get information about other user's connections. It makes
+possible to realise client-side sync patterns, like keeping all
+connections to join the same rooms.
+
+### Room permissions
+
+Each room has a permissions system. There is a single owner user, that
+has all administrator privileges and can assign users to the
+administrators group. Administrators can manage other users' access
+permissions. Two modes are supported: blacklist and whitelist. After
+access lists/mode modifications, service automatically removes users
+that have lost an access permission.
+
+If `enableRoomsManagement` options is enabled users can create rooms
+via APIs. The creator of a room will be it's owner and can also delete
+it.
+
+### Reliable messaging and history synchronisation
+
+When a user sends a room message, in the ack callback the message `id`
+is returned. It means that the message has been saved in a store (in
+an append only circular buffer like structure). Room message ids are a
+sequence than increases by one for each successfully sent message in
+the room. A client can always check the last room message id via
+`roomHistoryInfo`, and call `roomHistoryGet` to get missing
+messages. Such approach ensures that a message can be received, unless
+it is deleted due to rotation.
+
+### Custom messages format
+
+By default a client can send messages that are limited to just a
+`{textMessage: 'Some string'}`. To enable custom messages format
+provide `directMessagesChecker` or `roomMessagesChecker` hooks. When a
+hook resolves, a message format is accepted. Messages can be arbitrary
+data with a few restrictions. The top level must be an `Object`,
+without `timestamp`, `author` or `id` fields (service will fill this
+fields before sending messages). The nested levels can include
+arbitrary data types (even binary), but no nested objects with a field
+`type` set to `'Buffer'` (used for binary data manipulations).
+
+### Integration and customisations
+
+Each user command supports before and after hook adding, and a client
+connection hook is supported too. Command and hooks are executed
+sequentially: before hook - command - after hook. Sequence termination
+in before hooks is supported. Clients can send additional command
+arguments, hooks can read them, and reply with additional arguments.
+
+To execute an user command server side the `execUserCommand` is
+provided. Also there are some more server side only methods provided
+by `ServiceAPI` and `Transport`. Look for some customisation cases in
+[Customisation examples](#customisation-examples).
+
+### Failures recovery
+
+Service keeps user presence and connection data in a store, that may
+be persistent or shared. So if an instance is shutdown incorrectly
+(without calling or waiting for `close` method to finish) or lost
+completely network connection to a store, presence data will become
+incorrect. To fix this case the `instanceRecovery` method is provided.
+
+Also there are more subtle cases regarding connection-dependant data
+consistency. Transport communication instances and store instances can
+experience various kind of network, software or hardware failures. In
+some edge cases (like operation on multiple users) such failures can
+cause inconsistencies (for the most part errors will be returned to
+the command's issuers). Such events are reported via instance events
+(see `ChatServiceEvents`), and data can be sync via `RecoveryAPI`
+methods.
+
+
+## Customisation examples
+
+### Anonymous listeners
+
+By default every user is assumed to have an unique login
+(userName). Instead of managing names generation, an integration with
+a separate transport can be used (or a multiplexed connection, for
+example an another socket.io namespace). Room messages can be
+forwarded from `roomMessage` after hook to a transport, that is
+accessible without a login. And vice versa some service commands can
+be executed by anonymous users via `execUserCommand` with bypassing
+permissions option turned on.
+
+### Explicit multi-device announcements
+
+By default there is no way for other users to know the number and
+types of user connections joined to a room. Such information can be
+passed, for example in a query string and then saved via a connection
+hook. The announcement can be made in `roomJoin` after hook, using
+directly transport `sendToChannel` method. Also additional information
+regarding joined devices types should be sent from `roomGetAccessList`
+after hook (when list name is equal to `'userlist'`).
+
+
+## API documentation
 
 Is available online at
 [gitpages](https://an-sh.github.io/chat-service/0.8/).
@@ -135,7 +242,7 @@ Is available online at
   from the server to a client.
 
 - `UserCommands` class describes socket.io messages that a client
-  sends to a server and receives reply as a socket.io ack.
+  sends to a server and receives reply as a command ack.
 
 - `ChatService` class is the package exported object and a service
   instance constructor, describes options. It also contains mixin
@@ -144,7 +251,7 @@ Is available online at
 Run `npm install -g codo` and `codo` to generate local documentation.
 
 
-### Frontend example
+## Frontend example
 
 An Angular single page chat application with a basic features
 demonstration is now in a separate
@@ -154,10 +261,10 @@ processes. Check `README.md` file in that repository for more
 information.
 
 
-### Bug reporting and debugging
+## Debugging
 
 In normal circumstances all errors that are returned to a service user
-(via commands ack, or `loginConfirmed`/`loginRejected` messages)
+(via commands ack, `loginConfirmed` or `loginRejected` messages)
 should be instances of `ChatServiceError`. All other errors mean a
 bug, or some failures in the service infrastructure. To enable debug
 logging of such errors use `export NODE_DEBUG=ChatService`. The
@@ -166,10 +273,12 @@ enable long stack traces use `export BLUEBIRD_DEBUG=1`. It is highly
 recommended to follow this conventions for extension hooks
 development.
 
+## Bug reporting
+
 If you encounter a bug in this package, please submit a bug report at
 github repo [issues](https://github.com/an-sh/chat-service/issues).
 
 
-### License
+## License
 
 MIT
