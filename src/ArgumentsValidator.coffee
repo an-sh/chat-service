@@ -45,6 +45,7 @@ class ArgumentsValidator
         if checker
           Promise.fromCallback (fn) ->
             checker args[idx], fn
+      .return()
     .asCallback cb
 
   # @private
