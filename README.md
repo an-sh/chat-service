@@ -140,7 +140,7 @@ Connections are completely independent, no additional client side
 support is required. But there are info messages and commands that can
 be used to get information about other user's connections. It makes
 possible to realise client-side sync patterns, like keeping all
-connections to join the same rooms.
+connections to be joined to the same rooms.
 
 ### Room permissions
 
@@ -152,8 +152,8 @@ access lists/mode modifications, service automatically removes users
 that have lost an access permission.
 
 If `enableRoomsManagement` options is enabled users can create rooms
-via APIs. The creator of a room will be it's owner and can also delete
-it.
+via `roomCreate` command. The creator of a room will be it's owner and
+can also delete it via `roomDelete` command.
 
 ### Reliable messaging and history synchronisation
 
@@ -162,9 +162,9 @@ is returned. It means that the message has been saved in a store (in
 an append only circular buffer like structure). Room message ids are a
 sequence than increases by one for each successfully sent message in
 the room. A client can always check the last room message id via
-`roomHistoryInfo`, and call `roomHistoryGet` to get missing
-messages. Such approach ensures that a message can be received, unless
-it is deleted due to rotation.
+`roomHistoryInfo` command, and use `roomHistoryGet` command to get
+missing messages. Such approach ensures that a message can be
+received, unless it is deleted due to rotation.
 
 ### Custom messages format
 
@@ -186,7 +186,7 @@ sequentially: before hook - command - after hook. Sequence termination
 in before hooks is supported. Clients can send additional command
 arguments, hooks can read them, and reply with additional arguments.
 
-To execute an user command server side the `execUserCommand` is
+To execute an user command server side `execUserCommand` is
 provided. Also there are some more server side only methods provided
 by `ServiceAPI` and `Transport`. Look for some customisation cases in
 [Customisation examples](#customisation-examples).
@@ -197,7 +197,7 @@ Service keeps user presence and connection data in a store, that may
 be persistent or shared. So if an instance is shutdown incorrectly
 (without calling or waiting for `close` method to finish) or lost
 completely network connection to a store, presence data will become
-incorrect. To fix this case the `instanceRecovery` method is provided.
+incorrect. To fix this case `instanceRecovery` method is provided.
 
 Also there are more subtle cases regarding connection-dependant data
 consistency. Transport communication instances and store instances can
