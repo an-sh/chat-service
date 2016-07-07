@@ -1,5 +1,5 @@
 
-### 0.8.0
+### 0.8.0 (2016/07/07)
 
 - Added ChatService clusterBus.
 - Added hasDirectAccess and hasRoomAccess serviceAPI methods.
