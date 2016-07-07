@@ -64,7 +64,7 @@ else
 closeInstance = (service) ->
   unless service then return
   service.close()
-  .timeout 1500
+  .timeout 2000
   .catch (e) ->
     console.log 'Service closing error: ', e
     service.redis?.disconnect().catchReturn()

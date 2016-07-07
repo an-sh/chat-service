@@ -9,7 +9,8 @@ expect = require('chai').expect
   startService
 } = require './testutils.coffee'
 
-{ port
+{ cleanupTimeout
+  port
   user1
   user2
   user3
@@ -29,6 +30,7 @@ module.exports = ->
   socket5 = null
 
   afterEach (cb) ->
+    @timeout cleanupTimeout
     cleanup [instance1, instance2], [socket1, socket2, socket3], cb
     chatService = socket1 = socket2 = socket3 = null
 
@@ -61,6 +63,8 @@ module.exports = ->
       ], done
 
   it 'should actually remove other instances sockets from channel', (done) ->
+    @timeout 4000
+    @slow 2000
     instance1 = startService _.assign {port : port}, redisConfig
     instance2 = startService _.assign {port : port+1}, redisConfig
     instance1.addRoom roomName1, { owner : user2 }, ->
@@ -86,8 +90,6 @@ module.exports = ->
         socket3.emit 'roomAddToList', roomName1, 'blacklist', [user1], ->
           socket3.emit 'roomMessage', roomName1, {textMessage : 'hello'}
           setTimeout done, 1000
-  .timeout 3000
-  .slow 2500
 
   it 'should disconnect users sockets across all instances', (done) ->
     instance1 = startService _.assign {port : port}, redisConfig

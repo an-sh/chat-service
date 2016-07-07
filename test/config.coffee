@@ -16,6 +16,7 @@ else
 
 
 module.exports= {
+  cleanupTimeout : 4000
   host : 'ws://localhost'
   memoryConfig
   namespace : '/chat-service'

@@ -12,7 +12,8 @@ expect = require('chai').expect
   startService
 } = require './testutils.coffee'
 
-{ port
+{ cleanupTimeout
+  port
   user1
   user2
   user3
@@ -28,6 +29,7 @@ module.exports = ->
   socket3 = null
 
   afterEach (cb) ->
+    @timeout cleanupTimeout
     cleanup [instance1], [socket1, socket2, socket3], cb
     instance1 = socket1 = socket2 = socket3 = null
 

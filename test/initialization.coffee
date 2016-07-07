@@ -12,7 +12,8 @@ socketIO = require 'socket.io'
   startService
 } = require './testutils.coffee'
 
-{ port
+{ cleanupTimeout
+  port
   user1
   user2
   user3
@@ -29,6 +30,7 @@ module.exports = ->
   socket3 = null
 
   afterEach (cb) ->
+    @timeout cleanupTimeout
     cleanup chatService, [socket1, socket2, socket3], cb
     chatService = socket1 = socket2 = socket3 = null
 
@@ -94,6 +96,8 @@ module.exports = ->
       done()
 
   it 'should update instance heartbeat', (done) ->
+    @timeout 4000
+    @slow 2000
     chatService = startService { heartbeatRate : 500 }
     start = _.now()
     setTimeout ->
@@ -102,5 +106,3 @@ module.exports = ->
         expect(ts).within(start, start + 2000)
         done()
     , 1000
-  .timeout 3000
-  .slow 2500
