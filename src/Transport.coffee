@@ -13,7 +13,7 @@ class Transport
   #
   # @param channel [String] A channel.
   # @param messageName [String] Message name.
-  # @param messageData [Array] Message data.
+  # @param messageData [Rest...] Message data.
   #
   # @return [null]
   emitToChannel : (channel, messageName, messageData...) ->
@@ -25,7 +25,7 @@ class Transport
   # @param id [String] Sender socket id.
   # @param channel [String] A channel.
   # @param messageName [String] Message name.
-  # @param messageData [Array] Message data.
+  # @param messageData [Rest...] Message data.
   #
   # @return [null]
   sendToChannel : (id, channel, messageName, messageData...) ->
