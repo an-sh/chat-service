@@ -605,29 +605,29 @@ class ChatService extends ChatServiceEvents {
 
 
   // @property [Object] {ArgumentsValidator} instance.
-  validator = null;
+  // validator = null;
 
   // @property [Object] {Transport} instance.
-  transport = null;
+  // transport = null;
 
   // @property [Object or null] Socket.io server.
-  io = null;
+  // io = null;
 
   // @property [Object or null] Socket.io server namespace.
-  nsp = null;
+  // nsp = null;
 
   // @property [Object or null] State ioredis instance.
-  redis = null;
+  // redis = null;
 
   // @property [EventEmitter] Cluster communication via adapter. Emits
   //   messages to all services nodes, including the sender node.
-  clusterBus = null;
+  // clusterBus = null;
 
   // @property [String] Service instance UID.
-  instanceUID = null;
+  // instanceUID = null;
 
   // @property [Constructor] {ChatServiceError} class constructor.
-  static ChatServiceError = ChatServiceError;
+  // static ChatServiceError = ChatServiceError;
 
   // @private
   // @nodoc
@@ -772,6 +772,8 @@ class ChatService extends ChatServiceEvents {
 }
 
 mix(ChatService, ServiceAPI, RecoveryAPI);
+ChatService.ChatServiceError = ChatServiceError;
 
 
-export default ChatService;
+// export default ChatService;
+module.exports = ChatService;

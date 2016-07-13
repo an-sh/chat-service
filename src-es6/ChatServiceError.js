@@ -7,32 +7,11 @@ import util from 'util';
 // to create custom error subclasses.
 class ChatServiceError extends Error {
 
-  // @property [Object] Error strings.
-  errorStrings = {
-    badArgument : 'Bad argument at position %d, value %j',
-    invalidName : 'String %s contains invalid characters',
-    invalidSocket : 'Socket %s is not connected',
-    noCommand : 'No such command %s',
-    noList : 'No such list %s',
-    noLogin : 'No login provided',
-    noRoom : 'No such room %s',
-    noSocket : 'Command %s requires a valid socket',
-    noUser : 'No such user %s',
-    noUserOnline : 'No such user online %s',
-    notAllowed : 'Action is not allowed',
-    notJoined : 'Not joined to room %s',
-    roomExists : 'Room %s already exists',
-    timeout : 'Server operation timeout',
-    userExists : 'User %s already exists',
-    userOnline : 'User %s is online',
-    wrongArgumentsCount : 'Expected %s arguments, got %s'
-  };
-
   // @property [String] Error key in errorStrings.
-  name = 'unknownError';
+  // name = 'unknownError';
 
   // @property [Array<Object>] Error arguments.
-  args = [];
+  // args = [];
 
   // @private
   // @nodoc
@@ -52,6 +31,27 @@ class ChatServiceError extends Error {
     }
   }
 }
+
+// @property [Object] Error strings.
+ChatServiceError.errorStrings = {
+  badArgument : 'Bad argument at position %d, value %j',
+  invalidName : 'String %s contains invalid characters',
+  invalidSocket : 'Socket %s is not connected',
+  noCommand : 'No such command %s',
+  noList : 'No such list %s',
+  noLogin : 'No login provided',
+  noRoom : 'No such room %s',
+  noSocket : 'Command %s requires a valid socket',
+  noUser : 'No such user %s',
+  noUserOnline : 'No such user online %s',
+  notAllowed : 'Action is not allowed',
+  notJoined : 'Not joined to room %s',
+  roomExists : 'Room %s already exists',
+  timeout : 'Server operation timeout',
+  userExists : 'User %s already exists',
+  userOnline : 'User %s is online',
+  wrongArgumentsCount : 'Expected %s arguments, got %s'
+};
 
 
 export default ChatServiceError;
