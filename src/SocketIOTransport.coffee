@@ -133,10 +133,10 @@ class SocketIOTransport extends Transport
   # @private
   rejectLogin : (socket, error) ->
     useRawErrorObjects = @server.useRawErrorObjects
-    if error and not (error instanceof ChatServiceError)
+    if error? and not (error instanceof ChatServiceError)
       debuglog error
-    unless useRawErrorObjects
-      error = error?.toString?()
+    if error? and not useRawErrorObjects
+      error = error.toString()
     socket.emit 'loginRejected', error
     socket.disconnect()
 
@@ -151,7 +151,8 @@ class SocketIOTransport extends Transport
     id = socket.id
     Promise.try ->
       unless userName
-        userName = socket.handshake.query?.user
+        query = socket.handshake.query
+        userName = query and query.user
         unless userName
           Promise.reject new ChatServiceError 'noLogin'
     .then ->

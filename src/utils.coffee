@@ -56,7 +56,7 @@ execHook = (hook, args...) ->
     Promise.fromCallback (fn) ->
       fn callbackData...
     , {multiArgs : true}
-  else if typeof res?.then is 'function'
+  else if res? and typeof res.then is 'function'
     res
   else
     Promise.fromCallback (fn) ->

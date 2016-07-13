@@ -72,7 +72,7 @@ class User extends DirectMessaging
   checkOnline : ->
     @userState.getAllSockets()
     .then (sockets) =>
-      unless sockets?.length
+      if not sockets or not sockets.length
         Promise.reject new ChatServiceError 'noUserOnline', @userName
 
   # @private

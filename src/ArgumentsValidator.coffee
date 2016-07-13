@@ -52,7 +52,7 @@ class ArgumentsValidator
   # @nodoc
   getArgsCount : (name) ->
     checker = @checkers.get name
-    return checker?.length || 0
+    if checker then checker.length else 0
 
   # @private
   # @nodoc
@@ -76,7 +76,7 @@ class ArgumentsValidator
   # @private
   # @nodoc
   checkTypes : (checkers, args) ->
-    if args?.length != checkers.length
+    if args.length != checkers.length
       return new ChatServiceError 'wrongArgumentsCount'
       , checkers.length, args.length
     for checker, idx in checkers

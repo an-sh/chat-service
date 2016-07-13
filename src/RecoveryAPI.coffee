@@ -44,7 +44,7 @@ RecoveryAPI =
         .then (user) ->
           user.userState.getRoomToSockets roomName
           .then (sockets) ->
-            unless sockets?.length
+            if not sockets or not sockets.length
               user.removeFromRoom roomName
           .catchReturn()
           .then ->

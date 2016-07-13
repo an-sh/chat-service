@@ -309,7 +309,7 @@ class UserStateMemory
   # @private
   getRoomToSockets : (roomName) ->
     socketsset = @roomsToSockets.get roomName
-    data = socketsset?.toObject() || {}
+    data = (socketsset and socketsset.toObject()) || {}
     Promise.resolve data
 
   # @private
@@ -318,7 +318,7 @@ class UserStateMemory
     sockets = @socketsToRooms.keysArray()
     for id in sockets
       socketsset = @socketsToRooms.get id
-      result[id] = socketsset?.toArray() || []
+      result[id] = (socketsset and socketsset.toArray()) || []
     Promise.resolve result
 
   # @private
@@ -337,16 +337,18 @@ class UserStateMemory
   removeSocketFromRoom : (id, roomName) ->
     roomsset = @socketsToRooms.get id
     socketsset = @roomsToSockets.get roomName
-    roomsset?.delete roomName
-    socketsset?.delete id
-    njoined = socketsset?.length || 0
+    if roomsset
+      roomsset.delete roomName
+    if socketsset
+      socketsset.delete id
+    njoined = (socketsset and socketsset.length) || 0
     Promise.resolve njoined
 
   # @private
   removeAllSocketsFromRoom : (roomName) ->
     sockets = @socketsToRooms.keysArray()
     socketsset = @roomsToSockets.get roomName
-    removedSockets = socketsset?.toArray() || []
+    removedSockets = (socketsset and socketsset.toArray()) || []
     for id in removedSockets
       roomsset = @socketsToRooms.get id
       roomsset.delete roomName
@@ -359,7 +361,7 @@ class UserStateMemory
   removeSocket : (id) ->
     rooms = @roomsToSockets.toArray()
     roomsset = @socketsToRooms.get id
-    removedRooms = roomsset?.toArray() || []
+    removedRooms = (roomsset and roomsset.toArray()) || []
     joinedSockets = []
     for roomName, idx in removedRooms
       socketsset = @roomsToSockets.get roomName

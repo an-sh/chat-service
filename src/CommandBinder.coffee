@@ -19,12 +19,12 @@ CommandBinder =
   bindAck : (cb) ->
     useRawErrorObjects = @server.useRawErrorObjects
     (error, data, rest...) ->
-      if error and not (error instanceof ChatServiceError)
+      if error? and not (error instanceof ChatServiceError)
         debuglog error
       error = null unless error?
       data = null unless data?
-      unless useRawErrorObjects
-        error = error?.toString?()
+      if error? and not useRawErrorObjects
+        error = error.toString()
       cb error, data, rest...
 
   # @private
@@ -39,8 +39,8 @@ CommandBinder =
   makeCommand : (name, fn) ->
     self = @
     validator = @server.validator
-    beforeHook = @server.hooks?["#{name}Before"]
-    afterHook = @server.hooks?["#{name}After"]
+    beforeHook = @server.hooks["#{name}Before"]
+    afterHook = @server.hooks["#{name}After"]
     (args..., info = {}, cb) =>
       ack = @bindAck cb if cb
       execInfo = new ExecInfo
@@ -53,7 +53,7 @@ CommandBinder =
           if beforeHook and not execInfo.bypassHooks
             execHook beforeHook, execInfo
         .then (results) ->
-          if results?.length then return results
+          if results and results.length then return results
           fn.apply self, [execInfo.args..., execInfo]
           .then (result) ->
             execInfo.results = [result]
@@ -63,7 +63,7 @@ CommandBinder =
             if afterHook and not execInfo.bypassHooks
               execHook afterHook, execInfo
           .then (results) ->
-            if results?.length
+            if results and results.length
               results
             else if execInfo.error
               Promise.reject execInfo.error
