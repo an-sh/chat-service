@@ -23,6 +23,7 @@ mix = (c, mixins...) ->
     for name, method of mixin
       unless c::[name]
         c::[name] = method
+  return
 
 # @private
 # @nodoc
