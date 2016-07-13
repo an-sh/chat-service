@@ -11,7 +11,7 @@ SocketIOTransport = require './SocketIOTransport'
 _ = require 'lodash'
 uid = require 'uid-safe'
 
-{ execHook, extend } = require './utils'
+{ execHook, mix } = require './utils'
 
 # @note This class describes server outgoing messages, not actual
 #   methods.
@@ -482,8 +482,6 @@ HooksInterface =
 # @extend RecoveryAPI
 class ChatService extends ChatServiceEvents
 
-  extend @, ServiceAPI, RecoveryAPI
-
   # Crates an object and starts a new service instance.
   #
   # @param options [Object] Service configuration options.
@@ -734,6 +732,8 @@ class ChatService extends ChatServiceEvents
       .finally =>
         @emit 'closed', closeError
     .asCallback done
+
+mix ChatService, ServiceAPI, RecoveryAPI
 
 
 module.exports = ChatService

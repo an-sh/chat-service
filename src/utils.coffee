@@ -18,7 +18,7 @@ nameChecker = /^[^\u0000-\u001F:{}\u007F]+$/
 
 # @private
 # @nodoc
-extend = (c, mixins...) ->
+mix = (c, mixins...) ->
   for mixin in mixins
     for name, method of mixin
       unless c::[name]
@@ -69,7 +69,7 @@ module.exports = {
   checkNameSymbols
   debuglog
   execHook
-  extend
+  mix
   nameChecker
   possiblyCallback
 }

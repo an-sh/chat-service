@@ -8,7 +8,7 @@ _ = require 'lodash'
 promiseRetry = require 'promise-retry'
 uid = require 'uid-safe'
 
-{ extend } = require './utils'
+{ mix } = require './utils'
 
 
 # @private
@@ -295,8 +295,6 @@ class ListsStateRedis
 # @nodoc
 class RoomStateRedis extends ListsStateRedis
 
-  extend @, stateOperations
-
   # @private
   constructor : (@server, @roomName) ->
     @name = @roomName
@@ -430,13 +428,13 @@ class RoomStateRedis extends ListsStateRedis
     timestamp = _.now()
     @redis.hset @makeKeyName('usersseen'), userName, timestamp
 
+mix RoomStateRedis, stateOperations
+
 
 # Implements direct messaging state API.
 # @private
 # @nodoc
 class DirectMessagingStateRedis extends ListsStateRedis
-
-  extend @, stateOperations
 
   # @private
   constructor : (@server, @userName) ->
@@ -460,13 +458,13 @@ class DirectMessagingStateRedis extends ListsStateRedis
     ]
     .return()
 
+mix DirectMessagingStateRedis, stateOperations
+
 
 # Implements user state API.
 # @private
 # @nodoc
 class UserStateRedis
-
-  extend @, lockOperations
 
   # @private
   constructor : (@server, @userName) ->
@@ -571,6 +569,8 @@ class UserStateRedis
           if start + ttl < _.now()
             @server.emit 'lockTimeExceeded', val, {@userName, roomName}
           @unlock @makeRoomLock(roomName), val
+
+mix UserStateRedis, lockOperations
 
 
 # Implements global state API.

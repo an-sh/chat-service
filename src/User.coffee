@@ -8,7 +8,7 @@ _ = require 'lodash'
 
 { asyncLimit
   checkNameSymbols
-  extend
+  mix
 } = require './utils'
 
 
@@ -17,8 +17,6 @@ _ = require 'lodash'
 #
 # Client commands implementation.
 class User extends DirectMessaging
-
-  extend @, CommandBinder, UserAssociations
 
   # @private
   constructor : (@server, @userName) ->
@@ -290,6 +288,8 @@ class User extends DirectMessaging
   systemMessage : (data, {id}) ->
     @transport.sendToChannel id, @echoChannel, 'systemMessage', data
     Promise.resolve()
+
+mix User, CommandBinder, UserAssociations
 
 
 module.exports = User

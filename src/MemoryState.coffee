@@ -10,7 +10,7 @@ _ = require 'lodash'
 promiseRetry = require 'promise-retry'
 uid = require 'uid-safe'
 
-{ extend } = require './utils'
+{ mix } = require './utils'
 
 
 # @private
@@ -274,8 +274,6 @@ class DirectMessagingStateMemory extends ListsStateMemory
 # @nodoc
 class UserStateMemory
 
-  extend @, lockOperations
-
   # @private
   constructor : (@server, @userName) ->
     @socketsToRooms = new FastMap
@@ -384,6 +382,8 @@ class UserStateMemory
           if start + ttl < _.now()
             @server.emit 'lockTimeExceeded', val, {@userName, roomName}
           @unlock roomName, val
+
+mix UserStateMemory, lockOperations
 
 
 # Implements global state API.

@@ -3,7 +3,7 @@ ChatServiceError = require './ChatServiceError'
 Promise = require 'bluebird'
 _ = require 'lodash'
 
-{ extend, asyncLimit } = require './utils'
+{ mix, asyncLimit } = require './utils'
 
 # @private
 # @mixin
@@ -125,8 +125,6 @@ RoomPermissions =
 # Implements room messaging state manipulations with the respect to
 # user's permissions.
 class Room
-
-  extend @, RoomPermissions
 
   # @private
   constructor : (@server, @roomName) ->
@@ -261,6 +259,8 @@ class Room
     @checkRead author, bypassPermissions
     .then =>
       @roomState.userSeenGet userName
+
+mix Room, RoomPermissions
 
 
 module.exports = Room

@@ -2,7 +2,7 @@
 ChatServiceError = require './ChatServiceError'
 Promise = require 'bluebird'
 
-{ extend } = require './utils'
+{ mix } = require './utils'
 
 
 # @private
@@ -53,8 +53,6 @@ DirectMessagingPermissions =
 # user's permissions.
 class DirectMessaging
 
-  extend @, DirectMessagingPermissions
-
   # @private
   constructor : (@server, @userName) ->
     State = @server.state.DirectMessagingState
@@ -96,6 +94,8 @@ class DirectMessaging
   # @private
   changeMode : (author, mode) ->
     @directMessagingState.whitelistOnlySet mode
+
+mix DirectMessaging, DirectMessagingPermissions
 
 
 module.exports = DirectMessaging
