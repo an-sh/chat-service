@@ -35,7 +35,9 @@ class ChatServiceError extends Error
 
   # @private
   # @nodoc
-  constructor : (@name, @args...) ->
+  constructor : (name, args...) ->
+    @name = name
+    @args = args
 
   # @private
   # @nodoc

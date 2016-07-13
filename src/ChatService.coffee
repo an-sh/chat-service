@@ -591,8 +591,10 @@ class ChatService extends ChatServiceEvents
   #   as arguments for a Cluster client.
   #
   #
-  constructor : (@options = {}, @hooks = {}) ->
+  constructor : (options = {}, hooks = {}) ->
     super
+    @options = options
+    @hooks = hooks
     @setOptions()
     @setComponents()
     @startServer()

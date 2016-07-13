@@ -54,7 +54,9 @@ DirectMessagingPermissions =
 class DirectMessaging
 
   # @private
-  constructor : (@server, @userName) ->
+  constructor : (server, userName) ->
+    @server = server
+    @userName = userName
     State = @server.state.DirectMessagingState
     @directMessagingState = new State @server, @userName
 

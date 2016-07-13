@@ -106,7 +106,9 @@ class ListsStateMemory
 class RoomStateMemory extends ListsStateMemory
 
   # @private
-  constructor : (@server, @name) ->
+  constructor : (server, name) ->
+    @server = server
+    @name = name
     @historyMaxGetMessages = @server.historyMaxGetMessages
     @historyMaxSize = @server.defaultHistoryLimit
     @whitelist = new FastSet
@@ -248,8 +250,10 @@ class RoomStateMemory extends ListsStateMemory
 class DirectMessagingStateMemory extends ListsStateMemory
 
   # @private
-  constructor : (@server, @userName) ->
-    @whitelistOnly
+  constructor : (server, userName) ->
+    @server = server
+    @userName = userName
+    @whitelistOnly = false
     @whitelist = new FastSet
     @blacklist = new FastSet
 
@@ -275,7 +279,9 @@ class DirectMessagingStateMemory extends ListsStateMemory
 class UserStateMemory
 
   # @private
-  constructor : (@server, @userName) ->
+  constructor : (server, userName) ->
+    @server = server
+    @userName = userName
     @socketsToRooms = new FastMap
     @socketsToInstances = new FastMap
     @roomsToSockets = new FastMap
@@ -392,7 +398,9 @@ mix UserStateMemory, lockOperations
 class MemoryState
 
   # @private
-  constructor : (@server, @options = {}) ->
+  constructor : (server, options = {}) ->
+    @server = server
+    @options = options
     @closed = false
     @users = new FastMap
     @rooms = new FastMap

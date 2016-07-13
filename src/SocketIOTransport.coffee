@@ -17,8 +17,10 @@ hasBinary = require 'has-binary'
 class ClusterBus extends EventEmitter
 
   # @private
-  constructor : (@server, @adapter) ->
+  constructor : (server, adapter) ->
     super()
+    @server = server
+    @adapter = adapter
     @channel = 'cluster:bus'
     @intenalEvents = ['roomLeaveSocket', 'socketRoomLeft'
       , 'disconnectUserSockets']
@@ -69,8 +71,12 @@ class ClusterBus extends EventEmitter
 class SocketIOTransport extends Transport
 
   # @private
-  constructor : (@server, @options, @adapterConstructor, @adapterOptions) ->
+  constructor : (server, options, adapterConstructor, adapterOptions) ->
     super
+    @server = server
+    @options = options
+    @adapterConstructor = adapterConstructor
+    @adapterOptions = adapterOptions
     @hooks = @server.hooks
     @io = @options.io
     @namespace = @options.namespace || '/chat-service'

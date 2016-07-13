@@ -127,7 +127,9 @@ RoomPermissions =
 class Room
 
   # @private
-  constructor : (@server, @roomName) ->
+  constructor : (server, roomName) ->
+    @server = server
+    @roomName = roomName
     State = @server.state.RoomState
     @roomState = new State @server, @roomName
 

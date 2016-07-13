@@ -296,7 +296,9 @@ class ListsStateRedis
 class RoomStateRedis extends ListsStateRedis
 
   # @private
-  constructor : (@server, @roomName) ->
+  constructor : (server, roomName) ->
+    @server = server
+    @roomName = roomName
     @name = @roomName
     @historyMaxGetMessages = @server.historyMaxGetMessages
     @redis = @server.redis
@@ -437,7 +439,9 @@ mix RoomStateRedis, stateOperations
 class DirectMessagingStateRedis extends ListsStateRedis
 
   # @private
-  constructor : (@server, @userName) ->
+  constructor : (server, userName) ->
+    @server = server
+    @userName = userName
     @name = @userName
     @prefix = 'users'
     @exitsErrorName = 'userExists'
@@ -467,7 +471,9 @@ mix DirectMessagingStateRedis, stateOperations
 class UserStateRedis
 
   # @private
-  constructor : (@server, @userName) ->
+  constructor : (server, userName) ->
+    @server = server
+    @userName = userName
     @name = @userName
     @prefix = 'users'
     @redis = @server.redis
@@ -579,7 +585,9 @@ mix UserStateRedis, lockOperations
 class RedisState
 
   # @private
-  constructor : (@server, @options = {}) ->
+  constructor : (server, options = {}) ->
+    @server = server
+    @options = options
     @closed = false
     if @options.useCluster
       @redis = new Redis.Cluster @options.redisOptions...

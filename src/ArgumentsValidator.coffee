@@ -15,7 +15,8 @@ class ArgumentsValidator
 
   # @private
   # @nodoc
-  constructor : (@server) ->
+  constructor : (server) ->
+    @server = server
     @checkers = new FastMap
     @directMessagesChecker = @server.directMessagesChecker
     @roomMessagesChecker = @server.roomMessagesChecker

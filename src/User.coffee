@@ -19,8 +19,10 @@ _ = require 'lodash'
 class User extends DirectMessaging
 
   # @private
-  constructor : (@server, @userName) ->
+  constructor : (server, userName) ->
     super
+    @server = server
+    @userName = userName
     @state = @server.state
     @transport = @server.transport
     @validator = @server.validator
