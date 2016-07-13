@@ -8,7 +8,7 @@ util = require 'util'
 class ChatServiceError extends Error
 
   # @property [Object] Error strings.
-  @::errorStrings =
+  errorStrings:
     badArgument : 'Bad argument at position %d, value %j'
     invalidName : 'String %s contains invalid characters'
     invalidSocket : 'Socket %s is not connected'
