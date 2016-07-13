@@ -21,14 +21,13 @@ uid = require 'uid-safe'
 # @example Socket.io client example
 #   socket = io.connect url, params
 #   socket.once 'loginConfirmed', (userName) ->
-#     socket.on 'directMessage', (fromUser, msg) ->
+#     socket.on 'directMessage', (msg) ->
 #       # just the same as any event. no reply is required.
 #
 class ServerMessages
   # Direct message. A message will have timestamp and author fields,
   # but other fields can be used if {ChatService#constructor}
   # `directMessagesChecker` hook is set.
-  # @param fromUser [String] Message sender.
   # @param msg [Object<textMessage:String, timestamp:Number, author:String>]
   #   Message.
   # @see UserCommands#directMessage
