@@ -36,7 +36,7 @@ lockOperations =
         err = new ChatServiceError 'timeout'
         retry err
       else
-        @locks.set key, val
+        @locks.set(key, val) #bug decaffeinate 2.16.0
         Promise.resolve()
 
   # @private
@@ -424,8 +424,8 @@ class MemoryState
       if isPredicate
         return Promise.resolve null
       else
-        error = new ChatServiceError 'noRoom', name
-        return Promise.reject error
+        error = new ChatServiceError('noRoom', name) #bug decaffeinate 2.16.0
+        return Promise.reject(error) #bug decaffeinate 2.16.0
     Promise.resolve r
 
   # @private
@@ -434,13 +434,13 @@ class MemoryState
     unless @rooms.get name
       @rooms.set name, room
     else
-      error = new ChatServiceError 'roomExists', name
-      return Promise.reject error
+      error = new ChatServiceError('roomExists', name) #bug decaffeinate 2.16.0
+      return Promise.reject(error) #bug decaffeinate 2.16.0
     if state
       room.initState state
       .return room
     else
-      Promise.resolve room
+      Promise.resolve(room) #bug decaffeinate 2.16.0
 
   # @private
   removeRoom : (name) ->
@@ -484,10 +484,10 @@ class MemoryState
       if isPredicate
         return Promise.resolve null
       else
-        error = new ChatServiceError 'noUser', name
-        Promise.reject error
+        error = new ChatServiceError('noUser', name) #bug decaffeinate 2.16.0
+        Promise.reject(error) #bug decaffeinate 2.16.0
     else
-      Promise.resolve user
+      Promise.resolve(user) #bug decaffeinate 2.16.0
 
   # @private
   addUser : (name, state) ->
@@ -501,7 +501,7 @@ class MemoryState
       user.initState state
       .return user
     else
-      Promise.resolve user
+      Promise.resolve(user) #bug decaffeinate 2.16.0
 
   # @private
   removeUser : (name) ->

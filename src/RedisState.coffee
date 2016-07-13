@@ -592,8 +592,8 @@ class RedisState
     if @options.useCluster
       @redis = new Redis.Cluster @options.redisOptions...
     else
-      redisOptions = _.castArray @options.redisOptions
-      @redis = new Redis redisOptions...
+      redisOptions = _.castArray(@options.redisOptions) #bug decaffeinate 2.16.0
+      @redis = new Redis(redisOptions...) #bug decaffeinate 2.16.0
     @RoomState = RoomStateRedis
     @UserState = UserStateRedis
     @DirectMessagingState = DirectMessagingStateRedis
@@ -632,8 +632,8 @@ class RedisState
         if isPredicate
           return Promise.resolve null
         else
-          error = new ChatServiceError 'noRoom', name
-          return Promise.reject error
+          error = new ChatServiceError('noRoom', name) #bug decaffeinate 2.16.0
+          return Promise.reject(error) #bug decaffeinate 2.16.0
       Promise.resolve room
 
   # @private
@@ -688,8 +688,8 @@ class RedisState
         if isPredicate
           return Promise.resolve null
         else
-          error = new ChatServiceError 'noUser', name
-          return Promise.reject error
+          error = new ChatServiceError('noUser', name) #bug decaffeinate 2.16.0
+          return Promise.reject(error) #bug decaffeinate 2.16.0
       Promise.resolve user
 
   # @private

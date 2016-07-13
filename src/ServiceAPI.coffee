@@ -34,7 +34,7 @@ ServiceAPI =
   execUserCommand : (context, command, args...) ->
     if _.isObject context
       userName = context.userName
-    else if _.isBoolean context
+    else if _.isBoolean(context) #bug decaffeinate 2.16.0
       context = {bypassPermissions : context}
     else
       userName = context
@@ -44,7 +44,7 @@ ServiceAPI =
       if userName
         @state.getUser userName
       else
-        new User @
+        new User(@) #bug decaffeinate 2.16.0
     .then (user) ->
       user.exec command, context, args
     .asCallback cb, { spread : true }
@@ -85,7 +85,7 @@ ServiceAPI =
         else
           Promise.all [
             user.removeState()
-            @state.removeUser userName
+            @state.removeUser(userName) #bug decaffeinate 2.16.0
           ]
     .return()
     .asCallback cb

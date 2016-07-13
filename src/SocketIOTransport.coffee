@@ -62,7 +62,7 @@ class ClusterBus extends EventEmitter
       [nev, nargs] = @mergeEventName ev, args
       emit nev, nargs...
     else
-      emit ev, args...
+      emit(ev, args...) #bug decaffeinate 2.16.0
 
 
 # @private
@@ -92,7 +92,8 @@ class SocketIOTransport extends Transport
         @dontCloseIO = true
         @io = new SocketServer @options.http
       else
-        @io = new SocketServer @server.port, @ioOptions
+        #bug decaffeinate 2.16.0
+        @io = new SocketServer(@server.port, @ioOptions)
       if Adapter
         @adapter = new Adapter @adapterOptions...
         @io.adapter @adapter
@@ -191,7 +192,7 @@ class SocketIOTransport extends Transport
         .catch (error) =>
           @rejectLogin socket, error
     else
-      @nsp.on 'connection', @addClient.bind @
+      @nsp.on('connection', @addClient.bind(@)) #bug decaffeinate 2.16.0
     Promise.resolve()
 
   # @private
@@ -242,7 +243,8 @@ class SocketIOTransport extends Transport
     unless socket
       @emitToChannel channel, messageName, messageData...
     else
-      socket.to(channel).emit messageName, messageData...
+      #bug decaffeinate 2.16.0
+      socket.to(channel).emit(messageName, messageData...)
     return
 
   # @private
@@ -251,8 +253,8 @@ class SocketIOTransport extends Transport
     unless socket
       Promise.reject new ChatServiceError 'invalidSocket', id
     else
-      Promise.fromCallback (fn) ->
-        socket.join channel, fn
+      #bug decaffeinate 2.16.0
+      Promise.fromCallback( (fn) -> socket.join(channel, fn) )
 
   # @private
   leaveChannel : (id, channel) ->

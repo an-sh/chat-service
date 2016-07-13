@@ -97,7 +97,7 @@ class User extends DirectMessaging
           Promise.reject new ChatServiceError 'noSocket', 'connection'
       else
         for cmd of @server.userCommands
-          @bindCommand id, cmd, @[cmd]
+          @bindCommand(id, cmd, @[cmd]) #bug decaffeinate 2.16.0
         [ @, nconnected ]
 
   # @private

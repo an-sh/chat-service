@@ -693,8 +693,7 @@ class ChatService extends ChatServiceEvents
       else
         # tests spec compatibility
         @transport.setEvents()
-        .then =>
-          @clusterBus.listen()
+        .then( => @clusterBus.listen() ) #bug decaffeinate 2.16.0
     .then =>
       @state.updateHeartbeat()
       @hbtimer = setInterval @state.updateHeartbeat.bind(@state), @heartbeatRate
@@ -725,7 +724,7 @@ class ChatService extends ChatServiceEvents
       if @hooks.onClose
         execHook @hooks.onClose, @, error
       else
-        Promise.reject error
+        Promise.reject(error) #bug decaffeinate 2.16.0
     .catch (error) ->
       closeError = error
       Promise.reject error

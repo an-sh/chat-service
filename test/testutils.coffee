@@ -1,5 +1,8 @@
 
-ChatService = require('../src/ChatService.coffee')
+if process.env.TEST_ES6
+  ChatService = require('../src-es6/ChatService')
+else
+  ChatService = require('../src/ChatService.coffee')
 Promise = require 'bluebird'
 Redis = require 'ioredis'
 _ = require 'lodash'

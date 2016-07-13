@@ -41,7 +41,8 @@ checkNameSymbols = (name) ->
   if (_.isString(name) and nameChecker.test(name))
     Promise.resolve()
   else
-    Promise.reject new ChatServiceError 'invalidName', name
+    #bug decaffeinate 2.16.0
+    Promise.reject(new ChatServiceError('invalidName', name))
 
 # @private
 # @nodoc
@@ -54,15 +55,17 @@ execHook = (hook, args...) ->
     cb data... if cb
   res = hook args..., wrapper
   if callbackData
-    Promise.fromCallback (fn) ->
+    #bug decaffeinate 2.16.0
+    Promise.fromCallback( (fn) ->
       fn callbackData...
-    , {multiArgs : true}
+    , {multiArgs : true} )
   else if res? and typeof res.then is 'function'
     res
   else
-    Promise.fromCallback (fn) ->
+    #bug decaffeinate 2.16.0
+    Promise.fromCallback( (fn) ->
       cb = fn
-    , {multiArgs : true}
+    , {multiArgs : true} )
 
 
 module.exports = {

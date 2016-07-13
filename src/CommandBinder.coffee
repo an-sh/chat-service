@@ -66,7 +66,7 @@ CommandBinder =
             if results and results.length
               results
             else if execInfo.error
-              Promise.reject execInfo.error
+              Promise.reject(execInfo.error) #bug decaffeinate 2.16.0
             else
               execInfo.results
       .asCallback ack, { spread : true }
