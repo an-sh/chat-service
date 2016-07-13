@@ -1,5 +1,7 @@
 
 if process.env.TEST_ES6
+  require('babel-register')({presets: ['es2015']})
+  console.log 'es6 testing...'
   ChatService = require('../src-es6/ChatService')
 else
   ChatService = require('../src/ChatService.coffee')
