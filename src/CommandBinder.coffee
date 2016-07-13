@@ -41,7 +41,7 @@ CommandBinder =
     validator = @server.validator
     beforeHook = @server.hooks["#{name}Before"]
     afterHook = @server.hooks["#{name}After"]
-    (args..., info = {}, cb) =>
+    (args, info = {}, cb) =>
       ack = @bindAck cb if cb
       execInfo = new ExecInfo
       _.assignIn execInfo, { @server, @userName }
@@ -77,7 +77,7 @@ CommandBinder =
     info = { id : id }
     @transport.bindHandler id, name, ->
       [args, cb] = possiblyCallback arguments
-      cmd args..., info, cb
+      cmd args, info, cb
 
 
 module.exports = CommandBinder

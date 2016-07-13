@@ -54,7 +54,7 @@ class User extends DirectMessaging
     return msg
 
   # @private
-  exec : (command, options = {}, args...) ->
+  exec : (command, options = {}, args) ->
     id = options.id
     unless @server.userCommands[command]
       error = new ChatServiceError 'noCommand', command
@@ -65,7 +65,7 @@ class User extends DirectMessaging
     fn = @[command]
     cmd = @makeCommand command, fn
     Promise.fromCallback (cb) ->
-      cmd args..., options, cb
+      cmd args, options, cb
     , {multiArgs: true}
 
   # @private

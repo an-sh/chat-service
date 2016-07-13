@@ -46,7 +46,7 @@ ServiceAPI =
       else
         new User @
     .then (user) ->
-      user.exec command, context, args...
+      user.exec command, context, args
     .asCallback cb, { spread : true }
 
   # Adds an user with a state.
