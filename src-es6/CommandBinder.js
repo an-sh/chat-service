@@ -49,7 +49,8 @@ let CommandBinder = {
     let { validator } = this.server;
     let beforeHook = this.server.hooks[`${name}Before`];
     let afterHook = this.server.hooks[`${name}After`];
-    return (args, info = {}, cb) => {
+    return (args, info, cb) => {
+      info = info || {}
       if (cb) { var ack = this.bindAck(cb); }
       let execInfo = new ExecInfo();
       _.assignIn(execInfo, { server: this.server, userName: this.userName });
@@ -83,7 +84,7 @@ let CommandBinder = {
             }
           });
         })
-      
+
       )
       .asCallback(ack, { spread : true });
     };

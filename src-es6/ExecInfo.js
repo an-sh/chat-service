@@ -34,11 +34,17 @@ class ExecInfo {
 
   // @private
   // @nodoc
-  constructor() {
-    this.args = [];
-    this.restArgs = [];
+  constructor () {
+    this.server = null
+    this.userName = null
+    this.id = null
+    this.bypassPermissions = null
+    this.bypassHooks = false
+    this.error = null
+    this.results = null
+    this.args = []
+    this.restArgs = []
   }
 }
 
-
-export default ExecInfo;
+export default ExecInfo

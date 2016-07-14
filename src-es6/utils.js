@@ -77,5 +77,10 @@ let execHook = function(hook, ...args) {
   }
 };
 
+let getUserCommands = function(server) {
+  let commands = Object.getOwnPropertyNames(server.userCommands.__proto__);
+  return _.without(commands, 'constructor');
+}
 
-export { asyncLimit, checkNameSymbols, debuglog, execHook, mix, nameChecker, possiblyCallback };
+
+export { asyncLimit, checkNameSymbols, debuglog, execHook, mix, nameChecker, possiblyCallback, getUserCommands };

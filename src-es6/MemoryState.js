@@ -134,6 +134,7 @@ class RoomStateMemory extends ListsStateMemory {
 
   // @private
   constructor(server, name) {
+    super();
     this.server = server;
     this.name = name;
     this.historyMaxGetMessages = this.server.historyMaxGetMessages;
@@ -302,6 +303,7 @@ class DirectMessagingStateMemory extends ListsStateMemory {
 
   // @private
   constructor(server, userName) {
+    super()
     this.server = server;
     this.userName = userName;
     this.whitelistOnly = false;

@@ -56,7 +56,7 @@ let stateOperations = {
 
   // @private
   removeState() {
-    return this.stateReset(null)
+    return this.stateReset()
     .then(() => {
       return this.redis.del(this.makeKeyName('exists'), this.makeKeyName('isInit'));
     }
@@ -335,6 +335,7 @@ class RoomStateRedis extends ListsStateRedis {
 
   // @private
   constructor(server, roomName) {
+    super()
     this.server = server;
     this.roomName = roomName;
     this.name = this.roomName;
@@ -345,7 +346,8 @@ class RoomStateRedis extends ListsStateRedis {
   }
 
   // @private
-  stateReset(state = {}) {
+  stateReset(state) {
+    state = state || {}
     let { whitelist, blacklist, adminlist
     , whitelistOnly, owner, historyMaxSize } = state;
     whitelistOnly = whitelistOnly ? true : '';
@@ -508,6 +510,7 @@ class DirectMessagingStateRedis extends ListsStateRedis {
 
   // @private
   constructor(server, userName) {
+    super()
     this.server = server;
     this.userName = userName;
     this.name = this.userName;
@@ -522,7 +525,8 @@ class DirectMessagingStateRedis extends ListsStateRedis {
   }
 
   // @private
-  stateReset(state = {}) {
+  stateReset(state) {
+    state = state || {}
     let { whitelist, blacklist, whitelistOnly } = state;
     whitelistOnly = whitelistOnly ? true : '';
     return Promise.all([

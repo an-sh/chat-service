@@ -6,7 +6,7 @@ import Promise from 'bluebird';
 import UserAssociations from './UserAssociations';
 import _ from 'lodash';
 
-import { asyncLimit, checkNameSymbols, mix } from './utils';
+import { asyncLimit, checkNameSymbols, getUserCommands, mix } from './utils';
 
 
 // @private
@@ -17,7 +17,7 @@ class User extends DirectMessaging {
 
   // @private
   constructor(server, userName) {
-    super();
+    super(server, userName);
     this.server = server;
     this.userName = userName;
     this.state = this.server.state;
@@ -36,7 +36,7 @@ class User extends DirectMessaging {
 
   // @private
   initState(state) {
-    return super.initState();
+    return super.initState(state);
   }
 
   // @private
@@ -56,7 +56,7 @@ class User extends DirectMessaging {
   }
 
   // @private
-  exec(command, options = {}, args) {
+  exec(command, options, args) {
     let { id } = options;
     if (!this.server.userCommands[command]) {
       var error = new ChatServiceError('noCommand', command);
@@ -105,7 +105,9 @@ class User extends DirectMessaging {
         return this.removeUserSocket(id)
         .then(() => Promise.reject(new ChatServiceError('noSocket', 'connection')));
       } else {
-        for (let cmd in this.server.userCommands) {
+        let commands = getUserCommands(this.server)
+        for (let idx in commands) {
+          let cmd = commands[idx]
           this.bindCommand(id, cmd, this[cmd]); //bug decaffeinate 2.16.0
         }
         return [ this, nconnected ];

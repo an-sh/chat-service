@@ -1,12 +1,11 @@
 
-let cb;
 import ChatServiceError from './ChatServiceError';
 import FastMap from 'collections/fast-map';
 import Promise from 'bluebird';
 import _ from 'lodash';
 import check from 'check-types';
 
-import { possiblyCallback } from './utils';
+import { getUserCommands, possiblyCallback } from './utils';
 
 
 // Commands arguments type and count validation. Can be used for hooks
@@ -25,9 +24,10 @@ class ArgumentsValidator {
       directMessage : [ null, this.directMessagesChecker ],
       roomMessage : [ null, this.roomMessagesChecker ]
     };
-    for (let name in this.server.userCommands) {
-      let fn = this.server.userCommands[name];
-      this.checkers.set(name, this[name]());
+    let commands = getUserCommands(this.server)
+    for (let idx in commands) {
+      let cmd = commands[idx]
+      this.checkers.set(cmd, this[cmd]());
     }
   }
 
@@ -38,19 +38,19 @@ class ArgumentsValidator {
   //
   // @return [Promise]
   checkArguments(name, ...args) {
-    [args, cb] = possiblyCallback(args);
+    let [nargs, cb] = possiblyCallback(args);
     return Promise.try(() => {
       let checkers = this.checkers.get(name);
       if (!checkers) {
         var error = new ChatServiceError('noCommand', name);
         return Promise.reject(error);
       }
-      var error = this.checkTypes(checkers, args);
+      var error = this.checkTypes(checkers, nargs);
       if (error) { return Promise.reject(error); }
       let customCheckers = this.customCheckers[name] || [];
       return Promise.each(customCheckers, function(checker, idx) {
         if (checker) {
-          return Promise.fromCallback(fn => checker(args[idx], fn));
+          return Promise.fromCallback(fn => checker(nargs[idx], fn));
         }
       }
       )

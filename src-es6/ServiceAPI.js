@@ -32,16 +32,15 @@ let ServiceAPI = {
   //
   // @return [Promise<Array>] Array of command results.
   execUserCommand(context, command, ...args) {
-    let cb;
     if (_.isObject(context)) {
       var { userName } = context;
     } else if (_.isBoolean(context)) { //bug decaffeinate 2.16.0
       context = {bypassPermissions : context};
     } else {
       var userName = context;
-      context = null;
+      context = {};
     }
-    [args, cb] = possiblyCallback(args);
+    let [nargs, cb] = possiblyCallback(args);
     return Promise.try(() => {
       if (userName) {
         return this.state.getUser(userName);
@@ -50,7 +49,7 @@ let ServiceAPI = {
       }
     }
     )
-    .then(user => user.exec(command, context, args))
+    .then(user => user.exec(command, context, nargs))
     .asCallback(cb, { spread : true });
   },
 
@@ -91,10 +90,10 @@ let ServiceAPI = {
         if (sockets && _.size(sockets) > 0) {
           return Promise.reject(new ChatServiceError('userOnline', userName));
         } else {
-          return Promise.all [
+          return Promise.all([
             user.removeState(),
             this.state.removeUser(userName) //bug decaffeinate 2.16.0
-          ];
+          ]);
         }
       }
       );

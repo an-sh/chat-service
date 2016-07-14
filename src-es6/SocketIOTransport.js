@@ -66,12 +66,11 @@ class ClusterBus extends EventEmitter {
   // @private
   onPacket(packet) {
     let [ev, ...args] = packet.data;
-    let emit = this.constructor.__super__.emit.bind(this);
     if (_.includes(this.intenalEvents, ev)) {
       let [nev, nargs] = this.mergeEventName(ev, args);
-      return emit(nev, ...nargs);
+      return super.emit(nev, ...nargs);
     } else {
-      return emit(ev, ...args); //bug decaffeinate 2.16.0
+      return super.emit(ev, ...args); //bug decaffeinate 2.16.0
     }
   }
 }
@@ -294,19 +293,19 @@ class SocketIOTransport extends Transport {
 
   // @private
   getConnectionObject(id) {
-    super.getConnectionObject();
+    // super.getConnectionObject();
     return this.nsp.connected[id];
   }
 
   // @private
   emitToChannel(channel, messageName, ...messageData) {
-    super.emitToChannel();
+    // super.emitToChannel();
     this.nsp.to(channel).emit(messageName, ...messageData);
   }
 
   // @private
   sendToChannel(id, channel, messageName, ...messageData) {
-    super.sendToChannel();
+    // super.sendToChannel();
     let socket = this.getConnectionObject(id);
     if (!socket) {
       this.emitToChannel(channel, messageName, ...messageData);

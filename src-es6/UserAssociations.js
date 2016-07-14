@@ -180,7 +180,10 @@ let UserAssociations = {
   // @private
   removeUserSocket(id) {
     return this.userState.removeSocket(id)
-    .spread((roomsRemoved = [], joinedSockets = [], nconnected = 0) => {
+    .spread((roomsRemoved, joinedSockets, nconnected) => {
+      roomsRemoved = roomsRemoved || []
+      joinedSockets = joinedSockets || []
+      nconnected = nconnected || 0
       return this.socketLeaveChannels(id, roomsRemoved)
       .then(() => {
         return Promise.map(roomsRemoved, (roomName, idx) => {
@@ -231,7 +234,8 @@ let UserAssociations = {
   removeFromRoom(roomName) {
     return Promise.using(this.userState.lockToRoom(roomName, this.lockTTL), () => {
       return this.removeUserSocketsFromRoom(roomName)
-      .then((removedSockets = []) => {
+      .then((removedSockets) => {
+        removedSockets = removedSockets || []
         return this.channelLeaveSockets(roomName, removedSockets)
         .then(() => {
           if (removedSockets.length) {
@@ -247,7 +251,8 @@ let UserAssociations = {
   },
 
   // @private
-  removeRoomUsers(roomName, userNames = []) {
+  removeRoomUsers(roomName, userNames) {
+    userNames = userNames || []
     return Promise.map(userNames, userName => {
       return this.state.getUser(userName)
       .then(user => user.removeFromRoom(roomName))
