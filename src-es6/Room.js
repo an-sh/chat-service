@@ -1,9 +1,9 @@
 
-import ChatServiceError from './ChatServiceError';
-import Promise from 'bluebird';
-import _ from 'lodash';
+const ChatServiceError = require('./ChatServiceError');
+const Promise = require('bluebird');
+const _ = require('lodash');
 
-import { mix, asyncLimit } from './utils';
+const { mix, asyncLimit } = require('./utils');
 
 // @private
 // @mixin
@@ -384,4 +384,4 @@ class Room {
 mix(Room, RoomPermissions);
 
 
-export default Room;
+module.exports = Room;

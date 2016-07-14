@@ -1,14 +1,14 @@
 
-import ChatServiceError from './ChatServiceError';
-import { EventEmitter } from 'events';
-import Promise from 'bluebird';
-import RedisAdapter from 'socket.io-redis';
-import SocketServer from 'socket.io';
-import Transport from './Transport';
-import _ from 'lodash';
-import hasBinary from 'has-binary';
+const ChatServiceError = require('./ChatServiceError');
+const { EventEmitter } = require('events');
+const Promise = require('bluebird');
+const RedisAdapter = require('socket.io-redis');
+const SocketServer = require('socket.io');
+const Transport = require('./Transport');
+const _ = require('lodash');
+const hasBinary = require('has-binary');
 
-import { debuglog, execHook, checkNameSymbols } from './utils';
+const { debuglog, execHook, checkNameSymbols } = require('./utils');
 
 
 // @private
@@ -344,4 +344,4 @@ class SocketIOTransport extends Transport {
 }
 
 
-export default SocketIOTransport;
+module.exports = SocketIOTransport;

@@ -1,17 +1,17 @@
 
-import ArgumentsValidator from './ArgumentsValidator';
-import ChatServiceError from './ChatServiceError';
-import ChatServiceEvents from './ChatServiceEvents';
-import MemoryState from './MemoryState';
-import Promise from 'bluebird';
-import RecoveryAPI from './RecoveryAPI';
-import RedisState from './RedisState';
-import ServiceAPI from './ServiceAPI';
-import SocketIOTransport from './SocketIOTransport';
-import _ from 'lodash';
-import uid from 'uid-safe';
+const ArgumentsValidator = require('./ArgumentsValidator');
+const ChatServiceError = require('./ChatServiceError');
+const ChatServiceEvents = require('./ChatServiceEvents');
+const MemoryState = require('./MemoryState');
+const Promise = require('bluebird');
+const RecoveryAPI = require('./RecoveryAPI');
+const RedisState = require('./RedisState');
+const ServiceAPI = require('./ServiceAPI');
+const SocketIOTransport = require('./SocketIOTransport');
+const _ = require('lodash');
+const uid = require('uid-safe');
 
-import { execHook, mix } from './utils';
+const { execHook, mix } = require('./utils');
 
 // @note This class describes server outgoing messages, not actual
 //   methods.
@@ -775,5 +775,5 @@ mix(ChatService, ServiceAPI, RecoveryAPI);
 ChatService.ChatServiceError = ChatServiceError;
 
 
-// export default ChatService;
+// module.exports = ChatService;
 module.exports = ChatService;

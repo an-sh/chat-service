@@ -1,14 +1,14 @@
 
-import ChatServiceError from './ChatServiceError';
-import Promise from 'bluebird';
-import Redis from 'ioredis';
-import Room from './Room';
-import User from './User';
-import _ from 'lodash';
-import promiseRetry from 'promise-retry';
-import uid from 'uid-safe';
+const ChatServiceError = require('./ChatServiceError');
+const Promise = require('bluebird');
+const Redis = require('ioredis');
+const Room = require('./Room');
+const User = require('./User');
+const _ = require('lodash');
+const promiseRetry = require('promise-retry');
+const uid = require('uid-safe');
 
-import { mix } from './utils';
+const { mix } = require('./utils');
 
 
 // @private
@@ -834,4 +834,4 @@ class RedisState {
 }
 
 
-export default RedisState;
+module.exports = RedisState;

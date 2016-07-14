@@ -1,8 +1,8 @@
 
-import ChatServiceError from './ChatServiceError';
-import Promise from 'bluebird';
+const ChatServiceError = require('./ChatServiceError');
+const Promise = require('bluebird');
 
-import { mix } from './utils';
+const { mix } = require('./utils');
 
 
 // @private
@@ -133,4 +133,4 @@ class DirectMessaging {
 mix(DirectMessaging, DirectMessagingPermissions);
 
 
-export default DirectMessaging;
+module.exports = DirectMessaging;

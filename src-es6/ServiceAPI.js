@@ -1,12 +1,12 @@
 
-import Promise from 'bluebird';
-import ChatServiceError from './ChatServiceError';
+const Promise = require('bluebird');
+const ChatServiceError = require('./ChatServiceError');
 
-import _ from 'lodash';
+const _ = require('lodash');
 
-import { checkNameSymbols, possiblyCallback } from './utils';
+const { checkNameSymbols, possiblyCallback } = require('./utils');
 
-import User from './User';
+const User = require('./User');
 
 // @mixin
 // API for server side operations.
@@ -264,4 +264,4 @@ let ServiceAPI = {
 };
 
 
-export default ServiceAPI;
+module.exports = ServiceAPI;

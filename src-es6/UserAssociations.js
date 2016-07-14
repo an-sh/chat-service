@@ -1,8 +1,8 @@
 
-import Promise from 'bluebird';
-import _ from 'lodash';
-import eventToPromise from 'event-to-promise';
-import { asyncLimit } from './utils';
+const Promise = require('bluebird');
+const _ = require('lodash');
+const eventToPromise = require('event-to-promise');
+const { asyncLimit } = require('./utils');
 
 
 // @private
@@ -263,4 +263,4 @@ let UserAssociations = {
 };
 
 
-export default UserAssociations;
+module.exports = UserAssociations;

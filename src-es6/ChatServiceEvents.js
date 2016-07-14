@@ -1,5 +1,5 @@
 
-import { EventEmitter } from 'events';
+const { EventEmitter } = require('events');
 
 // ChatService operational events.
 // @see RecoveryAPI
@@ -46,4 +46,4 @@ class ChatServiceEvents extends EventEmitter {
 }
 
 
-export default ChatServiceEvents;
+module.exports = ChatServiceEvents;

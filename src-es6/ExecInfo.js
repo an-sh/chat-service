@@ -47,4 +47,4 @@ class ExecInfo {
   }
 }
 
-export default ExecInfo
+module.exports = ExecInfo

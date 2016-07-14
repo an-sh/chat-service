@@ -1,12 +1,12 @@
 
-import ChatServiceError from './ChatServiceError';
-import CommandBinder from './CommandBinder';
-import DirectMessaging from './DirectMessaging';
-import Promise from 'bluebird';
-import UserAssociations from './UserAssociations';
-import _ from 'lodash';
+const ChatServiceError = require('./ChatServiceError');
+const CommandBinder = require('./CommandBinder');
+const DirectMessaging = require('./DirectMessaging');
+const Promise = require('bluebird');
+const UserAssociations = require('./UserAssociations');
+const _ = require('lodash');
 
-import { asyncLimit, checkNameSymbols, getUserCommands, mix } from './utils';
+const { asyncLimit, checkNameSymbols, getUserCommands, mix } = require('./utils');
 
 
 // @private
@@ -387,4 +387,4 @@ class User extends DirectMessaging {
 mix(User, CommandBinder, UserAssociations);
 
 
-export default User;
+module.exports = User;

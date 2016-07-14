@@ -1,16 +1,16 @@
 
-import ChatServiceError from './ChatServiceError';
-import FastMap from 'collections/fast-map';
-import FastSet from 'collections/fast-set';
-import List from 'collections/list';
-import Promise from 'bluebird';
-import Room from './Room';
-import User from './User';
-import _ from 'lodash';
-import promiseRetry from 'promise-retry';
-import uid from 'uid-safe';
+const ChatServiceError = require('./ChatServiceError');
+const FastMap = require('collections/fast-map');
+const FastSet = require('collections/fast-set');
+const List = require('collections/list');
+const Promise = require('bluebird');
+const Room = require('./Room');
+const User = require('./User');
+const _ = require('lodash');
+const promiseRetry = require('promise-retry');
+const uid = require('uid-safe');
 
-import { mix } from './utils';
+const { mix } = require('./utils');
 
 
 // @private
@@ -620,4 +620,4 @@ class MemoryState {
 }
 
 
-export default MemoryState;
+module.exports = MemoryState;

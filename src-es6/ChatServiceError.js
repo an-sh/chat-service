@@ -1,5 +1,5 @@
 
-import util from 'util'
+const util = require('util')
 
 // ChatService errors, that are intended to be returned to clients as a
 // part of a normal service functioning. {ChatServiceError} constructor
@@ -47,4 +47,4 @@ ChatServiceError.prototype.toString = function () {
   }
 }
 
-export default ChatServiceError
+module.exports = ChatServiceError

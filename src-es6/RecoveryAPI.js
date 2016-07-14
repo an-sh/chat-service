@@ -1,7 +1,7 @@
 
-import Promise from 'bluebird';
-import User from './User';
-import _ from 'lodash';
+const Promise = require('bluebird');
+const User = require('./User');
+const _ = require('lodash');
 
 
 // @mixin
@@ -131,4 +131,4 @@ let RecoveryAPI = {
 };
 
 
-export default RecoveryAPI;
+module.exports = RecoveryAPI;

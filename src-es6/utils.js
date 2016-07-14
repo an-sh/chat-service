@@ -1,8 +1,8 @@
 
-import ChatServiceError from './ChatServiceError';
-import Promise from 'bluebird';
-import _ from 'lodash';
-import util from 'util';
+const ChatServiceError = require('./ChatServiceError');
+const Promise = require('bluebird');
+const _ = require('lodash');
+const util = require('util');
 
 // @private
 // @nodoc
@@ -83,4 +83,4 @@ let getUserCommands = function(server) {
 }
 
 
-export { asyncLimit, checkNameSymbols, debuglog, execHook, mix, nameChecker, possiblyCallback, getUserCommands };
+module.exports = { asyncLimit, checkNameSymbols, debuglog, execHook, mix, nameChecker, possiblyCallback, getUserCommands };

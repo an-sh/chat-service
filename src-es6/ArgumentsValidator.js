@@ -1,11 +1,11 @@
 
-import ChatServiceError from './ChatServiceError';
-import FastMap from 'collections/fast-map';
-import Promise from 'bluebird';
-import _ from 'lodash';
-import check from 'check-types';
+const ChatServiceError = require('./ChatServiceError');
+const FastMap = require('collections/fast-map');
+const Promise = require('bluebird');
+const _ = require('lodash');
+const check = require('check-types');
 
-import { getUserCommands, possiblyCallback } from './utils';
+const { getUserCommands, possiblyCallback } = require('./utils');
 
 
 // Commands arguments type and count validation. Can be used for hooks
@@ -309,4 +309,4 @@ class ArgumentsValidator {
 }
 
 
-export default ArgumentsValidator;
+module.exports = ArgumentsValidator;

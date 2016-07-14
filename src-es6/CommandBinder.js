@@ -1,10 +1,10 @@
 
-import ChatServiceError from './ChatServiceError';
-import ExecInfo from './ExecInfo';
-import Promise from 'bluebird';
-import _ from 'lodash';
+const ChatServiceError = require('./ChatServiceError');
+const ExecInfo = require('./ExecInfo');
+const Promise = require('bluebird');
+const _ = require('lodash');
 
-import { debuglog, execHook, possiblyCallback } from './utils';
+const { debuglog, execHook, possiblyCallback } = require('./utils');
 
 
 // @private
@@ -103,4 +103,4 @@ let CommandBinder = {
 };
 
 
-export default CommandBinder;
+module.exports = CommandBinder;
