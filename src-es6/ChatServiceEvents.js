@@ -1,5 +1,5 @@
 
-const { EventEmitter } = require('events');
+const { EventEmitter } = require('events')
 
 // ChatService operational events.
 // @see RecoveryAPI
@@ -40,10 +40,6 @@ class ChatServiceEvents extends EventEmitter {
   //   @option lockInfo [String] userName User name.
   //   @option lockInfo [String] roomName Room name.
   //
-  constructor() {
-    super();
-  }
 }
 
-
-module.exports = ChatServiceEvents;
+module.exports = ChatServiceEvents

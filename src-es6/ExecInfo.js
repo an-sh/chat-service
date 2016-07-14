@@ -4,33 +4,33 @@
 class ExecInfo {
 
   // @property [ChatService] Service instance.
-  // server = null;
+  // server = null
 
   // @property [String or null] User name.
-  // userName = null;
+  // userName = null
 
   // @property [String or null] Socket id.
-  // id = null;
+  // id = null
 
   // @property [Boolean] Bypass permissions, see
   //   {ServiceAPI~execUserCommand}.
-  // bypassPermissions = false;
+  // bypassPermissions = false
 
   // @property [Boolean] Don't call command hooks if `true`.
-  // bypassHooks = false;
+  // bypassHooks = false
 
   // @property [Error] Command error.
-  // error = null;
+  // error = null
 
   // @property [Array<Object>] Command results.
-  // results = null;
+  // results = null
 
   // @property [Array<Object>] Command arguments.
-  // args = [];
+  // args = []
 
   // @property [Array<Object>] Additional arguments, passed after
   //   command arguments. Can be used as additional hooks parameters.
-  // restArgs = [];
+  // restArgs = []
 
   // @private
   // @nodoc

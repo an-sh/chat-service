@@ -1,17 +1,16 @@
 
-const ArgumentsValidator = require('./ArgumentsValidator');
-const ChatServiceError = require('./ChatServiceError');
-const ChatServiceEvents = require('./ChatServiceEvents');
-const MemoryState = require('./MemoryState');
-const Promise = require('bluebird');
-const RecoveryAPI = require('./RecoveryAPI');
-const RedisState = require('./RedisState');
-const ServiceAPI = require('./ServiceAPI');
-const SocketIOTransport = require('./SocketIOTransport');
-const _ = require('lodash');
-const uid = require('uid-safe');
-
-const { execHook, mix } = require('./utils');
+const ArgumentsValidator = require('./ArgumentsValidator')
+const ChatServiceError = require('./ChatServiceError')
+const ChatServiceEvents = require('./ChatServiceEvents')
+const MemoryState = require('./MemoryState')
+const Promise = require('bluebird')
+const RecoveryAPI = require('./RecoveryAPI')
+const RedisState = require('./RedisState')
+const ServiceAPI = require('./ServiceAPI')
+const SocketIOTransport = require('./SocketIOTransport')
+const _ = require('lodash')
+const uid = require('uid-safe')
+const { execHook, mix } = require('./utils')
 
 // @note This class describes server outgoing messages, not actual
 //   methods.
@@ -32,7 +31,7 @@ class ServerMessages {
   // @param msg [Object<textMessage:String, timestamp:Number, author:String>]
   //   Message.
   // @see UserCommands#directMessage
-  directMessage(msg) {}
+  directMessage (msg) {}
 
   // Direct message echo. If an user have several connections from
   // different sockets, and if one client sends
@@ -41,61 +40,61 @@ class ServerMessages {
   // @param msg [Object<textMessage:String, timestamp:Number, author:String>]
   //   Message.
   // @see UserCommands#directMessage
-  directMessageEcho(toUser, msg) {}
+  directMessageEcho (toUser, msg) {}
 
   // Disconnected from a server.
   // @note Client system event.
   // @param reason [Object] Disconnect info.
-  disconnect(reason) {}
+  disconnect (reason) {}
 
   // Error events, like socket.io middleware error.
   // @note Client system event.
   // @param error [Object] Error.
-  error(error) {}
+  error (_error) {}
 
   // Indicates a successful login.
   // @param userName [String] UserName.
   // @param data [Object] Additional login data with an id of the socket.
   // @option data [String] id Socket id.
-  loginConfirmed(userName, data) {}
+  loginConfirmed (userName, data) {}
 
   // Indicates a login error.
   // @param error [Object] Error.
-  loginRejected(error) {}
+  loginRejected (_error) {}
 
   // Indicates that a user has lost a room access permission.
   // @param roomName [String] Room name.
   // @see UserCommands#roomAddToList
   // @see UserCommands#roomRemoveFromList
-  roomAccessRemoved(roomName) {}
+  roomAccessRemoved (roomName) {}
 
   // Indicates a room access list add.
   // @param roomName [String] Rooms name.
   // @param listName [String] 'blacklist', 'adminlist' or 'whitelist'.
   // @param userNames [Array<String>] UserNames removed from the list.
   // @see UserCommands#roomAddToList
-  roomAccessListAdded(roomName, listName, userNames) {}
+  roomAccessListAdded (roomName, listName, userNames) {}
 
   // Indicates a room access list remove.
   // @param roomName [String] Rooms name.
   // @param listName [String] 'blacklist', 'adminlist' or 'whitelist'.
   // @param userNames [Array<String>] UserNames added to the list.
   // @see UserCommands#roomRemoveFromList
-  roomAccessListRemoved(roomName, listName, userNames) {}
+  roomAccessListRemoved (roomName, listName, userNames) {}
 
   // Echoes room join from other user's connections.
   // @param roomName [String] UserName.
   // @param id [String] Socket id.
   // @param njoined [Number] Number of sockets that are still joined.
   // @see UserCommands#roomJoin
-  roomJoinedEcho(roomName, id, njoined) {}
+  roomJoinedEcho (roomName, id, njoined) {}
 
   // Echoes room leave from other user's connections.
   // @param roomName [String] UserName.
   // @param id [String] Socket id.
   // @param njoined [Number] Number of sockets that are still joined.
   // @see UserCommands#roomLeave
-  roomLeftEcho(roomName, id, njoined) {}
+  roomLeftEcho (roomName, id, njoined) {}
 
   // Room message. A message will have timestamp, id and author fields,
   // but other fields can be used if {ChatService#constructor}
@@ -104,42 +103,41 @@ class ServerMessages {
   // @param msg [Object<textMessage:String, timestamp:Number,
   //   author:String, id:Number>] Message.
   // @see UserCommands#roomMessage
-  roomMessage(roomName, msg) {}
+  roomMessage (roomName, msg) {}
 
   // Indicates a room mode change.
   // @param roomName [String] Rooms name.
   // @param mode [Boolean]
   // @see UserCommands#roomSetWhitelistMode
-  roomModeChanged(roomName, mode) {}
+  roomModeChanged (roomName, mode) {}
 
   // Indicates that an another user has joined a room.
   // @param roomName [String] Rooms name.
   // @param userName [String] UserName.
   // @see UserCommands#roomJoin
-  roomUserJoined(roomName, userName) {}
+  roomUserJoined (roomName, userName) {}
 
   // Indicates that an another user has left a room.
   // @param roomName [String] Rooms name.
   // @param userName [String] UserName.
   // @see UserCommands#roomLeave
-  roomUserLeft(roomName, userName) {}
+  roomUserLeft (roomName, userName) {}
 
   // Indicates a connection of an another socket with the same user.
   // @param id [String] Socket id.
   // @param nconnected [Number] Total number of users's sockets.
-  socketConnectEcho(id, nconnected) {}
+  socketConnectEcho (id, nconnected) {}
 
   // Indicates a disconnection of an another socket with the same user.
   // @param id [String] Socket id.
   // @param nconnected [Number] Total number of users's sockets.
-  socketDisconnectEcho(id, nconnected) {}
+  socketDisconnectEcho (id, nconnected) {}
 
   // Custom message from a server or from an another socket of the same
   //   user.
   // @param data [Object] Arbitrary data.
-  systemMessage(data) {}
+  systemMessage (data) {}
 }
-
 
 // @note This class describes server incoming messages, not actual
 //   methods.
@@ -167,13 +165,13 @@ class UserCommands {
   // @param userNames [Array<String>] UserNames to add to the list.
   // @param cb [Function<error, null>] Send ack with an error or an
   //   empty data.
-  directAddToList(listName, userNames, cb) {}
+  directAddToList (listName, userNames, cb) {}
 
   // Gets direct messaging blacklist or whitelist.
   // @param listName [String] 'blacklist' or 'whitelist'.
   // @param cb [Function<error, Array<String>>] Sends ack with an error or
   //   the requested list.
-  directGetAccessList(listName, cb) {}
+  directGetAccessList (listName, cb) {}
 
   // Gets direct messaging whitelist only mode. If it is true then
   // direct messages are allowed only for users that are in the
@@ -181,7 +179,7 @@ class UserCommands {
   // users that are not in the blacklist.
   // @param cb [Function<error, Boolean>] Sends ack with an error or
   //   the user's whitelist only mode.
-  directGetWhitelistMode(cb) {}
+  directGetWhitelistMode (cb) {}
 
   // Sends {ServerMessages#directMessage} to an another user, if
   // {ChatService#constructor} `enableDirectMessages` option is
@@ -196,26 +194,26 @@ class UserCommands {
   // @param cb [Function<error, Object<textMessage:String,
   //   timestamp:Number, author:String>>] Sends ack with an error or
   //   a processed message.
-  directMessage(toUser, msg, cb) {}
+  directMessage (toUser, msg, cb) {}
 
   // Removes userNames from user's direct messaging blacklist or whitelist.
   // @param listName [String] 'blacklist' or 'whitelist'.
   // @param userNames [Array<String>] User names to remove from the list.
   // @param cb [Function<error, null>] Sends ack with an error or an empty data.
-  directRemoveFromList(listName, userNames, cb) {}
+  directRemoveFromList (listName, userNames, cb) {}
 
   // Sets direct messaging whitelist only mode.
   // @see UserCommands#directGetWhitelistMode
   // @param mode [Boolean] Room mode.
   // @param cb [Function<error, null>] Sends ack with an error or an empty data.
-  directSetWhitelistMode(mode, cb) {}
+  directSetWhitelistMode (mode, cb) {}
 
   // Emitted when a socket disconnects from the server.
   // @note Can't be send by a client as a service message, use
   //   underlying transport API instead.
   // @param reason [String] Reason.
   // @param cb [Function<error, null>] Callback.
-  disconnect(reason, cb) {}
+  disconnect (reason, cb) {}
 
   // Gets a list of all sockets with corresponding joined rooms. This
   // returns information about all user's sockets.
@@ -224,7 +222,7 @@ class UserCommands {
   //   values.
   // @see ServerMessages#roomJoinedEcho
   // @see ServerMessages#roomLeftEcho
-  listOwnSockets(cb) {}
+  listOwnSockets (cb) {}
 
   // Adds userNames to room's blacklist, adminlist and whitelist. Also
   // removes users that have lost an access permission in the result of
@@ -238,14 +236,14 @@ class UserCommands {
   // @param cb [Function<error, null>] Sends ack with an error or an empty data.
   // @see ServerMessages#roomAccessRemoved
   // @see ServerMessages#roomAccessListAdded
-  roomAddToList(roomName, listName, userNames, cb) {}
+  roomAddToList (roomName, listName, userNames, cb) {}
 
   // Creates a room if {ChatService#constructor}
   // `enableRoomsManagement` option is true.
   // @param roomName [String] Rooms name.
   // @param mode [bool] Room mode.
   // @param cb [Function<error, null>] Sends ack with an error or an empty data.
-  roomCreate(roomName, mode, cb) {}
+  roomCreate (roomName, mode, cb) {}
 
   // Deletes a room if {ChatService#constructor}
   // `enableRoomsManagement` is true and the user has an owner
@@ -253,20 +251,20 @@ class UserCommands {
   // users.
   // @param roomName [String] Rooms name.
   // @param cb [Function<error, null>] Sends ack with an error or an empty data.
-  roomDelete(roomName, cb) {}
+  roomDelete (roomName, cb) {}
 
   // Gets room messaging userlist, blacklist, adminlist and whitelist.
   // @param roomName [String] Room name.
   // @param listName [String] 'userlist', 'blacklist', 'adminlist', 'whitelist'.
   // @param cb [Function<error, Array<String>>] Sends ack with an error
   //   or the requested list.
-  roomGetAccessList(roomName, listName, cb) {}
+  roomGetAccessList (roomName, listName, cb) {}
 
   // Gets the room owner.
   // @param roomName [String] Room name.
   // @param cb [Function<error, String>] Sends ack with an error or
   //   the room owner.
-  roomGetOwner(roomName, cb) {}
+  roomGetOwner (roomName, cb) {}
 
   // Gets the room messaging whitelist only mode. If it is true, then
   // join is allowed only for users that are in the
@@ -275,7 +273,7 @@ class UserCommands {
   // @param roomName [String] Room name.
   // @param cb [Function<error, Boolean>] Sends ack with an error or
   //   whitelist only mode.
-  roomGetWhitelistMode(roomName, cb) {}
+  roomGetWhitelistMode (roomName, cb) {}
 
   // Gets latest room messages. The maximum size is set by
   // {ChatService#constructor} `historyMaxGetMessages` option. Messages
@@ -284,7 +282,7 @@ class UserCommands {
   // @param cb [Function<error, Array<Object>>] Sends ack with an
   //   error or array of messages.
   // @see UserCommands#roomMessage
-  roomRecentHistory(roomName, cb){}
+  roomRecentHistory (roomName, cb) {}
 
   // Returns messages that were sent after a message with the specified
   // id. The returned number of messages is limited by the limit
@@ -302,7 +300,7 @@ class UserCommands {
   //   error or array of messages.
   // @see UserCommands#roomHistoryLastId
   // @see UserCommands#roomMessage
-  roomHistoryGet(roomName, id, limit, cb) {}
+  roomHistoryGet (roomName, id, limit, cb) {}
 
   // Gets the the room history information.
   // @param roomName [String] Room name.
@@ -311,7 +309,7 @@ class UserCommands {
   //   lastMessageId:Number>>] Sends ack with an error or an object
   //   contains the room history information.
   // @see UserCommands#roomHistoryGet
-  roomHistoryInfo(roomName, cb) {}
+  roomHistoryInfo (roomName, cb) {}
 
   // Joins room, an user must join the room to receive messages or
   // execute room commands. Sends {ServerMessages#roomJoinedEcho} to other
@@ -323,7 +321,7 @@ class UserCommands {
   // @param roomName [String] Room name.
   // @param cb [Function<error, Number>] Sends ack with an error or a
   //   number of joined user's sockets.
-  roomJoin(roomName, cb) {}
+  roomJoin (roomName, cb) {}
 
   // Leaves room. Sends {ServerMessages#roomLeftEcho} to other user's
   // sockets. Also sends {ServerMessages#roomUserLeft} to other room
@@ -333,7 +331,7 @@ class UserCommands {
   // @param roomName [String] Room name.
   // @param cb [Function<error, Number>] Sends ack with an error or a
   //   number of joined user's sockets.
-  roomLeave(roomName, cb) {}
+  roomLeave (roomName, cb) {}
 
   // Sends {ServerMessages#roomMessage} to all room users.
   // @see ServerMessages#roomMessage
@@ -343,7 +341,7 @@ class UserCommands {
   //   hook is set.
   // @param cb [Function<error, Number>] Sends ack with an error or the
   //   message id.
-  roomMessage(roomName, msg, cb) {}
+  roomMessage (roomName, msg, cb) {}
 
   // Removes userNames from room's blacklist, adminlist and
   // whitelist. Also removes users that have lost an access permission
@@ -359,7 +357,7 @@ class UserCommands {
   //   empty data.
   // @see ServerMessages#roomAccessRemoved
   // @see ServerMessages#roomAccessListRemoved
-  roomRemoveFromList(roomName, listName, userNames, cb) {}
+  roomRemoveFromList (roomName, listName, userNames, cb) {}
 
   // Sets room messaging whitelist only mode. Also removes users that
   // have lost an access permission in the result of an operation, sending
@@ -370,7 +368,7 @@ class UserCommands {
   // @param mode [Boolean]
   // @param cb [Function<error, null>] Sends ack with an error or an
   //   empty data.
-  roomSetWhitelistMode(roomName, mode, cb) {}
+  roomSetWhitelistMode (roomName, mode, cb) {}
 
   // Send user's joined state and last state change timestamp.
   // @param roomName [String] Rooms name.
@@ -378,7 +376,7 @@ class UserCommands {
   // @param cb [Function<error, Object<timestamp:Number,
   //   joined:Boolean> >] Sends ack with an error or an object with a
   //   joined state and a state switch timestamp.
-  roomUserSeen(roomName, userName, cb) {}
+  roomUserSeen (roomName, userName, cb) {}
 
   // Send data to other connected users's sockets. Or can be used with
   // {ServiceAPI~execUserCommand} and the null id to send data from a
@@ -386,9 +384,8 @@ class UserCommands {
   // @param data [Object] Arbitrary data.
   // @param cb [Function<error, null>] Sends ack with an error or an
   //   empty data.
-  systemMessage(data, cb) {}
+  systemMessage (data, cb) {}
 }
-
 
 // Hooks interface. Hooks can either return a Promise or call a
 // callback. The {ChatService#constructor} hooks parameter expects an
@@ -408,7 +405,7 @@ let HooksInterface = {
   //   data object. User name and auth data are send back with a
   //   {ServerMessages#loginConfirmed} message. Error is sent as a
   //   {ServerMessages#loginRejected} message.
-  onConnect(server, id, cb) {},
+  onConnect (server, id, cb) {},
 
   // Executes when server is started (after a state and a transport are
   // up, but before message processing is started).
@@ -417,7 +414,7 @@ let HooksInterface = {
   // @param cb [Callback] Optional callback.
   //
   // @return [Promise]
-  onStart(server, cb) {},
+  onStart (server, cb) {},
 
   // Executes when server is closed (after a transport is closed and
   // all clients are disconnected, but a state is still up).
@@ -426,7 +423,7 @@ let HooksInterface = {
   // @param cb [Callback] Optional callback.
   //
   // @return [Promise]
-  onClose(server, cb) {},
+  onClose (server, cb) {},
 
   // Validator for {UserCommands#directMessage} message objects. When
   // is set, a custom format in direct messages is enabled. When hooks
@@ -437,7 +434,7 @@ let HooksInterface = {
   // @param cb [Callback] Optional callback.
   //
   // @return [Promise]
-  directMessagesChecker(msg, cb) {},
+  directMessagesChecker (msg, cb) {},
 
   // Validator for {UserCommands#roomMessage} message objects. When is
   // set, a custom format in room messages is enabled. When hooks
@@ -448,7 +445,7 @@ let HooksInterface = {
   // @param cb [Callback] Optional callback.
   //
   // @return [Promise]
-  roomMessagesChecker(msg, cb) {},
+  roomMessagesChecker (msg, cb) {},
 
   // Before hooks are available for all {UserCommands} and are executed
   // after an arguments validation.
@@ -462,7 +459,7 @@ let HooksInterface = {
   //   to continue a command execution. Rejections or a resolved array
   //   will stop further execution, and return results to the command
   //   issuer.
-  _COMMAND_Before(execInfo, cb) {},
+  _COMMAND_Before (execInfo, cb) {},
 
   // After hooks are available for all {UserCommands} and are executed
   // after ChatService default event handlers.
@@ -476,9 +473,8 @@ let HooksInterface = {
   //   to return unchanged command results to the command
   //   issuer. Rejections or a resolved array will override command
   //   results.
-  _COMMAND_After(execInfo, cb) {}
-};
-
+  _COMMAND_After (execInfo, cb) {}
+}
 
 // Service class, is the package exported object.
 // @extend ServiceAPI
@@ -594,186 +590,169 @@ class ChatService extends ChatServiceEvents {
   //   as arguments for a Cluster client.
   //
   //
-  constructor(options = {}, hooks = {}) {
-    super();
-    this.options = options;
-    this.hooks = hooks;
-    this.setOptions();
-    this.setComponents();
-    this.startServer();
+  constructor (options = {}, hooks = {}) {
+    super()
+    this.options = options
+    this.hooks = hooks
+    this.setOptions()
+    this.setComponents()
+    this.startServer()
   }
 
-
   // @property [Object] {ArgumentsValidator} instance.
-  // validator = null;
+  // validator = null
 
   // @property [Object] {Transport} instance.
-  // transport = null;
+  // transport = null
 
   // @property [Object or null] Socket.io server.
-  // io = null;
+  // io = null
 
   // @property [Object or null] Socket.io server namespace.
-  // nsp = null;
+  // nsp = null
 
   // @property [Object or null] State ioredis instance.
-  // redis = null;
+  // redis = null
 
   // @property [EventEmitter] Cluster communication via adapter. Emits
   //   messages to all services nodes, including the sender node.
-  // clusterBus = null;
+  // clusterBus = null
 
   // @property [String] Service instance UID.
-  // instanceUID = null;
+  // instanceUID = null
 
   // @property [Constructor] {ChatServiceError} class constructor.
-  // static ChatServiceError = ChatServiceError;
+  // static ChatServiceError = ChatServiceError
 
   // @private
   // @nodoc
-  setOptions() {
-    this.instanceUID = uid.sync(18);
-    this.runningCommands = 0;
-    this.closed = false;
+  setOptions () {
+    this.instanceUID = uid.sync(18)
+    this.runningCommands = 0
+    this.closed = false
 
-    this.closeTimeout = this.options.closeTimeout || 15000;
-    this.busAckTimeout = this.options.busAckTimeout || 5000;
-    this.heartbeatRate = this.options.heartbeatRate || 10000;
-    this.heartbeatTimeout = this.options.heartbeatTimeout || 30000;
-    this.enableAccessListsUpdates= this.options.enableAccessListsUpdates || false;
-    this.enableDirectMessages = this.options.enableDirectMessages || false;
-    this.enableRoomsManagement = this.options.enableRoomsManagement || false;
-    this.enableUserlistUpdates = this.options.enableUserlistUpdates || false;
-    this.historyMaxGetMessages = this.options.historyMaxGetMessages;
+    this.closeTimeout = this.options.closeTimeout || 15000
+    this.busAckTimeout = this.options.busAckTimeout || 5000
+    this.heartbeatRate = this.options.heartbeatRate || 10000
+    this.heartbeatTimeout = this.options.heartbeatTimeout || 30000
+    this.enableAccessListsUpdates = this.options.enableAccessListsUpdates || false
+    this.enableDirectMessages = this.options.enableDirectMessages || false
+    this.enableRoomsManagement = this.options.enableRoomsManagement || false
+    this.enableUserlistUpdates = this.options.enableUserlistUpdates || false
+    this.historyMaxGetMessages = this.options.historyMaxGetMessages
     if (!_.isNumber(this.historyMaxGetMessages) || this.historyMaxGetMessages < 0) {
-      this.historyMaxGetMessages = 100;
+      this.historyMaxGetMessages = 100
     }
-    this.defaultHistoryLimit = this.options.defaultHistoryLimit;
+    this.defaultHistoryLimit = this.options.defaultHistoryLimit
     if (!_.isNumber(this.defaultHistoryLimit) || this.defaultHistoryLimit < 0) {
-      this.defaultHistoryLimit = 10000;
+      this.defaultHistoryLimit = 10000
     }
-    this.port = this.options.port || 8000;
-    this.useRawErrorObjects = this.options.useRawErrorObjects || false;
+    this.port = this.options.port || 8000
+    this.useRawErrorObjects = this.options.useRawErrorObjects || false
 
-    this.adapterConstructor = this.options.adapter || 'memory';
-    this.adapterOptions = _.castArray(this.options.adapterOptions);
-    this.stateConstructor = this.options.state || 'memory';
-    this.stateOptions = this.options.stateOptions || {};
-    this.transportConstructor = this.options.transport || 'socket.io';
-    this.transportOptions = this.options.transportOptions || {};
+    this.adapterConstructor = this.options.adapter || 'memory'
+    this.adapterOptions = _.castArray(this.options.adapterOptions)
+    this.stateConstructor = this.options.state || 'memory'
+    this.stateOptions = this.options.stateOptions || {}
+    this.transportConstructor = this.options.transport || 'socket.io'
+    this.transportOptions = this.options.transportOptions || {}
 
-    this.directMessagesChecker = this.hooks.directMessagesChecker;
-    return this.roomMessagesChecker = this.hooks.roomMessagesChecker;
+    this.directMessagesChecker = this.hooks.directMessagesChecker
+    this.roomMessagesChecker = this.hooks.roomMessagesChecker
   }
-
 
   // @private
   // @nodoc
-  setComponents() {
-    let State = (() => { switch (true) {
-      case this.stateConstructor === 'memory': return MemoryState;
-      case this.stateConstructor === 'redis': return RedisState;
-      case _.isFunction(this.stateConstructor): return this.stateConstructor;
-      default: throw new Error(`Invalid state: ${this.stateConstructor}`);
-    } })();
-    let Transport = (() => { switch (true) {
-      case this.transportConstructor === 'socket.io': return SocketIOTransport;
-      case _.isFunction(this.transportConstructor): return this.transportConstructor;
-      default: throw new Error(`Invalid transport: ${this.transportConstructor}`);
-    } })();
-    this.userCommands = new UserCommands();
-    this.serverMessages = new ServerMessages();
-    this.validator = new ArgumentsValidator(this);
-    this.state = new State(this, this.stateOptions);
-    return this.transport = new Transport(this, this.transportOptions
-    , this.adapterConstructor, this.adapterOptions);
+  setComponents () {
+    let State = (() => {
+      switch (true) {
+        case this.stateConstructor === 'memory':
+          return MemoryState
+        case this.stateConstructor === 'redis':
+          return RedisState
+        case _.isFunction(this.stateConstructor):
+          return this.stateConstructor
+        default:
+          throw new Error(`Invalid state: ${this.stateConstructor}`)
+      }
+    })()
+    let Transport = (() => {
+      switch (true) {
+        case this.transportConstructor === 'socket.io':
+          return SocketIOTransport
+        case _.isFunction(this.transportConstructor):
+          return this.transportConstructor
+        default:
+          throw new Error(`Invalid transport: ${this.transportConstructor}`)
+      }
+    })()
+    this.userCommands = new UserCommands()
+    this.serverMessages = new ServerMessages()
+    this.validator = new ArgumentsValidator(this)
+    this.state = new State(this, this.stateOptions)
+    this.transport = new Transport(this, this.transportOptions,
+                                   this.adapterConstructor, this.adapterOptions)
   }
-
 
   // @private
   // @nodoc
-  startServer() {
+  startServer () {
     return Promise.try(() => {
       if (this.hooks.onStart) {
-        return this.clusterBus.listen()
-        .then(() => {
-          return execHook(this.hooks.onStart, this);
-        }
-        )
-        .then(() => {
-          return this.transport.setEvents();
-        }
-        );
+        return this.clusterBus.listen().then(() => {
+          return execHook(this.hooks.onStart, this)
+        }).then(() => {
+          return this.transport.setEvents()
+        })
       } else {
         // tests spec compatibility
-        return this.transport.setEvents()
-        .then( () => this.clusterBus.listen() ); //bug decaffeinate 2.16.0
+        return this.transport.setEvents().then(() => this.clusterBus.listen())
       }
-    }
-    )
-    .then(() => {
-      this.state.updateHeartbeat();
-      this.hbtimer = setInterval(this.state.updateHeartbeat.bind(this.state), this.heartbeatRate);
-      return this.emit('ready');
-    }
-    )
-    .catch(error => {
-      this.closed = true;
-      return this.transport.close()
-      .then(() => {
-        return this.state.close();
-      }
-      )
-      .finally(() => {
-        return this.emit('closed', error);
-      }
-      );
-    }
-    );
+    }).then(() => {
+      this.state.updateHeartbeat()
+      let hbupdater = this.state.updateHeartbeat.bind(this.state)
+      this.hbtimer = setInterval(hbupdater, this.heartbeatRate)
+      return this.emit('ready')
+    }).catch(error => {
+      this.closed = true
+      return this.transport.close().then(() => {
+        return this.state.close()
+      }).finally(() => {
+        return this.emit('closed', error)
+      })
+    })
   }
-
 
   // Closes server.
   // @note __MUST__ be called before node process shutdown to correctly
   //   update the state.
   // @param done [callback] Optional callback.
   // @return [Promise]
-  close(done) {
-    if (this.closed) { return Promise.resolve(); }
-    this.closed = true;
-    clearInterval(this.hbtimer);
-    let closeError = null;
-    return this.transport.close()
-    .then(() => {
-      return execHook(this.hooks.onClose, this, null);
-    }
-    , error => {
+  close (done) {
+    if (this.closed) { return Promise.resolve() }
+    this.closed = true
+    clearInterval(this.hbtimer)
+    let closeError = null
+    return this.transport.close().then(() => {
+      return execHook(this.hooks.onClose, this, null)
+    }, error => {
       if (this.hooks.onClose) {
-        return execHook(this.hooks.onClose, this, error);
+        return execHook(this.hooks.onClose, this, error)
       } else {
-        return Promise.reject(error); //bug decaffeinate 2.16.0
+        return Promise.reject(error)
       }
-    }
-    )
-    .catch(function(error) {
-      closeError = error;
-      return Promise.reject(error);
-    })
-    .finally(() => {
-      return this.state.close()
-      .finally(() => {
-        return this.emit('closed', closeError);
-      }
-      );
-    }
-    )
-    .asCallback(done);
+    }).catch(function (error) {
+      closeError = error
+      return Promise.reject(error)
+    }).finally(() => {
+      return this.state.close().finally(() => {
+        return this.emit('closed', closeError)
+      })
+    }).asCallback(done)
   }
 }
 
-mix(ChatService, ServiceAPI, RecoveryAPI);
-ChatService.ChatServiceError = ChatServiceError;
+mix(ChatService, ServiceAPI, RecoveryAPI)
+ChatService.ChatServiceError = ChatServiceError
 
-
-// module.exports = ChatService;
-module.exports = ChatService;
+module.exports = ChatService

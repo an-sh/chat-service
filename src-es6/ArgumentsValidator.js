@@ -1,12 +1,10 @@
 
-const ChatServiceError = require('./ChatServiceError');
-const FastMap = require('collections/fast-map');
-const Promise = require('bluebird');
-const _ = require('lodash');
-const check = require('check-types');
-
-const { getUserCommands, possiblyCallback } = require('./utils');
-
+const ChatServiceError = require('./ChatServiceError')
+const FastMap = require('collections/fast-map')
+const Promise = require('bluebird')
+const _ = require('lodash')
+const check = require('check-types')
+const { getUserCommands, possiblyCallback } = require('./utils')
 
 // Commands arguments type and count validation. Can be used for hooks
 // development, an instance of {ArgumentsValidator} implementation is
@@ -15,19 +13,19 @@ class ArgumentsValidator {
 
   // @private
   // @nodoc
-  constructor(server) {
-    this.server = server;
-    this.checkers = new FastMap();
-    this.directMessagesChecker = this.server.directMessagesChecker;
-    this.roomMessagesChecker = this.server.roomMessagesChecker;
+  constructor (server) {
+    this.server = server
+    this.checkers = new FastMap()
+    this.directMessagesChecker = this.server.directMessagesChecker
+    this.roomMessagesChecker = this.server.roomMessagesChecker
     this.customCheckers = {
-      directMessage : [ null, this.directMessagesChecker ],
-      roomMessage : [ null, this.roomMessagesChecker ]
-    };
+      directMessage: [ null, this.directMessagesChecker ],
+      roomMessage: [ null, this.roomMessagesChecker ]
+    }
     let commands = getUserCommands(this.server)
     for (let idx in commands) {
       let cmd = commands[idx]
-      this.checkers.set(cmd, this[cmd]());
+      this.checkers.set(cmd, this[cmd]())
     }
   }
 
@@ -37,276 +35,274 @@ class ArgumentsValidator {
   // @param args [Rest...] Command arguments with an optional callback.
   //
   // @return [Promise]
-  checkArguments(name, ...args) {
-    let [nargs, cb] = possiblyCallback(args);
+  checkArguments (name, ...args) {
+    let [nargs, cb] = possiblyCallback(args)
     return Promise.try(() => {
-      let checkers = this.checkers.get(name);
+      let checkers = this.checkers.get(name)
       if (!checkers) {
-        var error = new ChatServiceError('noCommand', name);
-        return Promise.reject(error);
+        let error = new ChatServiceError('noCommand', name)
+        return Promise.reject(error)
       }
-      var error = this.checkTypes(checkers, nargs);
-      if (error) { return Promise.reject(error); }
-      let customCheckers = this.customCheckers[name] || [];
-      return Promise.each(customCheckers, function(checker, idx) {
+      let error = this.checkTypes(checkers, nargs)
+      if (error) { return Promise.reject(error) }
+      let customCheckers = this.customCheckers[name] || []
+      return Promise.each(customCheckers, (checker, idx) => {
         if (checker) {
-          return Promise.fromCallback(fn => checker(nargs[idx], fn));
+          return Promise.fromCallback(fn => checker(nargs[idx], fn))
+        } else {
+          return Promise.resolve()
         }
-      }
-      )
-      .return();
-    }
-    )
-    .asCallback(cb);
+      }).return()
+    }).asCallback(cb)
   }
 
   // @private
   // @nodoc
-  getArgsCount(name) {
-    let checker = this.checkers.get(name);
-    if (checker) { return checker.length; } else { return 0; }
+  getArgsCount (name) {
+    let checker = this.checkers.get(name)
+    return checker ? checker.length : 0
   }
 
   // @private
   // @nodoc
-  splitArguments(name, oargs) {
-    let nargs = this.getArgsCount(name);
-    let args = _.slice(oargs, 0, nargs);
-    let restArgs = _.slice(oargs, nargs);
-    return { args, restArgs };
+  splitArguments (name, oargs) {
+    let nargs = this.getArgsCount(name)
+    let args = _.slice(oargs, 0, nargs)
+    let restArgs = _.slice(oargs, nargs)
+    return {args, restArgs}
   }
 
   // @private
   // @nodoc
-  checkMessage(msg) {
+  checkMessage (msg) {
     return check.object(msg) &&
-      check.string(msg.textMessage) && _.keys(msg).length === 1;
+      check.string(msg.textMessage) &&
+      _.keys(msg).length === 1
   }
 
   // @private
   // @nodoc
-  checkObject(obj) {
-    return check.object(obj);
+  checkObject (obj) {
+    return check.object(obj)
   }
 
   // @private
   // @nodoc
-  checkTypes(checkers, args) {
+  checkTypes (checkers, args) {
     if (args.length !== checkers.length) {
       return new ChatServiceError('wrongArgumentsCount'
-      , checkers.length, args.length);
+        , checkers.length, args.length)
     }
     for (let idx = 0; idx < checkers.length; idx++) {
-      let checker = checkers[idx];
+      let checker = checkers[idx]
       if (!checker(args[idx])) {
-        return new ChatServiceError('badArgument', idx, args[idx]);
+        return new ChatServiceError('badArgument', idx, args[idx])
       }
     }
-    return null;
+    return null
   }
 
   // @private
   // @nodoc
-  directAddToList(listName, userNames) {
+  directAddToList (listName, userNames) {
     return [
       check.string,
       check.array.of.string
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  directGetAccessList(listName) {
+  directGetAccessList (listName) {
     return [
       check.string
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  directGetWhitelistMode() {
-    return [];
+  directGetWhitelistMode () {
+    return []
   }
 
   // @private
   // @nodoc
-  directMessage(toUser, msg) {
+  directMessage (toUser, msg) {
     return [
       check.string,
       this.directMessagesChecker ? this.checkObject : this.checkMessage
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  directRemoveFromList(listName, userNames) {
+  directRemoveFromList (listName, userNames) {
     return [
       check.string,
       check.array.of.string
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  directSetWhitelistMode(mode) {
+  directSetWhitelistMode (mode) {
     return [
       check.boolean
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  disconnect(reason) {
+  disconnect (reason) {
     return [
       check.string
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  listOwnSockets() {
-    return [];
+  listOwnSockets () {
+    return []
   }
 
   // @private
   // @nodoc
-  roomAddToList(roomName, listName, userNames) {
+  roomAddToList (roomName, listName, userNames) {
     return [
       check.string,
       check.string,
       check.array.of.string
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  roomCreate(roomName, mode) {
+  roomCreate (roomName, mode) {
     return [
       check.string,
       check.boolean
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  roomDelete(roomName) {
+  roomDelete (roomName) {
     return [
       check.string
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  roomGetAccessList(roomName, listName) {
+  roomGetAccessList (roomName, listName) {
     return [
       check.string,
       check.string
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  roomGetOwner(roomName) {
+  roomGetOwner (roomName) {
     return [
       check.string
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  roomGetWhitelistMode(roomName) {
+  roomGetWhitelistMode (roomName) {
     return [
       check.string
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  roomRecentHistory(roomName){
+  roomRecentHistory (roomName) {
     return [
       check.string
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  roomHistoryGet(roomName, id, limit) {
+  roomHistoryGet (roomName, id, limit) {
     return [
       check.string,
       str => check.greaterOrEqual(str, 0),
       str => check.greaterOrEqual(str, 1)
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  roomHistoryInfo(roomName) {
+  roomHistoryInfo (roomName) {
     return [
       check.string
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  roomJoin(roomName) {
+  roomJoin (roomName) {
     return [
       check.string
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  roomLeave(roomName) {
+  roomLeave (roomName) {
     return [
       check.string
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  roomMessage(roomName, msg) {
+  roomMessage (roomName, msg) {
     return [
       check.string,
       this.roomMessagesChecker ? this.checkObject : this.checkMessage
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  roomRemoveFromList(roomName, listName, userNames) {
+  roomRemoveFromList (roomName, listName, userNames) {
     return [
       check.string,
       check.string,
       check.array.of.string
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  roomSetWhitelistMode(roomName, mode) {
+  roomSetWhitelistMode (roomName, mode) {
     return [
       check.string,
       check.boolean
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  roomUserSeen(roomName, userName) {
+  roomUserSeen (roomName, userName) {
     return [
       check.string,
       check.string
-    ];
+    ]
   }
 
   // @private
   // @nodoc
-  systemMessage(data) {
+  systemMessage (data) {
     return [
       () => true
-    ];
+    ]
   }
 }
 
-
-module.exports = ArgumentsValidator;
+module.exports = ArgumentsValidator

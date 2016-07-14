@@ -1,8 +1,4 @@
 
-const ChatServiceError = require('./ChatServiceError');
-const Promise = require('bluebird');
-const _ = require('lodash');
-
 // Transport public API interface. An instance of {Transport}
 // implementation is available as a member of {ChatService} instance.
 class Transport {
@@ -16,7 +12,7 @@ class Transport {
   // @param messageData [Rest...] Message data.
   //
   // @return [null]
-  emitToChannel(channel, messageName, ...messageData) {}
+  emitToChannel (channel, messageName, ...messageData) {}
 
   // Sends a message to a channel (each room has a channel with the
   // same name), excluding the sender socket. This messages are sent
@@ -28,7 +24,7 @@ class Transport {
   // @param messageData [Rest...] Message data.
   //
   // @return [null]
-  sendToChannel(id, channel, messageName, ...messageData) {}
+  sendToChannel (id, channel, messageName, ...messageData) {}
 
   // Get an underlying connection object by id.
   //
@@ -36,8 +32,7 @@ class Transport {
   //
   // @return [Object or null] Connection object corresponding to the
   //   socket id. Returns `null` if the connection was closed.
-  getConnectionObject(id) {}
+  getConnectionObject (id) {}
 }
 
-
-module.exports = Transport;
+module.exports = Transport

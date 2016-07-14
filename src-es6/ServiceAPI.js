@@ -1,12 +1,9 @@
 
-const Promise = require('bluebird');
-const ChatServiceError = require('./ChatServiceError');
-
-const _ = require('lodash');
-
-const { checkNameSymbols, possiblyCallback } = require('./utils');
-
-const User = require('./User');
+const ChatServiceError = require('./ChatServiceError')
+const Promise = require('bluebird')
+const User = require('./User')
+const _ = require('lodash')
+const { checkNameSymbols, possiblyCallback } = require('./utils')
 
 // @mixin
 // API for server side operations.
@@ -31,26 +28,24 @@ let ServiceAPI = {
   //   permissions checking, default is `false`.
   //
   // @return [Promise<Array>] Array of command results.
-  execUserCommand(context, command, ...args) {
+  execUserCommand (context, command, ...args) {
     if (_.isObject(context)) {
-      var { userName } = context;
-    } else if (_.isBoolean(context)) { //bug decaffeinate 2.16.0
-      context = {bypassPermissions : context};
+      var { userName } = context
+    } else if (_.isBoolean(context)) {
+      context = {bypassPermissions: context}
     } else {
-      var userName = context;
-      context = {};
+      userName = context
+      context = {}
     }
-    let [nargs, cb] = possiblyCallback(args);
+    let [nargs, cb] = possiblyCallback(args)
     return Promise.try(() => {
       if (userName) {
-        return this.state.getUser(userName);
+        return this.state.getUser(userName)
       } else {
-        return new User(this); //bug decaffeinate 2.16.0
+        return new User(this)
       }
-    }
-    )
-    .then(user => user.exec(command, context, nargs))
-    .asCallback(cb, { spread : true });
+    }).then(user => user.exec(command, context, nargs))
+      .asCallback(cb, { spread: true })
   },
 
   // Adds an user with a state.
@@ -65,14 +60,10 @@ let ServiceAPI = {
   //   whitelistOnly mode, default is `false`.
   //
   // @return [Promise]
-  addUser(userName, state, cb) {
-    return checkNameSymbols(userName)
-    .then(() => {
-      return this.state.addUser(userName, state);
-    }
-    )
-    .return()
-    .asCallback(cb);
+  addUser (userName, state, cb) {
+    return checkNameSymbols(userName).then(() => {
+      return this.state.addUser(userName, state)
+    }).return().asCallback(cb)
   },
 
   // Deletes an offline user. Will raise an error if user has online
@@ -82,25 +73,19 @@ let ServiceAPI = {
   // @param cb [Callback] Optional callback.
   //
   // @return [Promise]
-  deleteUser(userName, cb) {
-    return this.state.getUser(userName)
-    .then(user => {
-      return user.listOwnSockets()
-      .then(sockets => {
+  deleteUser (userName, cb) {
+    return this.state.getUser(userName).then(user => {
+      return user.listOwnSockets().then(sockets => {
         if (sockets && _.size(sockets) > 0) {
-          return Promise.reject(new ChatServiceError('userOnline', userName));
+          return Promise.reject(new ChatServiceError('userOnline', userName))
         } else {
           return Promise.all([
             user.removeState(),
-            this.state.removeUser(userName) //bug decaffeinate 2.16.0
-          ]);
+            this.state.removeUser(userName) // bug decaffeinate 2.16.0
+          ])
         }
-      }
-      );
-    }
-    )
-    .return()
-    .asCallback(cb);
+      })
+    }).return().asCallback(cb)
   },
 
   // Checks user existence.
@@ -109,10 +94,10 @@ let ServiceAPI = {
   // @param cb [Callback] Optional callback.
   //
   // @return [Promise<Boolean>]
-  hasUser(userName, cb) {
+  hasUser (userName, cb) {
     return this.state.getUser(userName, true)
-    .then(function(user) { if (user) { return true; } else { return false; } })
-    .asCallback(cb);
+      .then(function (user) { if (user) { return true } else { return false } })
+      .asCallback(cb)
   },
 
   // Checks for a name existence in an user list.
@@ -123,10 +108,10 @@ let ServiceAPI = {
   // @param cb [Callback] Optional callback.
   //
   // @return [Promise<Boolean>]
-  userHasInList(userName, listName, item, cb) {
+  userHasInList (userName, listName, item, cb) {
     return this.state.getUser(userName)
-    .then(user => user.directMessagingState.hasInList(listName, item))
-    .asCallback(cb);
+      .then(user => user.directMessagingState.hasInList(listName, item))
+      .asCallback(cb)
   },
 
   // Checks for a direct messaging permission.
@@ -136,22 +121,20 @@ let ServiceAPI = {
   // @param cb [Callback] Optional callback.
   //
   // @return [Promise<Boolean>]
-  hasDirectAccess(recipient, sender, cb) {
+  hasDirectAccess (recipient, sender, cb) {
     return this.state.getUser(recipient)
-    .then(user =>
-      user.checkAcess(sender)
+      .then(user => user.checkAcess(sender))
       .return(true)
       .catchReturn(ChatServiceError, false)
-    )
-    .asCallback(cb);
+      .asCallback(cb)
   },
 
   // Disconnects user's sockets for all service instances. Method is
   // asynchronous, returns without waiting for the completion.
   //
   // @param userName [String] User name.
-  disconnectUserSockets(userName) {
-    return this.clusterBus.emit('disconnectUserSockets', userName);
+  disconnectUserSockets (userName) {
+    return this.clusterBus.emit('disconnectUserSockets', userName)
   },
 
   // Adds a room with a state.
@@ -169,14 +152,11 @@ let ServiceAPI = {
   // @option state [Integer] historyMaxSize Room history maximum size.
   //
   // @return [Promise]
-  addRoom(roomName, state, cb) {
+  addRoom (roomName, state, cb) {
     return checkNameSymbols(roomName)
-    .then(() => {
-      return this.state.addRoom(roomName, state);
-    }
-    )
-    .return()
-    .asCallback(cb);
+      .then(() => this.state.addRoom(roomName, state))
+      .return()
+      .asCallback(cb)
   },
 
   // Removes all room data, and removes joined user from the room.
@@ -185,10 +165,10 @@ let ServiceAPI = {
   // @param cb [Callback] Optional callback.
   //
   // @return [Promise]
-  deleteRoom(roomName, cb) {
+  deleteRoom (roomName, cb) {
     return this.execUserCommand(true, 'roomDelete', roomName)
-    .return()
-    .asCallback(cb);
+      .return()
+      .asCallback(cb)
   },
 
   // Checks room existence.
@@ -197,10 +177,10 @@ let ServiceAPI = {
   // @param cb [Callback] Optional callback.
   //
   // @return [Promise<Boolean>]
-  hasRoom(roomName, cb) {
+  hasRoom (roomName, cb) {
     return this.state.getRoom(roomName, true)
-    .then(function(room) { if (room) { return true; } else { return false; } })
-    .asCallback(cb);
+      .then(function (room) { if (room) { return true } else { return false } })
+      .asCallback(cb)
   },
 
   // Checks for a name existence in a room list.
@@ -211,10 +191,10 @@ let ServiceAPI = {
   // @param cb [Callback] Optional callback.
   //
   // @return [Promise<Boolean>]
-  roomHasInList(roomName, listName, item, cb) {
+  roomHasInList (roomName, listName, item, cb) {
     return this.state.getRoom(roomName)
-    .then(room => room.roomState.hasInList(listName, item))
-    .asCallback(cb);
+      .then(room => room.roomState.hasInList(listName, item))
+      .asCallback(cb)
   },
 
   // Checks for a room access permission.
@@ -224,14 +204,12 @@ let ServiceAPI = {
   // @param cb [Callback] Optional callback.
   //
   // @return [Promise<Boolean>]
-  hasRoomAccess(roomName, userName, cb) {
+  hasRoomAccess (roomName, userName, cb) {
     return this.state.getRoom(roomName)
-    .then(room =>
-      room.checkAcess(userName)
+      .then(room => room.checkAcess(userName))
       .return(true)
       .catchReturn(ChatServiceError, false)
-    )
-    .asCallback(cb);
+      .asCallback(cb)
   },
 
   // Changes a room owner.
@@ -241,11 +219,11 @@ let ServiceAPI = {
   // @param cb [Callback] Optional callback.
   //
   // @return [Promise]
-  changeRoomOwner(roomName, owner, cb) {
+  changeRoomOwner (roomName, owner, cb) {
     return this.state.getRoom(roomName)
-    .then(room => room.roomState.ownerSet(owner))
-    .return()
-    .asCallback(cb);
+      .then(room => room.roomState.ownerSet(owner))
+      .return()
+      .asCallback(cb)
   },
 
   // Changes a room history size.
@@ -255,13 +233,12 @@ let ServiceAPI = {
   // @param cb [Callback] Optional callback.
   //
   // @return [Promise]
-  changeRoomHistoryMaxSize(roomName, size, cb) {
+  changeRoomHistoryMaxSize (roomName, size, cb) {
     return this.state.getRoom(roomName)
-    .then(room => room.roomState.historyMaxSizeSet(size))
-    .return()
-    .asCallback(cb);
+      .then(room => room.roomState.historyMaxSizeSet(size))
+      .return()
+      .asCallback(cb)
   }
-};
+}
 
-
-module.exports = ServiceAPI;
+module.exports = ServiceAPI

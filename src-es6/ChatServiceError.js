@@ -8,6 +8,7 @@ const util = require('util')
 
 // @private
 // @nodoc
+// TODO rewrite
 function ChatServiceError (name, ...args) {
   this.name = name
   this.args = args
