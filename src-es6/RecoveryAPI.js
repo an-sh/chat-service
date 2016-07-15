@@ -13,22 +13,23 @@ let RecoveryAPI = {
     let { userName } = user
     return user.userState.getSocketsToInstance().then(sockets => {
       return Promise.each(_.toPairs(sockets), ([socket, instance]) => {
-        if (instance === this.instanceUID && !this.transport.getConnectionObject(socket)) {
-          return user.userState.removeSocket(socket)
-        } else {
-          return Promise.resolve()
+        if (instance === this.instanceUID) {
+          if (!this.transport.getConnectionObject(socket)) {
+            return user.userState.removeSocket(socket)
+          }
         }
+        return Promise.resolve()
       })
     }).then(() => {
       return user.userState.getSocketsToRooms()
-    }).then(function (data) {
+    }).then(data => {
       let args = _.values(data)
       return _.intersection(...args)
     }).then(rooms => {
       return Promise.each(rooms, roomName => {
         return this.state.getRoom(roomName)
           .then(room => room.roomState.hasInList('userlist', userName))
-          .then(function (isPresent) {
+          .then(isPresent => {
             if (!isPresent) {
               return user.removeFromRoom(roomName)
             } else {
@@ -46,7 +47,7 @@ let RecoveryAPI = {
     return room.getList(null, 'userlist', true).then(userlist => {
       return Promise.each(userlist, userName => {
         return this.state.getUser(userName).then(user => {
-          return user.userState.getRoomToSockets(roomName).then(function (sockets) {
+          return user.userState.getRoomToSockets(roomName).then(sockets => {
             if (!sockets || !sockets.length) {
               return user.removeFromRoom(roomName)
             } else {
@@ -67,9 +68,9 @@ let RecoveryAPI = {
   //
   // @return [Promise]
   userStateSync (userName, cb) {
-    return this.state.getUser(userName).then(user => {
-      return this.checkUserSockets(user)
-    }).asCallback(cb)
+    return this.state.getUser(userName)
+      .then(user => this.checkUserSockets(user))
+      .asCallback(cb)
   },
 
   // Sync room to users associations.
@@ -79,9 +80,9 @@ let RecoveryAPI = {
   //
   // @return [Promise]
   roomStateSync (roomName, cb) {
-    return this.state.getRoom(roomName).then(room => {
-      return this.checkRoomJoined(room)
-    }).asCallback(cb)
+    return this.state.getRoom(roomName)
+      .then(room => this.checkRoomJoined(room))
+      .asCallback(cb)
   },
 
   // Fix instance data after an incorrect service shutdown.
@@ -93,7 +94,8 @@ let RecoveryAPI = {
   instanceRecovery (id, cb) {
     return this.state.getInstanceSockets(id).then(sockets => {
       return Promise.each(_.toPairs(sockets), ([id, userName]) => {
-        return this.execUserCommand({userName, id}, 'disconnect', 'instance recovery')
+        let context = {userName, id}
+        return this.execUserCommand(context, 'disconnect', 'instance recovery')
       })
     }).asCallback(cb)
   },

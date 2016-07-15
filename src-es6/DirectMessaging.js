@@ -35,10 +35,7 @@ let DirectMessagingPermissions = {
     if (userName === this.userName) {
       return Promise.reject(new ChatServiceError('notAllowed'))
     }
-    if (bypassPermissions) {
-      return Promise.resolve()
-    }
-    // TODO rewrite
+    if (bypassPermissions) { return Promise.resolve() }
     return this.directMessagingState.hasInList('blacklist', userName)
       .then(blacklisted => {
         if (blacklisted) {
@@ -48,12 +45,9 @@ let DirectMessagingPermissions = {
           .then(whitelistOnly => {
             if (!whitelistOnly) { return Promise.resolve() }
             return this.directMessagingState.hasInList('whitelist', userName)
-              .then(function (whitelisted) {
-                if (!whitelisted) {
-                  return Promise.reject(new ChatServiceError('notAllowed'))
-                } else {
-                  return Promise.resolve()
-                }
+              .then(whitelisted => {
+                if (whitelisted) { return Promise.resolve() }
+                return Promise.reject(new ChatServiceError('notAllowed'))
               })
           })
       })
@@ -92,23 +86,20 @@ class DirectMessaging {
 
   // @private
   getList (author, listName) {
-    return this.checkList(author, listName).then(() => {
-      return this.directMessagingState.getList(listName)
-    })
+    return this.checkList(author, listName)
+      .then(() => this.directMessagingState.getList(listName))
   }
 
   // @private
   addToList (author, listName, values) {
-    return this.checkListValues(author, listName, values).then(() => {
-      return this.directMessagingState.addToList(listName, values)
-    })
+    return this.checkListValues(author, listName, values)
+      .then(() => this.directMessagingState.addToList(listName, values))
   }
 
   // @private
   removeFromList (author, listName, values) {
-    return this.checkListValues(author, listName, values).then(() => {
-      return this.directMessagingState.removeFromList(listName, values)
-    })
+    return this.checkListValues(author, listName, values)
+      .then(() => this.directMessagingState.removeFromList(listName, values))
   }
 
   // @private

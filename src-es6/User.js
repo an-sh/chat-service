@@ -66,15 +66,17 @@ class User extends DirectMessaging {
     }
     let fn = this[command]
     let cmd = this.makeCommand(command, fn)
-    return Promise.fromCallback(cb => cmd(args, options, cb)
-                                , {multiArgs: true})
+    return Promise.fromCallback(
+      cb => cmd(args, options, cb),
+      {multiArgs: true})
   }
 
   // @private
   checkOnline () {
     return this.userState.getAllSockets().then(sockets => {
       if (!sockets || !sockets.length) {
-        return Promise.reject(new ChatServiceError('noUserOnline', this.userName))
+        let error = new ChatServiceError('noUserOnline', this.userName)
+        return Promise.reject(error)
       } else {
         return Promise.resolve()
       }
@@ -92,21 +94,23 @@ class User extends DirectMessaging {
 
   // @private
   registerSocket (id) {
-    return this.state.addSocket(id, this.userName).then(() => {
-      return this.userState.addSocket(id, this.server.instanceUID)
-    }).then(nconnected => {
-      if (!this.transport.getConnectionObject(id)) {
-        return this.removeUserSocket(id)
-          .then(() => Promise.reject(new ChatServiceError('noSocket', 'connection')))
-      } else {
-        let commands = getUserCommands(this.server)
-        for (let idx in commands) {
-          let cmd = commands[idx]
-          this.bindCommand(id, cmd, this[cmd])
+    return this.state.addSocket(id, this.userName)
+      .then(() => this.userState.addSocket(id, this.server.instanceUID))
+      .then(nconnected => {
+        if (!this.transport.getConnectionObject(id)) {
+          return this.removeUserSocket(id).then(() => {
+            let error = new ChatServiceError('noSocket', 'connection')
+            return Promise.reject(error)
+          })
+        } else {
+          let commands = getUserCommands(this.server)
+          for (let idx in commands) {
+            let cmd = commands[idx]
+            this.bindCommand(id, cmd, this[cmd])
+          }
+          return [ this, nconnected ]
         }
-        return [ this, nconnected ]
-      }
-    })
+      })
   }
 
   // @private
@@ -114,9 +118,7 @@ class User extends DirectMessaging {
     return this.userState.getAllSockets().then(sockets => {
       return Promise.map(
         sockets,
-        sid => {
-          return this.transport.disconnectClient(sid)
-        },
+        sid => this.transport.disconnectClient(sid),
         { concurrency: asyncLimit })
     })
   }

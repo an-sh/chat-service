@@ -12,17 +12,20 @@ let UserAssociations = {
 
   // @private
   userJoinRoomReport (userName, roomName) {
-    return this.transport.emitToChannel(roomName, 'roomUserJoined', roomName, userName)
+    return this.transport.emitToChannel(
+      roomName, 'roomUserJoined', roomName, userName)
   },
 
   // @private
   userLeftRoomReport (userName, roomName) {
-    return this.transport.emitToChannel(roomName, 'roomUserLeft', roomName, userName)
+    return this.transport.emitToChannel(
+      roomName, 'roomUserLeft', roomName, userName)
   },
 
   // @private
   userRemovedReport (userName, roomName) {
-    this.transport.emitToChannel(this.echoChannel, 'roomAccessRemoved', roomName)
+    this.transport.emitToChannel(
+      this.echoChannel, 'roomAccessRemoved', roomName)
     return this.userLeftRoomReport(userName, roomName)
   },
 
@@ -53,7 +56,8 @@ let UserAssociations = {
   // @private
   leaveChannel (id, channel) {
     return this.transport.leaveChannel(id, channel).catch(e => {
-      return this.consistencyFailure(e, { roomName: channel, id, opType: 'transportChannel' })
+      let info = { roomName: channel, id, opType: 'transportChannel' }
+      return this.consistencyFailure(e, info)
     })
   },
 
@@ -61,16 +65,14 @@ let UserAssociations = {
   socketLeaveChannels (id, channels) {
     return Promise.map(
       channels,
-      channel => {
-        return this.leaveChannel(id, channel)
-      },
+      channel => this.leaveChannel(id, channel),
       { concurrency: asyncLimit })
   },
 
   // @private
   leaveChannelMessage (id, channel) {
     let bus = this.transport.clusterBus
-    return Promise.try(function () {
+    return Promise.try(() => {
       bus.emit('roomLeaveSocket', id, channel)
       return eventToPromise(bus, bus.makeSocketRoomLeftName(id, channel))
     }).timeout(this.server.busAckTimeout).catchReturn()
@@ -80,41 +82,39 @@ let UserAssociations = {
   channelLeaveSockets (channel, ids) {
     return Promise.map(
       ids,
-      id => {
-        return this.leaveChannelMessage(id, channel)
-      },
+      id => this.leaveChannelMessage(id, channel),
       { concurrency: asyncLimit })
   },
 
   // @private
   rollbackRoomJoin (error, roomName, id) {
-    return this.userState.removeSocketFromRoom(id, roomName)
-      .catch(e => {
-        this.consistencyFailure(e, { roomName, opType: 'userRooms' })
-        return 1
-      }).then(njoined => {
-        if (!njoined) {
-          return this.leaveRoom(roomName)
-        } else {
-          return Promise.resolve()
-        }
-      }).thenThrow(error)
+    return this.userState.removeSocketFromRoom(id, roomName).catch(e => {
+      this.consistencyFailure(e, { roomName, opType: 'userRooms' })
+      return 1
+    }).then(njoined => {
+      if (!njoined) {
+        return this.leaveRoom(roomName)
+      } else {
+        return Promise.resolve()
+      }
+    }).thenThrow(error)
   },
 
   // @private
   leaveRoom (roomName) {
-    return Promise.try(() => {
-      return this.state.getRoom(roomName)
-    }).then(room => {
-      return room.leave(this.userName)
-    }).catch(e => {
-      return this.consistencyFailure(e, { roomName, opType: 'roomUserlist' })
-    })
+    return Promise
+      .try(() => this.state.getRoom(roomName))
+      .then(room => room.leave(this.userName))
+      .catch(e => {
+        let info = { roomName, opType: 'roomUserlist' }
+        return this.consistencyFailure(e, info)
+      })
   },
 
   // @private
   joinSocketToRoom (id, roomName) {
-    return Promise.using(this.userState.lockToRoom(roomName, this.lockTTL), () => {
+    let lock = this.userState.lockToRoom(roomName, this.lockTTL)
+    return Promise.using(lock, () => {
       return this.state.getRoom(roomName).then(room => {
         return room.join(this.userName).then(() => {
           return this.userState.addSocketToRoom(id, roomName).then(njoined => {
@@ -124,9 +124,7 @@ let UserAssociations = {
               }
               return this.socketJoinEcho(id, roomName, njoined)
             }).return(njoined)
-          }).catch(e => {
-            return this.rollbackRoomJoin(e, roomName, id)
-          })
+          }).catch(e => this.rollbackRoomJoin(e, roomName, id))
         })
       })
     })
@@ -134,14 +132,14 @@ let UserAssociations = {
 
   // @private
   leaveSocketFromRoom (id, roomName) {
-    return Promise.using(this.userState.lockToRoom(roomName, this.lockTTL), () => {
+    let lock = this.userState.lockToRoom(roomName, this.lockTTL)
+    return Promise.using(lock, () => {
       return this.userState.removeSocketFromRoom(id, roomName).then(njoined => {
         return this.leaveChannel(id, roomName).then(() => {
           this.socketLeftEcho(id, roomName, njoined)
           if (!njoined) {
-            return this.leaveRoom(roomName).then(() => {
-              return this.userLeftRoomReport(this.userName, roomName)
-            })
+            return this.leaveRoom(roomName)
+              .then(() => this.userLeftRoomReport(this.userName, roomName))
           } else {
             return Promise.resolve()
           }
@@ -164,39 +162,38 @@ let UserAssociations = {
               let njoined = joinedSockets[idx]
               this.socketLeftEcho(id, roomName, njoined)
               if (!njoined) {
-                return this.leaveRoom(roomName).then(() => {
-                  return this.userLeftRoomReport(this.userName, roomName)
-                })
+                return this.leaveRoom(roomName)
+                  .then(() => this.userLeftRoomReport(this.userName, roomName))
               } else {
                 return Promise.resolve()
               }
             },
-            { concurrency: asyncLimit }).then(() => {
-              return this.socketDisconnectEcho(id, nconnected)
-            })
+            { concurrency: asyncLimit })
+            .then(() => this.socketDisconnectEcho(id, nconnected))
         })
-      }).then(() => {
-        return this.state.removeSocket(id)
-      })
+      }).then(() => this.state.removeSocket(id))
   },
 
   // @private
   removeSocketFromServer (id) {
     return this.removeUserSocket(id).catch(e => {
-      return this.consistencyFailure(e, { id, opType: 'userSockets' })
+      let info = { id, opType: 'userSockets' }
+      return this.consistencyFailure(e, info)
     })
   },
 
   // @private
   removeUserSocketsFromRoom (roomName) {
     return this.userState.removeAllSocketsFromRoom(roomName).catch(e => {
-      return this.consistencyFailure(e, { roomName, opType: 'roomUserlist' })
+      let info = { roomName, opType: 'roomUserlist' }
+      return this.consistencyFailure(e, info)
     })
   },
 
   // @private
   removeFromRoom (roomName) {
-    return Promise.using(this.userState.lockToRoom(roomName, this.lockTTL), () => {
+    let lock = this.userState.lockToRoom(roomName, this.lockTTL)
+    return Promise.using(lock, () => {
       return this.removeUserSocketsFromRoom(roomName).then((removedSockets) => {
         removedSockets = removedSockets || []
         return this.channelLeaveSockets(roomName, removedSockets).then(() => {

@@ -48,7 +48,6 @@ let checkNameSymbols = function (name) {
   if (_.isString(name) && nameChecker.test(name)) {
     return Promise.resolve()
   } else {
-    // bug decaffeinate 2.16.0
     return Promise.reject(new ChatServiceError('invalidName', name))
   }
 }
@@ -65,15 +64,13 @@ let execHook = function (hook, ...args) {
   }
   let res = hook(...args, wrapper)
   if (callbackData) {
-    // bug decaffeinate 2.16.0
-    return Promise.fromCallback(fn => fn(...callbackData)
-                                , {multiArgs: true})
+    return Promise.fromCallback(
+      fn => { fn(...callbackData) },
+      {multiArgs: true})
   } else if ((res != null) && typeof res.then === 'function') {
     return res
   } else {
-    // bug decaffeinate 2.16.0
-    return Promise.fromCallback(fn => { cb = fn }
-                                , {multiArgs: true})
+    return Promise.fromCallback(fn => { cb = fn }, {multiArgs: true})
   }
 }
 

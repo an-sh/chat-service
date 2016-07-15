@@ -16,7 +16,7 @@ let namespace = 'chatservice'
 // @private
 // @nodoc
 function initSet (redis, set, values) {
-  redis.del(set).then(function () {
+  redis.del(set).then(() => {
     if (!values) {
       return Promise.resolve()
     } else {
@@ -41,17 +41,15 @@ let stateOperations = {
       } else {
         return Promise.resolve()
       }
-    }).then(() => {
-      return this.stateReset(state)
-    }).then(() => {
-      return this.redis.setnx(this.makeKeyName('isInit'), true)
-    })
+    }).then(() => this.stateReset(state))
+      .then(() => this.redis.setnx(this.makeKeyName('isInit'), true))
   },
 
   // @private
   removeState () {
     return this.stateReset().then(() => {
-      return this.redis.del(this.makeKeyName('exists'), this.makeKeyName('isInit'))
+      return this.redis.del(
+        this.makeKeyName('exists'), this.makeKeyName('isInit'))
     })
   },
 
@@ -73,10 +71,10 @@ let lockOperations = {
     return promiseRetry(
       {minTimeout: 100, retries: 10, factor: 1.5, randomize: true}
       , (retry, n) => {
-        return this.redis.set(key, val, 'NX', 'PX', ttl).then(function (res) {
+        return this.redis.set(key, val, 'NX', 'PX', ttl).then(res => {
           if (!res) {
-            let err = new ChatServiceError('timeout')
-            return retry(err)
+            let error = new ChatServiceError('timeout')
+            return retry(error)
           } else {
             return null
           }
@@ -270,33 +268,27 @@ class ListsStateRedis {
 
   // @private
   addToList (listName, elems) {
-    return this.checkList(listName).then(() => {
-      return this.redis.sadd(this.makeKeyName(listName), elems)
-    })
+    return this.checkList(listName)
+      .then(() => this.redis.sadd(this.makeKeyName(listName), elems))
   }
 
   // @private
   removeFromList (listName, elems) {
-    return this.checkList(listName).then(() => {
-      return this.redis.srem(this.makeKeyName(listName), elems)
-    })
+    return this.checkList(listName)
+      .then(() => this.redis.srem(this.makeKeyName(listName), elems))
   }
 
   // @private
   getList (listName) {
-    return this.checkList(listName).then(() => {
-      return this.redis.smembers(this.makeKeyName(listName))
-    })
+    return this.checkList(listName)
+      .then(() => this.redis.smembers(this.makeKeyName(listName)))
   }
 
   // @private
   hasInList (listName, elem) {
-    return this.checkList(listName).then(() => {
-      return this.redis.sismember(this.makeKeyName(listName), elem)
-    }).then(function (data) {
-      let result = data ? true : false
-      return Promise.resolve(result)
-    })
+    return this.checkList(listName)
+      .then(() => this.redis.sismember(this.makeKeyName(listName), elem))
+      .then(data => Promise.resolve(Boolean(data)))
   }
 
   // @private
@@ -307,10 +299,8 @@ class ListsStateRedis {
 
   // @private
   whitelistOnlyGet () {
-    return this.redis.get(this.makeKeyName('whitelistMode')).then(function (data) {
-      let result = data ? true : false
-      return Promise.resolve(result)
-    })
+    return this.redis.get(this.makeKeyName('whitelistMode'))
+      .then(data => Promise.resolve(Boolean(data)))
   }
 
 }
@@ -335,7 +325,8 @@ class RoomStateRedis extends ListsStateRedis {
   // @private
   stateReset (state) {
     state = state || {}
-    let { whitelist, blacklist, adminlist, whitelistOnly, owner, historyMaxSize } = state
+    let { whitelist, blacklist, adminlist,
+          whitelistOnly, owner, historyMaxSize } = state
     whitelistOnly = whitelistOnly ? true : ''
     if (!owner) { owner = '' }
     return Promise.all([
@@ -375,8 +366,8 @@ class RoomStateRedis extends ListsStateRedis {
     if (_.isNumber(historyMaxSize) && historyMaxSize >= 0) {
       return this.redis.set(this.makeKeyName('historyMaxSize'), historyMaxSize)
     } else {
-      return this.redis.set(this.makeKeyName('historyMaxSize'),
-                            this.server.defaultHistoryLimit)
+      let limit = this.server.defaultHistoryLimit
+      return this.redis.set(this.makeKeyName('historyMaxSize'), limit)
     }
   }
 
@@ -391,7 +382,8 @@ class RoomStateRedis extends ListsStateRedis {
         historySize = parseInt(historySize)
         historyMaxSize = parseFloat(historyMaxSize)
         lastMessageId = parseInt(lastMessageId)
-        let info = { historySize, historyMaxSize,
+        let info = { historySize,
+                     historyMaxSize,
                      historyMaxGetMessages: this.historyMaxGetMessages,
                      lastMessageId }
         return Promise.resolve(info)
@@ -413,7 +405,7 @@ class RoomStateRedis extends ListsStateRedis {
       this.makeKeyName('lastMessageId'), this.makeKeyName('historyMaxSize'),
       this.makeKeyName('messagesIds'), this.makeKeyName('messagesTimestamps'),
       this.makeKeyName('messagesHistory'), smsg, timestamp)
-      .spread(function (id) {
+      .spread(id => {
         msg.id = id
         msg.timestamp = timestamp
         return Promise.resolve(msg)
@@ -428,7 +420,7 @@ class RoomStateRedis extends ListsStateRedis {
     }
     for (let idx = 0; idx < msgs.length; idx++) {
       let msg = msgs[idx]
-      let obj = JSON.parse(msg, function (key, val) {
+      let obj = JSON.parse(msg, (key, val) => {
         if (val && val.type === 'Buffer') {
           return new Buffer(val.data)
         } else {
@@ -445,10 +437,11 @@ class RoomStateRedis extends ListsStateRedis {
   // @private
   messagesGetRecent () {
     if (this.historyMaxGetMessages <= 0) { return Promise.resolve([]) }
+    let limit = this.historyMaxGetMessages - 1
     return this.redis.multi()
-      .lrange(this.makeKeyName('messagesHistory'), 0, this.historyMaxGetMessages - 1)
-      .lrange(this.makeKeyName('messagesTimestamps'), 0, this.historyMaxGetMessages - 1)
-      .lrange(this.makeKeyName('messagesIds'), 0, this.historyMaxGetMessages - 1)
+      .lrange(this.makeKeyName('messagesHistory'), 0, limit)
+      .lrange(this.makeKeyName('messagesTimestamps'), 0, limit)
+      .lrange(this.makeKeyName('messagesIds'), 0, limit)
       .exec()
       .spread(([_0, msgs], [_1, tss], [_2, ids]) => {
         return this.convertMessages(msgs, tss, ids)
@@ -474,8 +467,8 @@ class RoomStateRedis extends ListsStateRedis {
       .hget(this.makeKeyName('usersseen'), userName)
       .sismember(this.makeKeyName('userlist'), userName)
       .exec()
-      .spread(function ([_1, ts], [_2, isjoined]) {
-        let joined = isjoined ? true : false
+      .spread(([_1, ts], [_2, isjoined]) => {
+        let joined = Boolean(isjoined)
         let timestamp = ts ? parseInt(ts) : null
         return {joined, timestamp}
       })
@@ -595,7 +588,7 @@ class UserStateRedis {
   getSocketsToRooms () {
     return this.redis.getSocketsToRooms(
       this.makeKeyName('sockets'), this.makeSocketToRooms())
-      .spread(function (result) {
+      .spread(result => {
         let data = JSON.parse(result) || {}
         for (let k in data) {
           let v = data[k]
@@ -649,7 +642,8 @@ class UserStateRedis {
       return this.lock(this.makeRoomLock(roomName), val, ttl).then(() => {
         return Promise.resolve().disposer(() => {
           if (start + ttl < _.now()) {
-            this.server.emit('lockTimeExceeded', val, {userName: this.userName, roomName})
+            let info = {userName: this.userName, roomName}
+            this.server.emit('lockTimeExceeded', val, info)
           }
           return this.unlock(this.makeRoomLock(roomName), val)
         })
@@ -716,7 +710,7 @@ class RedisState {
   // @private
   getRoom (name, isPredicate = false) {
     let room = new Room(this.server, name)
-    return this.hasRoom(name).then(function (exists) {
+    return this.hasRoom(name).then(exists => {
       if (!exists) {
         if (isPredicate) {
           return Promise.resolve(null)
@@ -767,27 +761,26 @@ class RedisState {
   // @private
   getInstanceHeartbeat (uid = this.instanceUID) {
     return this.redis.get(this.makeKeyName('instances', uid, 'heartbeat'))
-      .then(function (ts) {
-        if (ts) { return parseInt(ts) } else { return null }
-      })
+      .then(ts => ts ? parseInt(ts) : null)
   }
 
   // @private
   getOrAddUser (name, state) {
     let user = new User(this.server, name)
-    return this.hasUser(name).then(function (exists) {
+    return this.hasUser(name).then(exists => {
       if (!exists) {
         return user.initState(state)
       } else {
         return Promise.resolve()
       }
-    }).catch(ChatServiceError, e => user).return(user)
+    }).catch(ChatServiceError, e => user)
+      .return(user)
   }
 
   // @private
   getUser (name, isPredicate = false) {
     let user = new User(this.server, name)
-    return this.hasUser(name).then(function (exists) {
+    return this.hasUser(name).then(exists => {
       if (!exists) {
         if (isPredicate) {
           return Promise.resolve(null)

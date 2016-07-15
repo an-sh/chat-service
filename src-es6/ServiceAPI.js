@@ -61,9 +61,10 @@ let ServiceAPI = {
   //
   // @return [Promise]
   addUser (userName, state, cb) {
-    return checkNameSymbols(userName).then(() => {
-      return this.state.addUser(userName, state)
-    }).return().asCallback(cb)
+    return checkNameSymbols(userName)
+      .then(() => this.state.addUser(userName, state))
+      .return()
+      .asCallback(cb)
   },
 
   // Deletes an offline user. Will raise an error if user has online
@@ -96,7 +97,7 @@ let ServiceAPI = {
   // @return [Promise<Boolean>]
   hasUser (userName, cb) {
     return this.state.getUser(userName, true)
-      .then(function (user) { if (user) { return true } else { return false } })
+      .then(user => Boolean(user))
       .asCallback(cb)
   },
 
@@ -179,7 +180,7 @@ let ServiceAPI = {
   // @return [Promise<Boolean>]
   hasRoom (roomName, cb) {
     return this.state.getRoom(roomName, true)
-      .then(function (room) { if (room) { return true } else { return false } })
+      .then((room) => Boolean(room))
       .asCallback(cb)
   },
 

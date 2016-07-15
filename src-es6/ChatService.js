@@ -690,8 +690,8 @@ class ChatService extends ChatServiceEvents {
     this.serverMessages = new ServerMessages()
     this.validator = new ArgumentsValidator(this)
     this.state = new State(this, this.stateOptions)
-    this.transport = new Transport(this, this.transportOptions,
-                                   this.adapterConstructor, this.adapterOptions)
+    this.transport = new Transport(
+      this, this.transportOptions, this.adapterConstructor, this.adapterOptions)
   }
 
   // @private
@@ -699,11 +699,9 @@ class ChatService extends ChatServiceEvents {
   startServer () {
     return Promise.try(() => {
       if (this.hooks.onStart) {
-        return this.clusterBus.listen().then(() => {
-          return execHook(this.hooks.onStart, this)
-        }).then(() => {
-          return this.transport.setEvents()
-        })
+        return this.clusterBus.listen()
+          .then(() => execHook(this.hooks.onStart, this))
+          .then(() => this.transport.setEvents())
       } else {
         // tests spec compatibility
         return this.transport.setEvents().then(() => this.clusterBus.listen())
@@ -715,11 +713,9 @@ class ChatService extends ChatServiceEvents {
       return this.emit('ready')
     }).catch(error => {
       this.closed = true
-      return this.transport.close().then(() => {
-        return this.state.close()
-      }).finally(() => {
-        return this.emit('closed', error)
-      })
+      return this.transport.close()
+        .then(() => this.state.close())
+        .finally(() => this.emit('closed', error))
     })
   }
 
@@ -733,22 +729,21 @@ class ChatService extends ChatServiceEvents {
     this.closed = true
     clearInterval(this.hbtimer)
     let closeError = null
-    return this.transport.close().then(() => {
-      return execHook(this.hooks.onClose, this, null)
-    }, error => {
-      if (this.hooks.onClose) {
-        return execHook(this.hooks.onClose, this, error)
-      } else {
+    return this.transport.close().then(
+      () => execHook(this.hooks.onClose, this, null),
+      error => {
+        if (this.hooks.onClose) {
+          return execHook(this.hooks.onClose, this, error)
+        } else {
+          return Promise.reject(error)
+        }
+      }).catch(error => {
+        closeError = error
         return Promise.reject(error)
-      }
-    }).catch(function (error) {
-      closeError = error
-      return Promise.reject(error)
-    }).finally(() => {
-      return this.state.close().finally(() => {
-        return this.emit('closed', closeError)
-      })
-    }).asCallback(done)
+      }).finally(() => {
+        return this.state.close()
+          .finally(() => this.emit('closed', closeError))
+      }).asCallback(done)
   }
 }
 

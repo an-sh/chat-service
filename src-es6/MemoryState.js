@@ -98,14 +98,14 @@ class ListsStateMemory {
   hasInList (listName, elem) {
     return this.checkList(listName).then(() => {
       let data = this[listName].has(elem)
-      data = data ? true : false
+      data = Boolean(data)
       return Promise.resolve(data)
     })
   }
 
   // @private
   whitelistOnlySet (mode) {
-    this.whitelistOnly = mode ? true : false
+    this.whitelistOnly = Boolean(mode)
     return Promise.resolve()
   }
 
@@ -143,7 +143,8 @@ class RoomStateMemory extends ListsStateMemory {
 
   // @private
   initState (state = {}) {
-    let { whitelist, blacklist, adminlist, whitelistOnly, owner, historyMaxSize } = state
+    let { whitelist, blacklist, adminlist,
+          whitelistOnly, owner, historyMaxSize } = state
     initState(this.whitelist, whitelist)
     initState(this.blacklist, blacklist)
     initState(this.adminlist, adminlist)
@@ -151,7 +152,7 @@ class RoomStateMemory extends ListsStateMemory {
     initState(this.messagesTimestamps)
     initState(this.messagesIds)
     initState(this.usersseen)
-    this.whitelistOnly = whitelistOnly ? true : false
+    this.whitelistOnly = Boolean(whitelistOnly)
     this.owner = owner || null
     return this.historyMaxSizeSet(historyMaxSize)
   }
@@ -194,16 +195,20 @@ class RoomStateMemory extends ListsStateMemory {
   // @private
   historyInfo () {
     let historySize = this.messagesHistory.length
-    let info = { historySize, historyMaxSize: this.historyMaxSize,
-                 historyMaxGetMessages: this.historyMaxGetMessages,
-                 lastMessageId: this.lastMessageId }
+    let info = {
+      historySize,
+      historyMaxSize: this.historyMaxSize,
+      historyMaxGetMessages: this.historyMaxGetMessages,
+      lastMessageId: this.lastMessageId
+    }
     return Promise.resolve(info)
   }
 
   // @private
   getCommonUsers () {
-    let diff = (this.userlist.difference(this.whitelist)).difference(this.adminlist)
-    let data = diff.toArray()
+    let nonWL = this.userlist.difference(this.whitelist)
+    let nonAdmin = nonWL.difference(this.adminlist)
+    let data = nonAdmin.toArray()
     return Promise.resolve(data)
   }
 
@@ -271,7 +276,7 @@ class RoomStateMemory extends ListsStateMemory {
 
   // @private
   userSeenGet (userName) {
-    let joined = this.userlist.get(userName) ? true : false
+    let joined = Boolean(this.userlist.get(userName))
     let timestamp = this.usersseen.get(userName) || null
     return Promise.resolve({joined, timestamp})
   }
@@ -304,7 +309,7 @@ class DirectMessagingStateMemory extends ListsStateMemory {
   initState ({ whitelist, blacklist, whitelistOnly } = {}) {
     initState(this.whitelist, whitelist)
     initState(this.blacklist, blacklist)
-    this.whitelistOnly = whitelistOnly ? true : false
+    this.whitelistOnly = Boolean(whitelistOnly)
     return Promise.resolve()
   }
 
@@ -451,7 +456,8 @@ class UserStateMemory {
       return this.lock(roomName, val, ttl).then(() => {
         return Promise.resolve().disposer(() => {
           if (start + ttl < _.now()) {
-            this.server.emit('lockTimeExceeded', val, {userName: this.userName, roomName})
+            this.server.emit(
+              'lockTimeExceeded', val, {userName: this.userName, roomName})
           }
           return this.unlock(roomName, val)
         })

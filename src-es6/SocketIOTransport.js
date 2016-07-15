@@ -55,7 +55,7 @@ class ClusterBus extends EventEmitter {
   emit (ev, ...args) {
     let data = [ ev, ...args ]
     let packet = { type: (hasBinary(args) ? 5 : 2), data }
-    let opts = {rooms: [ this.channel ]}
+    let opts = { rooms: [ this.channel ] }
     return this.adapter.broadcast(packet, opts, false)
   }
 
@@ -126,8 +126,9 @@ class SocketIOTransport extends Transport {
 
   // @private
   broadcastHook (packet, opts) {
-    if (_.indexOf(opts.rooms, this.clusterBus.channel) >= 0 &&
-        _.indexOf(this.clusterBus.types, packet.type) >= 0) {
+    let isBusCahnnel = _.indexOf(opts.rooms, this.clusterBus.channel) >= 0
+    let isBusType = _.indexOf(this.clusterBus.types, packet.type) >= 0
+    if (isBusCahnnel && isBusType) {
       this.clusterBus.onPacket(packet)
     }
   }
@@ -181,7 +182,7 @@ class SocketIOTransport extends Transport {
   // @private
   addClient (socket, userName, authData = {}) {
     let { id } = socket
-    return Promise.try(function () {
+    return Promise.try(() => {
       if (!userName) {
         let { query } = socket.handshake
         userName = query && query.user
@@ -199,9 +200,7 @@ class SocketIOTransport extends Transport {
             user.socketConnectEcho(id, nconnected)
             return this.confirmLogin(socket, userName, authData)
           })
-      }).catch(error => {
-        return this.rejectLogin(socket, error)
-      })
+      }).catch(error => this.rejectLogin(socket, error))
   }
 
   // @private
@@ -220,9 +219,7 @@ class SocketIOTransport extends Transport {
         }).then(loginData => {
           loginData = _.castArray(loginData)
           return this.addClient(socket, ...loginData)
-        }).catch(error => {
-          return this.rejectLogin(socket, error)
-        })
+        }).catch(error => this.rejectLogin(socket, error))
       })
     } else {
       this.nsp.on('connection', this.addClient.bind(this))
@@ -257,9 +254,8 @@ class SocketIOTransport extends Transport {
           socket.disconnect()
         }
       }
-    }).then(() => {
-      return this.waitCommands()
-    }).timeout(this.server.closeTimeout)
+    }).then(() => this.waitCommands())
+      .timeout(this.server.closeTimeout)
   }
 
   // @private
@@ -272,19 +268,16 @@ class SocketIOTransport extends Transport {
 
   // @private
   getConnectionObject (id) {
-    // super.getConnectionObject()
     return this.nsp.connected[id]
   }
 
   // @private
   emitToChannel (channel, messageName, ...messageData) {
-    // super.emitToChannel()
     this.nsp.to(channel).emit(messageName, ...messageData)
   }
 
   // @private
   sendToChannel (id, channel, messageName, ...messageData) {
-    // super.sendToChannel()
     let socket = this.getConnectionObject(id)
     if (!socket) {
       this.emitToChannel(channel, messageName, ...messageData)

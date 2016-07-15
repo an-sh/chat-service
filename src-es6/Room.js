@@ -34,22 +34,15 @@ let RoomPermissions = {
           return this.roomState.whitelistOnlyGet()
         }
       })
-    }).catch(e => {
-      return this.consistencyFailure(e, {userName})
-    })
+    }).catch(e => this.consistencyFailure(e, {userName}))
   },
 
   // @private
   hasAddChangedCurrentAccess (userName, listName) {
     return this.roomState.hasInList('userlist', userName).then(hasUser => {
       if (!hasUser) { return false }
-      return this.isAdmin(userName).then(function (admin) {
-        if (admin || listName !== 'blacklist') {
-          return false
-        } else {
-          return true
-        }
-      })
+      return this.isAdmin(userName)
+        .then(admin => !(admin || listName !== 'blacklist'))
     }).catch(e => {
       return this.consistencyFailure(e, {userName})
     })
@@ -76,7 +69,7 @@ let RoomPermissions = {
       if (listName === 'adminlist') {
         return Promise.reject(new ChatServiceError('notAllowed'))
       }
-      return this.roomState.hasInList('adminlist', author).then(function (admin) {
+      return this.roomState.hasInList('adminlist', author).then(admin => {
         if (!admin) {
           return Promise.reject(new ChatServiceError('notAllowed'))
         }
@@ -93,7 +86,7 @@ let RoomPermissions = {
 
   // @private
   checkModeChange (author, value, bypassPermissions) {
-    return this.isAdmin(author).then(function (admin) {
+    return this.isAdmin(author).then(admin => {
       if (!admin && !bypassPermissions) {
         return Promise.reject(new ChatServiceError('notAllowed'))
       } else {
@@ -106,22 +99,20 @@ let RoomPermissions = {
   checkAcess (userName) {
     return this.isAdmin(userName).then(admin => {
       if (admin) { return Promise.resolve() }
-      return this.roomState.hasInList('blacklist', userName).then(blacklisted => {
-        if (blacklisted) {
-          return Promise.reject(new ChatServiceError('notAllowed'))
-        }
-        return this.roomState.whitelistOnlyGet().then(whitelistOnly => {
-          if (!whitelistOnly) { return Promise.resolve() }
-          return this.roomState.hasInList('whitelist', userName)
-            .then(function (whitelisted) {
-              if (!whitelisted) {
+      return this.roomState.hasInList('blacklist', userName)
+        .then(blacklisted => {
+          if (blacklisted) {
+            return Promise.reject(new ChatServiceError('notAllowed'))
+          }
+          return this.roomState.whitelistOnlyGet().then(whitelistOnly => {
+            if (!whitelistOnly) { return Promise.resolve() }
+            return this.roomState.hasInList('whitelist', userName)
+              .then(whitelisted => {
+                if (whitelisted) { return Promise.resolve() }
                 return Promise.reject(new ChatServiceError('notAllowed'))
-              } else {
-                return Promise.resolve()
-              }
-            })
+              })
+          })
         })
-      })
     })
   },
 
@@ -131,11 +122,8 @@ let RoomPermissions = {
     return this.isAdmin(author).then(admin => {
       if (admin) { return Promise.resolve() }
       return this.roomState.hasInList('userlist', author).then(hasAuthor => {
-        if (!hasAuthor) {
-          return Promise.reject(new ChatServiceError('notJoined', this.roomName))
-        } else {
-          return Promise.resolve()
-        }
+        if (hasAuthor) { return Promise.resolve() }
+        return Promise.reject(new ChatServiceError('notJoined', this.roomName))
       })
     })
   },
@@ -143,7 +131,7 @@ let RoomPermissions = {
   // @private
   checkIsOwner (author, bypassPermissions) {
     if (bypassPermissions) { return Promise.resolve() }
-    return this.roomState.ownerGet().then(function (owner) {
+    return this.roomState.ownerGet().then(owner => {
       if (owner === author) { return Promise.resolve() }
       return Promise.reject(new ChatServiceError('notAllowed'))
     })
@@ -198,9 +186,8 @@ class Room {
   leave (author) {
     return this.roomState.hasInList('userlist', author).then(hasAuthor => {
       if (hasAuthor) {
-        return this.roomState.removeFromList('userlist', [author]).then(() => {
-          return this.roomState.userSeenUpdate(author)
-        })
+        return this.roomState.removeFromList('userlist', [author])
+          .then(() => this.roomState.userSeenUpdate(author))
       } else {
         return Promise.resolve()
       }
@@ -209,17 +196,16 @@ class Room {
 
   // @private
   join (author) {
-    return this.checkAcess(author).then(() => {
-      return this.roomState.hasInList('userlist', author)
-    }).then(hasAuthor => {
-      if (!hasAuthor) {
-        return this.roomState.userSeenUpdate(author).then(() => {
-          return this.roomState.addToList('userlist', [author])
-        })
-      } else {
-        return Promise.resolve()
-      }
-    })
+    return this.checkAcess(author)
+      .then(() => this.roomState.hasInList('userlist', author))
+      .then(hasAuthor => {
+        if (!hasAuthor) {
+          return this.roomState.userSeenUpdate(author)
+            .then(() => this.roomState.addToList('userlist', [author]))
+        } else {
+          return Promise.resolve()
+        }
+      })
   }
 
   // @private
@@ -243,23 +229,20 @@ class Room {
 
   // @private
   getList (author, listName, bypassPermissions) {
-    return this.checkRead(author, bypassPermissions).then(() => {
-      return this.roomState.getList(listName)
-    })
+    return this.checkRead(author, bypassPermissions)
+      .then(() => this.roomState.getList(listName))
   }
 
   // @private
   getRecentMessages (author, bypassPermissions) {
-    return this.checkRead(author, bypassPermissions).then(() => {
-      return this.roomState.messagesGetRecent()
-    })
+    return this.checkRead(author, bypassPermissions)
+      .then(() => this.roomState.messagesGetRecent())
   }
 
   // @private
   getHistoryInfo (author, bypassPermissions) {
-    return this.checkRead(author, bypassPermissions).then(() => {
-      return this.roomState.historyInfo()
-    })
+    return this.checkRead(author, bypassPermissions)
+      .then(() => this.roomState.historyInfo())
   }
 
   // @private
@@ -275,14 +258,11 @@ class Room {
   // @private
   addToList (author, listName, values, bypassPermissions) {
     return this.checkListChanges(author, listName, values, bypassPermissions)
+      .then(() => this.roomState.addToList(listName, values))
       .then(() => {
-        return this.roomState.addToList(listName, values)
-      }).then(() => {
         return Promise.filter(
           values,
-          val => {
-            return this.hasAddChangedCurrentAccess(val, listName)
-          },
+          val => this.hasAddChangedCurrentAccess(val, listName),
           { concurrency: asyncLimit })
       })
   }
@@ -290,48 +270,40 @@ class Room {
   // @private
   removeFromList (author, listName, values, bypassPermissions) {
     return this.checkListChanges(author, listName, values, bypassPermissions)
+      .then(() => this.roomState.removeFromList(listName, values))
       .then(() => {
-        return this.roomState.removeFromList(listName, values)
-      }).then(() => {
         return Promise.filter(
           values,
-          val => {
-            return this.hasRemoveChangedCurrentAccess(val, listName)
-          }
-          , { concurrency: asyncLimit })
+          val => this.hasRemoveChangedCurrentAccess(val, listName),
+          { concurrency: asyncLimit })
       })
   }
 
   // @private
   getMode (author, bypassPermissions) {
-    return this.checkRead(author, bypassPermissions).then(() => {
-      return this.roomState.whitelistOnlyGet()
-    })
+    return this.checkRead(author, bypassPermissions)
+      .then(() => this.roomState.whitelistOnlyGet())
   }
 
   // @private
   getOwner (author, bypassPermissions) {
-    return this.checkRead(author, bypassPermissions).then(() => {
-      return this.roomState.ownerGet()
-    })
+    return this.checkRead(author, bypassPermissions)
+      .then(() => this.roomState.ownerGet())
   }
 
   // @private
   changeMode (author, mode, bypassPermissions) {
     let whitelistOnly = mode
     return this.checkModeChange(author, mode, bypassPermissions)
-      .then(() => {
-        return this.roomState.whitelistOnlySet(whitelistOnly)
-      }).then(() => {
-        return this.getModeChangedCurrentAccess(whitelistOnly)
-      }).then(usernames => [ usernames, whitelistOnly ])
+      .then(() => this.roomState.whitelistOnlySet(whitelistOnly))
+      .then(() => this.getModeChangedCurrentAccess(whitelistOnly))
+      .then(usernames => [ usernames, whitelistOnly ])
   }
 
   // @private
   userSeen (author, userName, bypassPermissions) {
-    return this.checkRead(author, bypassPermissions).then(() => {
-      return this.roomState.userSeenGet(userName)
-    })
+    return this.checkRead(author, bypassPermissions)
+      .then(() => this.roomState.userSeenGet(userName))
   }
 
 }

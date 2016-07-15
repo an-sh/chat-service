@@ -33,6 +33,7 @@ class Transport {
   // @return [Object or null] Connection object corresponding to the
   //   socket id. Returns `null` if the connection was closed.
   getConnectionObject (id) {}
+
 }
 
 module.exports = Transport

@@ -57,33 +57,34 @@ let CommandBinder = {
       _.assignIn(execInfo, validator.splitArguments(name, args))
       return Promise.using(
         this.commandWatcher(info.id, name),
-        stop => validator.checkArguments(name, ...execInfo.args).then(function () {
-          if (beforeHook && !execInfo.bypassHooks) {
-            return execHook(beforeHook, execInfo)
-          } else {
-            return Promise.resolve()
-          }
-        }).then(function (results) {
-          if (results && results.length) { return results }
-          return fn.apply(self, [...execInfo.args, execInfo]).then(
-            result => { execInfo.results = [result] }
-            , error => { execInfo.error = error }
-          ).then(function () {
-            if (afterHook && !execInfo.bypassHooks) {
-              return execHook(afterHook, execInfo)
+        () => validator.checkArguments(name, ...execInfo.args)
+          .then(() => {
+            if (beforeHook && !execInfo.bypassHooks) {
+              return execHook(beforeHook, execInfo)
             } else {
               return Promise.resolve()
-            }
-          }).then(function (results) {
-            if (results && results.length) {
-              return results
-            } else if (execInfo.error) {
-              return Promise.reject(execInfo.error)
-            } else {
-              return execInfo.results
-            }
+            } })
+          .then(results => {
+            if (results && results.length) { return results }
+            return fn.apply(self, [...execInfo.args, execInfo])
+              .then(result => { execInfo.results = [result] },
+                    error => { execInfo.error = error })
+              .then(() => {
+                if (afterHook && !execInfo.bypassHooks) {
+                  return execHook(afterHook, execInfo)
+                } else {
+                  return Promise.resolve()
+                } })
+              .then(results => {
+                if (results && results.length) {
+                  return results
+                } else if (execInfo.error) {
+                  return Promise.reject(execInfo.error)
+                } else {
+                  return execInfo.results
+                }
+              })
           })
-        })
       ).asCallback(ack, { spread: true })
     }
   },
@@ -97,6 +98,7 @@ let CommandBinder = {
       return cmd(args, info, cb)
     })
   }
+
 }
 
 module.exports = CommandBinder
