@@ -6,8 +6,6 @@ const util = require('util')
 // is available as a static member of {ChatService} class. Can be used
 // to create custom error subclasses.
 
-// @private
-// @nodoc
 // TODO rewrite
 function ChatServiceError (name, ...args) {
   this.name = name
@@ -37,8 +35,6 @@ ChatServiceError.prototype.errorStrings = {
   wrongArgumentsCount: 'Expected %s arguments, got %s'
 }
 
-// @private
-// @nodoc
 ChatServiceError.prototype.toString = function () {
   let str = this.errorStrings[this.name]
   if (str) {

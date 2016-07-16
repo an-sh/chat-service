@@ -5,29 +5,32 @@ const User = require('./User')
 const _ = require('lodash')
 const { checkNameSymbols, possiblyCallback } = require('./utils')
 
-// @mixin
-// API for server side operations.
+/**
+ * @mixin
+ */
 let ServiceAPI = {
 
-  // Executes {UserCommands}.
-  //
-  // @param context [String or Boolean or Object] Is a `userName` if
-  //   String, or a `bypassPermissions` if Boolean, or an options hash if
-  //   Object.
-  // @param command [String] Command name.
-  // @param args [Rest...] Command arguments with an optional callback.
-  //
-  // @option context [String] userName User name.
-  // @option context [String] id Socket id, it is required for
-  //   {UserCommands#disconnect}, {UserCommands#roomJoin},
-  //   {UserCommands#roomLeave} commands.
-  // @option context [Boolean] bypassHooks If `false` executes command
-  //   without before and after hooks, default is `false`.
-  // @option context [Boolean] bypassPermissions If `true` executes
-  //   command (except {UserCommands#roomJoin}) bypassing any
-  //   permissions checking, default is `false`.
-  //
-  // @return [Promise<Array>] Array of command results.
+  /**
+   * Executes ClientRequests handlers.
+   *
+   * @param {string|boolean|Object} context Is a `userName` if string,
+   *   or a `bypassPermissions` if boolean, or an options hash if
+   *   Object.
+   * @param {string} command Command name.
+   * @param {...*} args Command arguments.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @property {string} context.userName User name.
+   * @property {string} context.id Socket id, it is required for
+   *   `disconnect`, `roomJoin`, `roomLeave` commands.
+   * @property {boolean} context.bypassHooks If `false` executes
+   *   command without before and after hooks, default is `false`.
+   * @property {boolean} context.bypassPermissions If `true` executes
+   *   command (except `roomJoin`) bypassing any permissions checking,
+   *   default is `false`.
+   *
+   * @return {Promise<Array>} Array of command results.
+   */
   execUserCommand (context, command, ...args) {
     if (_.isObject(context)) {
       var { userName } = context
@@ -48,18 +51,20 @@ let ServiceAPI = {
       .asCallback(cb, { spread: true })
   },
 
-  // Adds an user with a state.
-  //
-  // @param userName [String] User name.
-  // @param state [Object] User state.
-  // @param cb [Callback] Optional callback.
-  //
-  // @option state [Array<String>] whitelist User direct messages whitelist.
-  // @option state [Array<String>] blacklist User direct messages blacklist.
-  // @option state [Boolean] whitelistOnly User direct messages
-  //   whitelistOnly mode, default is `false`.
-  //
-  // @return [Promise]
+  /**
+   * Adds an user with a state.
+   *
+   * @param {string} userName User name.
+   * @param {Object} state User state.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @property {Array<string>} state.whitelist User direct messages whitelist.
+   * @property {Array<string>} state.blacklist User direct messages blacklist.
+   * @property {boolean} state.whitelistOnly User direct messages
+   *   whitelistOnly mode, default is `false`.
+   *
+   * @return {Promise<void>}
+   */
   addUser (userName, state, cb) {
     return checkNameSymbols(userName)
       .then(() => this.state.addUser(userName, state))
@@ -67,13 +72,15 @@ let ServiceAPI = {
       .asCallback(cb)
   },
 
-  // Deletes an offline user. Will raise an error if user has online
-  // sockets.
-  //
-  // @param userName [String] User name.
-  // @param cb [Callback] Optional callback.
-  //
-  // @return [Promise]
+  /**
+   * Deletes an offline user. Will raise an error if user has online
+   * sockets.
+   *
+   * @param {string} userName User name.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @return {Promise<void>}
+   */
   deleteUser (userName, cb) {
     return this.state.getUser(userName).then(user => {
       return user.listOwnSockets().then(sockets => {
@@ -82,46 +89,52 @@ let ServiceAPI = {
         } else {
           return Promise.all([
             user.removeState(),
-            this.state.removeUser(userName) // bug decaffeinate 2.16.0
+            this.state.removeUser(userName)
           ])
         }
       })
     }).return().asCallback(cb)
   },
 
-  // Checks user existence.
-  //
-  // @param userName [String] User name.
-  // @param cb [Callback] Optional callback.
-  //
-  // @return [Promise<Boolean>]
+  /**
+   * Checks user existence.
+   *
+   * @param {string} userName User name.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @return {Promise<boolean>}
+   */
   hasUser (userName, cb) {
     return this.state.getUser(userName, true)
       .then(user => Boolean(user))
       .asCallback(cb)
   },
 
-  // Checks for a name existence in an user list.
-  //
-  // @param userName [String] User name.
-  // @param listName [String] List name.
-  // @param item [String] List element.
-  // @param cb [Callback] Optional callback.
-  //
-  // @return [Promise<Boolean>]
+  /**
+   * Checks for a name existence in an user list.
+   *
+   * @param {string} userName User name.
+   * @param {string} listName List name.
+   * @param {string} item List element.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @return {Promise<boolean>}
+   */
   userHasInList (userName, listName, item, cb) {
     return this.state.getUser(userName)
       .then(user => user.directMessagingState.hasInList(listName, item))
       .asCallback(cb)
   },
 
-  // Checks for a direct messaging permission.
-  //
-  // @param recipient [String] Recipient name.
-  // @param sender [String] Sender name.
-  // @param cb [Callback] Optional callback.
-  //
-  // @return [Promise<Boolean>]
+  /**
+   * Checks for a direct messaging permission.
+   *
+   * @param {string} recipient Recipient name.
+   * @param {string} sender Sender name.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @return {Promise<boolean>}
+   */
   hasDirectAccess (recipient, sender, cb) {
     return this.state.getUser(recipient)
       .then(user => user.checkAcess(sender))
@@ -130,29 +143,33 @@ let ServiceAPI = {
       .asCallback(cb)
   },
 
-  // Disconnects user's sockets for all service instances. Method is
-  // asynchronous, returns without waiting for the completion.
-  //
-  // @param userName [String] User name.
+  /**
+   * Disconnects user's sockets for all service instances. Method is
+   * asynchronous, returns without waiting for the completion.
+   *
+   * @param {string} userName User name.
+   */
   disconnectUserSockets (userName) {
     return this.clusterBus.emit('disconnectUserSockets', userName)
   },
 
-  // Adds a room with a state.
-  //
-  // @param roomName [String] Room name.
-  // @param state [Object] Room state.
-  // @param cb [Callback] Optional callback.
-  //
-  // @option state [Array<String>] whitelist Room whitelist.
-  // @option state [Array<String>] blacklist Room blacklist
-  // @option state [Array<String>] adminlist Room adminlist.
-  // @option state [Boolean] whitelistOnly Room whitelistOnly mode,
-  //   default is `false`.
-  // @option state [String] owner Room owner.
-  // @option state [Integer] historyMaxSize Room history maximum size.
-  //
-  // @return [Promise]
+  /**
+   * Adds a room with a state.
+   *
+   * @param {string} roomName Room name.
+   * @param {Object} state Room state.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @property {Array<string>} state.whitelist Room whitelist.
+   * @property {Array<string>} state.blacklist Room blacklist
+   * @property {Array<string>} state.adminlist Room adminlist.
+   * @property {boolean} state.whitelistOnly Room whitelistOnly mode,
+   *   default is `false`.
+   * @property {string} state.owner Room owner.
+   * @property {Integer} state.historyMaxSize Room history maximum size.
+   *
+   * @return {Promise<void>}
+   */
   addRoom (roomName, state, cb) {
     return checkNameSymbols(roomName)
       .then(() => this.state.addRoom(roomName, state))
@@ -160,51 +177,59 @@ let ServiceAPI = {
       .asCallback(cb)
   },
 
-  // Removes all room data, and removes joined user from the room.
-  //
-  // @param roomName [String] Room name.
-  // @param cb [Callback] Optional callback.
-  //
-  // @return [Promise]
+  /**
+   * Removes all room data, and removes joined user from the room.
+   *
+   * @param {string} roomName Room name.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @return {Promise<void>}
+   */
   deleteRoom (roomName, cb) {
     return this.execUserCommand(true, 'roomDelete', roomName)
       .return()
       .asCallback(cb)
   },
 
-  // Checks room existence.
-  //
-  // @param roomName [String] Room name.
-  // @param cb [Callback] Optional callback.
-  //
-  // @return [Promise<Boolean>]
+  /**
+   * Checks room existence.
+   *
+   * @param {string} roomName Room name.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @return {Promise<boolean>}
+   */
   hasRoom (roomName, cb) {
     return this.state.getRoom(roomName, true)
       .then((room) => Boolean(room))
       .asCallback(cb)
   },
 
-  // Checks for a name existence in a room list.
-  //
-  // @param roomName [String] Room name.
-  // @param listName [String] List name.
-  // @param item [String] List element.
-  // @param cb [Callback] Optional callback.
-  //
-  // @return [Promise<Boolean>]
+  /**
+   * Checks for a name existence in a room list.
+   *
+   * @param {string} roomName Room name.
+   * @param {string} listName List name.
+   * @param {string} item List element.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @return {Promise<boolean>}
+   */
   roomHasInList (roomName, listName, item, cb) {
     return this.state.getRoom(roomName)
       .then(room => room.roomState.hasInList(listName, item))
       .asCallback(cb)
   },
 
-  // Checks for a room access permission.
-  //
-  // @param roomName [String] Room name.
-  // @param userName [String] User name.
-  // @param cb [Callback] Optional callback.
-  //
-  // @return [Promise<Boolean>]
+  /**
+   * Checks for a room access permission.
+   *
+   * @param {string} roomName Room name.
+   * @param {string} userName User name.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @return {Promise<boolean>}
+   */
   hasRoomAccess (roomName, userName, cb) {
     return this.state.getRoom(roomName)
       .then(room => room.checkAcess(userName))
@@ -213,13 +238,15 @@ let ServiceAPI = {
       .asCallback(cb)
   },
 
-  // Changes a room owner.
-  //
-  // @param roomName [String] Room name.
-  // @param owner [String] Owner user name.
-  // @param cb [Callback] Optional callback.
-  //
-  // @return [Promise]
+  /**
+   * Changes a room owner.
+   *
+   * @param {string} roomName Room name.
+   * @param {string} owner Owner user name.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @return {Promise<void>}
+   */
   changeRoomOwner (roomName, owner, cb) {
     return this.state.getRoom(roomName)
       .then(room => room.roomState.ownerSet(owner))
@@ -227,19 +254,22 @@ let ServiceAPI = {
       .asCallback(cb)
   },
 
-  // Changes a room history size.
-  //
-  // @param roomName [String] Room name.
-  // @param size [Integer] Room history size.
-  // @param cb [Callback] Optional callback.
-  //
-  // @return [Promise]
+  /**
+   * Changes a room history size.
+   *
+   * @param {string} roomName Room name.
+   * @param {Integer} size Room history size.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @return {Promise<void>}
+   */
   changeRoomHistoryMaxSize (roomName, size, cb) {
     return this.state.getRoom(roomName)
       .then(room => room.roomState.historyMaxSizeSet(size))
       .return()
       .asCallback(cb)
   }
+
 }
 
 module.exports = ServiceAPI

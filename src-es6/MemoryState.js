@@ -11,8 +11,6 @@ const promiseRetry = require('promise-retry')
 const uid = require('uid-safe')
 const { mix } = require('./utils')
 
-// @private
-// @nodoc
 let initState = function (state, values) {
   if (state) {
     state.clear()
@@ -24,11 +22,8 @@ let initState = function (state, values) {
 
 // Memory lock operations.
 // @mixin
-// @private
-// @nodoc
 let lockOperations = {
 
-  // @private
   lock (key, val, ttl) {
     return promiseRetry(
       {minTimeout: 100, retries: 10, factor: 1.5, randomize: true},
@@ -44,7 +39,6 @@ let lockOperations = {
     )
   },
 
-  // @private
   unlock (key, val) {
     let currentVal = this.locks.get(key)
     if (currentVal === val) {
@@ -56,11 +50,8 @@ let lockOperations = {
 }
 
 // Implements state API lists management.
-// @private
-// @nodoc
 class ListsStateMemory {
 
-  // @private
   checkList (listName) {
     if (!this.hasList(listName)) {
       let error = new ChatServiceError('noList', listName)
@@ -70,7 +61,6 @@ class ListsStateMemory {
     }
   }
 
-  // @private
   addToList (listName, elems) {
     return this.checkList(listName).then(() => {
       this[listName].addEach(elems)
@@ -78,7 +68,6 @@ class ListsStateMemory {
     })
   }
 
-  // @private
   removeFromList (listName, elems) {
     return this.checkList(listName).then(() => {
       this[listName].deleteEach(elems)
@@ -86,7 +75,6 @@ class ListsStateMemory {
     })
   }
 
-  // @private
   getList (listName) {
     return this.checkList(listName).then(() => {
       let data = this[listName].toArray()
@@ -94,7 +82,6 @@ class ListsStateMemory {
     })
   }
 
-  // @private
   hasInList (listName, elem) {
     return this.checkList(listName).then(() => {
       let data = this[listName].has(elem)
@@ -103,13 +90,11 @@ class ListsStateMemory {
     })
   }
 
-  // @private
   whitelistOnlySet (mode) {
     this.whitelistOnly = Boolean(mode)
     return Promise.resolve()
   }
 
-  // @private
   whitelistOnlyGet () {
     return Promise.resolve(this.whitelistOnly)
   }
@@ -117,11 +102,8 @@ class ListsStateMemory {
 }
 
 // Implements room state API.
-// @private
-// @nodoc
 class RoomStateMemory extends ListsStateMemory {
 
-  // @private
   constructor (server, name) {
     super()
     this.server = server
@@ -141,7 +123,6 @@ class RoomStateMemory extends ListsStateMemory {
     this.owner = null
   }
 
-  // @private
   initState (state = {}) {
     let { whitelist, blacklist, adminlist,
           whitelistOnly, owner, historyMaxSize } = state
@@ -157,34 +138,28 @@ class RoomStateMemory extends ListsStateMemory {
     return this.historyMaxSizeSet(historyMaxSize)
   }
 
-  // @private
   removeState () {
     return Promise.resolve()
   }
 
-  // @private
   startRemoving () {
     return Promise.resolve()
   }
 
-  // @private
   hasList (listName) {
     return listName === 'adminlist' || listName === 'whitelist' ||
       listName === 'blacklist' || listName === 'userlist'
   }
 
-  // @private
   ownerGet () {
     return Promise.resolve(this.owner)
   }
 
-  // @private
   ownerSet (owner) {
     this.owner = owner
     return Promise.resolve()
   }
 
-  // @private
   historyMaxSizeSet (historyMaxSize) {
     if (_.isNumber(historyMaxSize) && historyMaxSize >= 0) {
       this.historyMaxSize = historyMaxSize
@@ -192,7 +167,6 @@ class RoomStateMemory extends ListsStateMemory {
     return Promise.resolve()
   }
 
-  // @private
   historyInfo () {
     let historySize = this.messagesHistory.length
     let info = {
@@ -204,7 +178,6 @@ class RoomStateMemory extends ListsStateMemory {
     return Promise.resolve(info)
   }
 
-  // @private
   getCommonUsers () {
     let nonWL = this.userlist.difference(this.whitelist)
     let nonAdmin = nonWL.difference(this.adminlist)
@@ -212,7 +185,6 @@ class RoomStateMemory extends ListsStateMemory {
     return Promise.resolve(data)
   }
 
-  // @private
   messageAdd (msg) {
     let timestamp = _.now()
     this.lastMessageId++
@@ -235,7 +207,6 @@ class RoomStateMemory extends ListsStateMemory {
     return makeResult()
   }
 
-  // @private
   messagesGetRecent () {
     let msgs = this.messagesHistory.slice(0, this.historyMaxGetMessages)
     let tss = this.messagesTimestamps.slice(0, this.historyMaxGetMessages)
@@ -251,7 +222,6 @@ class RoomStateMemory extends ListsStateMemory {
     return Promise.resolve(data)
   }
 
-  // @private
   messagesGet (id, maxMessages = this.historyMaxGetMessages) {
     if (maxMessages <= 0) { return Promise.resolve([]) }
     id = _.max([0, id])
@@ -274,14 +244,12 @@ class RoomStateMemory extends ListsStateMemory {
     return Promise.resolve(msgs)
   }
 
-  // @private
   userSeenGet (userName) {
     let joined = Boolean(this.userlist.get(userName))
     let timestamp = this.usersseen.get(userName) || null
     return Promise.resolve({joined, timestamp})
   }
 
-  // @private
   userSeenUpdate (userName) {
     let timestamp = _.now()
     this.usersseen.set(userName, timestamp)
@@ -291,11 +259,8 @@ class RoomStateMemory extends ListsStateMemory {
 }
 
 // Implements direct messaging state API.
-// @private
-// @nodoc
 class DirectMessagingStateMemory extends ListsStateMemory {
 
-  // @private
   constructor (server, userName) {
     super()
     this.server = server
@@ -305,7 +270,6 @@ class DirectMessagingStateMemory extends ListsStateMemory {
     this.blacklist = new FastSet()
   }
 
-  // @private
   initState ({ whitelist, blacklist, whitelistOnly } = {}) {
     initState(this.whitelist, whitelist)
     initState(this.blacklist, blacklist)
@@ -313,12 +277,10 @@ class DirectMessagingStateMemory extends ListsStateMemory {
     return Promise.resolve()
   }
 
-  // @private
   removeState () {
     return Promise.resolve()
   }
 
-  // @private
   hasList (listName) {
     return listName === 'whitelist' || listName === 'blacklist'
   }
@@ -326,11 +288,8 @@ class DirectMessagingStateMemory extends ListsStateMemory {
 }
 
 // Implements user state API.
-// @private
-// @nodoc
 class UserStateMemory {
 
-  // @private
   constructor (server, userName) {
     this.server = server
     this.userName = userName
@@ -341,12 +300,10 @@ class UserStateMemory {
     this.echoChannel = this.makeEchoChannelName(this.userName)
   }
 
-  // @private
   makeEchoChannelName (userName) {
     return `echo:${userName}`
   }
 
-  // @private
   addSocket (id, uid) {
     let roomsset = new FastSet()
     this.socketsToRooms.set(id, roomsset)
@@ -355,26 +312,22 @@ class UserStateMemory {
     return Promise.resolve(nconnected)
   }
 
-  // @private
   getAllSockets () {
     let sockets = this.socketsToRooms.keysArray()
     return Promise.resolve(sockets)
   }
 
-  // @private
   getSocketsToInstance () {
     let data = this.socketsToInstances.toObject()
     return Promise.resolve(data)
   }
 
-  // @private
   getRoomToSockets (roomName) {
     let socketsset = this.roomsToSockets.get(roomName)
     let data = (socketsset && socketsset.toObject()) || {}
     return Promise.resolve(data)
   }
 
-  // @private
   getSocketsToRooms () {
     let result = {}
     let sockets = this.socketsToRooms.keysArray()
@@ -386,7 +339,6 @@ class UserStateMemory {
     return Promise.resolve(result)
   }
 
-  // @private
   addSocketToRoom (id, roomName) {
     let roomsset = this.socketsToRooms.get(id)
     let socketsset = this.roomsToSockets.get(roomName)
@@ -400,7 +352,6 @@ class UserStateMemory {
     return Promise.resolve(njoined)
   }
 
-  // @private
   removeSocketFromRoom (id, roomName) {
     let roomsset = this.socketsToRooms.get(id)
     let socketsset = this.roomsToSockets.get(roomName)
@@ -414,7 +365,6 @@ class UserStateMemory {
     return Promise.resolve(njoined)
   }
 
-  // @private
   removeAllSocketsFromRoom (roomName) {
     let sockets = this.socketsToRooms.keysArray()
     let socketsset = this.roomsToSockets.get(roomName)
@@ -431,7 +381,6 @@ class UserStateMemory {
     return Promise.resolve(removedSockets)
   }
 
-  // @private
   removeSocket (id) {
     let roomsset = this.socketsToRooms.get(id)
     let removedRooms = (roomsset && roomsset.toArray()) || []
@@ -449,7 +398,6 @@ class UserStateMemory {
     return Promise.resolve([ removedRooms, joinedSockets, nconnected ])
   }
 
-  // @private
   lockToRoom (roomName, ttl) {
     return uid(18).then(val => {
       let start = _.now()
@@ -470,11 +418,8 @@ class UserStateMemory {
 mix(UserStateMemory, lockOperations)
 
 // Implements global state API.
-// @private
-// @nodoc
 class MemoryState {
 
-  // @private
   constructor (server, options = {}) {
     this.server = server
     this.options = options
@@ -490,13 +435,11 @@ class MemoryState {
     this.lockTTL = this.options.lockTTL || 5000
   }
 
-  // @private
   close () {
     this.closed = true
     return Promise.resolve()
   }
 
-  // @private
   getRoom (name, isPredicate = false) {
     let r = this.rooms.get(name)
     if (!r) {
@@ -510,7 +453,6 @@ class MemoryState {
     return Promise.resolve(r)
   }
 
-  // @private
   addRoom (name, state) {
     let room = new Room(this.server, name)
     if (!this.rooms.get(name)) {
@@ -526,49 +468,41 @@ class MemoryState {
     }
   }
 
-  // @private
   removeRoom (name) {
     this.rooms.delete(name)
     return Promise.resolve()
   }
 
-  // @private
   addSocket (id, userName) {
     this.sockets.set(id, userName)
     return Promise.resolve()
   }
 
-  // @private
   removeSocket (id) {
     this.sockets.delete(id)
     return Promise.resolve()
   }
 
-  // @private
   getInstanceSockets (uid) {
     return Promise.resolve(this.sockets.toObject())
   }
 
-  // @private
   updateHeartbeat () {
     this.heartbeatStamp = _.now()
     return Promise.resolve()
   }
 
-  // @private
   getInstanceHeartbeat (uid = this.instanceUID) {
     if (uid !== this.instanceUID) { return null }
     return Promise.resolve(this.heartbeatStamp)
   }
 
-  // @private
   getOrAddUser (name, state) {
     let user = this.users.get(name)
     if (user) { return Promise.resolve(user) }
     return this.addUser(name, state)
   }
 
-  // @private
   getUser (name, isPredicate = false) {
     let user = this.users.get(name)
     if (!user) {
@@ -583,7 +517,6 @@ class MemoryState {
     }
   }
 
-  // @private
   addUser (name, state) {
     let user = this.users.get(name)
     if (user) {
@@ -599,7 +532,6 @@ class MemoryState {
     }
   }
 
-  // @private
   removeUser (name) {
     this.users.delete(name)
     return Promise.resolve()

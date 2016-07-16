@@ -2,13 +2,11 @@
 const Promise = require('bluebird')
 const _ = require('lodash')
 
-// @mixin
-// API for a service state recovery.
-// @see ChatServiceEvents
+/**
+ * @mixin
+ */
 let RecoveryAPI = {
 
-  // @private
-  // @nodoc
   checkUserSockets (user) {
     let { userName } = user
     return user.userState.getSocketsToInstance().then(sockets => {
@@ -40,8 +38,6 @@ let RecoveryAPI = {
     })
   },
 
-  // @private
-  // @nodoc
   checkRoomJoined (room) {
     let { roomName } = room
     return room.getList(null, 'userlist', true).then(userlist => {
@@ -61,36 +57,42 @@ let RecoveryAPI = {
     })
   },
 
-  // Sync user to sockets associations.
-  //
-  // @param userName [String] User name.
-  // @param cb [Callback] Optional callback.
-  //
-  // @return [Promise]
+  /**
+   * Sync user to sockets associations.
+   *
+   * @param {string} userName User name.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @return {Promise<void>}
+   */
   userStateSync (userName, cb) {
     return this.state.getUser(userName)
       .then(user => this.checkUserSockets(user))
       .asCallback(cb)
   },
 
-  // Sync room to users associations.
-  //
-  // @param roomName [String] Room name.
-  // @param cb [Callback] Optional callback.
-  //
-  // @return [Promise]
+  /**
+   * Sync room to users associations.
+   *
+   * @param {string} roomName Room name.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @return {Promise<void>}
+   */
   roomStateSync (roomName, cb) {
     return this.state.getRoom(roomName)
       .then(room => this.checkRoomJoined(room))
       .asCallback(cb)
   },
 
-  // Fix instance data after an incorrect service shutdown.
-  //
-  // @param id [String] Instance id.
-  // @param cb [Callback] Optional callback.
-  //
-  // @return [Promise]
+  /**
+   * Fix instance data after an incorrect service shutdown.
+   *
+   * @param {string} id Instance id.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @return {Promise<void>}
+   */
   instanceRecovery (id, cb) {
     return this.state.getInstanceSockets(id).then(sockets => {
       return Promise.each(_.toPairs(sockets), ([id, userName]) => {
@@ -100,12 +102,14 @@ let RecoveryAPI = {
     }).asCallback(cb)
   },
 
-  // Get instance heartbeat.
-  //
-  // @param id [String] Instance id.
-  // @param cb [Callback] Optional callback.
-  //
-  // @return [Promise<Number>] Heartbeat timestamp.
+  /**
+   * Get instance heartbeat.
+   *
+   * @param {string} id Instance id.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @return {Promise<integer>} Heartbeat timestamp.
+   */
   getInstanceHeartbeat (id, cb) {
     return this.state.getInstanceHeartbeat(id).asCallback(cb)
   }

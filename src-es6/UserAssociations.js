@@ -3,57 +3,47 @@ const Promise = require('bluebird')
 const eventToPromise = require('event-to-promise')
 const { asyncLimit } = require('./utils')
 
-// @private
-// @nodoc
 // @mixin
 //
 // Associations for User class.
 let UserAssociations = {
 
-  // @private
   userJoinRoomReport (userName, roomName) {
     return this.transport.emitToChannel(
       roomName, 'roomUserJoined', roomName, userName)
   },
 
-  // @private
   userLeftRoomReport (userName, roomName) {
     return this.transport.emitToChannel(
       roomName, 'roomUserLeft', roomName, userName)
   },
 
-  // @private
   userRemovedReport (userName, roomName) {
     this.transport.emitToChannel(
       this.echoChannel, 'roomAccessRemoved', roomName)
     return this.userLeftRoomReport(userName, roomName)
   },
 
-  // @private
   socketJoinEcho (id, roomName, njoined) {
     return this.transport.sendToChannel(
       id, this.echoChannel, 'roomJoinedEcho', roomName, id, njoined)
   },
 
-  // @private
   socketLeftEcho (id, roomName, njoined) {
     return this.transport.sendToChannel(
       id, this.echoChannel, 'roomLeftEcho', roomName, id, njoined)
   },
 
-  // @private
   socketConnectEcho (id, nconnected) {
     return this.transport.sendToChannel(
       id, this.echoChannel, 'socketConnectEcho', id, nconnected)
   },
 
-  // @private
   socketDisconnectEcho (id, nconnected) {
     return this.transport.sendToChannel(
       id, this.echoChannel, 'socketDisconnectEcho', id, nconnected)
   },
 
-  // @private
   leaveChannel (id, channel) {
     return this.transport.leaveChannel(id, channel).catch(e => {
       let info = { roomName: channel, id, opType: 'transportChannel' }
@@ -61,7 +51,6 @@ let UserAssociations = {
     })
   },
 
-  // @private
   socketLeaveChannels (id, channels) {
     return Promise.map(
       channels,
@@ -69,7 +58,6 @@ let UserAssociations = {
       { concurrency: asyncLimit })
   },
 
-  // @private
   leaveChannelMessage (id, channel) {
     let bus = this.transport.clusterBus
     return Promise.try(() => {
@@ -78,7 +66,6 @@ let UserAssociations = {
     }).timeout(this.server.busAckTimeout).catchReturn()
   },
 
-  // @private
   channelLeaveSockets (channel, ids) {
     return Promise.map(
       ids,
@@ -86,7 +73,6 @@ let UserAssociations = {
       { concurrency: asyncLimit })
   },
 
-  // @private
   rollbackRoomJoin (error, roomName, id) {
     return this.userState.removeSocketFromRoom(id, roomName).catch(e => {
       this.consistencyFailure(e, { roomName, opType: 'userRooms' })
@@ -100,7 +86,6 @@ let UserAssociations = {
     }).thenThrow(error)
   },
 
-  // @private
   leaveRoom (roomName) {
     return Promise
       .try(() => this.state.getRoom(roomName))
@@ -111,7 +96,6 @@ let UserAssociations = {
       })
   },
 
-  // @private
   joinSocketToRoom (id, roomName) {
     let lock = this.userState.lockToRoom(roomName, this.lockTTL)
     return Promise.using(lock, () => {
@@ -130,7 +114,6 @@ let UserAssociations = {
     })
   },
 
-  // @private
   leaveSocketFromRoom (id, roomName) {
     let lock = this.userState.lockToRoom(roomName, this.lockTTL)
     return Promise.using(lock, () => {
@@ -148,7 +131,6 @@ let UserAssociations = {
     })
   },
 
-  // @private
   removeUserSocket (id) {
     return this.userState.removeSocket(id)
       .spread((roomsRemoved, joinedSockets, nconnected) => {
@@ -174,7 +156,6 @@ let UserAssociations = {
       }).then(() => this.state.removeSocket(id))
   },
 
-  // @private
   removeSocketFromServer (id) {
     return this.removeUserSocket(id).catch(e => {
       let info = { id, opType: 'userSockets' }
@@ -182,7 +163,6 @@ let UserAssociations = {
     })
   },
 
-  // @private
   removeUserSocketsFromRoom (roomName) {
     return this.userState.removeAllSocketsFromRoom(roomName).catch(e => {
       let info = { roomName, opType: 'roomUserlist' }
@@ -190,7 +170,6 @@ let UserAssociations = {
     })
   },
 
-  // @private
   removeFromRoom (roomName) {
     let lock = this.userState.lockToRoom(roomName, this.lockTTL)
     return Promise.using(lock, () => {
@@ -206,7 +185,6 @@ let UserAssociations = {
     })
   },
 
-  // @private
   removeRoomUsers (roomName, userNames) {
     userNames = userNames || []
     return Promise.map(

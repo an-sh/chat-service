@@ -32,8 +32,6 @@ class ExecInfo {
   //   command arguments. Can be used as additional hooks parameters.
   // restArgs = []
 
-  // @private
-  // @nodoc
   constructor () {
     this.server = null
     this.userName = null

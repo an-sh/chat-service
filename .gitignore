@@ -1,8 +1,8 @@
 
 *.log
 logs
-doc
-coverage
+/docs
+/coverage
 node_modules
 npm-debug.log
-lib
+/lib

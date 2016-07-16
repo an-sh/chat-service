@@ -9,12 +9,8 @@ const promiseRetry = require('promise-retry')
 const uid = require('uid-safe')
 const { mix } = require('./utils')
 
-// @private
-// @nodoc
 let namespace = 'chatservice'
 
-// @private
-// @nodoc
 function initSet (redis, set, values) {
   redis.del(set).then(() => {
     if (!values) {
@@ -28,11 +24,8 @@ function initSet (redis, set, values) {
 
 // State init/remove operations.
 // @mixin
-// @private
-// @nodoc
 let stateOperations = {
 
-  // @private
   initState (state) {
     return this.redis.setnx(this.makeKeyName('exists'), true).then(isnew => {
       if (!isnew) {
@@ -45,7 +38,6 @@ let stateOperations = {
       .then(() => this.redis.setnx(this.makeKeyName('isInit'), true))
   },
 
-  // @private
   removeState () {
     return this.stateReset().then(() => {
       return this.redis.del(
@@ -53,7 +45,6 @@ let stateOperations = {
     })
   },
 
-  // @private
   startRemoving () {
     return this.redis.del(this.makeKeyName('isInit'))
   }
@@ -62,11 +53,8 @@ let stateOperations = {
 
 // Redis lock operations.
 // @mixin
-// @private
-// @nodoc
 let lockOperations = {
 
-  // @private
   lock (key, val, ttl) {
     return promiseRetry(
       {minTimeout: 100, retries: 10, factor: 1.5, randomize: true}
@@ -82,7 +70,6 @@ let lockOperations = {
       })
   },
 
-  // @private
   unlock (key, val) {
     return this.redis.unlock(key, val)
   }
@@ -90,8 +77,6 @@ let lockOperations = {
 }
 
 // Redis scripts.
-// @private
-// @nodoc
 let luaCommands = {
   unlock: {
     numberOfKeys: 1,
@@ -248,16 +233,12 @@ return {jsonResult}`
 }
 
 // Implements state API lists management.
-// @private
-// @nodoc
 class ListsStateRedis {
 
-  // @private
   makeKeyName (keyName) {
     return `${namespace}:${this.prefix}:{${this.name}}:${keyName}`
   }
 
-  // @private
   checkList (listName) {
     if (!this.hasList(listName)) {
       let error = new ChatServiceError('noList', listName)
@@ -266,38 +247,32 @@ class ListsStateRedis {
     return Promise.resolve()
   }
 
-  // @private
   addToList (listName, elems) {
     return this.checkList(listName)
       .then(() => this.redis.sadd(this.makeKeyName(listName), elems))
   }
 
-  // @private
   removeFromList (listName, elems) {
     return this.checkList(listName)
       .then(() => this.redis.srem(this.makeKeyName(listName), elems))
   }
 
-  // @private
   getList (listName) {
     return this.checkList(listName)
       .then(() => this.redis.smembers(this.makeKeyName(listName)))
   }
 
-  // @private
   hasInList (listName, elem) {
     return this.checkList(listName)
       .then(() => this.redis.sismember(this.makeKeyName(listName), elem))
       .then(data => Promise.resolve(Boolean(data)))
   }
 
-  // @private
   whitelistOnlySet (mode) {
     let whitelistOnly = mode ? true : ''
     return this.redis.set(this.makeKeyName('whitelistMode'), whitelistOnly)
   }
 
-  // @private
   whitelistOnlyGet () {
     return this.redis.get(this.makeKeyName('whitelistMode'))
       .then(data => Promise.resolve(Boolean(data)))
@@ -306,11 +281,8 @@ class ListsStateRedis {
 }
 
 // Implements room state API.
-// @private
-// @nodoc
 class RoomStateRedis extends ListsStateRedis {
 
-  // @private
   constructor (server, roomName) {
     super()
     this.server = server
@@ -322,7 +294,6 @@ class RoomStateRedis extends ListsStateRedis {
     this.prefix = 'rooms'
   }
 
-  // @private
   stateReset (state) {
     state = state || {}
     let { whitelist, blacklist, adminlist,
@@ -345,23 +316,19 @@ class RoomStateRedis extends ListsStateRedis {
     ]).return()
   }
 
-  // @private
   hasList (listName) {
     return listName === 'adminlist' || listName === 'whitelist' ||
       listName === 'blacklist' || listName === 'userlist'
   }
 
-  // @private
   ownerGet () {
     return this.redis.get(this.makeKeyName('owner'))
   }
 
-  // @private
   ownerSet (owner) {
     return this.redis.set(this.makeKeyName('owner'), owner)
   }
 
-  // @private
   historyMaxSizeSet (historyMaxSize) {
     if (_.isNumber(historyMaxSize) && historyMaxSize >= 0) {
       return this.redis.set(this.makeKeyName('historyMaxSize'), historyMaxSize)
@@ -371,7 +338,6 @@ class RoomStateRedis extends ListsStateRedis {
     }
   }
 
-  // @private
   historyInfo () {
     return this.redis.multi()
       .get(this.makeKeyName('historyMaxSize'))
@@ -390,14 +356,12 @@ class RoomStateRedis extends ListsStateRedis {
       })
   }
 
-  // @private
   getCommonUsers () {
     return this.redis.sdiff(this.makeKeyName('userlist'),
                             this.makeKeyName('whitelist'),
                             this.makeKeyName('adminlist'))
   }
 
-  // @private
   messageAdd (msg) {
     let timestamp = _.now()
     let smsg = JSON.stringify(msg)
@@ -412,7 +376,6 @@ class RoomStateRedis extends ListsStateRedis {
       })
   }
 
-  // @private
   convertMessages (msgs, tss, ids) {
     let data = []
     if (!msgs) {
@@ -434,7 +397,6 @@ class RoomStateRedis extends ListsStateRedis {
     return Promise.resolve(data)
   }
 
-  // @private
   messagesGetRecent () {
     if (this.historyMaxGetMessages <= 0) { return Promise.resolve([]) }
     let limit = this.historyMaxGetMessages - 1
@@ -448,7 +410,6 @@ class RoomStateRedis extends ListsStateRedis {
       })
   }
 
-  // @private
   messagesGet (id, maxMessages = this.historyMaxGetMessages) {
     if (maxMessages <= 0) { return Promise.resolve([]) }
     id = _.max([0, id])
@@ -461,7 +422,6 @@ class RoomStateRedis extends ListsStateRedis {
       })
   }
 
-  // @private
   userSeenGet (userName) {
     return this.redis.multi()
       .hget(this.makeKeyName('usersseen'), userName)
@@ -474,7 +434,6 @@ class RoomStateRedis extends ListsStateRedis {
       })
   }
 
-  // @private
   userSeenUpdate (userName) {
     let timestamp = _.now()
     return this.redis.hset(this.makeKeyName('usersseen'), userName, timestamp)
@@ -484,11 +443,8 @@ class RoomStateRedis extends ListsStateRedis {
 mix(RoomStateRedis, stateOperations)
 
 // Implements direct messaging state API.
-// @private
-// @nodoc
 class DirectMessagingStateRedis extends ListsStateRedis {
 
-  // @private
   constructor (server, userName) {
     super()
     this.server = server
@@ -499,12 +455,10 @@ class DirectMessagingStateRedis extends ListsStateRedis {
     this.redis = this.server.redis
   }
 
-  // @private
   hasList (listName) {
     return listName === 'whitelist' || listName === 'blacklist'
   }
 
-  // @private
   stateReset (state) {
     state = state || {}
     let { whitelist, blacklist, whitelistOnly } = state
@@ -521,11 +475,8 @@ class DirectMessagingStateRedis extends ListsStateRedis {
 mix(DirectMessagingStateRedis, stateOperations)
 
 // Implements user state API.
-// @private
-// @nodoc
 class UserStateRedis {
 
-  // @private
   constructor (server, userName) {
     this.server = server
     this.userName = userName
@@ -535,32 +486,26 @@ class UserStateRedis {
     this.echoChannel = this.makeEchoChannelName(this.userName)
   }
 
-  // @private
   makeKeyName (keyName) {
     return `${namespace}:${this.prefix}:{${this.name}}:${keyName}`
   }
 
-  // @private
   makeSocketToRooms (id = '') {
     return this.makeKeyName(`socketsToRooms:${id}`)
   }
 
-  // @private
   makeRoomToSockets (room = '') {
     return this.makeKeyName(`roomsToSockets:${room}`)
   }
 
-  // @private
   makeRoomLock (room = '') {
     return this.makeKeyName(`roomLock:${room}`)
   }
 
-  // @private
   makeEchoChannelName (userName) {
     return `echo:${userName}`
   }
 
-  // @private
   addSocket (id, uid) {
     return this.redis.multi()
       .hset(this.makeKeyName('sockets'), id, uid)
@@ -569,22 +514,18 @@ class UserStateRedis {
       .spread((_0, [_1, nconnected]) => Promise.resolve(nconnected))
   }
 
-  // @private
   getAllSockets () {
     return this.redis.hkeys(this.makeKeyName('sockets'))
   }
 
-  // @private
   getSocketsToInstance () {
     return this.redis.hgetall(this.makeKeyName('sockets'))
   }
 
-  // @private
   getRoomToSockets (roomName) {
     return this.redis.smembers(this.makeRoomToSockets(roomName))
   }
 
-  // @private
   getSocketsToRooms () {
     return this.redis.getSocketsToRooms(
       this.makeKeyName('sockets'), this.makeSocketToRooms())
@@ -600,7 +541,6 @@ class UserStateRedis {
       })
   }
 
-  // @private
   addSocketToRoom (id, roomName) {
     return this.redis.multi()
       .sadd(this.makeSocketToRooms(id), roomName)
@@ -610,7 +550,6 @@ class UserStateRedis {
       .spread((_0, _1, [_2, njoined]) => Promise.resolve(njoined))
   }
 
-  // @private
   removeSocketFromRoom (id, roomName) {
     return this.redis.multi()
       .srem(this.makeSocketToRooms(id), roomName)
@@ -620,14 +559,12 @@ class UserStateRedis {
       .spread((_0, _1, [_2, njoined]) => Promise.resolve(njoined))
   }
 
-  // @private
   removeAllSocketsFromRoom (roomName) {
     return this.redis.removeAllSocketsFromRoom(
       this.makeRoomToSockets(roomName), this.makeSocketToRooms(), roomName)
       .spread(result => Promise.resolve(JSON.parse(result)))
   }
 
-  // @private
   removeSocket (id) {
     return this.redis.removeSocket(
       this.makeSocketToRooms(id), this.makeKeyName('sockets'),
@@ -635,7 +572,6 @@ class UserStateRedis {
       .spread(result => Promise.resolve(JSON.parse(result)))
   }
 
-  // @private
   lockToRoom (roomName, ttl) {
     return uid(18).then(val => {
       let start = _.now()
@@ -656,11 +592,8 @@ class UserStateRedis {
 mix(UserStateRedis, lockOperations)
 
 // Implements global state API.
-// @private
-// @nodoc
 class RedisState {
 
-  // @private
   constructor (server, options = {}) {
     this.server = server
     this.options = options
@@ -686,28 +619,23 @@ class RedisState {
     }
   }
 
-  // @private
   makeKeyName (prefix, name, keyName) {
     return `${namespace}:${prefix}:{${name}}:${keyName}`
   }
 
-  // @private
   hasRoom (name) {
     return this.redis.get(this.makeKeyName('rooms', name, 'isInit'))
   }
 
-  // @private
   hasUser (name) {
     return this.redis.get(this.makeKeyName('users', name, 'isInit'))
   }
 
-  // @private
   close () {
     this.closed = true
     return this.redis.quit().return()
   }
 
-  // @private
   getRoom (name, isPredicate = false) {
     let room = new Room(this.server, name)
     return this.hasRoom(name).then(exists => {
@@ -723,48 +651,40 @@ class RedisState {
     })
   }
 
-  // @private
   addRoom (name, state) {
     let room = new Room(this.server, name)
     return room.initState(state).return(room)
   }
 
-  // @private
   removeRoom (name) {
     return Promise.resolve()
   }
 
-  // @private
   addSocket (id, userName) {
     return this.redis.hset(
       this.makeKeyName('instances', this.instanceUID, 'sockets'), id, userName)
   }
 
-  // @private
   removeSocket (id) {
     return this.redis.hdel(
       this.makeKeyName('instances', this.instanceUID, 'sockets'), id)
   }
 
-  // @private
   getInstanceSockets (uid = this.instanceUID) {
     return this.redis.hgetall(this.makeKeyName('instances', uid, 'sockets'))
   }
 
-  // @private
   updateHeartbeat () {
     return this.redis.set(
       this.makeKeyName('instances', this.instanceUID, 'heartbeat'), _.now())
       .catchReturn()
   }
 
-  // @private
   getInstanceHeartbeat (uid = this.instanceUID) {
     return this.redis.get(this.makeKeyName('instances', uid, 'heartbeat'))
       .then(ts => ts ? parseInt(ts) : null)
   }
 
-  // @private
   getOrAddUser (name, state) {
     let user = new User(this.server, name)
     return this.hasUser(name).then(exists => {
@@ -777,7 +697,6 @@ class RedisState {
       .return(user)
   }
 
-  // @private
   getUser (name, isPredicate = false) {
     let user = new User(this.server, name)
     return this.hasUser(name).then(exists => {
@@ -793,13 +712,11 @@ class RedisState {
     })
   }
 
-  // @private
   addUser (name, state) {
     let user = new User(this.server, name)
     return user.initState(state).return(user)
   }
 
-  // @private
   removeUser (name) {
     return Promise.resolve()
   }

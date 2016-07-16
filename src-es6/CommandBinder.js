@@ -5,15 +5,12 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 const { debuglog, execHook, possiblyCallback } = require('./utils')
 
-// @private
 // @mixin
-// @nodoc
 //
 // Implements command implementation functions binding and wrapping.
 // Required existence of server in extented classes.
 let CommandBinder = {
 
-  // @private
   bindAck (cb) {
     let { useRawErrorObjects } = this.server
     return function (error, data, ...rest) {
@@ -29,7 +26,6 @@ let CommandBinder = {
     }
   },
 
-  // @private
   commandWatcher (id, name) {
     this.server.runningCommands++
     return Promise.resolve().disposer(() => {
@@ -40,7 +36,6 @@ let CommandBinder = {
     })
   },
 
-  // @private
   makeCommand (name, fn) {
     let self = this
     let { validator } = this.server
@@ -89,7 +84,6 @@ let CommandBinder = {
     }
   },
 
-  // @private
   bindCommand (id, name, fn) {
     let cmd = this.makeCommand(name, fn)
     let info = {id}

@@ -4,15 +4,13 @@ const FastMap = require('collections/fast-map')
 const Promise = require('bluebird')
 const _ = require('lodash')
 const check = require('check-types')
-const { getUserCommands, possiblyCallback } = require('./utils')
+const { possiblyCallback } = require('./utils')
 
 // Commands arguments type and count validation. Can be used for hooks
 // development, an instance of {ArgumentsValidator} implementation is
 // available as a member of {ChatService} instance.
 class ArgumentsValidator {
 
-  // @private
-  // @nodoc
   constructor (server) {
     this.server = server
     this.checkers = new FastMap()
@@ -22,7 +20,7 @@ class ArgumentsValidator {
       directMessage: [ null, this.directMessagesChecker ],
       roomMessage: [ null, this.roomMessagesChecker ]
     }
-    let commands = getUserCommands(this.server)
+    let commands = this.server.rpcRequestsNames
     for (let idx in commands) {
       let cmd = commands[idx]
       this.checkers.set(cmd, this[cmd]())
@@ -56,15 +54,11 @@ class ArgumentsValidator {
     }).asCallback(cb)
   }
 
-  // @private
-  // @nodoc
   getArgsCount (name) {
     let checker = this.checkers.get(name)
     return checker ? checker.length : 0
   }
 
-  // @private
-  // @nodoc
   splitArguments (name, oargs) {
     let nargs = this.getArgsCount(name)
     let args = _.slice(oargs, 0, nargs)
@@ -72,22 +66,16 @@ class ArgumentsValidator {
     return {args, restArgs}
   }
 
-  // @private
-  // @nodoc
   checkMessage (msg) {
     return check.object(msg) &&
       check.string(msg.textMessage) &&
       _.keys(msg).length === 1
   }
 
-  // @private
-  // @nodoc
   checkObject (obj) {
     return check.object(obj)
   }
 
-  // @private
-  // @nodoc
   checkTypes (checkers, args) {
     if (args.length !== checkers.length) {
       return new ChatServiceError('wrongArgumentsCount'
@@ -102,8 +90,6 @@ class ArgumentsValidator {
     return null
   }
 
-  // @private
-  // @nodoc
   directAddToList (listName, userNames) {
     return [
       check.string,
@@ -111,22 +97,16 @@ class ArgumentsValidator {
     ]
   }
 
-  // @private
-  // @nodoc
   directGetAccessList (listName) {
     return [
       check.string
     ]
   }
 
-  // @private
-  // @nodoc
   directGetWhitelistMode () {
     return []
   }
 
-  // @private
-  // @nodoc
   directMessage (toUser, msg) {
     return [
       check.string,
@@ -134,8 +114,6 @@ class ArgumentsValidator {
     ]
   }
 
-  // @private
-  // @nodoc
   directRemoveFromList (listName, userNames) {
     return [
       check.string,
@@ -143,30 +121,22 @@ class ArgumentsValidator {
     ]
   }
 
-  // @private
-  // @nodoc
   directSetWhitelistMode (mode) {
     return [
       check.boolean
     ]
   }
 
-  // @private
-  // @nodoc
   disconnect (reason) {
     return [
       check.string
     ]
   }
 
-  // @private
-  // @nodoc
   listOwnSockets () {
     return []
   }
 
-  // @private
-  // @nodoc
   roomAddToList (roomName, listName, userNames) {
     return [
       check.string,
@@ -175,8 +145,6 @@ class ArgumentsValidator {
     ]
   }
 
-  // @private
-  // @nodoc
   roomCreate (roomName, mode) {
     return [
       check.string,
@@ -184,16 +152,12 @@ class ArgumentsValidator {
     ]
   }
 
-  // @private
-  // @nodoc
   roomDelete (roomName) {
     return [
       check.string
     ]
   }
 
-  // @private
-  // @nodoc
   roomGetAccessList (roomName, listName) {
     return [
       check.string,
@@ -201,32 +165,24 @@ class ArgumentsValidator {
     ]
   }
 
-  // @private
-  // @nodoc
   roomGetOwner (roomName) {
     return [
       check.string
     ]
   }
 
-  // @private
-  // @nodoc
   roomGetWhitelistMode (roomName) {
     return [
       check.string
     ]
   }
 
-  // @private
-  // @nodoc
   roomRecentHistory (roomName) {
     return [
       check.string
     ]
   }
 
-  // @private
-  // @nodoc
   roomHistoryGet (roomName, id, limit) {
     return [
       check.string,
@@ -235,32 +191,24 @@ class ArgumentsValidator {
     ]
   }
 
-  // @private
-  // @nodoc
   roomHistoryInfo (roomName) {
     return [
       check.string
     ]
   }
 
-  // @private
-  // @nodoc
   roomJoin (roomName) {
     return [
       check.string
     ]
   }
 
-  // @private
-  // @nodoc
   roomLeave (roomName) {
     return [
       check.string
     ]
   }
 
-  // @private
-  // @nodoc
   roomMessage (roomName, msg) {
     return [
       check.string,
@@ -268,8 +216,6 @@ class ArgumentsValidator {
     ]
   }
 
-  // @private
-  // @nodoc
   roomRemoveFromList (roomName, listName, userNames) {
     return [
       check.string,
@@ -278,8 +224,6 @@ class ArgumentsValidator {
     ]
   }
 
-  // @private
-  // @nodoc
   roomSetWhitelistMode (roomName, mode) {
     return [
       check.string,
@@ -287,8 +231,6 @@ class ArgumentsValidator {
     ]
   }
 
-  // @private
-  // @nodoc
   roomUserSeen (roomName, userName) {
     return [
       check.string,
@@ -296,8 +238,6 @@ class ArgumentsValidator {
     ]
   }
 
-  // @private
-  // @nodoc
   systemMessage (data) {
     return [
       () => true

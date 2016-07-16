@@ -1,45 +1,59 @@
 
 const { EventEmitter } = require('events')
 
-// ChatService operational events.
-// @see RecoveryAPI
+/**
+ * @interface
+ * ChatService operational events.
+ */
 class ChatServiceEvents extends EventEmitter {
 
-  // @event ready Service is ready, state and transport are up.
-  //
-  // @event closed
-  //   Service is closed, state and transport are closed.
-  //   @param [Error or undefined] error Non-null if closed due to an error.
-  //
-  // @event storeConsistencyFailure
-  //   State store failed to be updated to reflect the current user
-  //   connections or presence state.
-  //
-  //   @param [Error] error Error.
-  //   @param [Object] operationInfo Operation details.
-  //   @option operationInfo [String] userName User name.
-  //   @option operationInfo [String] opType Operation type.
-  //   @option operationInfo [String or undefined] roomName Room name.
-  //   @option operationInfo [String or undefined] id Socket id.
-  //
-  // @event transportConsistencyFailure
-  //   Failed to teardown a transport connection.
-  //
-  //   @param [Error] error Error.
-  //   @param [Object] operationInfo Operation details.
-  //   @option operationInfo [String] userName User name.
-  //   @option operationInfo [String] opType Operation type.
-  //   @option operationInfo [String or undefined] roomName Room name.
-  //   @option operationInfo [String or undefined] id Socket id.
-  //
-  // @event lockTimeExceeded
-  //   Lock was hold longer than a lock ttl.
-  //
-  //   @param [String] id Lock id.
-  //   @param [Object] lockInfo Lock resource details.
-  //   @option lockInfo [String] userName User name.
-  //   @option lockInfo [String] roomName Room name.
-  //
+  /**
+   * Service is ready, state and transport are up.
+   * @event ChatServiceEvents#ready
+   *
+   */
+
+  /**
+   * Service is closed, state and transport are closed.
+   * @event ChatServiceEvents#closed
+   * @param {Error} [error] If was closed due to an error.
+   *
+   */
+
+  /**
+   * State store failed to be updated to reflect the current user
+   * connections or presence state
+   * @event ChatServiceEvents#storeConsistencyFailure
+   * @param {Error} error Error.
+   * @param {Object} operationInfo Operation details.
+   * @property {String} operationInfo.userName User name.
+   * @property {String} operationInfo.opType Operation type.
+   * @property {String} [operationInfo.roomName] Room name.
+   * @property {String} [operationInfo.id] Socket id.
+   */
+
+  /**
+   * Failed to teardown a transport connection.
+   * @event ChatServiceEvents#transportConsistencyFailure
+   *
+   * @param {Error} error Error.
+   * @param {Object} operationInfo Operation details.
+   * @property {String} operationInfo.userName User name.
+   * @property {String} operationInfo.opType Operation type.
+   * @property {String} [operationInfo.roomName] Room name.
+   * @property {String} [operationInfo.id] Socket id.
+   */
+
+  /**
+   * Lock was hold longer than a lock ttl.
+   * @event ChatServiceEvents#lockTimeExceeded
+   *
+   * @param {String} id Lock id.
+   * @param {Object} lockInfo Lock resource details.
+   * @property {String} [lockInfo.userName] User name.
+   * @property {String} [lockInfo.roomName] Room name.
+   */
+
 }
 
 module.exports = ChatServiceEvents

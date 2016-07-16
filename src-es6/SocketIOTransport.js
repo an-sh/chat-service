@@ -9,12 +9,9 @@ const hasBinary = require('has-binary')
 const { EventEmitter } = require('events')
 const { debuglog, execHook, checkNameSymbols } = require('./utils')
 
-// @private
-// @nodoc
 // Cluster bus.
 class ClusterBus extends EventEmitter {
 
-  // @private
   constructor (server, adapter) {
     super()
     this.server = server
@@ -26,19 +23,16 @@ class ClusterBus extends EventEmitter {
     this.types = [ 2, 5 ]
   }
 
-  // @private
   listen () {
     return Promise.fromCallback(cb => {
       return this.adapter.add(this.server.instanceUID, this.channel, cb)
     })
   }
 
-  // @private
   makeSocketRoomLeftName (id, roomName) {
     return `socketRoomLeft:${id}:${roomName}`
   }
 
-  // @private
   mergeEventName (ev, args) {
     switch (ev) {
       case 'socketRoomLeft':
@@ -50,7 +44,6 @@ class ClusterBus extends EventEmitter {
     }
   }
 
-  // @private
   // TODO: Use an API from socket.io if(when) it will be available.
   emit (ev, ...args) {
     let data = [ ev, ...args ]
@@ -59,7 +52,6 @@ class ClusterBus extends EventEmitter {
     return this.adapter.broadcast(packet, opts, false)
   }
 
-  // @private
   onPacket (packet) {
     let [ev, ...args] = packet.data
     if (_.includes(this.intenalEvents, ev)) {
@@ -71,12 +63,9 @@ class ClusterBus extends EventEmitter {
   }
 }
 
-// @private
-// @nodoc
 // Socket.io transport.
 class SocketIOTransport extends Transport {
 
-  // @private
   constructor (server, options, adapterConstructor, adapterOptions) {
     super()
     this.server = server
@@ -124,7 +113,6 @@ class SocketIOTransport extends Transport {
     this.closed = false
   }
 
-  // @private
   broadcastHook (packet, opts) {
     let isBusCahnnel = _.indexOf(opts.rooms, this.clusterBus.channel) >= 0
     let isBusType = _.indexOf(this.clusterBus.types, packet.type) >= 0
@@ -133,7 +121,6 @@ class SocketIOTransport extends Transport {
     }
   }
 
-  // @private
   // TODO: Use an API from socket.io if(when) it will be available.
   injectBusHook () {
     let broadcastHook = this.broadcastHook.bind(this)
@@ -145,7 +132,6 @@ class SocketIOTransport extends Transport {
     }
   }
 
-  // @private
   attachBusListeners () {
     this.clusterBus.on('roomLeaveSocket', (id, roomName) => {
       return this.leaveChannel(id, roomName)
@@ -159,7 +145,6 @@ class SocketIOTransport extends Transport {
     })
   }
 
-  // @private
   rejectLogin (socket, error) {
     let { useRawErrorObjects } = this.server
     if ((error != null) && !(error instanceof ChatServiceError)) {
@@ -172,14 +157,12 @@ class SocketIOTransport extends Transport {
     return socket.disconnect()
   }
 
-  // @private
   confirmLogin (socket, userName, authData) {
     authData.id = socket.id
     socket.emit('loginConfirmed', userName, authData)
     return Promise.resolve()
   }
 
-  // @private
   addClient (socket, userName, authData = {}) {
     let { id } = socket
     return Promise.try(() => {
@@ -203,7 +186,6 @@ class SocketIOTransport extends Transport {
       }).catch(error => this.rejectLogin(socket, error))
   }
 
-  // @private
   setEvents () {
     if (this.hooks.middleware) {
       let middleware = _.castArray(this.hooks.middleware)
@@ -227,7 +209,6 @@ class SocketIOTransport extends Transport {
     return Promise.resolve()
   }
 
-  // @private
   waitCommands () {
     if (this.server.runningCommands > 0) {
       return Promise.fromCallback(cb => {
@@ -238,7 +219,6 @@ class SocketIOTransport extends Transport {
     }
   }
 
-  // @private
   close () {
     this.closed = true
     this.nsp.removeAllListeners('connection')
@@ -258,7 +238,6 @@ class SocketIOTransport extends Transport {
       .timeout(this.server.closeTimeout)
   }
 
-  // @private
   bindHandler (id, name, fn) {
     let socket = this.getConnectionObject(id)
     if (socket) {
@@ -266,17 +245,14 @@ class SocketIOTransport extends Transport {
     }
   }
 
-  // @private
   getConnectionObject (id) {
     return this.nsp.connected[id]
   }
 
-  // @private
   emitToChannel (channel, messageName, ...messageData) {
     this.nsp.to(channel).emit(messageName, ...messageData)
   }
 
-  // @private
   sendToChannel (id, channel, messageName, ...messageData) {
     let socket = this.getConnectionObject(id)
     if (!socket) {
@@ -286,7 +262,6 @@ class SocketIOTransport extends Transport {
     }
   }
 
-  // @private
   joinChannel (id, channel) {
     let socket = this.getConnectionObject(id)
     if (!socket) {
@@ -296,14 +271,12 @@ class SocketIOTransport extends Transport {
     }
   }
 
-  // @private
   leaveChannel (id, channel) {
     let socket = this.getConnectionObject(id)
     if (!socket) { return Promise.resolve() }
     return Promise.fromCallback(fn => socket.leave(channel, fn))
   }
 
-  // @private
   disconnectClient (id) {
     let socket = this.getConnectionObject(id)
     if (socket) {

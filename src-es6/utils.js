@@ -4,20 +4,12 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 const util = require('util')
 
-// @private
-// @nodoc
 let debuglog = util.debuglog('ChatService')
 
-// @private
-// @nodoc
 let asyncLimit = 32
 
-// @private
-// @nodoc
 let nameChecker = /^[^\u0000-\u001F:{}\u007F]+$/
 
-// @private
-// @nodoc
 let mix = function (c, ...mixins) {
   for (let i = 0; i < mixins.length; i++) {
     let mixin = mixins[i]
@@ -30,8 +22,6 @@ let mix = function (c, ...mixins) {
   }
 }
 
-// @private
-// @nodoc
 let possiblyCallback = function (args) {
   let cb = _.last(args)
   if (_.isFunction(cb)) {
@@ -42,8 +32,6 @@ let possiblyCallback = function (args) {
   return [args, cb]
 }
 
-// @private
-// @nodoc
 let checkNameSymbols = function (name) {
   if (_.isString(name) && nameChecker.test(name)) {
     return Promise.resolve()
@@ -52,8 +40,6 @@ let checkNameSymbols = function (name) {
   }
 }
 
-// @private
-// @nodoc
 let execHook = function (hook, ...args) {
   if (!hook) { return Promise.resolve() }
   let cb = null
@@ -74,11 +60,6 @@ let execHook = function (hook, ...args) {
   }
 }
 
-let getUserCommands = function (server) {
-  let commands = Object.getOwnPropertyNames(server.userCommands.__proto__)
-  return _.without(commands, 'constructor')
-}
-
 module.exports = {
   asyncLimit,
   checkNameSymbols,
@@ -86,6 +67,5 @@ module.exports = {
   execHook,
   mix,
   nameChecker,
-  possiblyCallback,
-  getUserCommands
+  possiblyCallback
 }

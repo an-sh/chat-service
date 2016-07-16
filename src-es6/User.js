@@ -5,15 +5,12 @@ const DirectMessaging = require('./DirectMessaging')
 const Promise = require('bluebird')
 const UserAssociations = require('./UserAssociations')
 const _ = require('lodash')
-const { asyncLimit, checkNameSymbols, getUserCommands, mix } = require('./utils')
+const { asyncLimit, checkNameSymbols, mix } = require('./utils')
 
-// @private
-// @nodoc
 //
 // Client commands implementation.
 class User extends DirectMessaging {
 
-  // @private
   constructor (server, userName) {
     super(server, userName)
     this.server = server
@@ -32,17 +29,14 @@ class User extends DirectMessaging {
     this.echoChannel = this.userState.echoChannel
   }
 
-  // @private
   initState (state) {
     return super.initState(state)
   }
 
-  // @private
   removeState () {
     return super.removeState()
   }
 
-  // @private
   processMessage (msg, setTimestamp = false) {
     delete msg.id
     delete msg.timestamp
@@ -53,14 +47,16 @@ class User extends DirectMessaging {
     return msg
   }
 
-  // @private
   exec (command, options, args) {
     let { id } = options
-    if (!this.server.userCommands[command]) {
+    let requestsNames = this.server.rpcRequestsNames
+    if (!_.includes(requestsNames, command)) {
       let error = new ChatServiceError('noCommand', command)
       return Promise.reject(error)
     }
-    if (!id && command === 'disconnect' || command === 'roomJoin' || command === 'roomLeave') {
+    let requiresSocket = command === 'disconnect' ||
+          command === 'roomJoin' || command === 'roomLeave'
+    if (!id && requiresSocket) {
       let error = new ChatServiceError('noSocket', command)
       return Promise.reject(error)
     }
@@ -71,7 +67,6 @@ class User extends DirectMessaging {
       {multiArgs: true})
   }
 
-  // @private
   checkOnline () {
     return this.userState.getAllSockets().then(sockets => {
       if (!sockets || !sockets.length) {
@@ -83,7 +78,6 @@ class User extends DirectMessaging {
     })
   }
 
-  // @private
   consistencyFailure (error, operationInfo = {}) {
     operationInfo.userName = this.userName
     let name = operationInfo.opType === 'transportChannel'
@@ -92,7 +86,6 @@ class User extends DirectMessaging {
     this.server.emit(name, error, operationInfo)
   }
 
-  // @private
   registerSocket (id) {
     return this.state.addSocket(id, this.userName)
       .then(() => this.userState.addSocket(id, this.server.instanceUID))
@@ -103,7 +96,7 @@ class User extends DirectMessaging {
             return Promise.reject(error)
           })
         } else {
-          let commands = getUserCommands(this.server)
+          let commands = this.server.rpcRequestsNames
           for (let idx in commands) {
             let cmd = commands[idx]
             this.bindCommand(id, cmd, this[cmd])
@@ -113,7 +106,6 @@ class User extends DirectMessaging {
       })
   }
 
-  // @private
   disconnectInstanceSockets () {
     return this.userState.getAllSockets().then(sockets => {
       return Promise.map(
@@ -123,22 +115,18 @@ class User extends DirectMessaging {
     })
   }
 
-  // @private
   directAddToList (listName, values) {
     return this.addToList(this.userName, listName, values).return()
   }
 
-  // @private
   directGetAccessList (listName) {
     return this.getList(this.userName, listName)
   }
 
-  // @private
   directGetWhitelistMode () {
     return this.getMode(this.userName)
   }
 
-  // @private
   directMessage (recipientName, msg, {id, bypassPermissions}) {
     if (!this.enableDirectMessages) {
       let error = new ChatServiceError('notAllowed')
@@ -158,27 +146,22 @@ class User extends DirectMessaging {
     })
   }
 
-  // @private
   directRemoveFromList (listName, values) {
     return this.removeFromList(this.userName, listName, values).return()
   }
 
-  // @private
   directSetWhitelistMode (mode) {
     return this.changeMode(this.userName, mode).return()
   }
 
-  // @private
   disconnect (reason, {id}) {
     return this.removeSocketFromServer(id)
   }
 
-  // @private
   listOwnSockets () {
     return this.userState.getSocketsToRooms()
   }
 
-  // @private
   roomAddToList (roomName, listName, values, {bypassPermissions}) {
     return this.state.getRoom(roomName).then(room => {
       return room.addToList(this.userName, listName, values, bypassPermissions)
@@ -191,7 +174,6 @@ class User extends DirectMessaging {
     })
   }
 
-  // @private
   roomCreate (roomName, whitelistOnly, {bypassPermissions}) {
     if (!this.enableRoomsManagement && !bypassPermissions) {
       let error = new ChatServiceError('notAllowed')
@@ -203,7 +185,6 @@ class User extends DirectMessaging {
     }).return()
   }
 
-  // @private
   roomDelete (roomName, {bypassPermissions}) {
     if (!this.enableRoomsManagement && !bypassPermissions) {
       let error = new ChatServiceError('notAllowed')
@@ -220,35 +201,30 @@ class User extends DirectMessaging {
     })
   }
 
-  // @private
   roomGetAccessList (roomName, listName, {bypassPermissions}) {
     return this.state.getRoom(roomName).then(room => {
       return room.getList(this.userName, listName, bypassPermissions)
     })
   }
 
-  // @private
   roomGetOwner (roomName, {bypassPermissions}) {
     return this.state.getRoom(roomName).then(room => {
       return room.getOwner(this.userName, bypassPermissions)
     })
   }
 
-  // @private
   roomGetWhitelistMode (roomName, {bypassPermissions}) {
     return this.state.getRoom(roomName).then(room => {
       return room.getMode(this.userName, bypassPermissions)
     })
   }
 
-  // @private
   roomRecentHistory (roomName, {bypassPermissions}) {
     return this.state.getRoom(roomName).then(room => {
       return room.getRecentMessages(this.userName, bypassPermissions)
     })
   }
 
-  // @private
   roomHistoryGet (roomName, msgid, limit, {bypassPermissions}) {
     return this.state.getRoom(roomName)
       .then(room => {
@@ -257,28 +233,24 @@ class User extends DirectMessaging {
     )
   }
 
-  // @private
   roomHistoryInfo (roomName, {bypassPermissions}) {
     return this.state.getRoom(roomName).then(room => {
       return room.getHistoryInfo(this.userName, bypassPermissions)
     })
   }
 
-  // @private
   roomJoin (roomName, {id}) {
     return this.state.getRoom(roomName).then(room => {
       return this.joinSocketToRoom(id, roomName)
     })
   }
 
-  // @private
   roomLeave (roomName, {id}) {
     return this.state.getRoom(roomName).then(room => {
       return this.leaveSocketFromRoom(id, room.roomName)
     })
   }
 
-  // @private
   roomMessage (roomName, msg, {bypassPermissions}) {
     return this.state.getRoom(roomName).then(room => {
       this.processMessage(msg)
@@ -289,7 +261,6 @@ class User extends DirectMessaging {
     })
   }
 
-  // @private
   roomRemoveFromList (roomName, listName, values, {bypassPermissions}) {
     return this.state.getRoom(roomName).then(room => {
       return room.removeFromList(this.userName, listName, values, bypassPermissions)
@@ -302,7 +273,6 @@ class User extends DirectMessaging {
     }).return()
   }
 
-  // @private
   roomSetWhitelistMode (roomName, mode, {bypassPermissions}) {
     return this.state.getRoom(roomName).then(room => {
       return room.changeMode(this.userName, mode, bypassPermissions)
@@ -314,14 +284,12 @@ class User extends DirectMessaging {
     })
   }
 
-  // @private
   roomUserSeen (roomName, userName, {bypassPermissions}) {
     return this.state.getRoom(roomName).then(room => {
       return room.userSeen(this.userName, userName, bypassPermissions)
     })
   }
 
-  // @private
   systemMessage (data, {id}) {
     this.transport.sendToChannel(id, this.echoChannel, 'systemMessage', data)
     return Promise.resolve()

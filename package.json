@@ -5,10 +5,8 @@
   "description": "Chat like messaging on top of socket.io, focused on scalability and extensibility.",
   "main": "index.js",
   "scripts": {
-    "compile": "coffee -cm --output lib/ src/",
-    "prepublish": "coffee -cm --output lib/ src/",
     "test": "mocha",
-    "coverage": "mocha --require ./coffee-coverage-loader.js && istanbul report text-summary lcov",
+    "generate-docs": "jsdoc --configure .jsdoc.json --verbose",
     "pipe-coverage": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js --verbose"
   },
   "author": {
@@ -48,11 +46,13 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "coffee-coverage": "^1.0.1",
     "coffee-script": "^1.10.0",
     "coveralls": "^2.11.8",
+    "docdash": "^0.4.0",
     "istanbul": "^0.4.2",
+    "jsdoc": "^3.4.0",
     "mocha": "^2.4.5",
-    "socket.io-client": "^1.4.5"
+    "socket.io-client": "^1.4.5",
+    "standard": "^7.1.2"
   }
 }
