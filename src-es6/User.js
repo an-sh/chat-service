@@ -163,7 +163,7 @@ class User extends DirectMessaging {
   }
 
   roomAddToList (roomName, listName, values, {bypassPermissions}) {
-    return this.state.getRoom(roomName).then(room => { // TODO rewrite
+    return this.state.getRoom(roomName).then(room => {
       return room.addToList(this.userName, listName, values, bypassPermissions)
     }).then(userNames => {
       if (this.enableAccessListsUpdates) {
@@ -179,10 +179,10 @@ class User extends DirectMessaging {
       let error = new ChatServiceError('notAllowed')
       return Promise.reject(error)
     }
-    return checkNameSymbols(roomName).then(() => { // TODO rewrite
-      return this.state.addRoom(
-        roomName, {owner: this.userName, whitelistOnly})
-    }).return()
+    let owner = this.userName
+    return checkNameSymbols(roomName)
+      .then(() => this.state.addRoom(roomName, {owner, whitelistOnly}))
+      .return()
   }
 
   roomDelete (roomName, {bypassPermissions}) {
@@ -202,53 +202,44 @@ class User extends DirectMessaging {
   }
 
   roomGetAccessList (roomName, listName, {bypassPermissions}) {
-    return this.state.getRoom(roomName).then(room => { // TODO rewrite
-      return room.getList(this.userName, listName, bypassPermissions)
-    })
+    return this.state.getRoom(roomName)
+      .then(room => room.getList(this.userName, listName, bypassPermissions))
   }
 
   roomGetOwner (roomName, {bypassPermissions}) {
-    return this.state.getRoom(roomName).then(room => { // TODO rewrite
-      return room.getOwner(this.userName, bypassPermissions)
-    })
+    return this.state.getRoom(roomName)
+      .then(room => room.getOwner(this.userName, bypassPermissions))
   }
 
   roomGetWhitelistMode (roomName, {bypassPermissions}) {
-    return this.state.getRoom(roomName).then(room => { // TODO rewrite
-      return room.getMode(this.userName, bypassPermissions)
-    })
+    return this.state.getRoom(roomName)
+      .then(room => room.getMode(this.userName, bypassPermissions))
   }
 
   roomRecentHistory (roomName, {bypassPermissions}) {
-    return this.state.getRoom(roomName).then(room => { // TODO rewrite
-      return room.getRecentMessages(this.userName, bypassPermissions)
-    })
+    return this.state.getRoom(roomName)
+      .then(room => room.getRecentMessages(this.userName, bypassPermissions))
   }
 
   roomHistoryGet (roomName, msgid, limit, {bypassPermissions}) {
     return this.state.getRoom(roomName)
-      .then(room => { // TODO rewrite
-        return room.getMessages(this.userName, msgid, limit, bypassPermissions)
-      }
-    )
+      .then(room => room.getMessages(
+        this.userName, msgid, limit, bypassPermissions))
   }
 
   roomHistoryInfo (roomName, {bypassPermissions}) {
-    return this.state.getRoom(roomName).then(room => { // TODO rewrite
-      return room.getHistoryInfo(this.userName, bypassPermissions)
-    })
+    return this.state.getRoom(roomName)
+      .then(room => room.getHistoryInfo(this.userName, bypassPermissions))
   }
 
   roomJoin (roomName, {id}) {
-    return this.state.getRoom(roomName).then(room => { // TODO rewrite
-      return this.joinSocketToRoom(id, roomName)
-    })
+    return this.state.getRoom(roomName)
+      .then(room => this.joinSocketToRoom(id, roomName))
   }
 
   roomLeave (roomName, {id}) {
-    return this.state.getRoom(roomName).then(room => { // TODO rewrite
-      return this.leaveSocketFromRoom(id, room.roomName)
-    })
+    return this.state.getRoom(roomName)
+      .then(room => this.leaveSocketFromRoom(id, room.roomName))
   }
 
   roomMessage (roomName, msg, {bypassPermissions}) {
@@ -262,32 +253,33 @@ class User extends DirectMessaging {
   }
 
   roomRemoveFromList (roomName, listName, values, {bypassPermissions}) {
-    return this.state.getRoom(roomName).then(room => { // TODO rewrite
-      return room.removeFromList(this.userName, listName, values, bypassPermissions)
+    return this.state.getRoom(roomName).then(room => {
+      return room.removeFromList(
+        this.userName, listName, values, bypassPermissions)
     }).then(userNames => {
       if (this.enableAccessListsUpdates) {
-        this.transport.emitToChannel(roomName, 'roomAccessListRemoved',
-                                     roomName, listName, values)
+        this.transport.emitToChannel(
+          roomName, 'roomAccessListRemoved', roomName, listName, values)
       }
       return this.removeRoomUsers(roomName, userNames)
     }).return()
   }
 
   roomSetWhitelistMode (roomName, mode, {bypassPermissions}) {
-    return this.state.getRoom(roomName).then(room => { // TODO rewrite
+    return this.state.getRoom(roomName).then(room => {
       return room.changeMode(this.userName, mode, bypassPermissions)
     }).spread((userNames, mode) => {
       if (this.enableAccessListsUpdates) {
-        this.transport.emitToChannel(roomName, 'roomModeChanged', roomName, mode)
+        this.transport.emitToChannel(
+          roomName, 'roomModeChanged', roomName, mode)
       }
       return this.removeRoomUsers(roomName, userNames)
     })
   }
 
-  roomUserSeen (roomName, userName, {bypassPermissions}) { // TODO rewrite
-    return this.state.getRoom(roomName).then(room => {
-      return room.userSeen(this.userName, userName, bypassPermissions)
-    })
+  roomUserSeen (roomName, userName, {bypassPermissions}) {
+    return this.state.getRoom(roomName)
+      .then(room => room.userSeen(this.userName, userName, bypassPermissions))
   }
 
   systemMessage (data, {id}) {
