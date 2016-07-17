@@ -331,8 +331,7 @@ class UserStateMemory {
   getSocketsToRooms () {
     let result = {}
     let sockets = this.socketsToRooms.keysArray()
-    for (let i = 0; i < sockets.length; i++) {
-      let id = sockets[i]
+    for (let id of sockets) {
       let socketsset = this.socketsToRooms.get(id)
       result[id] = (socketsset && socketsset.toArray()) || []
     }
@@ -369,8 +368,7 @@ class UserStateMemory {
     let sockets = this.socketsToRooms.keysArray()
     let socketsset = this.roomsToSockets.get(roomName)
     let removedSockets = (socketsset && socketsset.toArray()) || []
-    for (let i = 0; i < removedSockets.length; i++) {
-      let id = removedSockets[i]
+    for (let id of removedSockets) {
       let roomsset = this.socketsToRooms.get(id)
       roomsset.delete(roomName)
     }
@@ -441,16 +439,14 @@ class MemoryState {
   }
 
   getRoom (name, isPredicate = false) {
-    let r = this.rooms.get(name)
-    if (!r) {
-      if (isPredicate) {
-        return Promise.resolve(null)
-      } else {
-        let error = new ChatServiceError('noRoom', name)
-        return Promise.reject(error)
-      }
+    let room = this.rooms.get(name)
+    if (room) { return Promise.resolve(room) }
+    if (isPredicate) {
+      return Promise.resolve(null)
+    } else {
+      let error = new ChatServiceError('noRoom', name)
+      return Promise.reject(error)
     }
-    return Promise.resolve(r)
   }
 
   addRoom (name, state) {
@@ -505,15 +501,12 @@ class MemoryState {
 
   getUser (name, isPredicate = false) {
     let user = this.users.get(name)
-    if (!user) {
-      if (isPredicate) {
-        return Promise.resolve(null)
-      } else {
-        let error = new ChatServiceError('noUser', name)
-        return Promise.reject(error)
-      }
+    if (user) { return Promise.resolve(user) }
+    if (isPredicate) {
+      return Promise.resolve(null)
     } else {
-      return Promise.resolve(user)
+      let error = new ChatServiceError('noUser', name)
+      return Promise.reject(error)
     }
   }
 
