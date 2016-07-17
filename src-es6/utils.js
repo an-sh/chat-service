@@ -60,6 +60,10 @@ let execHook = function (hook, ...args) {
   }
 }
 
+let run = function (self, gen) {
+  return Promise.coroutine(gen).call(self)
+}
+
 module.exports = {
   asyncLimit,
   checkNameSymbols,
@@ -67,5 +71,6 @@ module.exports = {
   execHook,
   mix,
   nameChecker,
-  possiblyCallback
+  possiblyCallback,
+  run
 }

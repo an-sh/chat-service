@@ -96,7 +96,7 @@ let UserAssociations = {
       })
   },
 
-  joinSocketToRoom (id, roomName) {
+  joinSocketToRoom (id, roomName) { // TODO rewrite
     let lock = this.userState.lockToRoom(roomName, this.lockTTL)
     return Promise.using(lock, () => {
       return this.state.getRoom(roomName).then(room => {
@@ -114,7 +114,7 @@ let UserAssociations = {
     })
   },
 
-  leaveSocketFromRoom (id, roomName) {
+  leaveSocketFromRoom (id, roomName) { // TODO rewrite
     let lock = this.userState.lockToRoom(roomName, this.lockTTL)
     return Promise.using(lock, () => {
       return this.userState.removeSocketFromRoom(id, roomName).then(njoined => {
@@ -170,7 +170,7 @@ let UserAssociations = {
     })
   },
 
-  removeFromRoom (roomName) {
+  removeFromRoom (roomName) { // TODO rewrite
     let lock = this.userState.lockToRoom(roomName, this.lockTTL)
     return Promise.using(lock, () => {
       return this.removeUserSocketsFromRoom(roomName).then((removedSockets) => {

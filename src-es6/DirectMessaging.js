@@ -20,13 +20,13 @@ let DirectMessagingPermissions = {
         if (name === this.userName) {
           return Promise.reject(new ChatServiceError('notAllowed'))
         } else {
-          return Promise.resolve()
+          return Promise.resolve() // TODO fix
         }
       }
     })
   },
 
-  checkAcess (userName, bypassPermissions) {
+  checkAcess (userName, bypassPermissions) { // TODO rewrite
     if (userName === this.userName) {
       return Promise.reject(new ChatServiceError('notAllowed'))
     }
