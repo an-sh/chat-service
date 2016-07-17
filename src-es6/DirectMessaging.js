@@ -1,7 +1,7 @@
 
 const ChatServiceError = require('./ChatServiceError')
 const Promise = require('bluebird')
-const { mix } = require('./utils')
+const { mix, run } = require('./utils')
 
 // @mixin
 //
@@ -15,37 +15,32 @@ let DirectMessagingPermissions = {
 
   checkListValues (author, listName, values) {
     return this.checkList(author, listName).then(() => {
-      for (let i = 0; i < values.length; i++) {
-        let name = values[i]
-        if (name === this.userName) {
-          return Promise.reject(new ChatServiceError('notAllowed'))
-        } else {
-          return Promise.resolve() // TODO fix
-        }
+      for (let name of values) {
+        if (name !== this.userName) { continue }
+        return Promise.reject(new ChatServiceError('notAllowed'))
       }
+      return Promise.resolve()
     })
   },
 
-  checkAcess (userName, bypassPermissions) { // TODO rewrite
+  checkAcess (userName, bypassPermissions) {
     if (userName === this.userName) {
       return Promise.reject(new ChatServiceError('notAllowed'))
     }
     if (bypassPermissions) { return Promise.resolve() }
-    return this.directMessagingState.hasInList('blacklist', userName)
-      .then(blacklisted => {
-        if (blacklisted) {
-          return Promise.reject(new ChatServiceError('notAllowed'))
-        }
-        return this.directMessagingState.whitelistOnlyGet()
-          .then(whitelistOnly => {
-            if (!whitelistOnly) { return Promise.resolve() }
-            return this.directMessagingState.hasInList('whitelist', userName)
-              .then(whitelisted => {
-                if (whitelisted) { return Promise.resolve() }
-                return Promise.reject(new ChatServiceError('notAllowed'))
-              })
-          })
-      })
+    return run(this, function * () {
+      let blacklisted = yield this.directMessagingState.hasInList(
+        'blacklist', userName)
+      if (blacklisted) {
+        return Promise.reject(new ChatServiceError('notAllowed'))
+      }
+      let whitelistOnly = yield this.directMessagingState.whitelistOnlyGet()
+      if (!whitelistOnly) { return Promise.resolve() }
+      let whitelisted = yield this.directMessagingState.hasInList(
+        'whitelist', userName)
+      if (whitelisted) { return Promise.resolve() }
+      return Promise.reject(new ChatServiceError('notAllowed'))
+    })
   }
 }
 
