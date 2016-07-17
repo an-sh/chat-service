@@ -5,11 +5,14 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 const { debuglog, execHook, possiblyCallback } = require('./utils')
 
-// @mixin
-//
 // Implements command implementation functions binding and wrapping.
-// Required existence of server in extented classes.
-let CommandBinder = {
+class CommandBinder {
+
+  constructor (server, transport, userName) {
+    this.server = server
+    this.transport = transport
+    this.userName = userName
+  }
 
   bindAck (cb) {
     let { useRawErrorObjects } = this.server
@@ -24,7 +27,7 @@ let CommandBinder = {
       }
       return cb(error, data, ...rest)
     }
-  },
+  }
 
   commandWatcher (id, name) {
     this.server.runningCommands++
@@ -34,10 +37,9 @@ let CommandBinder = {
         this.server.emit('commandsFinished')
       }
     })
-  },
+  }
 
   makeCommand (name, fn) {
-    let self = this
     let { validator } = this.server
     let beforeHook = this.server.hooks[`${name}Before`]
     let afterHook = this.server.hooks[`${name}After`]
@@ -61,7 +63,7 @@ let CommandBinder = {
             } })
           .then(results => {
             if (results && results.length) { return results }
-            return fn.apply(self, [...execInfo.args, execInfo])
+            return fn(...execInfo.args, execInfo)
               .then(result => { execInfo.results = [result] },
                     error => { execInfo.error = error })
               .then(() => {
@@ -82,7 +84,7 @@ let CommandBinder = {
           })
       ).asCallback(ack, { spread: true })
     }
-  },
+  }
 
   bindCommand (id, name, fn) {
     let cmd = this.makeCommand(name, fn)

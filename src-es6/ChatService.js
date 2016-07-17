@@ -8,9 +8,11 @@ const RecoveryAPI = require('./RecoveryAPI')
 const RedisState = require('./RedisState')
 const ServiceAPI = require('./ServiceAPI')
 const SocketIOTransport = require('./SocketIOTransport')
+const User = require('./User')
 const _ = require('lodash')
 const uid = require('uid-safe')
-const { execHook, mix } = require('./utils')
+const { execHook } = require('./utils')
+const { mixin } = require('es6-mixin')
 
 const rpcRequestsNames = [
   'directAddToList',
@@ -59,6 +61,10 @@ class ChatService extends ChatServiceEvents {
     this.hooks = hooks
     this.setOptions()
     this.setComponents()
+    mixin(this, ServiceAPI, this.state,
+          () => new User(this), this.clusterBus)
+    mixin(this, RecoveryAPI, this.state, this.transport,
+          this.execUserCommand.bind(this), this.instanceUID)
     this.startServer()
   }
 
@@ -199,7 +205,6 @@ class ChatService extends ChatServiceEvents {
   }
 }
 
-mix(ChatService, ServiceAPI, RecoveryAPI)
 ChatService.ChatServiceError = ChatServiceError
 
 module.exports = ChatService

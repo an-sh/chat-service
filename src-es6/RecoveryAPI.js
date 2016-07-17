@@ -5,7 +5,14 @@ const _ = require('lodash')
 /**
  * @mixin
  */
-let RecoveryAPI = {
+class RecoveryAPI {
+
+  constructor (state, transport, execUserCommand, instanceUID) {
+    this.state = state
+    this.transport = transport
+    this.instanceUID = instanceUID
+    this.execUserCommand = execUserCommand
+  }
 
   checkUserSockets (user) {
     let { userName } = user
@@ -36,7 +43,7 @@ let RecoveryAPI = {
           }).catchReturn()
       })
     })
-  },
+  }
 
   checkRoomJoined (room) {
     let { roomName } = room
@@ -55,7 +62,7 @@ let RecoveryAPI = {
         }).catchReturn()
       })
     })
-  },
+  }
 
   /**
    * Sync user to sockets associations.
@@ -69,7 +76,7 @@ let RecoveryAPI = {
     return this.state.getUser(userName)
       .then(user => this.checkUserSockets(user))
       .asCallback(cb)
-  },
+  }
 
   /**
    * Sync room to users associations.
@@ -83,7 +90,7 @@ let RecoveryAPI = {
     return this.state.getRoom(roomName)
       .then(room => this.checkRoomJoined(room))
       .asCallback(cb)
-  },
+  }
 
   /**
    * Fix instance data after an incorrect service shutdown.
@@ -100,7 +107,7 @@ let RecoveryAPI = {
         return this.execUserCommand(context, 'disconnect', 'instance recovery')
       })
     }).asCallback(cb)
-  },
+  }
 
   /**
    * Get instance heartbeat.

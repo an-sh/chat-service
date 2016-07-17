@@ -6,8 +6,8 @@ const Promise = require('bluebird')
 const UserAssociations = require('./UserAssociations')
 const _ = require('lodash')
 const { asyncLimit, checkNameSymbols, mix } = require('./utils')
+const { mixin } = require('es6-mixin')
 
-//
 // Client commands implementation.
 class User extends DirectMessaging {
 
@@ -27,6 +27,7 @@ class User extends DirectMessaging {
     this.userState = new State(this.server, this.userName)
     this.lockTTL = this.state.lockTTL
     this.echoChannel = this.userState.echoChannel
+    mixin(this, CommandBinder, this.server, this.transport, this.userName)
   }
 
   initState (state) {
@@ -60,7 +61,7 @@ class User extends DirectMessaging {
       let error = new ChatServiceError('noSocket', command)
       return Promise.reject(error)
     }
-    let fn = this[command]
+    let fn = this[command].bind(this)
     let cmd = this.makeCommand(command, fn)
     return Promise.fromCallback(
       cb => cmd(args, options, cb),
@@ -99,7 +100,7 @@ class User extends DirectMessaging {
           let commands = this.server.rpcRequestsNames
           for (let idx in commands) {
             let cmd = commands[idx]
-            this.bindCommand(id, cmd, this[cmd])
+            this.bindCommand(id, cmd, this[cmd].bind(this))
           }
           return [ this, nconnected ]
         }
@@ -289,6 +290,6 @@ class User extends DirectMessaging {
 
 }
 
-mix(User, CommandBinder, UserAssociations)
+mix(User, UserAssociations)
 
 module.exports = User

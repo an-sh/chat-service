@@ -1,17 +1,19 @@
 
 const ChatServiceError = require('./ChatServiceError')
 const Promise = require('bluebird')
-const { mix, run } = require('./utils')
+const { mixin } = require('es6-mixin')
+const { run } = require('./utils')
 
-// @mixin
-//
-// Implements direct messaging permissions checks. Required existence
-// of userName, directMessagingState and in extented classes.
-let DirectMessagingPermissions = {
+class DirectMessagingPermissions {
+
+  constructor (userName, directMessagingState) {
+    this.userName = userName
+    this.directMessagingState = directMessagingState
+  }
 
   checkList (author, listName) {
     return this.directMessagingState.checkList(listName)
-  },
+  }
 
   checkListValues (author, listName, values) {
     return this.checkList(author, listName).then(() => {
@@ -21,7 +23,7 @@ let DirectMessagingPermissions = {
       }
       return Promise.resolve()
     })
-  },
+  }
 
   checkAcess (userName, bypassPermissions) {
     if (userName === this.userName) {
@@ -44,8 +46,6 @@ let DirectMessagingPermissions = {
   }
 }
 
-//
-// @extend DirectMessagingPermissions
 // Implements direct messaging state manipulations with the respect to
 // user's permissions.
 class DirectMessaging {
@@ -55,6 +55,8 @@ class DirectMessaging {
     this.userName = userName
     let State = this.server.state.DirectMessagingState
     this.directMessagingState = new State(this.server, this.userName)
+    mixin(this, DirectMessagingPermissions,
+          this.userName, this.directMessagingState)
   }
 
   initState (state) {
@@ -84,6 +86,10 @@ class DirectMessaging {
       .then(() => this.directMessagingState.removeFromList(listName, values))
   }
 
+  hasInList (listName, item) {
+    return this.directMessagingState.hasInList(listName, item)
+  }
+
   getMode (author) {
     return this.directMessagingState.whitelistOnlyGet()
   }
@@ -92,7 +98,5 @@ class DirectMessaging {
     return this.directMessagingState.whitelistOnlySet(mode)
   }
 }
-
-mix(DirectMessaging, DirectMessagingPermissions)
 
 module.exports = DirectMessaging

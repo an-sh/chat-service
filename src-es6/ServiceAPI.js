@@ -1,14 +1,19 @@
 
 const ChatServiceError = require('./ChatServiceError')
 const Promise = require('bluebird')
-const User = require('./User')
 const _ = require('lodash')
 const { checkNameSymbols, possiblyCallback } = require('./utils')
 
 /**
  * @mixin
  */
-let ServiceAPI = {
+class ServiceAPI {
+
+  constructor (state, makeUser, clusterBus) {
+    this.state = state
+    this.makeUser = makeUser
+    this.clusterBus = clusterBus
+  }
 
   /**
    * Executes ClientRequests handlers.
@@ -45,11 +50,11 @@ let ServiceAPI = {
       if (userName) {
         return this.state.getUser(userName)
       } else {
-        return new User(this)
+        return this.makeUser()
       }
     }).then(user => user.exec(command, context, nargs))
       .asCallback(cb, { spread: true })
-  },
+  }
 
   /**
    * Adds an user with a state.
@@ -70,7 +75,7 @@ let ServiceAPI = {
       .then(() => this.state.addUser(userName, state))
       .return()
       .asCallback(cb)
-  },
+  }
 
   /**
    * Deletes an offline user. Will raise an error if user has online
@@ -94,7 +99,7 @@ let ServiceAPI = {
         }
       })
     }).return().asCallback(cb)
-  },
+  }
 
   /**
    * Checks user existence.
@@ -108,7 +113,7 @@ let ServiceAPI = {
     return this.state.getUser(userName, true)
       .then(user => Boolean(user))
       .asCallback(cb)
-  },
+  }
 
   /**
    * Checks for a name existence in an user list.
@@ -122,9 +127,9 @@ let ServiceAPI = {
    */
   userHasInList (userName, listName, item, cb) {
     return this.state.getUser(userName)
-      .then(user => user.directMessagingState.hasInList(listName, item))
+      .then(user => user.hasInList(listName, item))
       .asCallback(cb)
-  },
+  }
 
   /**
    * Checks for a direct messaging permission.
@@ -141,7 +146,7 @@ let ServiceAPI = {
       .return(true)
       .catchReturn(ChatServiceError, false)
       .asCallback(cb)
-  },
+  }
 
   /**
    * Disconnects user's sockets for all service instances. Method is
@@ -151,7 +156,7 @@ let ServiceAPI = {
    */
   disconnectUserSockets (userName) {
     return this.clusterBus.emit('disconnectUserSockets', userName)
-  },
+  }
 
   /**
    * Adds a room with a state.
@@ -175,7 +180,7 @@ let ServiceAPI = {
       .then(() => this.state.addRoom(roomName, state))
       .return()
       .asCallback(cb)
-  },
+  }
 
   /**
    * Removes all room data, and removes joined user from the room.
@@ -189,7 +194,7 @@ let ServiceAPI = {
     return this.execUserCommand(true, 'roomDelete', roomName)
       .return()
       .asCallback(cb)
-  },
+  }
 
   /**
    * Checks room existence.
@@ -203,7 +208,7 @@ let ServiceAPI = {
     return this.state.getRoom(roomName, true)
       .then((room) => Boolean(room))
       .asCallback(cb)
-  },
+  }
 
   /**
    * Checks for a name existence in a room list.
@@ -219,7 +224,7 @@ let ServiceAPI = {
     return this.state.getRoom(roomName)
       .then(room => room.roomState.hasInList(listName, item))
       .asCallback(cb)
-  },
+  }
 
   /**
    * Checks for a room access permission.
@@ -236,7 +241,7 @@ let ServiceAPI = {
       .return(true)
       .catchReturn(ChatServiceError, false)
       .asCallback(cb)
-  },
+  }
 
   /**
    * Changes a room owner.
@@ -252,7 +257,7 @@ let ServiceAPI = {
       .then(room => room.roomState.ownerSet(owner))
       .return()
       .asCallback(cb)
-  },
+  }
 
   /**
    * Changes a room history size.

@@ -2,20 +2,29 @@
 const ChatServiceError = require('./ChatServiceError')
 const Promise = require('bluebird')
 const _ = require('lodash')
-const { asyncLimit, mix, run } = require('./utils')
+const { mixin } = require('es6-mixin')
+const { asyncLimit, run } = require('./utils')
 
-// @mixin
-//
-// Implements room messaging permissions checks.  Required existence of
-// userName, roomState and in extented classes.
-let RoomPermissions = {
+class RoomPermissions {
+
+  constructor (roomName, roomState, emitFailure) {
+    this.roomName = roomName
+    this.roomState = roomState
+    this.emitFailure = emitFailure
+  }
+
+  consistencyFailure (error, operationInfo = {}) {
+    operationInfo.roomName = this.roomName
+    operationInfo.opType = 'roomUserlist'
+    this.emitFailure('storeConsistencyFailure', error, operationInfo)
+  }
 
   isAdmin (userName) {
     return this.roomState.ownerGet().then(owner => {
       if (owner === userName) { return true }
       return this.roomState.hasInList('adminlist', userName)
     })
-  },
+  }
 
   hasRemoveChangedCurrentAccess (userName, listName) {
     return this.roomState.hasInList('userlist', userName).then(hasUser => {
@@ -25,7 +34,7 @@ let RoomPermissions = {
         return this.roomState.whitelistOnlyGet()
       })
     }).catch(e => this.consistencyFailure(e, {userName}))
-  },
+  }
 
   hasAddChangedCurrentAccess (userName, listName) {
     return this.roomState.hasInList('userlist', userName).then(hasUser => {
@@ -35,7 +44,7 @@ let RoomPermissions = {
     }).catch(e => {
       return this.consistencyFailure(e, {userName})
     })
-  },
+  }
 
   getModeChangedCurrentAccess (value) {
     if (!value) {
@@ -43,7 +52,7 @@ let RoomPermissions = {
     } else {
       return this.roomState.getCommonUsers()
     }
-  },
+  }
 
   checkListChanges (author, listName, values, bypassPermissions) {
     if (listName === 'userlist') {
@@ -66,7 +75,7 @@ let RoomPermissions = {
         return Promise.resolve()
       })
     })
-  },
+  }
 
   checkModeChange (author, value, bypassPermissions) {
     if (bypassPermissions) { return Promise.resolve() }
@@ -74,7 +83,7 @@ let RoomPermissions = {
       if (admin) { return Promise.resolve() }
       return Promise.reject(new ChatServiceError('notAllowed'))
     })
-  },
+  }
 
   checkAcess (userName) {
     return run(this, function * () {
@@ -90,7 +99,7 @@ let RoomPermissions = {
       if (whitelisted) { return Promise.resolve() }
       return Promise.reject(new ChatServiceError('notAllowed'))
     })
-  },
+  }
 
   checkRead (author, bypassPermissions) {
     if (bypassPermissions) { return Promise.resolve() }
@@ -101,7 +110,7 @@ let RoomPermissions = {
       if (admin) { return Promise.resolve() }
       return Promise.reject(new ChatServiceError('notJoined', this.roomName))
     })
-  },
+  }
 
   checkIsOwner (author, bypassPermissions) {
     if (bypassPermissions) { return Promise.resolve() }
@@ -113,8 +122,6 @@ let RoomPermissions = {
 
 }
 
-//
-// @extend RoomPermissions
 // Implements room messaging state manipulations with the respect to
 // user's permissions.
 class Room {
@@ -124,6 +131,8 @@ class Room {
     this.roomName = roomName
     let State = this.server.state.RoomState
     this.roomState = new State(this.server, this.roomName)
+    mixin(this, RoomPermissions, this.roomName,
+          this.roomState, this.server.emit.bind(this.server))
   }
 
   initState (state) {
@@ -136,12 +145,6 @@ class Room {
 
   startRemoving () {
     return this.roomState.startRemoving()
-  }
-
-  consistencyFailure (error, operationInfo = {}) {
-    operationInfo.roomName = this.roomName
-    operationInfo.opType = 'roomUserlist'
-    this.server.emit('storeConsistencyFailure', error, operationInfo)
   }
 
   getUsers () {
@@ -246,7 +249,5 @@ class Room {
   }
 
 }
-
-mix(Room, RoomPermissions)
 
 module.exports = Room
