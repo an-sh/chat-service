@@ -86,18 +86,22 @@ class ChatService extends ChatServiceEvents {
     this.busAckTimeout = this.options.busAckTimeout || 5000
     this.heartbeatRate = this.options.heartbeatRate || 10000
     this.heartbeatTimeout = this.options.heartbeatTimeout || 30000
-    this.enableAccessListsUpdates = this.options.enableAccessListsUpdates || false
+    this.enableAccessListsUpdates =
+      this.options.enableAccessListsUpdates || false
     this.enableDirectMessages = this.options.enableDirectMessages || false
     this.enableRoomsManagement = this.options.enableRoomsManagement || false
     this.enableUserlistUpdates = this.options.enableUserlistUpdates || false
     this.historyMaxGetMessages = this.options.historyMaxGetMessages
-    if (!_.isNumber(this.historyMaxGetMessages) || this.historyMaxGetMessages < 0) {
+    if (!_.isNumber(this.historyMaxGetMessages) ||
+        this.historyMaxGetMessages < 0) {
       this.historyMaxGetMessages = 100
     }
     this.defaultHistoryLimit = this.options.defaultHistoryLimit
-    if (!_.isNumber(this.defaultHistoryLimit) || this.defaultHistoryLimit < 0) {
+    if (!_.isNumber(this.defaultHistoryLimit) ||
+        this.defaultHistoryLimit < 0) {
       this.defaultHistoryLimit = 10000
     }
+
     this.port = this.options.port || 8000
     this.useRawErrorObjects = this.options.useRawErrorObjects || false
 
@@ -138,7 +142,8 @@ class ChatService extends ChatServiceEvents {
     this.validator = new ArgumentsValidator(this)
     this.state = new State(this, this.stateOptions)
     this.transport = new Transport(
-      this, this.transportOptions, this.adapterConstructor, this.adapterOptions)
+      this, this.transportOptions,
+      this.adapterConstructor, this.adapterOptions)
   }
 
   startServer () {

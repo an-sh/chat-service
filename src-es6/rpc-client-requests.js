@@ -146,7 +146,9 @@ exports.roomDelete = function (roomName) {}
   * Gets room messaging userlist, blacklist, adminlist and whitelist.
   *
   * @param {string} roomName Room name.
-  * @param {('blacklist'|'adminlist'|'whitelist'|'userlist')} listName List name.
+  *
+  * @param {('blacklist'|'adminlist'|'whitelist'|'userlist')} listName
+  * List name.
   *
   * @returns {Array<string>} The requested list.
   */

@@ -84,7 +84,8 @@ class SocketIOTransport extends Transport {
         case _.isFunction(this.adapterConstructor):
           return this.adapterConstructor
         default:
-          throw new Error(`Invalid transport adapter: ${this.adapterConstructor}`)
+          let c = this.adapterConstructor
+          throw new Error(`Invalid transport adapter: ${c}`)
       }
     })()
     if (!this.io) {
