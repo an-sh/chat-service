@@ -3,6 +3,8 @@ const Promise = require('bluebird')
 const eventToPromise = require('event-to-promise')
 const { asyncLimit } = require('./utils')
 
+const co = Promise.coroutine
+
 // @mixin
 //
 // Associations for User class.
@@ -96,39 +98,36 @@ let UserAssociations = {
       })
   },
 
-  joinSocketToRoom (id, roomName) { // TODO rewrite
+  joinSocketToRoom (id, roomName) {
     let lock = this.userState.lockToRoom(roomName, this.lockTTL)
-    return Promise.using(lock, () => {
-      return this.state.getRoom(roomName).then(room => {
-        return room.join(this.userName).then(() => {
-          return this.userState.addSocketToRoom(id, roomName).then(njoined => {
-            return this.transport.joinChannel(id, roomName).then(() => {
-              if (njoined === 1) {
-                this.userJoinRoomReport(this.userName, roomName)
-              }
-              return this.socketJoinEcho(id, roomName, njoined)
-            }).return(njoined)
-          }).catch(e => this.rollbackRoomJoin(e, roomName, id))
-        })
-      })
-    })
+    return Promise.using(lock, co(function * () {
+      let room = yield this.state.getRoom(roomName)
+      yield room.join(this.userName)
+      return this.userState.addSocketToRoom(id, roomName).then(njoined => {
+        return this.transport.joinChannel(id, roomName).then(() => {
+          if (njoined === 1) {
+            this.userJoinRoomReport(this.userName, roomName)
+          }
+          return this.socketJoinEcho(id, roomName, njoined)
+        }).return(njoined)
+      }).catch(e => this.rollbackRoomJoin(e, roomName, id))
+    }).bind(this))
   },
 
-  leaveSocketFromRoom (id, roomName) { // TODO rewrite
+  leaveSocketFromRoom (id, roomName) {
     let lock = this.userState.lockToRoom(roomName, this.lockTTL)
-    return Promise.using(lock, () => {
-      return this.userState.removeSocketFromRoom(id, roomName).then(njoined => {
-        return this.leaveChannel(id, roomName).then(() => {
-          this.socketLeftEcho(id, roomName, njoined)
-          if (!njoined) {
-            return this.leaveRoom(roomName)
-              .then(() => this.userLeftRoomReport(this.userName, roomName))
-          } else {
-            return Promise.resolve()
-          }
-        }).return(njoined)
-      })
-    })
+    return Promise.using(lock, co(function * () {
+      let njoined = yield this.userState.removeSocketFromRoom(id, roomName)
+      yield this.leaveChannel(id, roomName)
+      this.socketLeftEcho(id, roomName, njoined)
+      if (!njoined) {
+        yield this.leaveRoom(roomName)
+        this.userLeftRoomReport(this.userName, roomName)
+        return 0
+      } else {
+        return njoined
+      }
+    }).bind(this))
   },
 
   removeUserSocket (id) {
@@ -143,12 +142,9 @@ let UserAssociations = {
             (roomName, idx) => {
               let njoined = joinedSockets[idx]
               this.socketLeftEcho(id, roomName, njoined)
-              if (!njoined) {
-                return this.leaveRoom(roomName)
-                  .then(() => this.userLeftRoomReport(this.userName, roomName))
-              } else {
-                return Promise.resolve()
-              }
+              if (njoined) { return Promise.resolve() }
+              return this.leaveRoom(roomName)
+                .then(() => this.userLeftRoomReport(this.userName, roomName))
             },
             { concurrency: asyncLimit })
             .then(() => this.socketDisconnectEcho(id, nconnected))
@@ -170,7 +166,7 @@ let UserAssociations = {
     })
   },
 
-  removeFromRoom (roomName) { // TODO rewrite
+  removeFromRoom (roomName) {
     let lock = this.userState.lockToRoom(roomName, this.lockTTL)
     return Promise.using(lock, () => {
       return this.removeUserSocketsFromRoom(roomName).then((removedSockets) => {
