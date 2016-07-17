@@ -344,7 +344,7 @@ class RoomStateRedis extends ListsStateRedis {
       .llen(this.makeKeyName('messagesHistory'))
       .get(this.makeKeyName('lastMessageId'))
       .exec()
-      .spread(([_0, historyMaxSize], [_1, historySize], [_2, lastMessageId]) => {
+      .spread(([, historyMaxSize], [, historySize], [, lastMessageId]) => {
         historySize = parseInt(historySize)
         historyMaxSize = parseFloat(historyMaxSize)
         lastMessageId = parseInt(lastMessageId)
@@ -405,7 +405,7 @@ class RoomStateRedis extends ListsStateRedis {
       .lrange(this.makeKeyName('messagesTimestamps'), 0, limit)
       .lrange(this.makeKeyName('messagesIds'), 0, limit)
       .exec()
-      .spread(([_0, msgs], [_1, tss], [_2, ids]) => {
+      .spread(([, msgs], [, tss], [, ids]) => {
         return this.convertMessages(msgs, tss, ids)
       })
   }
@@ -427,7 +427,7 @@ class RoomStateRedis extends ListsStateRedis {
       .hget(this.makeKeyName('usersseen'), userName)
       .sismember(this.makeKeyName('userlist'), userName)
       .exec()
-      .spread(([_1, ts], [_2, isjoined]) => {
+      .spread(([, ts], [, isjoined]) => {
         let joined = Boolean(isjoined)
         let timestamp = ts ? parseInt(ts) : null
         return {joined, timestamp}
@@ -438,6 +438,7 @@ class RoomStateRedis extends ListsStateRedis {
     let timestamp = _.now()
     return this.redis.hset(this.makeKeyName('usersseen'), userName, timestamp)
   }
+
 }
 
 mix(RoomStateRedis, stateOperations)
@@ -511,7 +512,7 @@ class UserStateRedis {
       .hset(this.makeKeyName('sockets'), id, uid)
       .hlen(this.makeKeyName('sockets'))
       .exec()
-      .spread((_0, [_1, nconnected]) => Promise.resolve(nconnected))
+      .spread((_, [, nconnected]) => Promise.resolve(nconnected))
   }
 
   getAllSockets () {
@@ -531,11 +532,8 @@ class UserStateRedis {
       this.makeKeyName('sockets'), this.makeSocketToRooms())
       .spread(result => {
         let data = JSON.parse(result) || {}
-        for (let k in data) {
-          let v = data[k]
-          if (_.isEmpty(v)) {
-            data[k] = []
-          }
+        for (let [k, v] of _.toPairs(data)) {
+          if (_.isEmpty(v)) { data[k] = [] }
         }
         return Promise.resolve(data)
       })
@@ -547,7 +545,7 @@ class UserStateRedis {
       .sadd(this.makeRoomToSockets(roomName), id)
       .scard(this.makeRoomToSockets(roomName))
       .exec()
-      .spread((_0, _1, [_2, njoined]) => Promise.resolve(njoined))
+      .then(([, , [, njoined]]) => Promise.resolve(njoined))
   }
 
   removeSocketFromRoom (id, roomName) {
@@ -556,7 +554,7 @@ class UserStateRedis {
       .srem(this.makeRoomToSockets(roomName), id)
       .scard(this.makeRoomToSockets(roomName))
       .exec()
-      .spread((_0, _1, [_2, njoined]) => Promise.resolve(njoined))
+      .then(([, , [, njoined]]) => Promise.resolve(njoined))
   }
 
   removeAllSocketsFromRoom (roomName) {
