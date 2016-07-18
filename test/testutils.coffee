@@ -72,10 +72,13 @@ closeInstance = (service) ->
   .timeout 2000
   .catch (e) ->
     console.log 'Service closing error: ', e
-    service.redis?.disconnect().catchReturn()
-  .then ->
-    service.io.httpServer.close()
-  .catchReturn()
+    Promise.try ->
+      service.redis?.disconnect()
+    .catchReturn()
+    .then ->
+      Promise.fromCallback (cb) ->
+        service.io.httpServer.close cb
+    .catchReturn()
 
 cleanup = (services, sockets, done) ->
   services = _.castArray services

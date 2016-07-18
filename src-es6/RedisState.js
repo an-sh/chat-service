@@ -7,7 +7,7 @@ const User = require('./User')
 const _ = require('lodash')
 const promiseRetry = require('promise-retry')
 const uid = require('uid-safe')
-const { mix } = require('./utils')
+const { mixin } = require('es6-mixin')
 
 let namespace = 'chatservice'
 
@@ -23,8 +23,15 @@ function initSet (redis, set, values) {
 
 
 // State init/remove operations.
-// @mixin
-let stateOperations = {
+class StateOperations {
+
+  constructor (name, exitsErrorName, redis, makeKeyName, stateReset) {
+    this.name = name
+    this.exitsErrorName = exitsErrorName
+    this.redis = redis
+    this.makeKeyName = makeKeyName
+    this.stateReset = stateReset
+  }
 
   initState (state) {
     return this.redis.setnx(this.makeKeyName('exists'), true).then(isnew => {
@@ -36,14 +43,14 @@ let stateOperations = {
       }
     }).then(() => this.stateReset(state))
       .then(() => this.redis.setnx(this.makeKeyName('isInit'), true))
-  },
+  }
 
   removeState () {
     return this.stateReset().then(() => {
       return this.redis.del(
         this.makeKeyName('exists'), this.makeKeyName('isInit'))
     })
-  },
+  }
 
   startRemoving () {
     return this.redis.del(this.makeKeyName('isInit'))
@@ -52,8 +59,11 @@ let stateOperations = {
 }
 
 // Redis lock operations.
-// @mixin
-let lockOperations = {
+class LockOperations {
+
+  constructor (redis) {
+    this.redis = redis
+  }
 
   lock (key, val, ttl) {
     return promiseRetry(
@@ -68,7 +78,7 @@ let lockOperations = {
           }
         }).catch(retry)
       })
-  },
+  }
 
   unlock (key, val) {
     return this.redis.unlock(key, val)
@@ -292,6 +302,8 @@ class RoomStateRedis extends ListsStateRedis {
     this.redis = this.server.redis
     this.exitsErrorName = 'roomExists'
     this.prefix = 'rooms'
+    mixin(this, StateOperations, this.name, this.exitsErrorName, this.redis,
+          this.makeKeyName.bind(this), this.stateReset.bind(this))
   }
 
   stateReset (state) {
@@ -441,8 +453,6 @@ class RoomStateRedis extends ListsStateRedis {
 
 }
 
-mix(RoomStateRedis, stateOperations)
-
 // Implements direct messaging state API.
 class DirectMessagingStateRedis extends ListsStateRedis {
 
@@ -454,6 +464,8 @@ class DirectMessagingStateRedis extends ListsStateRedis {
     this.prefix = 'users'
     this.exitsErrorName = 'userExists'
     this.redis = this.server.redis
+    mixin(this, StateOperations, this.name, this.exitsErrorName, this.redis,
+          this.makeKeyName.bind(this), this.stateReset.bind(this))
   }
 
   hasList (listName) {
@@ -473,8 +485,6 @@ class DirectMessagingStateRedis extends ListsStateRedis {
 
 }
 
-mix(DirectMessagingStateRedis, stateOperations)
-
 // Implements user state API.
 class UserStateRedis {
 
@@ -484,7 +494,7 @@ class UserStateRedis {
     this.name = this.userName
     this.prefix = 'users'
     this.redis = this.server.redis
-    this.echoChannel = this.makeEchoChannelName(this.userName)
+    mixin(this, LockOperations, this.redis)
   }
 
   makeKeyName (keyName) {
@@ -501,10 +511,6 @@ class UserStateRedis {
 
   makeRoomLock (room = '') {
     return this.makeKeyName(`roomLock:${room}`)
-  }
-
-  makeEchoChannelName (userName) {
-    return `echo:${userName}`
   }
 
   addSocket (id, uid) {
@@ -586,8 +592,6 @@ class UserStateRedis {
   }
 
 }
-
-mix(UserStateRedis, lockOperations)
 
 // Implements global state API.
 class RedisState {

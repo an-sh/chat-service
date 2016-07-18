@@ -10,18 +10,6 @@ let asyncLimit = 32
 
 let nameChecker = /^[^\u0000-\u001F:{}\u007F]+$/
 
-let mix = function (c, ...mixins) {
-  for (let i = 0; i < mixins.length; i++) {
-    let mixin = mixins[i]
-    for (let name in mixin) {
-      let method = mixin[name]
-      if (!c.prototype[name]) {
-        c.prototype[name] = method
-      }
-    }
-  }
-}
-
 let possiblyCallback = function (args) {
   let cb = _.last(args)
   if (_.isFunction(cb)) {
@@ -69,8 +57,6 @@ module.exports = {
   checkNameSymbols,
   debuglog,
   execHook,
-  mix,
-  nameChecker,
   possiblyCallback,
   run
 }

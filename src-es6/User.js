@@ -5,7 +5,7 @@ const DirectMessaging = require('./DirectMessaging')
 const Promise = require('bluebird')
 const UserAssociations = require('./UserAssociations')
 const _ = require('lodash')
-const { asyncLimit, checkNameSymbols, mix } = require('./utils')
+const { asyncLimit, checkNameSymbols } = require('./utils')
 const { mixin } = require('es6-mixin')
 
 // Client commands implementation.
@@ -15,19 +15,27 @@ class User extends DirectMessaging {
     super(server, userName)
     this.server = server
     this.userName = userName
+    this.echoChannel = `echo:${this.userName}`
     this.state = this.server.state
     this.transport = this.server.transport
-    this.validator = this.server.validator
-    this.hooks = this.server.hooks
     this.enableUserlistUpdates = this.server.enableUserlistUpdates
     this.enableAccessListsUpdates = this.server.enableAccessListsUpdates
     this.enableRoomsManagement = this.server.enableRoomsManagement
     this.enableDirectMessages = this.server.enableDirectMessages
     let State = this.server.state.UserState
     this.userState = new State(this.server, this.userName)
-    this.lockTTL = this.state.lockTTL
-    this.echoChannel = this.userState.echoChannel
     mixin(this, CommandBinder, this.server, this.transport, this.userName)
+    let opts = { transport: this.transport,
+                 state: this.state,
+                 userState: this.userState,
+                 userName: this.userName,
+                 echoChannel: this.echoChannel,
+                 clusterBus: this.server.clusterBus,
+                 busAckTimeout: this.server.busAckTimeout,
+                 lockTTL: this.state.lockTTL,
+                 consistencyFailure: this.consistencyFailure.bind(this)
+               }
+    mixin(this, UserAssociations, opts)
   }
 
   initState (state) {
@@ -289,7 +297,5 @@ class User extends DirectMessaging {
   }
 
 }
-
-mix(User, UserAssociations)
 
 module.exports = User

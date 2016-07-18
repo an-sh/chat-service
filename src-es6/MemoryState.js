@@ -9,7 +9,7 @@ const User = require('./User')
 const _ = require('lodash')
 const promiseRetry = require('promise-retry')
 const uid = require('uid-safe')
-const { mix } = require('./utils')
+const { mixin } = require('es6-mixin')
 
 let initState = function (state, values) {
   if (state) {
@@ -22,7 +22,11 @@ let initState = function (state, values) {
 
 // Memory lock operations.
 // @mixin
-let lockOperations = {
+class LockOperations {
+
+  constructor (locks) {
+    this.locks = locks
+  }
 
   lock (key, val, ttl) {
     return promiseRetry(
@@ -37,7 +41,7 @@ let lockOperations = {
         }
       }
     )
-  },
+  }
 
   unlock (key, val) {
     let currentVal = this.locks.get(key)
@@ -297,11 +301,7 @@ class UserStateMemory {
     this.socketsToInstances = new FastMap()
     this.roomsToSockets = new FastMap()
     this.locks = new FastMap()
-    this.echoChannel = this.makeEchoChannelName(this.userName)
-  }
-
-  makeEchoChannelName (userName) {
-    return `echo:${userName}`
+    mixin(this, LockOperations, this.locks)
   }
 
   addSocket (id, uid) {
@@ -412,8 +412,6 @@ class UserStateMemory {
   }
 
 }
-
-mix(UserStateMemory, lockOperations)
 
 // Implements global state API.
 class MemoryState {
