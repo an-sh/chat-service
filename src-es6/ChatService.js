@@ -1,7 +1,10 @@
 
+/**
+ * @namespace chat-service
+ */
+
 const ArgumentsValidator = require('./ArgumentsValidator')
 const ChatServiceError = require('./ChatServiceError')
-const ChatServiceEvents = require('./ChatServiceEvents')
 const MemoryState = require('./MemoryState')
 const Promise = require('bluebird')
 const RecoveryAPI = require('./RecoveryAPI')
@@ -11,6 +14,7 @@ const SocketIOTransport = require('./SocketIOTransport')
 const User = require('./User')
 const _ = require('lodash')
 const uid = require('uid-safe')
+const { EventEmitter } = require('events')
 const { execHook } = require('./utils')
 const { mixin } = require('es6-mixin')
 
@@ -43,17 +47,37 @@ const rpcRequestsNames = [
 
 /**
  * Service class, is the package exported object.
- * @mixes ServiceAPI
- * @mixes RecoveryAPI
+ *
+ * @extends EventEmitter
+ *
+ * @mixes chat-service.ServiceAPI
+ * @mixes chat-service.RecoveryAPI
+ *
+ * @fires chat-service.ready
+ * @fires chat-service.closed
+ * @fires chat-service.storeConsistencyFailure
+ * @fires chat-service.transportConsistencyFailure
+ * @fires chat-service.lockTimeExceeded
+ *
+ * @example <caption>Starting a server.</caption>
+ *   let ChatService = require('chat-service')
+ *   let service = new ChatService(options, hooks)
+ *
+ * @memberof chat-service
+ *
  */
-class ChatService extends ChatServiceEvents {
+class ChatService extends EventEmitter {
 
   /**
-   * Crates an object and starts a new service instance.
+   * Crates an object and starts a new service instance. The {@link
+   * chat-service.ChatService#close} method __MUST__ be called before
+   * the node process exit.
    *
-   * @param {Options} options Service configuration options.
+   * @param {chat-service.config.options} options Service
+   * configuration options.
    *
-   * @param {Array<Plugin>} hooks Service customisation hooks.
+   * @param {chat-service.HooksInterface} hooks Service customisation
+   * hooks.
    */
   constructor (options = {}, hooks = {}) {
     super()
@@ -69,17 +93,101 @@ class ChatService extends ChatServiceEvents {
   }
 
   /**
-   * @name ChatService#instanceUID
+   * @name ChatServiceError
+   * @type Class
+   * @static
+   * @readonly
+   *
+   * @memberof chat-service.ChatService
+   */
+
+  /**
+   * @name chat-service.ChatService#instanceUID
    * @type string
    * @readonly
    */
 
   /**
-   * @name ChatServiceError
-   * @type Class
-   * @memberof ChatService
-   * @static
+   * @name chat-service.ChatService#redis
+   * @type Object|undefined
    * @readonly
+   *
+   */
+
+  /**
+   * @name chat-service.ChatService#io
+   * @type Object|undefined
+   * @readonly
+   *
+   */
+
+  /**
+   * @name chat-service.ChatService#nsp
+   * @type Object|undefined
+   * @readonly
+   *
+   */
+
+  /**
+   * @name chat-service.ChatService#clusterBus
+   * @type Object
+   * @readonly
+   *
+   */
+
+  /**
+   * Service is ready, state and transport are up.
+   * @event ready
+   *
+   * @memberof chat-service
+   */
+
+  /**
+   * Service is closed, state and transport are closed.
+   * @event closed
+   * @param {Error} [error] If was closed due to an error.
+   *
+   * @memberof chat-service
+   */
+
+  /**
+   * State store failed to be updated to reflect the current user
+   * connections or presence state
+   * @event storeConsistencyFailure
+   * @param {Error} error Error.
+   * @param {Object} operationInfo Operation details.
+   * @property {String} operationInfo.userName User name.
+   * @property {String} operationInfo.opType Operation type.
+   * @property {String} [operationInfo.roomName] Room name.
+   * @property {String} [operationInfo.id] Socket id.
+   *
+   * @memberof chat-service
+   */
+
+  /**
+   * Failed to teardown a transport connection.
+   * @event transportConsistencyFailure
+   *
+   * @param {Error} error Error.
+   * @param {Object} operationInfo Operation details.
+   * @property {String} operationInfo.userName User name.
+   * @property {String} operationInfo.opType Operation type.
+   * @property {String} [operationInfo.roomName] Room name.
+   * @property {String} [operationInfo.id] Socket id.
+   *
+   * @memberof chat-service
+   */
+
+  /**
+   * Lock was hold longer than a lock ttl.
+   * @event lockTimeExceeded
+   *
+   * @param {String} id Lock id.
+   * @param {Object} lockInfo Lock resource details.
+   * @property {String} [lockInfo.userName] User name.
+   * @property {String} [lockInfo.roomName] Room name.
+   *
+   * @memberof chat-service
    */
 
   setOptions () {
@@ -180,7 +288,7 @@ class ChatService extends ChatServiceEvents {
    * @note __MUST__ be called before node process shutdown to correctly
    *   update the state.
    * @param {Callback} [cb] Optional callback.
-   * @return {Promise<void>}
+   * @return {Promise<undefined>} Promise that resolves without any data.
    */
   close (cb) {
     if (this.closed) { return Promise.resolve() }

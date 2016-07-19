@@ -1,11 +1,12 @@
 
 /**
  * {@link ChatService} constructor options.
- * @namespace Options
+ * @namespace config
+ * @memberof chat-service
  */
 
 /**
- * @memberOf Options
+ * @memberof chat-service.config
  * @typedef {Object} RedisStateOptions
  *
  * @property {boolean} [useCluster=false] Enable Redis cluster.
@@ -18,7 +19,7 @@
  */
 
 /**
- * @memberOf Options
+ * @memberof chat-service.config
  * @typedef {Object} SocketIOTransportOptions
  *
  * @property {string} [namespace='/chat-service'] Socket.io namespace.
@@ -34,8 +35,8 @@
  */
 
 /**
- * @memberOf Options
- * @typedef {Object} Options
+ * @memberof chat-service.config
+ * @typedef {Object} options
  *
  * @property {boolean} [port=8000] Port number.
  *
@@ -98,5 +99,3 @@
  *   constructor arguments, used only when no `io` object is passed in
  *   `SocketIOTransportOptions`.
  */
-
-module.exports = {}

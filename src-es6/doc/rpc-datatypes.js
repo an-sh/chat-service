@@ -1,7 +1,13 @@
 
 /**
- * Custom types definitions.
- * @namespace rpcTypes
+ * RPC description.
+ * @namespace rpc
+ */
+
+/**
+ * Custom rpc data types definitions.
+ * @namespace rpc.datatypes
+ * @memberof rpc
  */
 
 /**
@@ -10,7 +16,7 @@
  * `roomMessagesChecker` hook is set.
  *
  * @typedef {Object} Message
- * @memberof rpcTypes
+ * @memberof rpc.datatypes
  * @property {string} textMessage - Text message.
  */
 
@@ -20,7 +26,7 @@
  * `roomMessagesChecker` hook is set. Includes server assigned data.
  *
  * @typedef {Object} ProcessedMessage
- * @memberof rpcTypes
+ * @memberof rpc.datatypes
  * @property {string} textMessage - Text message.
  * @property {number} timestamp - Timestamp.
  * @property {string} author - Message sender.
@@ -31,7 +37,7 @@
  * Room history information.
  *
  * @typedef {Object} HistoryInfo
- * @memberof rpcTypes
+ * @memberof rpc.datatypes
  * @property {number} historyMaxGetMessages - Room single get limit.
  * @property {number} historyMaxSize - Room history limit.
  * @property {number} historySize - Room current history size.
@@ -42,7 +48,7 @@
  * Room user seen state information.
  *
  * @typedef {Object} UserSeenInfo
- * @memberof rpcTypes
+ * @memberof rpc.datatypes
  * @property {number} timestamp - Last state changed.
  * @property {boolean} joined - User's current joined state.
  */
@@ -52,14 +58,14 @@
  * joined rooms.
  *
  * @typedef {Object<string, Array<string>>} SocketsInfo
- * @memberof rpcTypes
+ * @memberof rpc.datatypes
  */
 
 /**
  * User auth data. May have additional properties.
  *
  * @typedef {Object} AuthData
- * @memberof rpcTypes
+ * @memberof rpc.datatypes
  * @property {string} id - Socket id.
  */
 
@@ -67,7 +73,7 @@
  * Chat service error representation.
  *
  * @typedef {Object} ChatServiceError
- * @memberof rpcTypes
+ * @memberof rpc.datatypes
  * @property {string} name - Error name.
  * @property {Array} args - Additional error data.
  */

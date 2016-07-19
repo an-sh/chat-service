@@ -3,7 +3,6 @@ const ChatServiceError = require('./ChatServiceError')
 const Promise = require('bluebird')
 const RedisAdapter = require('socket.io-redis')
 const SocketServer = require('socket.io')
-const Transport = require('./Transport')
 const _ = require('lodash')
 const hasBinary = require('has-binary')
 const { EventEmitter } = require('events')
@@ -64,10 +63,9 @@ class ClusterBus extends EventEmitter {
 }
 
 // Socket.io transport.
-class SocketIOTransport extends Transport {
+class SocketIOTransport {
 
   constructor (server, options, adapterConstructor, adapterOptions) {
-    super()
     this.server = server
     this.options = options
     this.adapterConstructor = adapterConstructor

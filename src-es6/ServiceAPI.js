@@ -6,6 +6,7 @@ const { checkNameSymbols, possiblyCallback } = require('./utils')
 
 /**
  * @mixin
+ * @memberof chat-service
  */
 class ServiceAPI {
 
@@ -68,7 +69,7 @@ class ServiceAPI {
    * @property {boolean} state.whitelistOnly User direct messages
    *   whitelistOnly mode, default is `false`.
    *
-   * @return {Promise<void>}
+   * @return {Promise<undefined>} Promise that resolves without any data.
    */
   addUser (userName, state, cb) {
     return checkNameSymbols(userName)
@@ -84,7 +85,7 @@ class ServiceAPI {
    * @param {string} userName User name.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<void>}
+   * @return {Promise<undefined>} Promise that resolves without any data.
    */
   deleteUser (userName, cb) {
     return this.state.getUser(userName).then(user => {
@@ -107,7 +108,7 @@ class ServiceAPI {
    * @param {string} userName User name.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<boolean>}
+   * @return {Promise<boolean>} Predicate result.
    */
   hasUser (userName, cb) {
     return this.state.getUser(userName, true)
@@ -123,7 +124,7 @@ class ServiceAPI {
    * @param {string} item List element.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<boolean>}
+   * @return {Promise<boolean>} Predicate result.
    */
   userHasInList (userName, listName, item, cb) {
     return this.state.getUser(userName)
@@ -138,7 +139,7 @@ class ServiceAPI {
    * @param {string} sender Sender name.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<boolean>}
+   * @return {Promise<boolean>} Predicate result.
    */
   hasDirectAccess (recipient, sender, cb) {
     return this.state.getUser(recipient)
@@ -153,9 +154,11 @@ class ServiceAPI {
    * asynchronous, returns without waiting for the completion.
    *
    * @param {string} userName User name.
+   *
+   * @return {undefined} Returns no data.
    */
   disconnectUserSockets (userName) {
-    return this.clusterBus.emit('disconnectUserSockets', userName)
+    this.clusterBus.emit('disconnectUserSockets', userName)
   }
 
   /**
@@ -173,7 +176,7 @@ class ServiceAPI {
    * @property {string} state.owner Room owner.
    * @property {Integer} state.historyMaxSize Room history maximum size.
    *
-   * @return {Promise<void>}
+   * @return {Promise<undefined>} Promise that resolves without any data.
    */
   addRoom (roomName, state, cb) {
     return checkNameSymbols(roomName)
@@ -188,7 +191,7 @@ class ServiceAPI {
    * @param {string} roomName Room name.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<void>}
+   * @return {Promise<undefined>} Promise that resolves without any data.
    */
   deleteRoom (roomName, cb) {
     return this.execUserCommand(true, 'roomDelete', roomName)
@@ -202,7 +205,7 @@ class ServiceAPI {
    * @param {string} roomName Room name.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<boolean>}
+   * @return {Promise<boolean>} Predicate result.
    */
   hasRoom (roomName, cb) {
     return this.state.getRoom(roomName, true)
@@ -218,7 +221,7 @@ class ServiceAPI {
    * @param {string} item List element.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<boolean>}
+   * @return {Promise<boolean>} Predicate result.
    */
   roomHasInList (roomName, listName, item, cb) {
     return this.state.getRoom(roomName)
@@ -233,7 +236,7 @@ class ServiceAPI {
    * @param {string} userName User name.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<boolean>}
+   * @return {Promise<boolean>} Predicate result.
    */
   hasRoomAccess (roomName, userName, cb) {
     return this.state.getRoom(roomName)
@@ -250,7 +253,7 @@ class ServiceAPI {
    * @param {string} owner Owner user name.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<void>}
+   * @return {Promise<undefined>} Promise that resolves without any data.
    */
   changeRoomOwner (roomName, owner, cb) {
     return this.state.getRoom(roomName)
@@ -266,7 +269,7 @@ class ServiceAPI {
    * @param {Integer} size Room history size.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<void>}
+   * @return {Promise<undefined>} Promise that resolves without any data.
    */
   changeRoomHistoryMaxSize (roomName, size, cb) {
     return this.state.getRoom(roomName)

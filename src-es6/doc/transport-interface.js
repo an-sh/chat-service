@@ -1,6 +1,5 @@
 
-// Transport public API interface. An instance of {Transport}
-// implementation is available as a member of {ChatService} instance.
+// Transport public interface.
 class Transport {
 
   // Sends a message to a channel (each room has a channel with the

@@ -43,6 +43,7 @@ class ExecInfo {
     this.args = []
     this.restArgs = []
   }
+
 }
 
 module.exports = ExecInfo

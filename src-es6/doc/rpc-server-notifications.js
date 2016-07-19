@@ -1,9 +1,10 @@
+/*eslint valid-jsdoc: ["error", { "requireReturn": false }]*/
+/*eslint no-unused-vars: 0*/
 
 /**
  * Notifications that are sent from a server to a client, no client's
  * reply is expected.
  *
- * @module ServerNotifications
  * @example <caption>Socket.io client example.</caption>
  *   let socket = io.connect(url, opts)
  *   socket.once('loginConfirmed', () => {
@@ -11,6 +12,9 @@
  *       // just the same as any event. no reply is required.
  *     })
  *   })
+ *
+ * @namespace serverNotifications
+ * @memberof rpc
  */
 
  /**
@@ -20,76 +24,92 @@
   *
   * @param {rpcTypes.ProcessedMessage} message Message.
   *
-  * @see module:ClientRequests.directMessage
+  * @see rpc.clientRequests.directMessage
+  *
+  * @memberof rpc.serverNotifications
   */
-exports.directMessage = function (message) {}
+function directMessage (message) {}
 
  /**
   * Direct message echo. If an user have several connections from
   * different sockets, and if one client sends {@link
-  * module:ClientRequests.directMessage}, others will receive a
+  * rpc.clientRequests.directMessage}, others will receive a
   * message echo.
   *
   * @param {string} toUser Message receiver.
   * @param {rpcTypes.ProcessedMessage} message Message.
   *
-  * @see module:ClientRequests.directMessage
+  * @see rpc.clientRequests.directMessage
+  *
+  * @memberof rpc.serverNotifications
   */
-exports.directMessageEcho = function (toUser, message) {}
+function directMessageEcho (toUser, message) {}
 
 /**
  * A client should wait until this event before issuing commands. If
- * auth has failed {@link module:ServerNotification.loginRejected}
+ * auth has failed {@link ServerNotification.loginRejected}
  * notification will be emitted instead. Only one of these events will
  * be emitted once per connection.
  *
  * @param {string} userName User name.
  * @param {rpcTypes.AuthData} authData Additional auth data.
  *
- * @see module:ServerNotification.loginRejected
- */
-exports.loginConfirmed = function (userName, authData) {}
+ * @see ServerNotification.loginRejected
+ *
+  * @memberof rpc.serverNotifications
+  */
+function loginConfirmed (userName, authData) {}
 
 /**
  * An auth error event.
  *
  * @param {rpcTypes.ChatServiceError|Error|string} reason Error.
  *
- * @see module:ServerNotification.loginConfirmed
- */
-exports.loginRejected = function (reason) {}
+ * @see ServerNotification.loginConfirmed
+ *
+  * @memberof rpc.serverNotifications
+  */
+function loginRejected (reason) {}
 
  /**
   * Indicates that a user has lost a room access permission.
   *
   * @param {string} roomName Room name.
   *
-  * @see module:ClientRequests.roomAddToList
-  * @see module:ClientRequests.roomRemoveFromList
+  * @see rpc.clientRequests.roomAddToList
+  * @see rpc.clientRequests.roomRemoveFromList
+  *
+  * @memberof rpc.serverNotifications
   */
-exports.roomAccessRemoved = function (roomName) {}
+function roomAccessRemoved (roomName) {}
 
  /**
   * Indicates a room access list add.
   *
   * @param {string} roomName Rooms name.
-  * @param {('blacklist'|'adminlist'|'whitelist')} listName List name.
+  * @param {string} listName List name. Possible values are:
+  * 'blacklist'|'adminlist'|'whitelist'
   * @param {Array<string>} userNames User names removed from the list.
   *
-  * @see module:ClientRequests.roomAddToList
+  * @see rpc.clientRequests.roomAddToList
+  *
+  * @memberof rpc.serverNotifications
   */
-exports.roomAccessListAdded = function (roomName, listName, userNames) {}
+function roomAccessListAdded (roomName, listName, userNames) {}
 
  /**
   * Indicates a room access list remove.
   *
   * @param {string} roomName Rooms name.
-  * @param {('blacklist'|'adminlist'|'whitelist')} listName List name.
+  * @param {string} listName List name. Possible values are:
+  * 'blacklist'|'adminlist'|'whitelist'
   * @param {Array<string>} userNames User names added to the list.
   *
-  * @see module:ClientRequests.roomRemoveFromList
+  * @see rpc.clientRequests.roomRemoveFromList
+  *
+  * @memberof rpc.serverNotifications
   */
-exports.roomAccessListRemoved = function (roomName, listName, userNames) {}
+function roomAccessListRemoved (roomName, listName, userNames) {}
 
  /**
   * Echoes room join from other user's connections.
@@ -98,9 +118,11 @@ exports.roomAccessListRemoved = function (roomName, listName, userNames) {}
   * @param {string} id Socket id.
   * @param {integer} njoined Number of sockets that are still joined.
   *
-  * @see module:ClientRequests.roomJoin
+  * @see rpc.clientRequests.roomJoin
+  *
+  * @memberof rpc.serverNotifications
   */
-exports.roomJoinedEcho = function (roomName, id, njoined) {}
+function roomJoinedEcho (roomName, id, njoined) {}
 
  /**
   * Echoes room leave from other user's connections.
@@ -109,9 +131,11 @@ exports.roomJoinedEcho = function (roomName, id, njoined) {}
   * @param {string} id Socket id.
   * @param {integer} njoined Number of sockets that are still joined.
   *
-  * @see module:ClientRequests.roomLeave
+  * @see rpc.clientRequests.roomLeave
+  *
+  * @memberof rpc.serverNotifications
   */
-exports.roomLeftEcho = function (roomName, id, njoined) {}
+function roomLeftEcho (roomName, id, njoined) {}
 
  /**
   * Room message. A message will have timestamp, id and author fields,
@@ -121,9 +145,11 @@ exports.roomLeftEcho = function (roomName, id, njoined) {}
   * @param {string} roomName Rooms name.
   * @param {rpcTypes.ProcessedMessage} message Message.
   *
-  * @see module:ClientRequests.roomMessage
+  * @see rpc.clientRequests.roomMessage
+  *
+  * @memberof rpc.serverNotifications
   */
-exports.roomMessage = function (roomName, message) {}
+function roomMessage (roomName, message) {}
 
  /**
   * Indicates a room mode change.
@@ -131,9 +157,11 @@ exports.roomMessage = function (roomName, message) {}
   * @param {string} roomName Rooms name.
   * @param {boolean} mode Room mode.
   *
-  * @see module:ClientRequests.roomSetWhitelistMode
+  * @see rpc.clientRequests.roomSetWhitelistMode
+  *
+  * @memberof rpc.serverNotifications
   */
-exports.roomModeChanged = function (roomName, mode) {}
+function roomModeChanged (roomName, mode) {}
 
  /**
   * Indicates that an another user has joined a room.
@@ -141,9 +169,11 @@ exports.roomModeChanged = function (roomName, mode) {}
   * @param {string} roomName Rooms name.
   * @param {string} userName User name.
   *
-  * @see module:ClientRequests.roomJoin
+  * @see rpc.clientRequests.roomJoin
+  *
+  * @memberof rpc.serverNotifications
   */
-exports.roomUserJoined = function (roomName, userName) {}
+function roomUserJoined (roomName, userName) {}
 
  /**
   * Indicates that an another user has left a room.
@@ -151,29 +181,37 @@ exports.roomUserJoined = function (roomName, userName) {}
   * @param {string} roomName Rooms name.
   * @param {string} userName User name.
   *
-  * @see module:ClientRequests.roomLeave
+  * @see rpc.clientRequests.roomLeave
+  *
+  * @memberof rpc.serverNotifications
   */
-exports.roomUserLeft = function (roomName, userName) {}
+function roomUserLeft (roomName, userName) {}
 
  /**
   * Custom message from an another socket of the same user.
   *
   * @param {Object} message Arbitrary data.
+  *
+  * @memberof rpc.serverNotifications
   */
-exports.selfBroadcast = function (message) {}
+function selfBroadcast (message) {}
 
  /**
   * Indicates a connection of an another socket with the same user.
   *
   * @param {string} id Socket id.
   * @param {integer} nconnected Total number of users's sockets.
+  *
+  * @memberof rpc.serverNotifications
   */
-exports.socketConnectEcho = function (id, nconnected) {}
+function socketConnectEcho (id, nconnected) {}
 
  /**
   * Indicates a disconnection of an another socket with the same user.
   *
   * @param {string} id Socket id.
   * @param {integer} nconnected Total number of users's sockets.
+  *
+  * @memberof rpc.serverNotifications
   */
-exports.socketDisconnectEcho = function (id, nconnected) {}
+function socketDisconnectEcho (id, nconnected) {}

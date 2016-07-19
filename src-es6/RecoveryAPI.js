@@ -4,6 +4,7 @@ const _ = require('lodash')
 
 /**
  * @mixin
+ * @memberof chat-service
  */
 class RecoveryAPI {
 
@@ -70,7 +71,7 @@ class RecoveryAPI {
    * @param {string} userName User name.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<void>}
+   * @return {Promise<undefined>} Promise that resolves without any data.
    */
   userStateSync (userName, cb) {
     return this.state.getUser(userName)
@@ -84,7 +85,7 @@ class RecoveryAPI {
    * @param {string} roomName Room name.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<void>}
+   * @return {Promise<undefined>} Promise that resolves without any data.
    */
   roomStateSync (roomName, cb) {
     return this.state.getRoom(roomName)
@@ -98,7 +99,7 @@ class RecoveryAPI {
    * @param {string} id Instance id.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<void>}
+   * @return {Promise<undefined>} Promise that resolves without any data.
    */
   instanceRecovery (id, cb) {
     return this.state.getInstanceSockets(id).then(sockets => {

@@ -1,12 +1,11 @@
 
 /**
- * Plugins interface.
+ * Hooks interface.
  * @todo Complete this spec.
- * @todo Implement APIs for hooks.
- * @todo Implement plugin runner.
+ * @memberof! chat-service
  * @interface
  */
-class Plugin {
+class HooksInterface {
 
   /**
    * Client connection hook. Client can send requests only after this
@@ -31,7 +30,7 @@ class Plugin {
    * @param {string} id Socket id.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<void>}
+   * @return {Promise<undefined>} Promise that resolves without any data.
    */
   onClientDisonnect (server, id, cb) {}
 
@@ -42,7 +41,7 @@ class Plugin {
    * @param {ChatService} server Service instance.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<void>}
+   * @return {Promise<undefined>} Promise that resolves without any data.
    */
   onSeverStart (server, cb) {}
 
@@ -53,7 +52,7 @@ class Plugin {
    * @param {ChatService} server Service instance.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<void>}
+   * @return {Promise<undefined>} Promise that resolves without any data.
    */
   onServerClose (server, cb) {}
 
@@ -63,12 +62,12 @@ class Plugin {
    * than a message format is considered valid, and the other way
    * around for the rejection case.
    *
-   * @param {Object} msg Message object.
+   * @param {Object} message Message object.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<void>}
+   * @return {Promise<undefined>} Promise that resolves without any data.
    */
-  directMessagesValidator (msg, cb) {}
+  directMessagesValidator (message, cb) {}
 
   /**
    * Validator for `roomMessage` message objects. When is set, a
@@ -76,12 +75,12 @@ class Plugin {
    * than a message format is considered valid, and the other way
    * around for the rejection case.
    *
-   * @param {Object} msg Message object.
+   * @param {Object} message Message object.
    * @param {Callback} [cb] Optional callback.
    *
-   * @return {Promise<void>}
+   * @return {Promise<undefined>} Promise that resolves without any data.
    */
-  roomMessagesValidator (msg, cb) {}
+  roomMessagesValidator (message, cb) {}
 
   /**
    * Before hooks are available for all `ClientRequests` and are
@@ -111,4 +110,4 @@ class Plugin {
 
 }
 
-module.exports = Plugin
+module.exports = HooksInterface

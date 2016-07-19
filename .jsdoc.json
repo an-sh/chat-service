@@ -18,6 +18,10 @@
       "outputSourceFiles": false
     }
   },
+  "docdash": {
+    "static": true,
+    "sort": true
+  },
   "opts": {
     "destination": "./docs/",
     "encoding": "utf8",
