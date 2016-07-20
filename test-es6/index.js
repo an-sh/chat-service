@@ -1,43 +1,45 @@
+/* eslint-env mocha */
+
 const _ = require('lodash')
-const config = require('./config.coffee')
-const testutils = require('./testutils.coffee')
+const config = require('./config')
+const testutils = require('./testutils')
 
 before(testutils.checkDB)
 
 describe('Chat service.', function () {
-  _.forEach(config.states, state => describe(`State: '${state.state}', adapter: '${state.adapter}'.`, function () {
-    before(() => testutils.setState(state))
+  _.forEach(
+    config.states,
+    state => describe(
+      `State: '${state.state}', adapter: '${state.adapter}'.`,
+      function () {
+        before(() => testutils.setState(state))
 
-    describe('Initialization', require('./initialization.coffee'))
+        describe('Initialization', require('./initialization'))
 
-    describe('Connection', require('./connection.coffee'))
+        describe('Connection', require('./connection'))
 
-    describe('Room management', require('./roomManagement.coffee'))
+        describe('Room management', require('./roomManagement'))
 
-    describe('Room messaging', require('./roomMessaging.coffee'))
+        describe('Room messaging', require('./roomMessaging'))
 
-    describe('Room permissions', require('./roomPermissions.coffee'))
+        describe('Room permissions', require('./roomPermissions'))
 
-    describe('Direct messaging', require('./directMessaging.coffee'))
+        describe('Direct messaging', require('./directMessaging'))
 
-    describe('Direct permissions', require('./directPermissions.coffee'))
+        describe('Direct permissions', require('./directPermissions'))
 
-    describe('Hooks', require('./hooks.coffee'))
+        describe('Hooks', require('./hooks'))
 
-    describe('API', require('./api.coffee'))
+        describe('API', require('./api'))
 
-    describe('API permissions', require('./apiPermissions.coffee'))
+        describe('API permissions', require('./apiPermissions'))
 
-    describe('Validation', require('./validation.coffee'))
+        describe('Validation', require('./validation'))
 
-    describe('Errors handling', require('./errorsHandling.coffee'))
+        describe('Errors handling', require('./errorsHandling'))
 
-    return describe('Consistency recovery', require('./consistencyRecovery.coffee'))
-  }
-  )
+        describe('Consistency recovery', require('./consistencyRecovery'))
+      }))
 
-  )
-
-  return describe('Service cluster', require('./serviceCluster.coffee'))
-}
-)
+  describe('Service cluster', require('./serviceCluster'))
+})

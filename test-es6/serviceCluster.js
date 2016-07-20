@@ -1,11 +1,15 @@
+/* eslint-env mocha */
+
 const _ = require('lodash')
 const { expect } = require('chai')
 
-const { cleanup, clientConnect, closeInstance, parallel, startService } = require('./testutils.coffee')
+const { cleanup, clientConnect, closeInstance,
+        parallel, startService } = require('./testutils')
 
-const { cleanupTimeout, port, user1, user2, user3, roomName1, roomName2, redisConfig } = require('./config.coffee')
+const { cleanupTimeout, port, user1, user2, user3,
+        roomName1, redisConfig } = require('./config')
 
-module.exports = function() {
+module.exports = function () {
   let instance1 = null
   let instance2 = null
   let socket1 = null
@@ -15,10 +19,9 @@ module.exports = function() {
   let socket5 = null
 
   afterEach(function (cb) {
-    let chatService
     this.timeout(cleanupTimeout)
     cleanup([instance1, instance2], [socket1, socket2, socket3], cb)
-    return chatService = socket1 = socket2 = socket3 = null
+    instance1 = instance2 = socket1 = socket2 = socket3 = null
   })
 
   it('should send cluster bus custom messages', function (done) {
@@ -26,257 +29,213 @@ module.exports = function() {
     let data = { key: 'value' }
     instance1 = startService(_.assign({port}, redisConfig))
     instance2 = startService(_.assign({port: port + 1}, redisConfig))
-    return parallel([
+    parallel([
       cb => instance1.on('ready', cb),
       cb => instance2.on('ready', cb)
-    ], function (error) {
+    ], (error) => {
       expect(error).not.ok
-      return parallel([
-        cb => instance2.clusterBus.on(event, function (uid, d) {
+      parallel([
+        cb => instance2.clusterBus.on(event, (uid, d) => {
           expect(uid).equal(instance1.instanceUID)
           expect(d).deep.equal(data)
-          return cb()
-        }
-        )
-        ,
-        cb => instance1.clusterBus.on(event, function (uid, d) {
+          cb()
+        }),
+        cb => instance1.clusterBus.on(event, (uid, d) => {
           expect(uid).equal(instance1.instanceUID)
           expect(d).deep.equal(data)
-          return cb()
-        }
-        )
-        ,
-        function (cb) {
+          cb()
+        }),
+        (cb) => {
           instance1.clusterBus.emit(event, instance1.instanceUID, data)
-          return cb()
+          cb()
         }
       ], done)
-    }
-    )
-  }
-  )
+    })
+  })
 
-  it('should actually remove other instances sockets from channel', function (done) {
+  it('should remove other instances sockets from channel', function (done) {
     this.timeout(4000)
     this.slow(2000)
     instance1 = startService(_.assign({port}, redisConfig))
     instance2 = startService(_.assign({port: port + 1}, redisConfig))
-    return instance1.addRoom(roomName1, { owner: user2 }, () => parallel([
-      function (cb) {
+    instance1.addRoom(roomName1, { owner: user2 }, () => parallel([
+      (cb) => {
         socket1 = clientConnect(user1, port)
-        socket1.on('roomMessage', () => done(new Error('Not removed from channel'))
-        )
-        return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, cb)
-        )
+        socket1.on('roomMessage',
+                   () => done(new Error('Not removed from channel')))
+        socket1.on('loginConfirmed',
+                   () => socket1.emit('roomJoin', roomName1, cb))
       },
-      function (cb) {
+      (cb) => {
         socket2 = clientConnect(user1, port + 1)
-        socket2.on('roomMessage', () => done(new Error('Not removed from channel'))
-        )
-        return socket2.on('loginConfirmed', () => socket2.emit('roomJoin', roomName1, cb)
-        )
+        socket2.on('roomMessage',
+                   () => done(new Error('Not removed from channel')))
+        socket2.on('loginConfirmed',
+                   () => socket2.emit('roomJoin', roomName1, cb))
       },
-      function (cb) {
+      (cb) => {
         socket3 = clientConnect(user2, port)
-        return socket3.on('loginConfirmed', () => socket3.emit('roomJoin', roomName1, cb)
-        )
+        socket3.on('loginConfirmed',
+                   () => socket3.emit('roomJoin', roomName1, cb))
       }
-    ], function (error) {
+    ], (error) => {
       expect(error).not.ok
-      return socket3.emit('roomAddToList', roomName1, 'blacklist', [user1], function () {
+      socket3.emit('roomAddToList', roomName1, 'blacklist', [user1], () => {
         socket3.emit('roomMessage', roomName1, {textMessage: 'hello'})
-        return setTimeout(done, 1000)
-      }
-      )
-    }
-    )
-
-    )
-  }
-  )
+        setTimeout(done, 1000)
+      })
+    }))
+  })
 
   it('should disconnect users sockets across all instances', function (done) {
     instance1 = startService(_.assign({port}, redisConfig))
     instance2 = startService(_.assign({port: port + 1}, redisConfig))
-    return parallel([
-      function (cb) {
+    parallel([
+      (cb) => {
         socket1 = clientConnect(user1, port)
-        return socket1.on('loginConfirmed', () => cb()
-        )
+        socket1.on('loginConfirmed', () => cb())
       },
-      function (cb) {
+      (cb) => {
         socket2 = clientConnect(user1, port + 1)
-        return socket2.on('loginConfirmed', () => cb()
-        )
+        socket2.on('loginConfirmed', () => cb())
       }
-    ], function (error) {
+    ], (error) => {
       expect(error).not.ok
-      return parallel([
+      parallel([
         cb => socket1.on('disconnect', () => cb()),
         cb => socket2.on('disconnect', () => cb()),
-        function (cb) {
+        (cb) => {
           instance1.disconnectUserSockets(user1)
-          return cb()
+          cb()
         }
       ], done)
-    }
-    )
-  }
-  )
+    })
+  })
 
-  it('should correctly update update presence info on shutdown', function (done) {
+  it('should correctly update presence info on shutdown', function (done) {
     instance1 = startService(_.assign({port}, redisConfig))
     instance2 = startService(_.assign({port: port + 1}, redisConfig))
     let ids = {}
-    return instance1.addRoom(roomName1, null, () => parallel([
-      function (cb) {
+    instance1.addRoom(roomName1, null, () => parallel([
+      (cb) => {
         socket1 = clientConnect(user1, port)
-        return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, cb)
-        )
+        socket1.on('loginConfirmed',
+                   () => socket1.emit('roomJoin', roomName1, cb))
       },
-      function (cb) {
+      (cb) => {
         socket2 = clientConnect(user2, port)
-        return socket2.on('loginConfirmed', () => socket2.emit('roomJoin', roomName1, cb)
-        )
+        socket2.on('loginConfirmed',
+                   () => socket2.emit('roomJoin', roomName1, cb))
       },
-      function (cb) {
+      (cb) => {
         socket3 = clientConnect(user2, port + 1)
-        return socket3.on('loginConfirmed', function (u, d) {
+        socket3.on('loginConfirmed', (u, d) => {
           ids[d.id] = d.id
-          return socket3.emit('roomJoin', roomName1, cb)
-        }
-        )
+          socket3.emit('roomJoin', roomName1, cb)
+        })
       },
-      function (cb) {
+      (cb) => {
         socket4 = clientConnect(user2, port + 1)
-        return socket4.on('loginConfirmed', function (u, d) {
+        socket4.on('loginConfirmed', (u, d) => {
           ids[d.id] = d.id
-          return socket4.emit('roomJoin', roomName1, cb)
-        }
-        )
+          socket4.emit('roomJoin', roomName1, cb)
+        })
       },
-      function (cb) {
+      (cb) => {
         socket5 = clientConnect(user3, port + 1)
-        return socket5.on('loginConfirmed', () => socket5.emit('roomJoin', roomName1, cb)
-        )
+        socket5.on('loginConfirmed',
+                   () => socket5.emit('roomJoin', roomName1, cb))
       }
-    ], function (error) {
+    ], (error) => {
       expect(error).not.ok
-      return parallel([
-        cb => socket2.on('roomLeftEcho', function (roomName, id, njoined) {
+      parallel([
+        cb => socket2.on('roomLeftEcho', (roomName, id, njoined) => {
           expect(roomName).equal(roomName1)
           delete ids[id]
           if (_.isEmpty(ids)) {
             expect(njoined).equal(1)
-            return cb()
+            cb()
           }
-        }
-        )
-        ,
-        cb => socket1.on('roomUserLeft', function (roomName, userName) {
+        }),
+        cb => socket1.on('roomUserLeft', (roomName, userName) => {
           expect(roomName).equal(roomName1)
           expect(userName).equal(user3)
-          return cb()
-        }
-        )
-        ,
-        cb => socket2.on('roomUserLeft', function (roomName, userName) {
+          cb()
+        }),
+        cb => socket2.on('roomUserLeft', (roomName, userName) => {
           expect(roomName).equal(roomName1)
           expect(userName).equal(user3)
-          return cb()
-        }
-        )
-        ,
+          cb()
+        }),
         cb => closeInstance(instance2).asCallback(cb)
-      ], function (error) {
+      ], (error) => {
         expect(error).not.ok
-        return parallel([
-          cb => instance1.execUserCommand(user2, 'listOwnSockets'
-            , function (error, sockets) {
+        parallel([
+          cb => instance1.execUserCommand(
+            user2, 'listOwnSockets', (error, sockets) => {
               expect(error).not.ok
               expect(_.size(sockets)).equal(1)
-              return cb()
-            }
-          )
-          ,
-          cb => instance1.execUserCommand(user3, 'listOwnSockets'
-            , function (error, sockets) {
+              cb()
+            }),
+          cb => instance1.execUserCommand(
+            user3, 'listOwnSockets', (error, sockets) => {
               expect(error).not.ok
               expect(_.size(sockets)).equal(0)
-              return cb()
-            }
-          )
-          ,
-          cb => socket1.emit('roomGetAccessList', roomName1, 'userlist',
-            function (error, list) {
+              cb()
+            }),
+          cb => socket1.emit(
+            'roomGetAccessList', roomName1, 'userlist', (error, list) => {
               expect(error).not.ok
               expect(list).lengthOf(2)
               expect(list).include(user1)
               expect(list).include(user2)
-              return cb()
-            }
-          )
-
+              cb()
+            })
         ], done)
-      }
-      )
-    }
-    )
+      })
+    }))
+  })
 
-    )
-  }
-  )
-
-  return it('should cleanup incorrectly shutdown instance data', function (done) {
+  it('should cleanup incorrectly shutdown instance data', function (done) {
     instance1 = startService(redisConfig)
     instance2 = startService(_.assign({port: port + 1}, redisConfig))
     let uid = instance1.instanceUID
-    return instance1.addRoom(roomName1, null, function () {
+    instance1.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, function () {
-        socket2 = clientConnect(user2)
-        return socket2.on('loginConfirmed', function () {
-          instance1.redis.disconnect()
-          instance1.io.httpServer.close()
-          clearInterval(instance1.hbtimer)
-          instance1 = null
-          return instance2.instanceRecovery(uid, function (error) {
-            expect(error).not.ok
-            return parallel([
-              cb => instance2.execUserCommand(user1, 'listOwnSockets'
-                , function (error, data) {
-                  expect(error).not.ok
-                  expect(data).empty
-                  return cb()
-                }
-              )
-              ,
-              cb => instance2.execUserCommand(user2, 'listOwnSockets'
-                , function (error, data) {
-                  expect(error).not.ok
-                  expect(data).empty
-                  return cb()
-                }
-              )
-              ,
-              cb => instance2.execUserCommand(true, 'roomGetAccessList'
-                , roomName1, 'userlist', function (error, data) {
-                  expect(error).not.ok
-                  return cb()
-                }
-              )
-
-            ], done)
-          }
-          )
-        }
-        )
-      }
-      )
-
-      )
-    }
-    )
-  }
-  )
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket2 = clientConnect(user2)
+          socket2.on('loginConfirmed', () => {
+            instance1.redis.disconnect()
+            instance1.io.httpServer.close()
+            clearInterval(instance1.hbtimer)
+            instance1 = null
+            instance2.instanceRecovery(uid, (error) => {
+              expect(error).not.ok
+              parallel([
+                cb => instance2.execUserCommand(
+                  user1, 'listOwnSockets', (error, data) => {
+                    expect(error).not.ok
+                    expect(data).empty
+                    cb()
+                  }),
+                cb => instance2.execUserCommand(
+                  user2, 'listOwnSockets', (error, data) => {
+                    expect(error).not.ok
+                    expect(data).empty
+                    cb()
+                  }),
+                cb => instance2.execUserCommand(
+                  true, 'roomGetAccessList', roomName1, 'userlist',
+                  (error, data) => {
+                    expect(error).not.ok
+                    cb()
+                  })
+              ], done)
+            })
+          })
+        })
+      })
+    })
+  })
 }

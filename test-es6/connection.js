@@ -1,11 +1,13 @@
-const _ = require('lodash')
+/* eslint-env mocha */
+
 const { expect } = require('chai')
 
-const { ChatService, cleanup, clientConnect, nextTick, parallel, startService } = require('./testutils.coffee')
+const { ChatService, cleanup, clientConnect,
+        nextTick, parallel, startService } = require('./testutils')
 
-const { cleanupTimeout, port, user1, user2, user3, roomName1, roomName2 } = require('./config.coffee')
+const { cleanupTimeout, user1 } = require('./config')
 
-module.exports = function() {
+module.exports = function () {
   let chatService = null
   let socket1 = null
   let socket2 = null
@@ -14,134 +16,111 @@ module.exports = function() {
   afterEach(function (cb) {
     this.timeout(cleanupTimeout)
     cleanup(chatService, [socket1, socket2, socket3], cb)
-    return chatService = socket1 = socket2 = socket3 = null
+    chatService = socket1 = socket2 = socket3 = null
   })
 
   it('should send auth data with id', function (done) {
     chatService = startService()
     socket1 = clientConnect(user1)
-    return socket1.on('loginConfirmed', function (u, data) {
+    socket1.on('loginConfirmed', (u, data) => {
       expect(u).equal(user1)
       expect(data).include.keys('id')
-      return done()
-    }
-    )
-  }
-  )
+      done()
+    })
+  })
 
   it('should reject an empty user query', function (done) {
     chatService = startService()
     socket1 = clientConnect()
-    return socket1.on('loginRejected', () => done()
-    )
-  }
-  )
+    socket1.on('loginRejected', () => done())
+  })
 
   it('should reject user names with illegal characters', function (done) {
     chatService = startService()
     socket1 = clientConnect('user}1')
-    return socket1.on('loginRejected', () => done()
-    )
-  }
-  )
+    socket1.on('loginRejected', () => done())
+  })
 
   it('should execute socket.io middleware', function (done) {
     let reason = 'some error'
     let auth = (socket, cb) => nextTick(cb, new Error(reason))
     chatService = startService(null, { middleware: auth })
     socket1 = clientConnect()
-    return socket1.on('error', function (e) {
+    socket1.on('error', (e) => {
       expect(e).deep.equal(reason)
-      return done()
-    }
-    )
-  }
-  )
+      done()
+    })
+  })
 
   it('should use onConnect hook username and data', function (done) {
     let name = 'someUser'
     let data = { token: 'token' }
-    let onConnect = function (server, id, cb) {
+    let onConnect = (server, id, cb) => {
       expect(server).instanceof(ChatService)
       expect(id).a('string')
-      return nextTick(cb, null, name, data)
+      nextTick(cb, null, name, data)
     }
-    chatService = startService(null, { onConnect})
+    chatService = startService(null, {onConnect})
     socket1 = clientConnect(user1)
-    return socket1.on('loginConfirmed', function (u, d) {
+    socket1.on('loginConfirmed', (u, d) => {
       expect(u).equal(name)
       expect(d).include.keys('id')
       expect(d.token).equal(data.token)
-      return done()
-    }
-    )
-  }
-  )
+      done()
+    })
+  })
 
   it('should reject login if onConnect hook passes error', function (done) {
     let err = null
-    let onConnect = function (server, id, cb) {
+    let onConnect = (server, id, cb) => {
       expect(server).instanceof(ChatService)
       expect(id).a('string')
       err = new ChatService.ChatServiceError('some error')
       throw err
     }
-    chatService = startService(null, { onConnect})
+    chatService = startService(null, {onConnect})
     socket1 = clientConnect(user1)
-    return socket1.on('loginRejected', function (e) {
+    socket1.on('loginRejected', (e) => {
       expect(e).deep.equal(err.toString())
-      return done()
-    }
-    )
-  }
-  )
+      done()
+    })
+  })
 
   it('should support multiple sockets per user', function (done) {
     chatService = startService()
     socket1 = clientConnect(user1)
-    return socket1.on('loginConfirmed', function () {
+    socket1.on('loginConfirmed', () => {
       socket2 = clientConnect(user1)
       let sid2 = null
       let sid2e = null
-      return parallel([
-        cb => socket1.on('socketConnectEcho', function (id, nconnected) {
+      parallel([
+        cb => socket1.on('socketConnectEcho', (id, nconnected) => {
           sid2e = id
           expect(nconnected).equal(2)
-          return cb()
-        }
-        )
-        ,
-        cb => socket2.on('loginConfirmed', function (u, data) {
+          cb()
+        }),
+        cb => socket2.on('loginConfirmed', (u, data) => {
           sid2 = data.id
-          return cb()
-        }
-        )
-
-      ], function () {
+          cb()
+        })
+      ], () => {
         expect(sid2e).equal(sid2)
         socket2.disconnect()
-        return socket1.on('socketDisconnectEcho', function (id, nconnected) {
+        socket1.on('socketDisconnectEcho', (id, nconnected) => {
           expect(id).equal(sid2)
           expect(nconnected).equal(1)
-          return done()
-        }
-        )
-      }
-      )
-    }
-    )
-  }
-  )
+          done()
+        })
+      })
+    })
+  })
 
-  return it('should disconnect all users on a server shutdown', function (done) {
+  it('should disconnect all users on a server shutdown', function (done) {
     let chatService1 = startService()
     socket1 = clientConnect(user1)
-    return socket1.on('loginConfirmed', () => parallel([
+    socket1.on('loginConfirmed', () => parallel([
       cb => chatService1.close(cb),
       cb => socket1.on('disconnect', () => cb())
-    ], done)
-
-    )
-  }
-  )
+    ], done))
+  })
 }

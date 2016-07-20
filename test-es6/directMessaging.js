@@ -1,11 +1,12 @@
-const _ = require('lodash')
+/* eslint-env mocha */
+
 const { expect } = require('chai')
 
-const { cleanup, clientConnect, startService } = require('./testutils.coffee')
+const { cleanup, clientConnect, startService } = require('./testutils')
 
-const { cleanupTimeout, port, user1, user2, user3, roomName1, roomName2 } = require('./config.coffee')
+const { cleanupTimeout, user1, user2 } = require('./config')
 
-module.exports = function() {
+module.exports = function () {
   let chatService = null
   let socket1 = null
   let socket2 = null
@@ -14,7 +15,7 @@ module.exports = function() {
   afterEach(function (cb) {
     this.timeout(cleanupTimeout)
     cleanup(chatService, [socket1, socket2, socket3], cb)
-    return chatService = socket1 = socket2 = socket3 = null
+    chatService = socket1 = socket2 = socket3 = null
   })
 
   it('should send direct messages', function (done) {
@@ -22,128 +23,107 @@ module.exports = function() {
     let message = { textMessage: txt }
     chatService = startService({ enableDirectMessages: true })
     socket1 = clientConnect(user1)
-    return socket1.on('loginConfirmed', function () {
+    socket1.on('loginConfirmed', () => {
       socket2 = clientConnect(user2)
-      return socket2.on('loginConfirmed', function () {
+      socket2.on('loginConfirmed', () => {
         socket1.emit('directMessage', user2, message)
-        return socket2.on('directMessage', function (msg) {
+        socket2.on('directMessage', (msg) => {
           expect(msg).include.keys('textMessage', 'author', 'timestamp')
           expect(msg.textMessage).equal(txt)
           expect(msg.author).equal(user1)
           expect(msg.timestamp).a('Number')
-          return done()
-        }
-        )
-      }
-      )
-    }
-    )
-  }
-  )
+          done()
+        })
+      })
+    })
+  })
 
-  it('should not send direct messages when the option is disabled', function (done) {
+  it('should not send direct messages when the option is off', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService()
     socket1 = clientConnect(user1)
-    return socket1.on('loginConfirmed', function () {
+    socket1.on('loginConfirmed', () => {
       socket2 = clientConnect(user2)
-      return socket2.on('loginConfirmed', () => socket1.emit('directMessage', user2, message, function (error, data) {
-        expect(error).ok
-        expect(data).null
-        return done()
-      }
-      )
-
-      )
-    }
-    )
-  }
-  )
+      socket2.on('loginConfirmed', () => {
+        socket1.emit('directMessage', user2, message, (error, data) => {
+          expect(error).ok
+          expect(data).null
+          done()
+        })
+      })
+    })
+  })
 
   it('should not send self-direct messages', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService({ enableDirectMessages: true })
     socket1 = clientConnect(user1)
-    return socket1.on('loginConfirmed', () => socket1.emit('directMessage', user1, message, function (error, data) {
-      expect(error).ok
-      expect(data).null
-      return done()
-    }
-    )
-
-    )
-  }
-  )
+    socket1.on('loginConfirmed', () => {
+      socket1.emit('directMessage', user1, message, (error, data) => {
+        expect(error).ok
+        expect(data).null
+        done()
+      })
+    })
+  })
 
   it('should not send direct messages to offline users', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService({ enableDirectMessages: true })
     socket2 = clientConnect(user2)
-    return socket2.on('loginConfirmed', function () {
+    socket2.on('loginConfirmed', () => {
       socket2.disconnect()
       socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('directMessage', user2, message, function (error, data) {
-        expect(error).ok
-        expect(data).null
-        return done()
-      }
-      )
-
-      )
-    }
-    )
-  }
-  )
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('directMessage', user2, message, (error, data) => {
+          expect(error).ok
+          expect(data).null
+          done()
+        })
+      })
+    })
+  })
 
   it("should echo direct messages to user's sockets", function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService({ enableDirectMessages: true })
     socket1 = clientConnect(user1)
-    return socket1.on('loginConfirmed', function () {
+    socket1.on('loginConfirmed', () => {
       socket3 = clientConnect(user1)
-      return socket3.on('loginConfirmed', function () {
+      socket3.on('loginConfirmed', () => {
         socket2 = clientConnect(user2)
-        return socket2.on('loginConfirmed', function () {
+        socket2.on('loginConfirmed', () => {
           socket1.emit('directMessage', user2, message)
-          return socket3.on('directMessageEcho', function (u, msg) {
+          socket3.on('directMessageEcho', (u, msg) => {
             expect(u).equal(user2)
             expect(msg).include.keys('textMessage', 'author', 'timestamp')
             expect(msg.textMessage).equal(txt)
             expect(msg.author).equal(user1)
             expect(msg.timestamp).a('Number')
-            return done()
-          }
-          )
-        }
-        )
-      }
-      )
-    }
-    )
-  }
-  )
+            done()
+          })
+        })
+      })
+    })
+  })
 
-  return it("should echo system messages to user's sockets", function (done) {
+  it("should echo system messages to user's sockets", function (done) {
     let data = 'some data.'
     chatService = startService()
     socket1 = clientConnect(user1)
-    return socket1.on('loginConfirmed', function () {
+    socket1.on('loginConfirmed', () => {
       socket2 = clientConnect(user1)
-      return socket2.on('loginConfirmed', function () {
+      socket2.on('loginConfirmed', () => {
         socket1.emit('systemMessage', data)
-        return socket2.on('systemMessage', function (d) {
+        socket2.on('systemMessage', (d) => {
           expect(d).equal(data)
-          return done()
-        }
-        )
-      }
-      )
-    }
-    )
-  }
-  )
+          done()
+        })
+      })
+    })
+  })
 }

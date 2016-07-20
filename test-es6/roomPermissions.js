@@ -1,11 +1,14 @@
-const _ = require('lodash')
+/* eslint-env mocha */
+
 const { expect } = require('chai')
 
-const { cleanup, clientConnect, parallel, startService } = require('./testutils.coffee')
+const { cleanup, clientConnect, parallel,
+        startService } = require('./testutils')
 
-const { cleanupTimeout, port, user1, user2, user3, roomName1, roomName2 } = require('./config.coffee')
+const { cleanupTimeout, user1, user2, user3,
+        roomName1 } = require('./config')
 
-module.exports = function() {
+module.exports = function () {
   let chatService = null
   let socket1 = null
   let socket2 = null
@@ -14,546 +17,472 @@ module.exports = function() {
   afterEach(function (cb) {
     this.timeout(cleanupTimeout)
     cleanup(chatService, [socket1, socket2, socket3], cb)
-    return chatService = socket1 = socket2 = socket3 = null
+    chatService = socket1 = socket2 = socket3 = null
   })
 
   it('should reject room messages from not joined users', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService()
-    return chatService.addRoom(roomName1, null, function () {
+    chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('roomMessage', roomName1, message, function (error, data) {
-        expect(error).ok
-        expect(data).null
-        return socket1.emit('roomRecentHistory', roomName1, function (error, data) {
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomMessage', roomName1, message, (error, data) => {
           expect(error).ok
           expect(data).null
-          return done()
-        }
-        )
-      }
-      )
-
-      )
-    }
-    )
-  }
-  )
+          socket1.emit('roomRecentHistory', roomName1, (error, data) => {
+            expect(error).ok
+            expect(data).null
+            done()
+          })
+        })
+      })
+    })
+  })
 
   it('should send a whitelistonly mode', function (done) {
     chatService = startService()
-    return chatService.addRoom(roomName1
-      , { whitelistOnly: true, whitelist: [user1] }
-      , function () {
+    chatService.addRoom(
+      roomName1,
+      { whitelistOnly: true, whitelist: [user1] },
+      () => {
         socket1 = clientConnect(user1)
-        return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, () => socket1.emit('roomGetWhitelistMode', roomName1, function (error, data) {
-          expect(error).not.ok
-          expect(data).true
-          return done()
-        }
-        )
-
-        )
-
-        )
-      }
-    )
-  }
-  )
+        socket1.on('loginConfirmed', () => {
+          socket1.emit('roomJoin', roomName1, () => {
+            socket1.emit('roomGetWhitelistMode', roomName1, (error, data) => {
+              expect(error).not.ok
+              expect(data).true
+              done()
+            })
+          })
+        })
+      })
+  })
 
   it('should send lists to room users', function (done) {
     chatService = startService()
-    return chatService.addRoom(roomName1, null, function () {
+    chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, () => socket1.emit('roomGetAccessList', roomName1, 'userlist'
-        , function (error, data) {
-          expect(error).not.ok
-          expect(data).an('array')
-          expect(data).include(user1)
-          return done()
-        }
-      )
-
-      )
-
-      )
-    }
-    )
-  }
-  )
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket1.emit(
+            'roomGetAccessList', roomName1, 'userlist', (error, data) => {
+              expect(error).not.ok
+              expect(data).an('array')
+              expect(data).include(user1)
+              done()
+            })
+        })
+      })
+    })
+  })
 
   it('should reject send lists to not joined users', function (done) {
     chatService = startService()
-    return chatService.addRoom(roomName1, null, function () {
+    chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('roomGetAccessList', roomName1, 'userlist'
-        , function (error, data) {
-          expect(error).ok
-          expect(data).null
-          return done()
-        }
-      )
-
-      )
-    }
-    )
-  }
-  )
+      socket1.on('loginConfirmed', () => {
+        socket1.emit(
+          'roomGetAccessList', roomName1, 'userlist', (error, data) => {
+            expect(error).ok
+            expect(data).null
+            done()
+          })
+      })
+    })
+  })
 
   it('should ckeck room list names', function (done) {
     chatService = startService()
-    return chatService.addRoom(roomName1, null, function () {
+    chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, () => socket1.emit('roomGetAccessList', roomName1, 'nolist'
-        , function (error, data) {
-          expect(error).ok
-          expect(data).null
-          return done()
-        }
-      )
-
-      )
-
-      )
-    }
-    )
-  }
-  )
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket1.emit(
+            'roomGetAccessList', roomName1, 'nolist', (error, data) => {
+              expect(error).ok
+              expect(data).null
+              done()
+            })
+        })
+      })
+    })
+  })
 
   it('should allow duplicate adding to lists', function (done) {
     chatService = startService({ enableRoomsManagement: true })
     socket1 = clientConnect(user1)
-    return socket1.on('loginConfirmed', u => socket1.emit('roomCreate', roomName1, false, () => socket1.emit('roomJoin', roomName1, () => socket1.emit('roomAddToList', roomName1, 'adminlist', [user2]
-      , function (error, data) {
-        expect(error).not.ok
-        expect(data).null
-        return socket1.emit('roomAddToList', roomName1, 'adminlist', [user2]
-          , function (error, data) {
-            expect(error).not.ok
-            expect(data).null
-            return done()
-          }
-        )
-      }
-    )
-
-    )
-
-    )
-
-    )
-  }
-  )
+    socket1.on('loginConfirmed', u => {
+      socket1.emit('roomCreate', roomName1, false, () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket1.emit(
+            'roomAddToList', roomName1, 'adminlist', [user2],
+            (error, data) => {
+              expect(error).not.ok
+              expect(data).null
+              socket1.emit(
+                'roomAddToList', roomName1, 'adminlist', [user2]
+                , (error, data) => {
+                  expect(error).not.ok
+                  expect(data).null
+                  done()
+                })
+            })
+        })
+      })
+    })
+  })
 
   it('should allow not added deleting from lists', function (done) {
     chatService = startService({ enableRoomsManagement: true })
     socket1 = clientConnect(user1)
-    return socket1.on('loginConfirmed', u => socket1.emit('roomCreate', roomName1, false, () => socket1.emit('roomJoin', roomName1, () => socket1.emit('roomRemoveFromList', roomName1, 'adminlist'
-      , [user2], function (error, data) {
-        expect(error).not.ok
-        expect(data).null
-        return done()
-      }
-    )
-
-    )
-
-    )
-
-    )
-  }
-  )
+    socket1.on('loginConfirmed', u => {
+      socket1.emit('roomCreate', roomName1, false, () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket1.emit(
+            'roomRemoveFromList', roomName1, 'adminlist', [user2],
+            (error, data) => {
+              expect(error).not.ok
+              expect(data).null
+              done()
+            })
+        })
+      })
+    })
+  })
 
   it('should send access list changed messages', function (done) {
     chatService = startService({ enableAccessListsUpdates: true })
-    return chatService.addRoom(roomName1, { owner: user1 }, function () {
+    chatService.addRoom(roomName1, { owner: user1 }, () => {
       socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, function () {
-        socket1.emit('roomAddToList', roomName1, 'adminlist', [user3])
-        return socket1.on('roomAccessListAdded', function (r, l, us) {
-          expect(r).equal(roomName1)
-          expect(l).equal('adminlist')
-          expect(us[0]).equal(user3)
-          socket1.emit('roomRemoveFromList', roomName1, 'adminlist'
-            , [user3])
-          return socket1.on('roomAccessListRemoved', function (r, l, us) {
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket1.emit('roomAddToList', roomName1, 'adminlist', [user3])
+          socket1.on('roomAccessListAdded', (r, l, us) => {
             expect(r).equal(roomName1)
             expect(l).equal('adminlist')
             expect(us[0]).equal(user3)
-            return done()
-          }
-          )
-        }
-        )
-      }
-      )
-
-      )
-    }
-    )
-  }
-  )
+            socket1.emit('roomRemoveFromList', roomName1, 'adminlist', [user3])
+            socket1.on('roomAccessListRemoved', (r, l, us) => {
+              expect(r).equal(roomName1)
+              expect(l).equal('adminlist')
+              expect(us[0]).equal(user3)
+              done()
+            })
+          })
+        })
+      })
+    })
+  })
 
   it('should send mode changed messages', function (done) {
     chatService = startService({ enableAccessListsUpdates: true })
-    return chatService.addRoom(roomName1
-      , { owner: user1, whitelistOnly: true }
-      , function () {
+    chatService.addRoom(
+      roomName1,
+      { owner: user1, whitelistOnly: true },
+      () => {
         socket1 = clientConnect(user1)
-        return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, function () {
-          socket1.emit('roomSetWhitelistMode', roomName1, false)
-          return socket1.on('roomModeChanged', function (roomName, mode) {
-            expect(roomName).equal(roomName1)
-            expect(mode).false
-            return done()
-          }
-          )
-        }
-        )
-
-        )
-      }
-    )
-  }
-  )
+        socket1.on('loginConfirmed', () => {
+          socket1.emit('roomJoin', roomName1, () => {
+            socket1.emit('roomSetWhitelistMode', roomName1, false)
+            socket1.on('roomModeChanged', (roomName, mode) => {
+              expect(roomName).equal(roomName1)
+              expect(mode).false
+              done()
+            })
+          })
+        })
+      })
+  })
 
   it('should allow wl and bl modifications for admins', function (done) {
     chatService = startService()
-    return chatService.addRoom(roomName1, { adminlist: [user1] }, function () {
+    chatService.addRoom(roomName1, { adminlist: [user1] }, () => {
       socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, () => socket1.emit('roomAddToList', roomName1, 'whitelist', [user2]
-        , function (error, data) {
-          expect(error).not.ok
-          expect(data).null
-          return socket1.emit('roomGetAccessList', roomName1, 'whitelist'
-            , function (error, data) {
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket1.emit(
+            'roomAddToList', roomName1, 'whitelist', [user2], (error, data) => {
               expect(error).not.ok
-              expect(data).include(user2)
-              return socket1.emit('roomRemoveFromList', roomName1, 'whitelist'
-                , [user2], function (error, data) {
+              expect(data).null
+              socket1.emit(
+                'roomGetAccessList', roomName1, 'whitelist', (error, data) => {
                   expect(error).not.ok
-                  expect(data).null
-                  return socket1.emit('roomGetAccessList', roomName1, 'whitelist'
-                    , function (error, data) {
+                  expect(data).include(user2)
+                  socket1.emit(
+                    'roomRemoveFromList', roomName1, 'whitelist', [user2],
+                    (error, data) => {
                       expect(error).not.ok
-                      expect(data).not.include(user2)
-                      return done()
-                    }
-                  )
-                }
-              )
-            }
-          )
-        }
-      )
-
-      )
-
-      )
-    }
-    )
-  }
-  )
+                      expect(data).null
+                      socket1.emit(
+                        'roomGetAccessList', roomName1, 'whitelist',
+                        (error, data) => {
+                          expect(error).not.ok
+                          expect(data).not.include(user2)
+                          done()
+                        })
+                    })
+                })
+            })
+        })
+      })
+    })
+  })
 
   it('should reject adminlist modifications for admins', function (done) {
     chatService = startService()
-    return chatService.addRoom(roomName1, { adminlist: [user1, user2] }, function () {
+    chatService.addRoom(roomName1, { adminlist: [user1, user2] }, () => {
       socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, function () {
-        socket2 = clientConnect(user2)
-        return socket2.on('loginConfirmed', () => socket2.emit('roomJoin', roomName1, () => socket1.emit('roomRemoveFromList', roomName1, 'adminlist'
-          , [user2] , function (error, data) {
-            expect(error).ok
-            expect(data).null
-            return done()
-          }
-        )
-
-        )
-
-        )
-      }
-      )
-
-      )
-    }
-    )
-  }
-  )
-
-  it('should reject list modifications with owner for admins'
-    , function (done) {
-      chatService = startService({ enableRoomsManagement: true })
-      socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('roomCreate', roomName1, false, () => socket1.emit('roomJoin', roomName1, () => socket1.emit('roomAddToList', roomName1, 'adminlist', [user2],
-        function (error, data) {
-          expect(error).not.ok
-          expect(data).null
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
           socket2 = clientConnect(user2)
-          return socket2.on('loginConfirmed', () => socket2.emit('roomJoin', roomName1, () => socket2.emit('roomAddToList', roomName1, 'whitelist'
-            , [user1], function (error, data) {
-              expect(error).ok
+          socket2.on('loginConfirmed', () => {
+            socket2.emit('roomJoin', roomName1, () => {
+              socket1.emit(
+                'roomRemoveFromList', roomName1, 'adminlist', [user2],
+                (error, data) => {
+                  expect(error).ok
+                  expect(data).null
+                  done()
+                })
+            })
+          })
+        })
+      })
+    })
+  })
+
+  it('should reject list modifications with owner for admins', function (done) {
+    chatService = startService({ enableRoomsManagement: true })
+    socket1 = clientConnect(user1)
+    socket1.on('loginConfirmed', () => {
+      socket1.emit('roomCreate', roomName1, false, () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket1.emit(
+            'roomAddToList', roomName1, 'adminlist', [user2], (error, data) => {
+              expect(error).not.ok
               expect(data).null
-              return done()
-            }
-          )
-
-          )
-
-          )
-        }
-      )
-
-      )
-
-      )
-
-      )
-    }
-  )
+              socket2 = clientConnect(user2)
+              socket2.on('loginConfirmed', () => {
+                socket2.emit('roomJoin', roomName1, () => {
+                  socket2.emit(
+                    'roomAddToList', roomName1, 'whitelist', [user1],
+                    (error, data) => {
+                      expect(error).ok
+                      expect(data).null
+                      done()
+                    })
+                })
+              })
+            })
+        })
+      })
+    })
+  })
 
   it('should reject direct userlist modifications', function (done) {
     chatService = startService()
-    return chatService.addRoom(roomName1, { adminlist: [user1] }, function () {
+    chatService.addRoom(roomName1, { adminlist: [user1] }, () => {
       socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, () => socket1.emit('roomAddToList', roomName1, 'userlist', [user2]
-        , function (error, data) {
-          expect(error).ok
-          expect(data).null
-          return done()
-        }
-      )
-
-      )
-
-      )
-    }
-    )
-  }
-  )
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket1.emit(
+            'roomAddToList', roomName1, 'userlist', [user2], (error, data) => {
+              expect(error).ok
+              expect(data).null
+              done()
+            })
+        })
+      })
+    })
+  })
 
   it('should reject any lists modifications for non-admins', function (done) {
     chatService = startService()
-    return chatService.addRoom(roomName1, null, function () {
+    chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, () => socket1.emit('roomAddToList', roomName1, 'whitelist', [user2]
-        , function (error, data) {
-          expect(error).ok
-          expect(data).null
-          return done()
-        }
-      )
-
-      )
-
-      )
-    }
-    )
-  }
-  )
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket1.emit(
+            'roomAddToList', roomName1, 'whitelist', [user2], (error, data) => {
+              expect(error).ok
+              expect(data).null
+              done()
+            })
+        })
+      })
+    })
+  })
 
   it('should reject mode changes for non-admins', function (done) {
     chatService = startService()
-    return chatService.addRoom(roomName1, null, function () {
+    chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, () => socket1.emit('roomSetWhitelistMode', roomName1, true
-        , function (error, data) {
-          expect(error).ok
-          expect(data).null
-          return done()
-        }
-      )
-
-      )
-
-      )
-    }
-    )
-  }
-  )
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket1.emit(
+            'roomSetWhitelistMode', roomName1, true, (error, data) => {
+              expect(error).ok
+              expect(data).null
+              done()
+            })
+        })
+      })
+    })
+  })
 
   it('should check room permissions', function (done) {
     chatService = startService()
-    return chatService.addRoom(roomName1, { blacklist: [user1] }, function () {
+    chatService.addRoom(roomName1, { blacklist: [user1] }, () => {
       socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, function (error, data) {
-        expect(error).ok
-        expect(data).null
-        return done()
-      }
-      )
-
-      )
-    }
-    )
-  }
-  )
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, (error, data) => {
+          expect(error).ok
+          expect(data).null
+          done()
+        })
+      })
+    })
+  })
 
   it('should check room permissions in whitelist mode', function (done) {
     chatService = startService()
-    return chatService.addRoom(roomName1
+    chatService.addRoom(roomName1
       , { whitelist: [user2], whitelistOnly: true }
-      , function () {
+      , () => {
         socket1 = clientConnect(user1)
-        return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, function (error, data) {
-          expect(error).ok
-          expect(data).null
-          socket2 = clientConnect(user2)
-          return socket2.on('loginConfirmed', () => socket2.emit('roomJoin', roomName1, function (error, data) {
-            expect(error).not.ok
-            expect(data).equal(1)
-            return done()
-          }
-          )
-
-          )
-        }
-        )
-
-        )
-      }
-    )
-  }
-  )
+        socket1.on('loginConfirmed', () => {
+          socket1.emit('roomJoin', roomName1, (error, data) => {
+            expect(error).ok
+            expect(data).null
+            socket2 = clientConnect(user2)
+            socket2.on('loginConfirmed', () => {
+              socket2.emit('roomJoin', roomName1, (error, data) => {
+                expect(error).not.ok
+                expect(data).equal(1)
+                done()
+              })
+            })
+          })
+        })
+      })
+  })
 
   it('should remove users on permissions changes', function (done) {
     chatService = startService()
-    return chatService.addRoom(roomName1, { adminlist: [user1, user3] }, () => parallel([
-      function (cb) {
-        socket1 = clientConnect(user1)
-        return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, cb)
-        )
-      },
-      function (cb) {
-        socket2 = clientConnect(user2)
-        return socket2.on('loginConfirmed', () => socket2.emit('roomJoin', roomName1, cb)
-        )
-      },
-      function (cb) {
-        socket3 = clientConnect(user3)
-        return socket3.on('loginConfirmed', () => socket3.emit('roomJoin', roomName1, cb)
-        )
-      }
-    ], function (error) {
-      expect(error).not.ok
-      socket3.on('roomAccessRemoved', () => done(new Error('Wrong user removed.'))
-      )
-      return parallel([
-        cb => socket1.emit('roomAddToList', roomName1, 'blacklist'
-          , [user2, user3, 'nouser'], cb)
-        ,
-        cb => socket2.on('roomAccessRemoved', function (r) {
-          expect(r).equal(roomName1)
-          return cb()
+    chatService.addRoom(
+      roomName1, { adminlist: [user1, user3] }, () => parallel([
+        (cb) => {
+          socket1 = clientConnect(user1)
+          socket1.on('loginConfirmed',
+                     () => socket1.emit('roomJoin', roomName1, cb))
+        },
+        (cb) => {
+          socket2 = clientConnect(user2)
+          socket2.on('loginConfirmed',
+                     () => socket2.emit('roomJoin', roomName1, cb))
+        },
+        (cb) => {
+          socket3 = clientConnect(user3)
+          socket3.on('loginConfirmed',
+                     () => socket3.emit('roomJoin', roomName1, cb))
         }
-        )
-        ,
-        cb => socket1.on('roomUserLeft', function (r, u) {
-          expect(r).equal(roomName1)
-          expect(u).equal(user2)
-          return cb()
-        }
-        )
-
-      ], done)
-    }
+      ], (error) => {
+        expect(error).not.ok
+        socket3.on('roomAccessRemoved',
+                   () => done(new Error('Wrong user removed.')))
+        parallel([
+          cb => socket1.emit('roomAddToList', roomName1,
+                             'blacklist', [user2, user3, 'nouser'], cb),
+          cb => socket2.on('roomAccessRemoved', (r) => {
+            expect(r).equal(roomName1)
+            cb()
+          }),
+          cb => socket1.on('roomUserLeft', (r, u) => {
+            expect(r).equal(roomName1)
+            expect(u).equal(user2)
+            cb()
+          })
+        ], done)
+      })
     )
-
-    )
-  }
-  )
+  })
 
   it('should remove affected users on mode changes', function (done) {
     chatService = startService()
-    return chatService.addRoom(roomName1, { adminlist: [user1] }, function () {
+    chatService.addRoom(roomName1, { adminlist: [user1] }, () => {
       socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, function () {
-        socket2 = clientConnect(user2)
-        return socket2.on('loginConfirmed', () => socket2.emit('roomJoin', roomName1, function () {
-          socket1.emit('roomSetWhitelistMode', roomName1, true)
-          socket1.on('roomAccessRemoved', () => done(new Error('Wrong user removed.'))
-          )
-          return socket2.on('roomAccessRemoved', function (r) {
-            expect(r).equal(roomName1)
-            return done()
-          }
-          )
-        }
-        )
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket2 = clientConnect(user2)
+          socket2.on('loginConfirmed', () => {
+            socket2.emit('roomJoin', roomName1, () => {
+              socket1.emit('roomSetWhitelistMode', roomName1, true)
+              socket1.on('roomAccessRemoved', () => {
+                done(new Error('Wrong user removed.'))
+              })
+              socket2.on('roomAccessRemoved', (r) => {
+                expect(r).equal(roomName1)
+                done()
+              })
+            })
+          })
+        })
+      })
+    })
+  })
 
-        )
-      }
-      )
-
-      )
-    }
-    )
-  }
-  )
-
-  it('should remove users on permissions changes in whitelist mode'
-    , function (done) {
-      chatService = startService()
-      return chatService.addRoom(roomName1
-        , { adminlist: [user1, user3],       whitelist: [user2],       whitelistOnly: true }
-        , function () {
-          socket1 = clientConnect(user1)
-          return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, function () {
+  it('should remove users on permissions changes in wl mode', function (done) {
+    chatService = startService()
+    chatService.addRoom(
+      roomName1,
+      { adminlist: [user1, user3], whitelist: [user2], whitelistOnly: true },
+      () => {
+        socket1 = clientConnect(user1)
+        socket1.on('loginConfirmed', () => {
+          socket1.emit('roomJoin', roomName1, () => {
             socket2 = clientConnect(user2)
-            return socket2.on('loginConfirmed', () => socket2.emit('roomJoin', roomName1, function () {
-              socket3 = clientConnect(user3)
-              return socket3.on('loginConfirmed', () => socket3.emit('roomJoin', roomName1, function () {
-                socket1.emit('roomRemoveFromList', roomName1
-                  , 'whitelist', [user2, user3, 'nouser'])
-                socket3.on('roomAccessRemoved', () => done(new Error('Wrong user removed.'))
-                )
-                return socket2.on('roomAccessRemoved', function (r) {
-                  expect(r).equal(roomName1)
-                  return done()
-                }
-                )
-              }
-              )
+            socket2.on('loginConfirmed', () => {
+              socket2.emit('roomJoin', roomName1, () => {
+                socket3 = clientConnect(user3)
+                socket3.on('loginConfirmed', () => {
+                  socket3.emit('roomJoin', roomName1, () => {
+                    socket1.emit('roomRemoveFromList', roomName1
+                                 , 'whitelist', [user2, user3, 'nouser'])
+                    socket3.on('roomAccessRemoved', () =>
+                               done(new Error('Wrong user removed.')))
+                    socket2.on('roomAccessRemoved', (r) => {
+                      expect(r).equal(roomName1)
+                      done()
+                    })
+                  })
+                })
+              })
+            })
+          })
+        })
+      })
+  })
 
-              )
-            }
-            )
-
-            )
-          }
-          )
-
-          )
-        }
-      )
-    }
-  )
-
-  return it('should remove disconnected users' , function (done) {
+  it('should remove disconnected users', function (done) {
     chatService = startService({ enableUserlistUpdates: true })
-    return chatService.addRoom(roomName1, null, function () {
+    chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
-      return socket1.on('loginConfirmed', () => socket1.emit('roomJoin', roomName1, function () {
-        socket2 = clientConnect(user2)
-        return socket2.on('loginConfirmed', () => socket2.emit('roomJoin', roomName1, function () {
-          socket2.disconnect()
-          return socket1.on('roomUserLeft', function (r, u) {
-            expect(r).equal(roomName1)
-            expect(u).equal(user2)
-            return done()
-          }
-          )
-        }
-        )
-
-        )
-      }
-      )
-
-      )
-    }
-    )
-  }
-  )
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket2 = clientConnect(user2)
+          socket2.on('loginConfirmed', () => {
+            socket2.emit('roomJoin', roomName1, () => {
+              socket2.disconnect()
+              socket1.on('roomUserLeft', (r, u) => {
+                expect(r).equal(roomName1)
+                expect(u).equal(user2)
+                done()
+              })
+            })
+          })
+        })
+      })
+    })
+  })
 }

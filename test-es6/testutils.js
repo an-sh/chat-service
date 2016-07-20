@@ -1,9 +1,10 @@
-var ChatService = require('../src-es6/ChatService')
+
+const ChatService = require('../src-es6/ChatService')
 
 const Promise = require('bluebird')
 const Redis = require('ioredis')
 const _ = require('lodash')
-const config = require('./config.coffee')
+const config = require('./config')
 const io = require('socket.io-client')
 
 let makeURL = function (port) {
@@ -25,10 +26,10 @@ let makeParams = function (userName) {
 }
 
 let state = null
-let setState = s => state = s
+function setState (s) { state = s }
 
 let customCleanup = null
-let setCustomCleanup = fn => customCleanup = fn
+function setCustomCleanup (fn) { customCleanup = fn }
 
 let clientConnect = function (name, port) {
   let url = makeURL(port)
@@ -45,35 +46,30 @@ let startService = function (opts, hooks) {
 
 if (process.env.TEST_REDIS_CLUSTER) {
   var redis = new Redis.Cluster(config.redisClusterConnect)
-  var checkDB = done => Promise.map(redis.nodes('master'), node => node.dbsize().then(function (data) {
-    if (data) { throw new Error('Unclean Redis DB'); }
-  })
-
-  )
-    .asCallback(done)
-
+  var checkDB = done => Promise.map(
+    redis.nodes('master'),
+    node => node.dbsize().then(data => {
+      if (data) { throw new Error('Unclean Redis DB') }
+    })).asCallback(done)
   var cleanDB = () => Promise.map(redis.nodes('master'), node => node.flushall()
   )
 } else {
-  var redis = new Redis(config.redisConnect)
-  var checkDB = done => redis.dbsize().then(function (data) {
-    if (data) { throw new Error('Unclean Redis DB'); }
-  })
-    .asCallback(done)
-
-  var cleanDB = () => redis.flushall()
+  redis = new Redis(config.redisConnect)
+  checkDB = done => redis.dbsize().then(data => {
+    if (data) { throw new Error('Unclean Redis DB') }
+  }).asCallback(done)
+  cleanDB = () => redis.flushall()
 }
 
 let closeInstance = function (service) {
-  if (!service) { return; }
+  if (!service) { return Promise.resolve() }
   return service.close()
     .timeout(2000)
     .catch(function (e) {
       console.log('Service closing error: ', e)
       return Promise.try(() => service.redis && service.redis.disconnect())
         .catchReturn()
-        .then(() => Promise.fromCallback(cb => service.io.httpServer.close(cb))
-      )
+        .then(() => Promise.fromCallback(cb => service.io.httpServer.close(cb)))
         .catchReturn()
     })
 }
@@ -81,7 +77,7 @@ let closeInstance = function (service) {
 let cleanup = function (services, sockets, done) {
   services = _.castArray(services)
   sockets = _.castArray(sockets)
-  return Promise.try(function () {
+  return Promise.try(() => {
     for (let i = 0; i < sockets.length; i++) {
       let socket = sockets[i]
       socket && socket.disconnect()
@@ -91,19 +87,31 @@ let cleanup = function (services, sockets, done) {
     } else {
       return Promise.map(services, closeInstance)
     }
-  })
-    .finally(function () {
-      customCleanup = null
-      return cleanDB()
-    })
-    .asCallback(done)
+  }).finally(() => {
+    customCleanup = null
+    return cleanDB()
+  }).asCallback(done)
 }
 
 // fix for node 0.12
 let nextTick = (fn, ...args) => process.nextTick(() => fn(...args))
 
-let parallel = (fns, cb) => Promise.map(fns, Promise.fromCallback).asCallback(cb)
+let parallel = (fns, cb) =>
+      Promise.map(fns, Promise.fromCallback).asCallback(cb)
 
-let series = (fns, cb) => Promise.mapSeries(fns, Promise.fromCallback).asCallback(cb)
+let series = (fns, cb) =>
+      Promise.mapSeries(fns, Promise.fromCallback).asCallback(cb)
 
-module.exports = { ChatService, checkDB, cleanup, clientConnect, closeInstance, nextTick, parallel, series, setCustomCleanup, setState, startService }
+module.exports = {
+  ChatService,
+  checkDB,
+  cleanup,
+  clientConnect,
+  closeInstance,
+  nextTick,
+  parallel,
+  series,
+  setCustomCleanup,
+  setState,
+  startService
+}
