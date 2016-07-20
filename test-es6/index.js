@@ -1,49 +1,43 @@
+import _ from 'lodash'
+import config from './config.coffee'
+import testutils from './testutils.coffee'
 
-import _ from 'lodash';
-import config from './config.coffee';
-import testutils from './testutils.coffee';
+before(testutils.checkDB)
 
+describe('Chat service.', function () {
+  _.forEach(config.states, state => describe(`State: '${state.state}', adapter: '${state.adapter}'.`, function () {
+    before(() => testutils.setState(state))
 
-before(testutils.checkDB);
+    describe('Initialization', require('./initialization.coffee'))
 
-describe('Chat service.', function() {
+    describe('Connection', require('./connection.coffee'))
 
-  _.forEach(config.states, state =>
+    describe('Room management', require('./roomManagement.coffee'))
 
-    describe(`State: '${state.state}', adapter: '${state.adapter}'.`, function() {
+    describe('Room messaging', require('./roomMessaging.coffee'))
 
-      before(() => testutils.setState(state));
+    describe('Room permissions', require('./roomPermissions.coffee'))
 
-      describe('Initialization', require('./initialization.coffee'));
+    describe('Direct messaging', require('./directMessaging.coffee'))
 
-      describe('Connection', require('./connection.coffee'));
+    describe('Direct permissions', require('./directPermissions.coffee'))
 
-      describe('Room management', require('./roomManagement.coffee'));
+    describe('Hooks', require('./hooks.coffee'))
 
-      describe('Room messaging', require('./roomMessaging.coffee'));
+    describe('API', require('./api.coffee'))
 
-      describe('Room permissions', require('./roomPermissions.coffee'));
+    describe('API permissions', require('./apiPermissions.coffee'))
 
-      describe('Direct messaging', require('./directMessaging.coffee'));
+    describe('Validation', require('./validation.coffee'))
 
-      describe('Direct permissions', require('./directPermissions.coffee'));
+    describe('Errors handling', require('./errorsHandling.coffee'))
 
-      describe('Hooks', require('./hooks.coffee'));
+    return describe('Consistency recovery', require('./consistencyRecovery.coffee'))
+  }
+  )
 
-      describe('API', require('./api.coffee'));
+  )
 
-      describe('API permissions', require('./apiPermissions.coffee'));
-
-      describe('Validation', require('./validation.coffee'));
-
-      describe('Errors handling', require('./errorsHandling.coffee'));
-
-      return describe('Consistency recovery', require('./consistencyRecovery.coffee'));
-    }
-    )
-  
-  );
-
-  return describe('Service cluster', require('./serviceCluster.coffee'));
+  return describe('Service cluster', require('./serviceCluster.coffee'))
 }
-);
+)
