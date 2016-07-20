@@ -1,12 +1,12 @@
-import Promise from 'bluebird'
-import _ from 'lodash'
-import { expect } from 'chai'
+const Promise = require('bluebird')
+const _ = require('lodash')
+const { expect } = require('chai')
 
-import { cleanup, clientConnect, closeInstance, nextTick, parallel, setCustomCleanup, startService } from './testutils.coffee'
+const { cleanup, clientConnect, closeInstance, nextTick, parallel, setCustomCleanup, startService } = require('./testutils.coffee')
 
-import { cleanupTimeout, port, user1, user2, user3, roomName1, roomName2 } from './config.coffee'
+const { cleanupTimeout, port, user1, user2, user3, roomName1, roomName2 } = require('./config.coffee')
 
-export default function() {
+module.exports = function() {
   let instance1 = null
   let socket1 = null
   let socket2 = null

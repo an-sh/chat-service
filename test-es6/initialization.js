@@ -1,14 +1,14 @@
-import Promise from 'bluebird'
-import _ from 'lodash'
-import { expect } from 'chai'
-import http from 'http'
-import socketIO from 'socket.io'
+const Promise = require('bluebird')
+const _ = require('lodash')
+const { expect } = require('chai')
+const http = require('http')
+const socketIO = require('socket.io')
 
-import { cleanup, clientConnect, closeInstance, setCustomCleanup, startService } from './testutils.coffee'
+const { cleanup, clientConnect, closeInstance, setCustomCleanup, startService } = require('./testutils.coffee')
 
-import { cleanupTimeout, port, user1, user2, user3, roomName1, roomName2, redisConnect } from './config.coffee'
+const { cleanupTimeout, port, user1, user2, user3, roomName1, roomName2, redisConnect } = require('./config.coffee')
 
-export default function() {
+module.exports = function() {
   let chatService = null
   let socket1 = null
   let socket2 = null

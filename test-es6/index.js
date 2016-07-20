@@ -1,6 +1,6 @@
-import _ from 'lodash'
-import config from './config.coffee'
-import testutils from './testutils.coffee'
+const _ = require('lodash')
+const config = require('./config.coffee')
+const testutils = require('./testutils.coffee')
 
 before(testutils.checkDB)
 

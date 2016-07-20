@@ -1,11 +1,11 @@
-import _ from 'lodash'
-import { expect } from 'chai'
+const _ = require('lodash')
+const { expect } = require('chai')
 
-import { cleanup, clientConnect, closeInstance, parallel, startService } from './testutils.coffee'
+const { cleanup, clientConnect, closeInstance, parallel, startService } = require('./testutils.coffee')
 
-import { cleanupTimeout, port, user1, user2, user3, roomName1, roomName2, redisConfig } from './config.coffee'
+const { cleanupTimeout, port, user1, user2, user3, roomName1, roomName2, redisConfig } = require('./config.coffee')
 
-export default function() {
+module.exports = function() {
   let instance1 = null
   let instance2 = null
   let socket1 = null

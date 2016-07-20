@@ -1,15 +1,10 @@
-if (process.env.TEST_ES6) {
-  // require('babel-register')({presets: ['es2015']})
-  console.log('es6 testing...')
-  var ChatService = require('../src-es6/ChatService')
-} else {
-  var ChatService = require('../src/ChatService.coffee')
-}
-import Promise from 'bluebird'
-import Redis from 'ioredis'
-import _ from 'lodash'
-import config from './config.coffee'
-import io from 'socket.io-client'
+var ChatService = require('../src-es6/ChatService')
+
+const Promise = require('bluebird')
+const Redis = require('ioredis')
+const _ = require('lodash')
+const config = require('./config.coffee')
+const io = require('socket.io-client')
 
 let makeURL = function (port) {
   port = port || config.port
@@ -111,4 +106,4 @@ let parallel = (fns, cb) => Promise.map(fns, Promise.fromCallback).asCallback(cb
 
 let series = (fns, cb) => Promise.mapSeries(fns, Promise.fromCallback).asCallback(cb)
 
-export { ChatService, checkDB, cleanup, clientConnect, closeInstance, nextTick, parallel, series, setCustomCleanup, setState, startService }
+module.exports = { ChatService, checkDB, cleanup, clientConnect, closeInstance, nextTick, parallel, series, setCustomCleanup, setState, startService }
