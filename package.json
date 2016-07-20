@@ -6,8 +6,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha",
-    "generate-docs": "jsdoc --configure .jsdoc.json --verbose",
-    "pipe-coverage": "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js --verbose"
+    "generate-docs": "jsdoc --configure .jsdoc.json --verbose"
   },
   "author": {
     "name": "Andrey Sharapov",
@@ -47,7 +46,6 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "coffee-script": "^1.10.0",
     "coveralls": "^2.11.8",
     "docdash": "^0.4.0",
     "istanbul": "^0.4.2",

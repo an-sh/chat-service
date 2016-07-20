@@ -1,9 +1,8 @@
 engines:
-  coffeelint:
+  eslint:
     enabled: true
 ratings:
    paths:
-   - src/**
+   - src/**/*
 exclude_paths:
 - "test/**/*"
-- "example/**/*"
