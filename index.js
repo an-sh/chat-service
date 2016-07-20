@@ -1,2 +1,2 @@
 
-module.exports = require('./src-es6//ChatService')
+module.exports = require('./src-es6/ChatService')

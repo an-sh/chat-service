@@ -1,4 +1,4 @@
-/*eslint valid-jsdoc: ["error", { "requireReturn": false }]*/
+/*eslint valid-jsdoc: [2, { "requireReturn": false }]*/
 /*eslint no-unused-vars: 0*/
 
 /**
