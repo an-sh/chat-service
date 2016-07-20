@@ -130,7 +130,14 @@ class ChatService extends EventEmitter {
 
   /**
    * @name chat-service.ChatService#clusterBus
-   * @type Object
+   * @type EventEmitter
+   * @readonly
+   *
+   */
+
+  /**
+   * @name chat-service.ChatService#validator
+   * @type chat-service.ArgumentsValidator
    * @readonly
    *
    */

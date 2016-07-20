@@ -1,36 +1,73 @@
 
-// ExecInfo is available for {UserCommands} hooks. See
-// {HooksInterface}.
+/**
+ * ExecInfo is available for {@link rpc.clientRequests} hooks.
+ * @see chat-service.HooksInterface
+ * @memberof chat-service
+ * @interface
+ */
 class ExecInfo {
+  /**
+   * Service instance.
+   * @name chat-service.ExecInfo#server
+   * @type ChatService
+   */
 
-  // @property [ChatService] Service instance.
-  // server = null
+  /**
+   * User name.
+   * @name chat-service.ExecInfo#userName
+   * @type String|null
+   */
 
-  // @property [String or null] User name.
-  // userName = null
+  /**
+   * Socket id.
+   * @name chat-service.ExecInfo#id
+   * @type String|null
+   */
 
-  // @property [String or null] Socket id.
-  // id = null
+  /**
+   * Bypass permissions.
+   * @name chat-service.ExecInfo#bypassPermissions
+   * @type Boolean
+   * @default false
+   * @see chat-service.ServiceAPI#execUserCommand
+   */
 
-  // @property [Boolean] Bypass permissions, see
-  //   {ServiceAPI~execUserCommand}.
-  // bypassPermissions = false
+  /**
+   * Don't call requests hooks if `true`.
+   * @name chat-service.ExecInfo#bypassHooks
+   * @type Boolean
+   * @default false
+   * @see chat-service.ServiceAPI#execUserCommand
+   */
 
-  // @property [Boolean] Don't call command hooks if `true`.
-  // bypassHooks = false
+  /**
+   * Request error.
+   * @name chat-service.ExecInfo#error
+   * @type Error|null
+   * @default null
+   */
 
-  // @property [Error] Command error.
-  // error = null
+  /**
+   * Request results.
+   * @name chat-service.ExecInfo#results
+   * @type {Array<Object>}
+   * @default null
+   */
 
-  // @property [Array<Object>] Command results.
-  // results = null
+  /**
+   * Request arguments.
+   * @name chat-service.ExecInfo#args
+   * @type {Array<Object>}
+   * @default []
+   */
 
-  // @property [Array<Object>] Command arguments.
-  // args = []
-
-  // @property [Array<Object>] Additional arguments, passed after
-  //   command arguments. Can be used as additional hooks parameters.
-  // restArgs = []
+  /**
+   * Additional arguments, passed after command arguments. Can be used
+   * as additional hooks parameters.
+   * @name chat-service.ExecInfo#restArgs
+   * @type {Array<Object>}
+   * @default []
+   */
 
   constructor () {
     this.server = null

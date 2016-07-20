@@ -264,7 +264,7 @@ function roomHistoryInfo (roomName) {}
 
  /**
   * Joins room, an user must join the room to receive messages or
-  * execute room commands. Sends {@link
+  * execute requests with a `room` prefix. Sends {@link
   * rpc.serverNotifications.roomJoinedEcho} to other user's
   * sockets. Also sends {@link rpc.serverNotifications.roomUserJoined}
   * to other room users if ChatService `enableUserlistUpdates` option

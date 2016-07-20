@@ -1,6 +1,8 @@
 
 /**
- * {@link ChatService} constructor options.
+ * {@link ChatService} configuration.
+ * @see chat-service.HooksInterface
+ *
  * @namespace config
  * @memberof chat-service
  */
@@ -41,27 +43,28 @@
  * @property {boolean} [port=8000] Port number.
  *
  * @property {boolean} [enableAccessListsUpdates=false] Enables
- *   {UserCommands#roomModeChanged},
- *   {UserCommands#roomAccessListAdded} and
- *   {UserCommands#roomAccessListRemoved} notifications.
+ *   {rpc.clientRequests#roomModeChanged},
+ *   {rpc.clientRequests#roomAccessListAdded} and
+ *   {rpc.clientRequests#roomAccessListRemoved} notifications.
  *
  * @property {boolean} [enableDirectMessages=false] Enables user to
- *   user {UserCommands#directMessage} communication.
+ *   user {rpc.clientRequests#directMessage} communication.
  *
  * @property {boolean} [enableRoomsManagement=false] Allows to use
- *   {UserCommands#roomCreate} and {UserCommands#roomDelete}.
+ *   {rpc.clientRequests#roomCreate} and
+ *   {rpc.clientRequests#roomDelete}.
  *
  * @property {boolean} [enableUserlistUpdates=false] Enables
  *   {ServerMessages#roomUserJoined} and {ServerMessages#roomUserLeft}
  *   messages.
  *
  * @property {number} [historyMaxGetMessages=100] Room history size
- *   available via {UserCommands#roomRecentHistory} or via a single
- *   invocation {UserCommands#roomHistoryGet}.
+ *   available via {rpc.clientRequests#roomRecentHistory} or via a
+ *   single invocation {rpc.clientRequests#roomHistoryGet}.
  *
  * @property {number} [defaultHistoryLimit=10000] Is used for
- *   {UserCommands#roomCreate} or when {ServiceAPI~addRoom} is called
- *   without `historyMaxSize` option.
+ *   {rpc.clientRequests#roomCreate} or when {ServiceAPI~addRoom} is
+ *   called without `historyMaxSize` option.
  *
  * @property {boolean} [useRawErrorObjects=false] Send error objects
  *   instead of strings. See {ChatServiceError}.

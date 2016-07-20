@@ -2,8 +2,8 @@
 /**
  * Hooks interface.
  * @todo Complete this spec.
- * @memberof! chat-service
  * @interface
+ * @memberof chat-service
  */
 class HooksInterface {
 
@@ -16,10 +16,10 @@ class HooksInterface {
    * @param {Callback} [cb] Optional callback.
    *
    * @return {Promise<Array|string>} Resolves either a login string
-   *   (user name) or an array with a login string and an optional
-   *   auth data object. User name and auth data are send back with a
-   *   `loginConfirmed` message. Error is sent as a `loginRejected`
-   *   message.
+   * (user name) or an array with a login string and an optional auth
+   * data object. User name and auth data are send back with a
+   * `loginConfirmed` message. Error is sent as a `loginRejected`
+   * message.
    */
   onClientConnect (server, id, cb) {}
 
@@ -36,7 +36,7 @@ class HooksInterface {
 
   /**
    * Executes when server is started (after a state and a transport are
-   * up, but before message processing is started).
+   * up, but before requests processing is started).
    *
    * @param {ChatService} server Service instance.
    * @param {Callback} [cb] Optional callback.
@@ -86,12 +86,13 @@ class HooksInterface {
    * Before hooks are available for all `ClientRequests` and are
    * executed after an arguments validation.
    *
-   * @param {ExecInfo} execInfo Command execution details.
+   * @param {chat-service.ExecInfo} execInfo Command execution
+   * details.
    * @param {Callback} [cb] Optional callback.
    *
    * @return {Promise<Array|void>} Resolves without a data to continue
-   *   a command execution. Rejections or a resolved array will stop
-   *   further execution, and return results to the command issuer.
+   * a command execution. Rejections or a resolved array will stop
+   * further execution, and return results to the command issuer.
    */
   clientRequestBefore (execInfo, cb) {}
 
@@ -99,12 +100,12 @@ class HooksInterface {
    * After hooks are available for all `ClientRequests` and are
    * executed after ChatService default event handlers.
    *
-   * @param {ExecInfo} execInfo Command execution details.
+   * @param {chat-service.ExecInfo} execInfo Command execution details.
    * @param {Callback} [cb] Optional callback.
    *
    * @return {Promise<Array|void>} Resolves without a data to return
-   *   unchanged command results to the command issuer. Rejections or
-   *   a resolved array will override command results.
+   * unchanged command results to the command issuer. Rejections or a
+   * resolved array will override command results.
    */
   clientRequestAfter (execInfo, cb) {}
 

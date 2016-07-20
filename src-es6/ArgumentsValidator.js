@@ -6,11 +6,21 @@ const _ = require('lodash')
 const check = require('check-types')
 const { possiblyCallback } = require('./utils')
 
-// Commands arguments type and count validation. Can be used for hooks
-// development, an instance of {ArgumentsValidator} implementation is
-// available as a member of {ChatService} instance.
+/**
+ * Commands arguments type and count validation. Can be used for hooks
+ * development.
+ *
+ * @memberof chat-service
+ */
 class ArgumentsValidator {
 
+  /**
+   * _Should not be called directly_. Instance is available as {@link
+   * chat-service.ChatService#validator}.
+   *
+   * @param {chat-service.ChatService} server ChatService.
+   *
+   */
   constructor (server) {
     this.server = server
     this.checkers = new FastMap()
@@ -27,12 +37,17 @@ class ArgumentsValidator {
     }
   }
 
-  // Check command arguments.
-  //
-  // @param name [String] Command name.
-  // @param args [Rest...] Command arguments with an optional callback.
-  //
-  // @return [Promise]
+  /**
+   * Check command arguments.
+   *
+   * @param {String} name Command name.
+   * @param {...*} args Command arguments.
+   * @param {Callback} [cb] Optional callback.
+   *
+   * @return {Promise<undefined>} Promise that resolves without any
+   * data, if validation is successful, otherwise a promise is
+   * rejected.
+   */
   checkArguments (name, ...args) {
     let [nargs, cb] = possiblyCallback(args)
     return Promise.try(() => {

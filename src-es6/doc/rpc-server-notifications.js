@@ -46,7 +46,7 @@ function directMessage (message) {}
 function directMessageEcho (toUser, message) {}
 
 /**
- * A client should wait until this event before issuing commands. If
+ * A client should wait until this event before issuing requests. If
  * auth has failed {@link ServerNotification.loginRejected}
  * notification will be emitted instead. Only one of these events will
  * be emitted once per connection.
@@ -54,10 +54,10 @@ function directMessageEcho (toUser, message) {}
  * @param {string} userName User name.
  * @param {rpcTypes.AuthData} authData Additional auth data.
  *
- * @see ServerNotification.loginRejected
+ * @see rpc.serverNotifications.loginRejected
  *
-  * @memberof rpc.serverNotifications
-  */
+ * @memberof rpc.serverNotifications
+ */
 function loginConfirmed (userName, authData) {}
 
 /**
@@ -65,10 +65,10 @@ function loginConfirmed (userName, authData) {}
  *
  * @param {rpcTypes.ChatServiceError|Error|string} reason Error.
  *
- * @see ServerNotification.loginConfirmed
+ * @see rpc.serverNotifications.loginConfirmed
  *
-  * @memberof rpc.serverNotifications
-  */
+ * @memberof rpc.serverNotifications
+ */
 function loginRejected (reason) {}
 
  /**
