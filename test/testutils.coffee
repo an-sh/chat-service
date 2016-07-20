@@ -73,7 +73,7 @@ closeInstance = (service) ->
   .catch (e) ->
     console.log 'Service closing error: ', e
     Promise.try ->
-      service.redis?.disconnect()
+      service.redis and service.redis.disconnect()
     .catchReturn()
     .then ->
       Promise.fromCallback (cb) ->
@@ -85,7 +85,7 @@ cleanup = (services, sockets, done) ->
   sockets = _.castArray sockets
   Promise.try ->
     for socket in sockets
-      socket?.disconnect()
+      socket and socket.disconnect()
     if customCleanup
       Promise.fromCallback customCleanup
     else
