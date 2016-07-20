@@ -87,7 +87,7 @@ module.exports = function () {
     })
   })
 
-  it("should echo direct messages to user's sockets", function (done) {
+  it('should echo direct messages to user\'s sockets', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService({ enableDirectMessages: true })
@@ -111,7 +111,7 @@ module.exports = function () {
     })
   })
 
-  it("should echo system messages to user's sockets", function (done) {
+  it('should echo system messages to user\'s sockets', function (done) {
     let data = 'some data.'
     chatService = startService()
     socket1 = clientConnect(user1)
