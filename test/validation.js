@@ -71,21 +71,4 @@ module.exports = function () {
       })
     })
   })
-
-  it('should have a server messages and user commands fields', function (done) {
-    chatService = startService()
-    for (var k in chatService.serverMessages) {
-      var fn = chatService.serverMessages[k]
-      fn()
-    }
-    for (k in chatService.userCommands) {
-      fn = chatService.userCommands[k]
-      fn()
-    }
-    for (k in chatService.HooksInterface) {
-      fn = chatService.HooksInterface[k]
-      fn()
-    }
-    process.nextTick(done)
-  })
 }
