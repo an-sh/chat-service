@@ -88,7 +88,7 @@ module.exports = function () {
     chatService = startService()
     let orig = chatService.state.addSocket
     chatService.state.addSocket = function (id) {
-      orig.apply(chatService.state, arguments)
+      return orig.apply(chatService.state, arguments)
         .finally(() => chatService.transport.disconnectClient(id))
     }
     let tst = chatService.transport.rejectLogin

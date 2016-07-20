@@ -1,5 +1,5 @@
 
-const ChatService = require('../src-es6/ChatService')
+const ChatService = require('../src/ChatService')
 
 const Promise = require('bluebird')
 const Redis = require('ioredis')
