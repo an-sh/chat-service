@@ -1,5 +1,4 @@
-
-module.exports = {
+{
   "extends": "standard",
   "rules": {
     "valid-jsdoc": 2,
