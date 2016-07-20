@@ -372,29 +372,29 @@ module.exports = function () {
     chatService = startService()
     chatService.addRoom(
       roomName1, { adminlist: [user1, user3] }, () => parallel([
-        (cb) => {
+        cb => {
           socket1 = clientConnect(user1)
           socket1.on('loginConfirmed',
                      () => socket1.emit('roomJoin', roomName1, cb))
         },
-        (cb) => {
+        cb => {
           socket2 = clientConnect(user2)
           socket2.on('loginConfirmed',
                      () => socket2.emit('roomJoin', roomName1, cb))
         },
-        (cb) => {
+        cb => {
           socket3 = clientConnect(user3)
           socket3.on('loginConfirmed',
                      () => socket3.emit('roomJoin', roomName1, cb))
         }
-      ], (error) => {
+      ], error => {
         expect(error).not.ok
         socket3.on('roomAccessRemoved',
                    () => done(new Error('Wrong user removed.')))
         parallel([
           cb => socket1.emit('roomAddToList', roomName1,
                              'blacklist', [user2, user3, 'nouser'], cb),
-          cb => socket2.on('roomAccessRemoved', (r) => {
+          cb => socket2.on('roomAccessRemoved', r => {
             expect(r).equal(roomName1)
             cb()
           }),
@@ -421,7 +421,7 @@ module.exports = function () {
               socket1.on('roomAccessRemoved', () => {
                 done(new Error('Wrong user removed.'))
               })
-              socket2.on('roomAccessRemoved', (r) => {
+              socket2.on('roomAccessRemoved', r => {
                 expect(r).equal(roomName1)
                 done()
               })
@@ -451,7 +451,7 @@ module.exports = function () {
                                  , 'whitelist', [user2, user3, 'nouser'])
                     socket3.on('roomAccessRemoved', () =>
                                done(new Error('Wrong user removed.')))
-                    socket2.on('roomAccessRemoved', (r) => {
+                    socket2.on('roomAccessRemoved', r => {
                       expect(r).equal(roomName1)
                       done()
                     })

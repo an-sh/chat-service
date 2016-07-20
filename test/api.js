@@ -23,13 +23,13 @@ module.exports = function () {
   it('should support a server side user disconnection', function (done) {
     chatService = startService()
     socket1 = clientConnect(user1)
-    socket1.on('loginConfirmed', (u) => {
+    socket1.on('loginConfirmed', u => {
       expect(u).equal(user1)
       socket2 = clientConnect(user1)
-      socket2.on('loginConfirmed', (u) => {
+      socket2.on('loginConfirmed', u => {
         expect(u).equal(user1)
         parallel([
-          (cb) => {
+          cb => {
             chatService.disconnectUserSockets(user1)
             cb()
           },
@@ -69,7 +69,7 @@ module.exports = function () {
         chatService.hasUser(user1, (error, data) => {
           expect(error).not.ok
           expect(data).true
-          chatService.deleteUser(user1, (error) => {
+          chatService.deleteUser(user1, error => {
             expect(error).not.ok
             chatService.hasUser(user1, (error, data) => {
               expect(error).not.ok
@@ -86,7 +86,7 @@ module.exports = function () {
     chatService = startService()
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
-      chatService.deleteUser(user1, (error) => {
+      chatService.deleteUser(user1, error => {
         expect(error).ok
         done()
       })
@@ -135,7 +135,7 @@ module.exports = function () {
   it('should check commands names.', function (done) {
     chatService = startService()
     chatService.addUser(user1, null, () => {
-      chatService.execUserCommand(user1, 'nocmd', (error) => {
+      chatService.execUserCommand(user1, 'nocmd', error => {
         expect(error).ok
         done()
       })
@@ -145,7 +145,7 @@ module.exports = function () {
   it('should check for socket ids if required.', function (done) {
     chatService = startService()
     chatService.addUser(user1, null, () => {
-      chatService.execUserCommand(user1, 'roomJoin', (error) => {
+      chatService.execUserCommand(user1, 'roomJoin', error => {
         expect(error).ok
         done()
       })

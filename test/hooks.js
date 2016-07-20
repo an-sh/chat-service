@@ -110,11 +110,11 @@ module.exports = function () {
     let someData = 'data'
     let before = null
     let after = null
-    let roomCreateBefore = (execInfo) => {
+    let roomCreateBefore = execInfo => {
       before = true
       return Promise.resolve()
     }
-    let roomCreateAfter = (execInfo) => {
+    let roomCreateAfter = execInfo => {
       after = true
       return Promise.resolve(someData)
     }
@@ -257,7 +257,7 @@ module.exports = function () {
       socket2 = clientConnect(user2)
       socket2.on('loginConfirmed', () => {
         socket1.emit('directMessage', user2, message)
-        socket2.on('directMessage', (msg) => {
+        socket2.on('directMessage', msg => {
           expect(msg).include.keys('htmlMessage', 'author', 'timestamp')
           expect(msg.htmlMessage).equal(html)
           expect(msg.author).equal(user1)

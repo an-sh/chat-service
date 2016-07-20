@@ -27,7 +27,7 @@ module.exports = function () {
       socket2 = clientConnect(user2)
       socket2.on('loginConfirmed', () => {
         socket1.emit('directMessage', user2, message)
-        socket2.on('directMessage', (msg) => {
+        socket2.on('directMessage', msg => {
           expect(msg).include.keys('textMessage', 'author', 'timestamp')
           expect(msg.textMessage).equal(txt)
           expect(msg.author).equal(user1)
@@ -119,7 +119,7 @@ module.exports = function () {
       socket2 = clientConnect(user1)
       socket2.on('loginConfirmed', () => {
         socket1.emit('systemMessage', data)
-        socket2.on('systemMessage', (d) => {
+        socket2.on('systemMessage', d => {
           expect(d).equal(data)
           done()
         })

@@ -26,10 +26,10 @@ module.exports = function () {
     instance1.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', (userName, { id }) => {
-        instance1.state.getUser(user1).then((user) => {
+        instance1.state.getUser(user1).then(user => {
           let orig1 = user.userState.removeSocketFromRoom
           let orig2 = user.userState.addSocketToRoom
-          setCustomCleanup((cb) => {
+          setCustomCleanup(cb => {
             user.userState.__proto__.removeSocketFromRoom = orig1
             user.userState.__proto__.addSocketToRoom = orig2
             closeInstance(instance1).asCallback(cb)
@@ -57,7 +57,7 @@ module.exports = function () {
                 cb()
               })
             })
-          ], (error) => {
+          ], error => {
             expect(error).not.ok
             user.userState.__proto__.removeSocketFromRoom = orig1
             user.userState.__proto__.addSocketToRoom = orig2
@@ -83,9 +83,9 @@ module.exports = function () {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', (userName, { id }) => {
         socket1.emit('roomJoin', roomName1, () => {
-          instance1.state.getRoom(roomName1).then((room) => {
+          instance1.state.getRoom(roomName1).then(room => {
             let orig = room.leave
-            setCustomCleanup((cb) => {
+            setCustomCleanup(cb => {
               room.__proto__.leave = orig
               closeInstance(instance1).asCallback(cb)
             })
@@ -108,7 +108,7 @@ module.exports = function () {
                   cb()
                 })
               })
-            ], (error) => {
+            ], error => {
               expect(error).not.ok
               room.__proto__.leave = orig
               instance1.roomStateSync(roomName1)
@@ -134,9 +134,9 @@ module.exports = function () {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', (userName, { id }) => {
         socket1.emit('roomJoin', roomName1, () => {
-          instance1.state.getUser(user1).then((user) => {
+          instance1.state.getUser(user1).then(user => {
             let orig = user.userState.removeSocket
-            setCustomCleanup((cb) => {
+            setCustomCleanup(cb => {
               user.userState.__proto__.removeSocket = orig
               closeInstance(instance1).asCallback(cb)
             })
@@ -172,9 +172,9 @@ module.exports = function () {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', (userName, { id }) => {
         socket1.emit('roomJoin', roomName1, () => {
-          instance1.state.getUser(user1).then((user) => {
+          instance1.state.getUser(user1).then(user => {
             let orig = user.userState.removeAllSocketsFromRoom
-            setCustomCleanup((cb) => {
+            setCustomCleanup(cb => {
               user.userState.__proto__.removeAllSocketsFromRoom = orig
               closeInstance(instance1).asCallback(cb)
             })
@@ -215,7 +215,7 @@ module.exports = function () {
   it('should recover from room access check errors', function (done) {
     instance1 = startService()
     instance1.addRoom(roomName1, null, () => {
-      instance1.state.getRoom(roomName1).then((room) => {
+      instance1.state.getRoom(roomName1).then(room => {
         socket1 = clientConnect(user1)
         socket1.on('loginConfirmed', (userName, { id }) => {
           socket1.emit('roomJoin', roomName1, () => {
@@ -223,14 +223,14 @@ module.exports = function () {
             room.roomState.__proto__.hasInList = function () {
               return Promise.reject(new Error())
             }
-            setCustomCleanup((cb) => {
+            setCustomCleanup(cb => {
               room.roomState.__proto__.hasInList = orig
               closeInstance(instance1).asCallback(cb)
             })
             parallel([
               cb => instance1.execUserCommand(
                 true, 'roomAddToList', roomName1, 'blacklist', [user1],
-                (error) => {
+                error => {
                   expect(error).not.ok
                   cb()
                 }),
@@ -246,7 +246,7 @@ module.exports = function () {
                   return instance1.roomStateSync(roomName1).then(() => {
                     return instance1.execUserCommand(
                       true, 'roomGetAccessList', roomName1, 'userlist')
-                  }).spread((list) => {
+                  }).spread(list => {
                     expect(list).an('Array')
                     expect(list).empty
                   }).asCallback(cb)
@@ -265,17 +265,17 @@ module.exports = function () {
     instance1.transport.__proto__.leaveChannel = function () {
       return Promise.reject(new Error())
     }
-    setCustomCleanup((cb) => {
+    setCustomCleanup(cb => {
       instance1.transport.__proto__.leaveChannel = orig
       closeInstance(instance1).asCallback(cb)
     })
     instance1.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', (userName, { id }) => {
-        socket1.emit('roomJoin', roomName1, (error) => {
+        socket1.emit('roomJoin', roomName1, error => {
           expect(error).not.ok
           parallel([
-            cb => socket1.emit('roomLeave', roomName1, (error) => {
+            cb => socket1.emit('roomLeave', roomName1, error => {
               expect(error).not.ok
               cb()
             }),

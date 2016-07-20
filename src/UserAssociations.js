@@ -172,7 +172,7 @@ class UserAssociations {
   removeFromRoom (roomName) {
     let lock = this.userState.lockToRoom(roomName, this.lockTTL)
     return Promise.using(lock, () => {
-      return this.removeUserSocketsFromRoom(roomName).then((removedSockets) => {
+      return this.removeUserSocketsFromRoom(roomName).then(removedSockets => {
         removedSockets = removedSockets || []
         return this.channelLeaveSockets(roomName, removedSockets).then(() => {
           if (removedSockets.length) {

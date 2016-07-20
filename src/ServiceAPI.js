@@ -209,7 +209,7 @@ class ServiceAPI {
    */
   hasRoom (roomName, cb) {
     return this.state.getRoom(roomName, true)
-      .then((room) => Boolean(room))
+      .then(room => Boolean(room))
       .asCallback(cb)
   }
 

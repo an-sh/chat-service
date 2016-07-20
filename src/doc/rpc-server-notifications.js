@@ -8,7 +8,7 @@
  * @example <caption>Socket.io client example.</caption>
  *   let socket = io.connect(url, opts)
  *   socket.once('loginConfirmed', () => {
- *     socket.on('directMessage', (message) => {
+ *     socket.on('directMessage', message => {
  *       // just the same as any event. no reply is required.
  *     })
  *   })

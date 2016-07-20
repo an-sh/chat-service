@@ -32,7 +32,7 @@ module.exports = function () {
     parallel([
       cb => instance1.on('ready', cb),
       cb => instance2.on('ready', cb)
-    ], (error) => {
+    ], error => {
       expect(error).not.ok
       parallel([
         cb => instance2.clusterBus.on(event, (uid, d) => {
@@ -45,7 +45,7 @@ module.exports = function () {
           expect(d).deep.equal(data)
           cb()
         }),
-        (cb) => {
+        cb => {
           instance1.clusterBus.emit(event, instance1.instanceUID, data)
           cb()
         }
@@ -59,26 +59,26 @@ module.exports = function () {
     instance1 = startService(_.assign({port}, redisConfig))
     instance2 = startService(_.assign({port: port + 1}, redisConfig))
     instance1.addRoom(roomName1, { owner: user2 }, () => parallel([
-      (cb) => {
+      cb => {
         socket1 = clientConnect(user1, port)
         socket1.on('roomMessage',
                    () => done(new Error('Not removed from channel')))
         socket1.on('loginConfirmed',
                    () => socket1.emit('roomJoin', roomName1, cb))
       },
-      (cb) => {
+      cb => {
         socket2 = clientConnect(user1, port + 1)
         socket2.on('roomMessage',
                    () => done(new Error('Not removed from channel')))
         socket2.on('loginConfirmed',
                    () => socket2.emit('roomJoin', roomName1, cb))
       },
-      (cb) => {
+      cb => {
         socket3 = clientConnect(user2, port)
         socket3.on('loginConfirmed',
                    () => socket3.emit('roomJoin', roomName1, cb))
       }
-    ], (error) => {
+    ], error => {
       expect(error).not.ok
       socket3.emit('roomAddToList', roomName1, 'blacklist', [user1], () => {
         socket3.emit('roomMessage', roomName1, {textMessage: 'hello'})
@@ -91,20 +91,20 @@ module.exports = function () {
     instance1 = startService(_.assign({port}, redisConfig))
     instance2 = startService(_.assign({port: port + 1}, redisConfig))
     parallel([
-      (cb) => {
+      cb => {
         socket1 = clientConnect(user1, port)
         socket1.on('loginConfirmed', () => cb())
       },
-      (cb) => {
+      cb => {
         socket2 = clientConnect(user1, port + 1)
         socket2.on('loginConfirmed', () => cb())
       }
-    ], (error) => {
+    ], error => {
       expect(error).not.ok
       parallel([
         cb => socket1.on('disconnect', () => cb()),
         cb => socket2.on('disconnect', () => cb()),
-        (cb) => {
+        cb => {
           instance1.disconnectUserSockets(user1)
           cb()
         }
@@ -117,36 +117,36 @@ module.exports = function () {
     instance2 = startService(_.assign({port: port + 1}, redisConfig))
     let ids = {}
     instance1.addRoom(roomName1, null, () => parallel([
-      (cb) => {
+      cb => {
         socket1 = clientConnect(user1, port)
         socket1.on('loginConfirmed',
                    () => socket1.emit('roomJoin', roomName1, cb))
       },
-      (cb) => {
+      cb => {
         socket2 = clientConnect(user2, port)
         socket2.on('loginConfirmed',
                    () => socket2.emit('roomJoin', roomName1, cb))
       },
-      (cb) => {
+      cb => {
         socket3 = clientConnect(user2, port + 1)
         socket3.on('loginConfirmed', (u, d) => {
           ids[d.id] = d.id
           socket3.emit('roomJoin', roomName1, cb)
         })
       },
-      (cb) => {
+      cb => {
         socket4 = clientConnect(user2, port + 1)
         socket4.on('loginConfirmed', (u, d) => {
           ids[d.id] = d.id
           socket4.emit('roomJoin', roomName1, cb)
         })
       },
-      (cb) => {
+      cb => {
         socket5 = clientConnect(user3, port + 1)
         socket5.on('loginConfirmed',
                    () => socket5.emit('roomJoin', roomName1, cb))
       }
-    ], (error) => {
+    ], error => {
       expect(error).not.ok
       parallel([
         cb => socket2.on('roomLeftEcho', (roomName, id, njoined) => {
@@ -168,7 +168,7 @@ module.exports = function () {
           cb()
         }),
         cb => closeInstance(instance2).asCallback(cb)
-      ], (error) => {
+      ], error => {
         expect(error).not.ok
         parallel([
           cb => instance1.execUserCommand(
@@ -210,7 +210,7 @@ module.exports = function () {
             instance1.io.httpServer.close()
             clearInterval(instance1.hbtimer)
             instance1 = null
-            instance2.instanceRecovery(uid, (error) => {
+            instance2.instanceRecovery(uid, error => {
               expect(error).not.ok
               parallel([
                 cb => instance2.execUserCommand(

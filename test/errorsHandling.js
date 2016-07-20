@@ -54,7 +54,7 @@ module.exports = function () {
         chatService.transport.joinChannel = function () {
           throw new Error('This is an error mockup for testing.')
         }
-        socket1.emit('roomJoin', roomName1, (error) => {
+        socket1.emit('roomJoin', roomName1, error => {
           expect(error).ok
           chatService.execUserCommand(
             true, 'roomGetAccessList', roomName1, 'userlist', (error, data) => {
@@ -74,7 +74,7 @@ module.exports = function () {
       throw new Error('This is an error mockup for testing.')
     }
     socket1 = clientConnect(user1)
-    socket1.on('loginRejected', (error) => {
+    socket1.on('loginRejected', error => {
       expect(error).ok
       chatService.execUserCommand(user1, 'listOwnSockets', (error, data) => {
         expect(error).not.ok
@@ -124,7 +124,7 @@ module.exports = function () {
       nextTick(cb, new Error())
     }
     chatService = startService(null, { onStart })
-    chatService.on('closed', (error) => {
+    chatService.on('closed', error => {
       expect(error).ok
       done()
     })
@@ -138,7 +138,7 @@ module.exports = function () {
         .then(() => { throw new Error() })
     }
     nextTick(
-      () => chatService.close().catch((error) => {
+      () => chatService.close().catch(error => {
         expect(error).ok
         done()
       }))
@@ -152,7 +152,7 @@ module.exports = function () {
     }
     chatService = startService(null, { onClose })
     nextTick(
-      () => chatService.close().catch((error) => {
+      () => chatService.close().catch(error => {
         expect(error).ok
         done()
       }))
@@ -170,7 +170,7 @@ module.exports = function () {
         .then(() => { throw new Error() })
     }
     nextTick(
-      () => chatService.close().catch((error) => {
+      () => chatService.close().catch(error => {
         expect(error).ok
         done()
       }))

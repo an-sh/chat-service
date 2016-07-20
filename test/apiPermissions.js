@@ -99,11 +99,11 @@ module.exports = function () {
       socket2 = clientConnect(user1)
       socket2.on('loginConfirmed', () => parallel([
         cb => chatService.execUserCommand(user1, 'systemMessage', data, cb),
-        cb => socket1.on('systemMessage', (d) => {
+        cb => socket1.on('systemMessage', d => {
           expect(d).equal(data)
           cb()
         }),
-        cb => socket2.on('systemMessage', (d) => {
+        cb => socket2.on('systemMessage', d => {
           expect(d).equal(data)
           cb()
         })
@@ -157,7 +157,7 @@ module.exports = function () {
           chatService.execUserCommand(
             { userName: user1, bypassPermissions: true },
             'directMessage', user2, message)
-          socket2.on('directMessage', (msg) => {
+          socket2.on('directMessage', msg => {
             expect(msg).include.keys('textMessage', 'author', 'timestamp')
             expect(msg.textMessage).equal(txt)
             expect(msg.author).equal(user1)
@@ -241,10 +241,10 @@ module.exports = function () {
     chatService = startService()
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
-      socket1.emit('directAddToList', 'blacklist', [user3], (error) => {
+      socket1.emit('directAddToList', 'blacklist', [user3], error => {
         expect(error).not.ok
         parallel([
-          (cb) => {
+          cb => {
             chatService.hasDirectAccess(user1, user2, (error, data) => {
               expect(error).not.ok
               expect(data).true
@@ -264,7 +264,7 @@ module.exports = function () {
   it('should check for room messaging permissions', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, {blacklist: [user3]}, () => parallel([
-      (cb) => {
+      cb => {
         chatService.hasRoomAccess(roomName1, user2, (error, data) => {
           expect(error).not.ok
           expect(data).true

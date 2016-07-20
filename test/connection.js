@@ -46,7 +46,7 @@ module.exports = function () {
     let auth = (socket, cb) => nextTick(cb, new Error(reason))
     chatService = startService(null, { middleware: auth })
     socket1 = clientConnect()
-    socket1.on('error', (e) => {
+    socket1.on('error', e => {
       expect(e).deep.equal(reason)
       done()
     })
@@ -80,7 +80,7 @@ module.exports = function () {
     }
     chatService = startService(null, {onConnect})
     socket1 = clientConnect(user1)
-    socket1.on('loginRejected', (e) => {
+    socket1.on('loginRejected', e => {
       expect(e).deep.equal(err.toString())
       done()
     })

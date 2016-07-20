@@ -26,7 +26,7 @@ module.exports = function () {
   it('should spawn a server', function (done) {
     chatService = startService()
     socket1 = clientConnect(user1)
-    socket1.on('loginConfirmed', (u) => {
+    socket1.on('loginConfirmed', u => {
       expect(u).equal(user1)
       done()
     })
@@ -42,7 +42,7 @@ module.exports = function () {
                  Promise.fromCallback(fn => app.close(fn)).catchReturn())
         .asCallback(cb))
     socket1 = clientConnect(user1)
-    socket1.on('loginConfirmed', (u) => {
+    socket1.on('loginConfirmed', u => {
       expect(u).equal(user1)
       done()
     })
@@ -55,7 +55,7 @@ module.exports = function () {
       .finally(() => io.close())
       .asCallback(cb))
     socket1 = clientConnect(user1)
-    socket1.on('loginConfirmed', (u) => {
+    socket1.on('loginConfirmed', u => {
       expect(u).equal(user1)
       done()
     })
@@ -65,7 +65,7 @@ module.exports = function () {
     let MemoryState = require('../src/MemoryState')
     chatService = startService({ state: MemoryState })
     socket1 = clientConnect(user1)
-    socket1.on('loginConfirmed', (u) => {
+    socket1.on('loginConfirmed', u => {
       expect(u).equal(user1)
       done()
     })
@@ -75,7 +75,7 @@ module.exports = function () {
     let Transport = require('../src/SocketIOTransport')
     chatService = startService({ transport: Transport })
     socket1 = clientConnect(user1)
-    socket1.on('loginConfirmed', (u) => {
+    socket1.on('loginConfirmed', u => {
       expect(u).equal(user1)
       done()
     })
@@ -86,7 +86,7 @@ module.exports = function () {
     chatService = startService(
       { adapter: Adapter, adapterOptions: redisConnect })
     socket1 = clientConnect(user1)
-    socket1.on('loginConfirmed', (u) => {
+    socket1.on('loginConfirmed', u => {
       expect(u).equal(user1)
       done()
     })
@@ -98,7 +98,7 @@ module.exports = function () {
     chatService = startService({ heartbeatRate: 500 })
     let start = _.now()
     setTimeout(() => chatService.getInstanceHeartbeat(chatService.instanceUID)
-      .then((ts) => {
+      .then(ts => {
         expect(ts).within(start, start + 2000)
         done()
       }), 1000)

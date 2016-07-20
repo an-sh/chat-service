@@ -51,25 +51,25 @@ module.exports = function () {
     let sid2 = null
     chatService = startService()
     chatService.addRoom(roomName1, null, () => parallel([
-      (cb) => {
+      cb => {
         socket3 = clientConnect(user1)
         socket3.on('loginConfirmed', () => cb())
       },
-      (cb) => {
+      cb => {
         socket1 = clientConnect(user1)
         socket1.on('loginConfirmed', (u, data) => {
           sid1 = data.id
           socket1.emit('roomJoin', roomName1, cb)
         })
       },
-      (cb) => {
+      cb => {
         socket2 = clientConnect(user1)
         socket2.on('loginConfirmed', (u, data) => {
           sid2 = data.id
           socket2.emit('roomJoin', roomName1, cb)
         })
       }
-    ], (error) => {
+    ], error => {
       expect(error).not.ok
       socket2.disconnect()
       parallel([
@@ -101,17 +101,17 @@ module.exports = function () {
   it('should update userlist on join and leave', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, null, () => parallel([
-      (cb) => {
+      cb => {
         socket1 = clientConnect(user1)
         socket1.on('loginConfirmed',
                    () => socket1.emit('roomJoin', roomName1, cb))
       },
-      (cb) => {
+      cb => {
         socket2 = clientConnect(user2)
         socket2.on('loginConfirmed',
                    () => socket2.emit('roomJoin', roomName1, cb))
       }
-    ], (error) => {
+    ], error => {
       expect(error).not.ok
       socket1.emit(
         'roomGetAccessList', roomName1, 'userlist', (error, data) => {
@@ -164,17 +164,17 @@ module.exports = function () {
   it('should update userlist on disconnect', function (done) {
     chatService = startService({ enableUserlistUpdates: true })
     chatService.addRoom(roomName1, null, () => parallel([
-      (cb) => {
+      cb => {
         socket1 = clientConnect(user1)
         socket1.on('loginConfirmed',
                    () => socket1.emit('roomJoin', roomName1, cb))
       },
-      (cb) => {
+      cb => {
         socket2 = clientConnect(user2)
         socket2.on('loginConfirmed',
                    () => socket2.emit('roomJoin', roomName1, cb))
       }
-    ], (error) => {
+    ], error => {
       expect(error).not.ok
       socket1.emit(
         'roomGetAccessList', roomName1, 'userlist', (error, data) => {
@@ -230,17 +230,17 @@ module.exports = function () {
     let message = { textMessage: txt }
     chatService = startService()
     chatService.addRoom(roomName1, null, () => parallel([
-      (cb) => {
+      cb => {
         socket1 = clientConnect(user1)
         socket1.on('loginConfirmed',
                    () => socket1.emit('roomJoin', roomName1, cb))
       },
-      (cb) => {
+      cb => {
         socket2 = clientConnect(user2)
         socket2.on('loginConfirmed',
                    () => socket2.emit('roomJoin', roomName1, cb))
       }
-    ], (error) => {
+    ], error => {
       expect(error).not.ok
       parallel([
         cb => socket1.emit('roomMessage', roomName1, message, cb),
@@ -367,7 +367,7 @@ module.exports = function () {
                          () => socket1.emit('roomJoin', roomName1, cb)),
         cb => socket1.emit('roomMessage', roomName1, message, cb),
         cb => socket1.emit('roomMessage', roomName1, message, cb)
-      ], (error) => {
+      ], error => {
         expect(error).not.ok
         parallel([
           cb =>
@@ -413,7 +413,7 @@ module.exports = function () {
         cb => socket1.emit('roomMessage', roomName1, message, cb),
         cb => socket1.emit('roomMessage', roomName1, message, cb),
         cb => socket1.emit('roomMessage', roomName1, message, cb)
-      ], (error) => {
+      ], error => {
         expect(error).not.ok
         parallel([
           cb =>
@@ -462,7 +462,7 @@ module.exports = function () {
         cb => socket1.emit('roomMessage', roomName1, message, cb),
         cb => socket1.emit('roomMessage', roomName1, message, cb),
         cb => socket1.emit('roomMessage', roomName1, message, cb)
-      ], (error) => {
+      ], error => {
         expect(error).not.ok
         parallel([
           cb =>
@@ -533,17 +533,17 @@ module.exports = function () {
       let ts = new Date().getTime()
       let tsmax = ts + 2000
       parallel([
-        (cb) => {
+        cb => {
           socket1 = clientConnect(user1)
           socket1.on('loginConfirmed',
                      () => socket1.emit('roomJoin', roomName1, cb))
         },
-        (cb) => {
+        cb => {
           socket2 = clientConnect(user2)
           socket2.on('loginConfirmed',
                      () => socket2.emit('roomJoin', roomName1, cb))
         }
-      ], (error) => {
+      ], error => {
         expect(error).not.ok
         socket1.emit('roomUserSeen', roomName1, user2, (error, info1) => {
           expect(error).not.ok
@@ -591,7 +591,7 @@ module.exports = function () {
     chatService.addRoom(roomName1, null, () => {
       chatService.addRoom(roomName2, null, () => {
         parallel([
-          (cb) => {
+          cb => {
             socket1 = clientConnect(user1)
             socket1.on('loginConfirmed', (u, data) => {
               sid1 = data.id
@@ -599,21 +599,21 @@ module.exports = function () {
                            () => socket1.emit('roomJoin', roomName2, cb))
             })
           },
-          (cb) => {
+          cb => {
             socket2 = clientConnect(user1)
             socket2.on('loginConfirmed', (u, data) => {
               sid2 = data.id
               socket2.emit('roomJoin', roomName1, cb)
             })
           },
-          (cb) => {
+          cb => {
             socket3 = clientConnect(user1)
             socket3.on('loginConfirmed', (u, data) => {
               sid3 = data.id
               cb()
             })
           }
-        ], (error) => {
+        ], error => {
           expect(error).not.ok
           socket2.emit('listOwnSockets', (error, data) => {
             expect(error).not.ok
