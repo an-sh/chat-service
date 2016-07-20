@@ -31,8 +31,7 @@ class ArgumentsValidator {
       roomMessage: [ null, this.roomMessagesChecker ]
     }
     let commands = this.server.rpcRequestsNames
-    for (let idx in commands) {
-      let cmd = commands[idx]
+    for (let cmd of commands) {
       this.checkers.set(cmd, this[cmd]())
     }
   }

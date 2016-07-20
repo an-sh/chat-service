@@ -106,8 +106,7 @@ class User extends DirectMessaging {
           })
         } else {
           let commands = this.server.rpcRequestsNames
-          for (let idx in commands) {
-            let cmd = commands[idx]
+          for (let cmd of commands) {
             this.bindCommand(id, cmd, this[cmd].bind(this))
           }
           return [ this, nconnected ]

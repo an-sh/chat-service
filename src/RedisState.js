@@ -612,8 +612,7 @@ class RedisState {
     this.lockTTL = this.options.lockTTL || 10000
     this.instanceUID = this.server.instanceUID
     this.server.redis = this.redis
-    for (let cmd in luaCommands) {
-      let def = luaCommands[cmd]
+    for (let [cmd, def] of _.toPairs(luaCommands)) {
       this.redis.defineCommand(cmd, {
         numberOfKeys: def.numberOfKeys,
         lua: def.lua

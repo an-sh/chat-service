@@ -188,8 +188,7 @@ class SocketIOTransport {
   setEvents () {
     if (this.hooks.middleware) {
       let middleware = _.castArray(this.hooks.middleware)
-      for (let i = 0; i < middleware.length; i++) {
-        let fn = middleware[i]
+      for (let fn of middleware) {
         this.nsp.use(fn)
       }
     }
@@ -228,8 +227,7 @@ class SocketIOTransport {
       } else if (this.http) {
         this.io.engine.close()
       } else {
-        for (let id in this.nsp.connected) {
-          let socket = this.nsp.connected[id]
+        for (let [, socket] of _.toPairs(this.nsp.connected)) {
           socket.disconnect()
         }
       }
