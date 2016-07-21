@@ -7,3 +7,4 @@ services:
   - redis-server
 git:
   depth: 5
+after_success: npm run coverage
