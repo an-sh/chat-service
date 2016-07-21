@@ -1,3 +1,4 @@
+/*eslint no-unused-vars: 0*/
 
 /**
  * Hooks interface.
@@ -110,5 +111,3 @@ class HooksInterface {
   clientRequestAfter (execInfo, cb) {}
 
 }
-
-module.exports = HooksInterface

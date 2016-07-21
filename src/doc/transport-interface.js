@@ -1,3 +1,4 @@
+/*eslint no-unused-vars: 0*/
 
 // Transport public interface.
 class Transport {
@@ -34,5 +35,3 @@ class Transport {
   getConnectionObject (id) {}
 
 }
-
-module.exports = Transport
