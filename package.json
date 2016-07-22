@@ -5,9 +5,13 @@
   "description": "Chat like messaging on top of socket.io, focused on scalability and extensibility.",
   "main": "index.js",
   "scripts": {
-    "test": "nyc mocha",
+    "compile": "babel src --out-dir lib --ignore src/doc/",
+    "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "generate-docs": "jsdoc --configure .jsdoc.json --verbose",
-    "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
+    "prepublish": "npm run compile",
+    "pretest-legacy": "npm run compile",
+    "test": "nyc mocha",
+    "test-legacy": "mocha -r babel-register"
   },
   "author": {
     "name": "Andrey Sharapov",
@@ -32,6 +36,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "babel-runtime": "^6.9.2",
     "bluebird": "^3.3.5",
     "check-types": "^7.0.0",
     "collections": "^5.0.1",
@@ -46,8 +51,13 @@
     "uid-safe": "^2.1.0"
   },
   "devDependencies": {
+    "babel-cli": "^6.11.4",
+    "babel-plugin-transform-runtime": "^6.9.0",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-register": "^6.9.0",
     "chai": "^3.5.0",
     "codecov": "^1.0.1",
+    "cross-env": "^2.0.0",
     "docdash": "^0.4.0",
     "jsdoc": "^3.4.0",
     "mocha": "^2.4.5",

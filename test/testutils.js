@@ -1,5 +1,5 @@
 
-const ChatService = require('../src/ChatService')
+const ChatService = require('../index.js')
 
 const Promise = require('bluebird')
 const Redis = require('ioredis')
