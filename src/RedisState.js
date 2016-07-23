@@ -582,8 +582,8 @@ class UserStateRedis {
       return this.lock(this.makeRoomLock(roomName), val, ttl).then(() => {
         return Promise.resolve().disposer(() => {
           if (start + ttl < _.now()) {
-            let info = {userName: this.userName, roomName}
-            this.server.emit('lockTimeExceeded', val, info)
+            this.server.emit(
+              'lockTimeExceeded', val, {userName: this.userName, roomName})
           }
           return this.unlock(this.makeRoomLock(roomName), val)
         })
