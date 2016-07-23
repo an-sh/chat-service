@@ -14,9 +14,9 @@ describe('Chat service.', function () {
       function () {
         before(() => testutils.setState(state))
 
-        describe('Initialization', require('./initialization'))
+        describe('Server initialisation', require('./initialization'))
 
-        describe('Connection', require('./connection'))
+        describe('Client connection', require('./connection'))
 
         describe('Room management', require('./roomManagement'))
 
@@ -28,18 +28,18 @@ describe('Chat service.', function () {
 
         describe('Direct permissions', require('./directPermissions'))
 
-        describe('Hooks', require('./hooks'))
+        describe('Hooks execution', require('./hooks'))
 
-        describe('API', require('./api'))
+        describe('Server-side API', require('./api'))
 
-        describe('API permissions', require('./apiPermissions'))
+        describe('Server-side API permissions', require('./apiPermissions'))
 
-        describe('Validation', require('./validation'))
+        describe('Parameters validation', require('./validation'))
 
-        describe('Errors handling', require('./errorsHandling'))
+        describe('Server errors handling', require('./errorsHandling'))
 
-        describe('Consistency recovery', require('./consistencyRecovery'))
+        describe('State consistency recovery', require('./consistencyRecovery'))
       }))
 
-  describe('Service cluster', require('./serviceCluster'))
+  describe('Service cluster with multiple nodes', require('./serviceCluster'))
 })

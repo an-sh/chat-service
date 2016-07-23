@@ -20,7 +20,7 @@ module.exports = function () {
     chatService = socket1 = socket2 = socket3 = null
   })
 
-  it('should create and delete rooms', function (done) {
+  it('should allow to create and delete rooms', function (done) {
     chatService = startService({ enableRoomsManagement: true })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', u => {
@@ -46,7 +46,7 @@ module.exports = function () {
     })
   })
 
-  it('should reject delete rooms for non-owners', function (done) {
+  it('should reject to delete a room for a non-owner', function (done) {
     chatService = startService({ enableRoomsManagement: true })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', u => {
@@ -63,7 +63,7 @@ module.exports = function () {
     })
   })
 
-  it('should check for invalid room names', function (done) {
+  it('should check for an invalid room names', function (done) {
     chatService = startService({ enableRoomsManagement: true })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', u => {
@@ -75,7 +75,7 @@ module.exports = function () {
     })
   })
 
-  it('should reject room management when option is disabled', function (done) {
+  it('should reject room management when the option is off', function (done) {
     chatService = startService()
     chatService.addRoom(roomName2, null, () => {
       socket1 = clientConnect(user1)

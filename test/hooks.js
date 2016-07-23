@@ -106,7 +106,7 @@ module.exports = function () {
     })
   })
 
-  it('should execute hooks with promises', function (done) {
+  it('should execute hooks using promises api', function (done) {
     let someData = 'data'
     let before = null
     let after = null
@@ -158,7 +158,7 @@ module.exports = function () {
     })
   })
 
-  it('should allow commands rest arguments', function (done) {
+  it('should store commands additional arguments', function (done) {
     let listOwnSocketsAfter = (execInfo, cb) => {
       let { restArgs } = execInfo
       expect(restArgs).instanceof(Array)
@@ -197,7 +197,7 @@ module.exports = function () {
     })
   })
 
-  it('should support more arguments in after hooks', function (done) {
+  it('should support additional values from after hooks', function (done) {
     let listOwnSocketsAfter = (execInfo, cb) =>
           nextTick(cb, null, ...execInfo.results, true)
     chatService = startService(null, { listOwnSocketsAfter })
@@ -232,7 +232,7 @@ module.exports = function () {
     socket1.on('loginConfirmed', () => chatService1.close())
   })
 
-  it('should stop commands on before hook data', function (done) {
+  it('should stop commands if before hook returns a data', function (done) {
     let val = 'asdf'
     let listOwnSocketsBefore = (execInfo, cb) => nextTick(cb, null, val)
     chatService = startService(null, { listOwnSocketsBefore })
@@ -246,7 +246,7 @@ module.exports = function () {
     })
   })
 
-  it('should accept custom direct messages with a hook', function (done) {
+  it('should accept custom direct messages using a hook', function (done) {
     let html = '<b>HTML message.</b>'
     let message = { htmlMessage: html }
     let directMessagesChecker = (msg, cb) => nextTick(cb)
@@ -268,7 +268,7 @@ module.exports = function () {
     })
   })
 
-  it('should accept custom room messages with a hook', function (done) {
+  it('should accept custom room messages using a hook', function (done) {
     let html = '<b>HTML message.</b>'
     let message = { htmlMessage: html }
     let roomMessagesChecker = (msg, cb) => nextTick(cb)
@@ -292,7 +292,7 @@ module.exports = function () {
     })
   })
 
-  it('should correctly send room messages with binary data', function (done) {
+  it('should correctly send room messages with a binary data', function (done) {
     let data = new Buffer([5])
     let message = { data }
     let roomMessagesChecker = (msg, cb) => nextTick(cb)

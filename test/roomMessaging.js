@@ -74,7 +74,7 @@ module.exports = function () {
     })
   })
 
-  it('should emit leave echo on disconnect', function (done) {
+  it('should emit leave echo on a disconnect', function (done) {
     let sid1 = null
     let sid2 = null
     chatService = startService()
@@ -126,7 +126,30 @@ module.exports = function () {
     }))
   })
 
-  it('should update userlist on join and leave', function (done) {
+  it('should remove disconnected users', function (done) {
+    chatService = startService({ enableUserlistUpdates: true })
+    chatService.addRoom(roomName1, null, () => {
+      socket1 = clientConnect(user1)
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket2 = clientConnect(user2)
+          socket2.on('loginConfirmed', () => {
+            socket2.emit('roomJoin', roomName1, () => {
+              socket2.disconnect()
+              socket1.on('roomUserLeft', (r, u) => {
+                expect(r).equal(roomName1)
+                expect(u).equal(user2)
+                done()
+              })
+            })
+          })
+        })
+      })
+    })
+  })
+
+
+  it('should update userlist on join and leave operations', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, null, () => parallel([
       cb => {
@@ -189,7 +212,7 @@ module.exports = function () {
     })
   })
 
-  it('should update userlist on disconnect', function (done) {
+  it('should update userlist on a disconnect', function (done) {
     chatService = startService({ enableUserlistUpdates: true })
     chatService.addRoom(roomName1, null, () => parallel([
       cb => {
@@ -225,7 +248,7 @@ module.exports = function () {
     }))
   })
 
-  it('should store and send room history', function (done) {
+  it('should store and send a room history', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService()
@@ -292,7 +315,7 @@ module.exports = function () {
     }))
   })
 
-  it('should drop history if limit is zero', function (done) {
+  it('should drop a history if the limit is zero', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService({ defaultHistoryLimit: 0 })
@@ -312,7 +335,7 @@ module.exports = function () {
     })
   })
 
-  it('should not send history if get limit is zero', function (done) {
+  it('should not send a history if the limit is zero', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService({ historyMaxGetMessages: 0 })
@@ -337,7 +360,7 @@ module.exports = function () {
     })
   })
 
-  it('should send room history maximum size', function (done) {
+  it('should send a room history maximum size', function (done) {
     let sz = 1000
     chatService = startService({ defaultHistoryLimit: sz })
     chatService.addRoom(roomName1, null, () => {
@@ -354,7 +377,7 @@ module.exports = function () {
     })
   })
 
-  it('should truncate long history', function (done) {
+  it('should truncate a long history', function (done) {
     let txt1 = 'Test message 1.'
     let message1 = { textMessage: txt1 }
     let txt2 = 'Test message 2.'
@@ -384,7 +407,7 @@ module.exports = function () {
     })
   })
 
-  it('should sync history', function (done) {
+  it('should support a history synchronisation', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService()
@@ -429,7 +452,7 @@ module.exports = function () {
     })
   })
 
-  it('should sync history with respect to the max get', function (done) {
+  it('should sync a history with respect to the limit', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService({ historyMaxGetMessages: 2 })
@@ -478,7 +501,7 @@ module.exports = function () {
     })
   })
 
-  it('should sync history with respect to a history size', function (done) {
+  it('should sync a history with respect to a history size', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService({ defaultHistoryLimit: 2 })
@@ -525,7 +548,7 @@ module.exports = function () {
     })
   })
 
-  it('should return and update room sync info', function (done) {
+  it('should send and update a room sync info', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService()
@@ -555,7 +578,7 @@ module.exports = function () {
     })
   })
 
-  it('should get and update user seen info', function (done) {
+  it('should get and update an user seen info', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
       let ts = new Date().getTime()
@@ -595,7 +618,7 @@ module.exports = function () {
     })
   })
 
-  it('should get empty seen info for unseen users', function (done) {
+  it('should send an empty seen info for unseen users', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -613,7 +636,7 @@ module.exports = function () {
     })
   })
 
-  it('should list own sockets with rooms', function (done) {
+  it('should include info in users\' sockets lists', function (done) {
     chatService = startService()
     let { sid1, sid2, sid3 } = {}
     chatService.addRoom(roomName1, null, () => {

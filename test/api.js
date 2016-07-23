@@ -20,7 +20,7 @@ module.exports = function () {
     chatService = socket1 = socket2 = socket3 = null
   })
 
-  it('should support a server side user disconnection', function (done) {
+  it('should be able to disconnect all user\'s sockets', function (done) {
     chatService = startService()
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', u => {
@@ -46,7 +46,7 @@ module.exports = function () {
     })
   })
 
-  it('should support adding users', function (done) {
+  it('should be able to add users', function (done) {
     chatService = startService()
     chatService.addUser(user1, { whitelistOnly: true }, () => {
       socket1 = clientConnect(user1)
@@ -60,7 +60,7 @@ module.exports = function () {
     })
   })
 
-  it('should support deleting users', function (done) {
+  it('should be able to delete users', function (done) {
     chatService = startService()
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
@@ -93,7 +93,7 @@ module.exports = function () {
     })
   })
 
-  it('should support deleting rooms', function (done) {
+  it('should be able to delete rooms', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, { owner: user1 }, () => {
       chatService.hasRoom(roomName1, (error, data) => {
@@ -112,7 +112,7 @@ module.exports = function () {
     })
   })
 
-  it('should check user names before adding', function (done) {
+  it('should check user names before adding a new user', function (done) {
     chatService = startService()
     chatService.addUser('user:1', null, (error, data) => {
       expect(error).ok
@@ -121,7 +121,7 @@ module.exports = function () {
     })
   })
 
-  it('should check existing users before adding new ones', function (done) {
+  it('should check existing users before adding a new one', function (done) {
     chatService = startService()
     chatService.addUser(user1, null, () => {
       chatService.addUser(user1, null, (error, data) => {
@@ -132,7 +132,7 @@ module.exports = function () {
     })
   })
 
-  it('should check commands names.', function (done) {
+  it('should check commands for existence', function (done) {
     chatService = startService()
     chatService.addUser(user1, null, () => {
       chatService.execUserCommand(user1, 'nocmd', error => {
@@ -142,7 +142,7 @@ module.exports = function () {
     })
   })
 
-  it('should check for socket ids if required.', function (done) {
+  it('should check for socket ids if required', function (done) {
     chatService = startService()
     chatService.addUser(user1, null, () => {
       chatService.execUserCommand(user1, 'roomJoin', error => {
@@ -152,7 +152,7 @@ module.exports = function () {
     })
   })
 
-  it('should support changing a room owner', function (done) {
+  it('should be able to change a room owner', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, { owner: user1 }, () => {
       socket1 = clientConnect(user1)
@@ -172,7 +172,7 @@ module.exports = function () {
     })
   })
 
-  it('should support changing a room history limit', function (done) {
+  it('should be able to change a room history limit', function (done) {
     let sz = 100
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
@@ -194,7 +194,7 @@ module.exports = function () {
     })
   })
 
-  it('should support room list checking', function (done) {
+  it('should be able to check room lists', function (done) {
     chatService = startService()
     chatService.addRoom(
       roomName1,
@@ -212,7 +212,7 @@ module.exports = function () {
         }))
   })
 
-  it('should support user list checking', function (done) {
+  it('should be able to check user lists', function (done) {
     chatService = startService()
     chatService.addUser(
       user1, { blacklist: [user2] },

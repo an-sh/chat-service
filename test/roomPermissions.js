@@ -92,7 +92,7 @@ module.exports = function () {
     })
   })
 
-  it('should ckeck room list names', function (done) {
+  it('should check room list names', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -133,7 +133,7 @@ module.exports = function () {
     })
   })
 
-  it('should allow not added deleting from lists', function (done) {
+  it('should allow deleting non-existing items from lists', function (done) {
     chatService = startService({ enableRoomsManagement: true })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', u => {
@@ -280,7 +280,7 @@ module.exports = function () {
     })
   })
 
-  it('should reject direct userlist modifications', function (done) {
+  it('should reject to modify userlists directly', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, { adminlist: [user1] }, () => {
       socket1 = clientConnect(user1)
@@ -462,27 +462,5 @@ module.exports = function () {
           })
         })
       })
-  })
-
-  it('should remove disconnected users', function (done) {
-    chatService = startService({ enableUserlistUpdates: true })
-    chatService.addRoom(roomName1, null, () => {
-      socket1 = clientConnect(user1)
-      socket1.on('loginConfirmed', () => {
-        socket1.emit('roomJoin', roomName1, () => {
-          socket2 = clientConnect(user2)
-          socket2.on('loginConfirmed', () => {
-            socket2.emit('roomJoin', roomName1, () => {
-              socket2.disconnect()
-              socket1.on('roomUserLeft', (r, u) => {
-                expect(r).equal(roomName1)
-                expect(u).equal(user2)
-                done()
-              })
-            })
-          })
-        })
-      })
-    })
   })
 }

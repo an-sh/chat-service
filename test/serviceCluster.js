@@ -24,7 +24,7 @@ module.exports = function () {
     instance1 = instance2 = socket1 = socket2 = socket3 = null
   })
 
-  it('should send cluster bus custom messages', function (done) {
+  it('should to able to send custom messages via a bus', function (done) {
     let event = 'someEvent'
     let data = { key: 'value' }
     instance1 = startService(_.assign({port}, redisConfig))
@@ -53,7 +53,7 @@ module.exports = function () {
     })
   })
 
-  it('should remove other instances sockets from channel', function (done) {
+  it('should remove other instances\' sockets from a channel', function (done) {
     this.timeout(4000)
     this.slow(2000)
     instance1 = startService(_.assign({port}, redisConfig))
@@ -112,7 +112,7 @@ module.exports = function () {
     })
   })
 
-  it('should correctly update presence info on shutdown', function (done) {
+  it('should correctly update a presence info on a shutdown', function (done) {
     instance1 = startService(_.assign({port}, redisConfig))
     instance2 = startService(_.assign({port: port + 1}, redisConfig))
     let ids = {}
@@ -196,7 +196,7 @@ module.exports = function () {
     }))
   })
 
-  it('should cleanup incorrectly shutdown instance data', function (done) {
+  it('should be able to cleanup an instance data', function (done) {
     instance1 = startService(redisConfig)
     instance2 = startService(_.assign({port: port + 1}, redisConfig))
     let uid = instance1.instanceUID

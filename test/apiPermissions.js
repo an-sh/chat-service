@@ -20,7 +20,7 @@ module.exports = function () {
     chatService = socket1 = socket2 = socket3 = null
   })
 
-  it('should get a user mode', function (done) {
+  it('should be able to get a user mode', function (done) {
     chatService = startService()
     chatService.addUser(user1, { whitelistOnly: true }, () => {
       chatService.execUserCommand(
@@ -32,7 +32,7 @@ module.exports = function () {
     })
   })
 
-  it('should change user lists', function (done) {
+  it('should be able to change user lists', function (done) {
     chatService = startService()
     chatService.addUser(user1, null, () => {
       chatService.execUserCommand(
@@ -50,7 +50,7 @@ module.exports = function () {
     })
   })
 
-  it('should check room names before adding', function (done) {
+  it('should check room names before adding a new room', function (done) {
     chatService = startService()
     chatService.addRoom('room:1', null, (error, data) => {
       expect(error).ok
@@ -59,7 +59,7 @@ module.exports = function () {
     })
   })
 
-  it('should get a room mode', function (done) {
+  it('should be able to get a room mode', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, { whitelistOnly: true }, () => {
       chatService.execUserCommand(
@@ -71,7 +71,7 @@ module.exports = function () {
     })
   })
 
-  it('should change room lists', function (done) {
+  it('should be able to change room lists', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
       chatService.execUserCommand(
@@ -91,7 +91,7 @@ module.exports = function () {
     })
   })
 
-  it('should send system messages to all user sockets', function (done) {
+  it('should send system messages to all user\'s sockets', function (done) {
     let data = 'some data.'
     chatService = startService()
     socket1 = clientConnect(user1)
@@ -111,7 +111,7 @@ module.exports = function () {
     })
   })
 
-  it('should execute commands without hooks', function (done) {
+  it('should be able to bypass command hooks', function (done) {
     let before = null
     let after = null
     let roomAddToListBefore = (callInfo, args, cb) => {
@@ -146,7 +146,7 @@ module.exports = function () {
       })
   })
 
-  it('should bypass user messaging permissions', function (done) {
+  it('should be able to bypass user messaging permissions', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService({ enableDirectMessages: true })
@@ -169,7 +169,7 @@ module.exports = function () {
     })
   })
 
-  it('should bypass room messaging permissions', function (done) {
+  it('should be able to bypass room messaging permissions', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService()
@@ -198,7 +198,7 @@ module.exports = function () {
           }))
   })
 
-  it('should send room messages without an user', function (done) {
+  it('should be able to send room messages without an user', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
     chatService = startService()
@@ -237,7 +237,7 @@ module.exports = function () {
     })
   })
 
-  it('should check for direct messaging permissions', function (done) {
+  it('should be able to check direct messaging permissions', function (done) {
     chatService = startService()
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
@@ -261,7 +261,7 @@ module.exports = function () {
     })
   })
 
-  it('should check for room messaging permissions', function (done) {
+  it('should be able to check room messaging permissions', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, {blacklist: [user3]}, () => parallel([
       cb => {

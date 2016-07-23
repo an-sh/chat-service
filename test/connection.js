@@ -19,7 +19,7 @@ module.exports = function () {
     chatService = socket1 = socket2 = socket3 = null
   })
 
-  it('should send auth data with id', function (done) {
+  it('should send auth data with an id field', function (done) {
     chatService = startService()
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', (u, data) => {
@@ -52,7 +52,7 @@ module.exports = function () {
     })
   })
 
-  it('should use onConnect hook username and data', function (done) {
+  it('should use an username and a data passed by onConnect', function (done) {
     let name = 'someUser'
     let data = { token: 'token' }
     let onConnect = (server, id, cb) => {
@@ -70,7 +70,7 @@ module.exports = function () {
     })
   })
 
-  it('should reject login if onConnect hook passes error', function (done) {
+  it('should reject a login if onConnect passes an error', function (done) {
     let err = null
     let onConnect = (server, id, cb) => {
       expect(server).instanceof(ChatService)
@@ -124,7 +124,7 @@ module.exports = function () {
     ], done))
   })
 
-  it('should return instance sockets', function (done) {
+  it('should be able to get instance sockets', function (done) {
     chatService = startService()
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', (name, { id }) => parallel([

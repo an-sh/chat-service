@@ -23,7 +23,7 @@ module.exports = function () {
     chatService = socket1 = socket2 = socket3 = null
   })
 
-  it('should spawn a server', function (done) {
+  it('should be able to spawn a server', function (done) {
     chatService = startService()
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', u => {
@@ -32,14 +32,14 @@ module.exports = function () {
     })
   })
 
-  it('should spawn a server without options', function (done) {
+  it('should be able to spawn a server without options', function (done) {
     let chatService = new ChatService()
     chatService.on('ready', () => {
       chatService.close().asCallback(done)
     })
   })
 
-  it('should integrate with a provided http server', function (done) {
+  it('should be able to integrate with a http server', function (done) {
     let app = http.createServer((req, res) => res.end())
     let chatService1 = startService({ transportOptions: { http: app } })
     app.listen(port)
@@ -55,7 +55,7 @@ module.exports = function () {
     })
   })
 
-  it('should integrate with a provided io server', function (done) {
+  it('should be able to integrate with an io server', function (done) {
     let io = socketIO(port)
     let chatService1 = startService({ transportOptions: {io} })
     setCustomCleanup(cb => closeInstance(chatService1)
@@ -68,7 +68,7 @@ module.exports = function () {
     })
   })
 
-  it('should use a custom state constructor', function (done) {
+  it('should be able to use a custom state constructor', function (done) {
     let MemoryState = require('../src/MemoryState')
     chatService = startService({ state: MemoryState })
     socket1 = clientConnect(user1)
@@ -78,7 +78,7 @@ module.exports = function () {
     })
   })
 
-  it('should use a custom transport constructor', function (done) {
+  it('should be able to use a custom transport constructor', function (done) {
     let Transport = require('../src/SocketIOTransport')
     chatService = startService({ transport: Transport })
     socket1 = clientConnect(user1)
@@ -88,7 +88,7 @@ module.exports = function () {
     })
   })
 
-  it('should use a custom adapter constructor', function (done) {
+  it('should be able to use a custom adapter constructor', function (done) {
     let Adapter = require('socket.io-redis')
     chatService = startService(
       { adapter: Adapter, adapterOptions: redisConnect })

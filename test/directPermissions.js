@@ -100,7 +100,7 @@ module.exports = function () {
     })
   })
 
-  it('should reject to add user to own lists', function (done) {
+  it('should reject to add self to lists', function (done) {
     chatService = startService({ enableDirectMessages: true })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
@@ -140,7 +140,7 @@ module.exports = function () {
     })
   })
 
-  it('should allow non-existing deleting from lists', function (done) {
+  it('should allow deleting non-existing items from lists', function (done) {
     chatService = startService({ enableDirectMessages: true })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
