@@ -87,7 +87,7 @@ class User extends DirectMessaging {
     })
   }
 
-  consistencyFailure (error, operationInfo = {}) {
+  consistencyFailure (error, operationInfo) {
     operationInfo.userName = this.userName
     let name = operationInfo.opType === 'transportChannel'
           ? 'transportConsistencyFailure'

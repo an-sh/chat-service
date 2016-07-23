@@ -44,14 +44,13 @@ class CommandBinder {
     let beforeHook = this.server.hooks[`${name}Before`]
     let afterHook = this.server.hooks[`${name}After`]
     return (args, info, cb) => {
-      info = info || {}
       if (cb) {
         var ack = this.bindAck(cb)
       }
       let execInfo = new ExecInfo()
-      _.assignIn(execInfo, { server: this.server, userName: this.userName })
-      _.assignIn(execInfo, info)
-      _.assignIn(execInfo, validator.splitArguments(name, args))
+      _.assign(execInfo, { server: this.server, userName: this.userName })
+      _.assign(execInfo, info)
+      _.assign(execInfo, validator.splitArguments(name, args))
       return Promise.using(
         this.commandWatcher(info.id, name),
         () => validator.checkArguments(name, ...execInfo.args)

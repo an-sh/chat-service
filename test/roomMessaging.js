@@ -20,7 +20,7 @@ module.exports = function () {
     chatService = socket1 = socket2 = socket3 = null
   })
 
-  it('should emit echos for other sockets of the same user', function (done) {
+  it('should emit echos to a non-joined user\'s socket', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -39,6 +39,34 @@ module.exports = function () {
               expect(id).equal(sid2)
               expect(njoined).equal(0)
               done()
+            })
+          })
+        })
+      })
+    })
+  })
+
+  it('should emit echos to a joined user\'s socket', function (done) {
+    chatService = startService()
+    chatService.addRoom(roomName1, null, () => {
+      socket1 = clientConnect(user1)
+      socket1.on('loginConfirmed', (u, data) => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket2 = clientConnect(user1)
+          socket2.on('loginConfirmed', (u, data) => {
+            let sid2 = data.id
+            socket2.emit('roomJoin', roomName1)
+            socket1.on('roomJoinedEcho', (room, id, njoined) => {
+              expect(room).equal(roomName1)
+              expect(id).equal(sid2)
+              expect(njoined).equal(2)
+              socket2.emit('roomLeave', roomName1)
+              socket1.on('roomLeftEcho', (room, id, njoined) => {
+                expect(room).equal(roomName1)
+                expect(id).equal(sid2)
+                expect(njoined).equal(1)
+                done()
+              })
             })
           })
         })

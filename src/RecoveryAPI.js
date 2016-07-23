@@ -35,13 +35,9 @@ class RecoveryAPI {
       return Promise.each(rooms, roomName => {
         return this.state.getRoom(roomName)
           .then(room => room.roomState.hasInList('userlist', userName))
-          .then(isPresent => {
-            if (!isPresent) {
-              return user.removeFromRoom(roomName)
-            } else {
-              return Promise.resolve()
-            }
-          }).catchReturn()
+          .then(isPresent =>
+                isPresent ? Promise.resolve() : user.removeFromRoom(roomName))
+          .catchReturn()
       })
     })
   }

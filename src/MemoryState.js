@@ -127,7 +127,7 @@ class RoomStateMemory extends ListsStateMemory {
     this.owner = null
   }
 
-  initState (state = {}) {
+  initState (state) {
     let { whitelist, blacklist, adminlist,
           whitelistOnly, owner, historyMaxSize } = state
     initState(this.whitelist, whitelist)
@@ -274,7 +274,7 @@ class DirectMessagingStateMemory extends ListsStateMemory {
     this.blacklist = new FastSet()
   }
 
-  initState ({ whitelist, blacklist, whitelistOnly } = {}) {
+  initState ({ whitelist, blacklist, whitelistOnly }) {
     initState(this.whitelist, whitelist)
     initState(this.blacklist, blacklist)
     this.whitelistOnly = Boolean(whitelistOnly)
@@ -416,7 +416,7 @@ class UserStateMemory {
 // Implements global state API.
 class MemoryState {
 
-  constructor (server, options = {}) {
+  constructor (server, options) {
     this.server = server
     this.options = options
     this.closed = false
@@ -477,7 +477,7 @@ class MemoryState {
     return Promise.resolve()
   }
 
-  getInstanceSockets (uid) {
+  getInstanceSockets (uid = this.instanceUID) {
     return Promise.resolve(this.sockets.toObject())
   }
 
@@ -487,7 +487,7 @@ class MemoryState {
   }
 
   getInstanceHeartbeat (uid = this.instanceUID) {
-    if (uid !== this.instanceUID) { return null }
+    if (uid !== this.instanceUID) { return Promise.resolve(null) }
     return Promise.resolve(this.heartbeatStamp)
   }
 

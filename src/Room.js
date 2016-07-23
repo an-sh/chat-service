@@ -13,7 +13,7 @@ class RoomPermissions {
     this.emitFailure = emitFailure
   }
 
-  consistencyFailure (error, operationInfo = {}) {
+  consistencyFailure (error, operationInfo) {
     operationInfo.roomName = this.roomName
     operationInfo.opType = 'roomUserlist'
     this.emitFailure('storeConsistencyFailure', error, operationInfo)
@@ -78,9 +78,8 @@ class RoomPermissions {
   }
 
   checkModeChange (author, value, bypassPermissions) {
-    if (bypassPermissions) { return Promise.resolve() }
     return this.isAdmin(author).then(admin => {
-      if (admin) { return Promise.resolve() }
+      if (admin || bypassPermissions) { return Promise.resolve() }
       return Promise.reject(new ChatServiceError('notAllowed'))
     })
   }

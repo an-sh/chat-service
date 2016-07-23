@@ -123,4 +123,23 @@ module.exports = function () {
       cb => socket1.on('disconnect', () => cb())
     ], done))
   })
+
+  it('should return instance sockets', function (done) {
+    chatService = startService()
+    socket1 = clientConnect(user1)
+    socket1.on('loginConfirmed', (name, { id }) => parallel([
+      cb => chatService.state.getInstanceSockets().asCallback(cb),
+      cb => chatService.state.getInstanceSockets(chatService.instanceUID)
+        .asCallback(cb)
+    ], (error, [ s1, s2 ]) => {
+      expect(error).not.ok
+      expect(s1).an('Object')
+      expect(s2).an('Object')
+      expect(Object.keys(s1)).lengthOf(1)
+      expect(Object.keys(s2)).lengthOf(1)
+      expect(s1).property(id, user1)
+      expect(s2).property(id, user1)
+      done()
+    }))
+  })
 }

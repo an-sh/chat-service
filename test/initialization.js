@@ -6,7 +6,7 @@ const { expect } = require('chai')
 const http = require('http')
 const socketIO = require('socket.io')
 
-const { cleanup, clientConnect, closeInstance,
+const { cleanup, clientConnect, closeInstance, ChatService,
         setCustomCleanup, startService } = require('./testutils')
 
 const { cleanupTimeout, port, user1, redisConnect } = require('./config')
@@ -29,6 +29,13 @@ module.exports = function () {
     socket1.on('loginConfirmed', u => {
       expect(u).equal(user1)
       done()
+    })
+  })
+
+  it('should spawn a server without options', function (done) {
+    let chatService = new ChatService()
+    chatService.on('ready', () => {
+      chatService.close().asCallback(done)
     })
   })
 

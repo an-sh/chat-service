@@ -21,7 +21,7 @@ module.exports = function () {
 
   it('should check state constructor type', function (done) {
     try {
-      chatService = startService({ state: {} }, null)
+      chatService = startService({ state: {} })
     } catch (error) {
       expect(error).ok
       nextTick(done)
@@ -30,7 +30,7 @@ module.exports = function () {
 
   it('should check transport constructor type', function (done) {
     try {
-      chatService = startService({ transport: {} }, null)
+      chatService = startService({ transport: {} })
     } catch (error) {
       expect(error).ok
       nextTick(done)
@@ -39,7 +39,7 @@ module.exports = function () {
 
   it('should check adapter constructor type', function (done) {
     try {
-      chatService = startService({ adapter: {} }, null)
+      chatService = startService({ adapter: {} })
     } catch (error) {
       expect(error).ok
       nextTick(done)

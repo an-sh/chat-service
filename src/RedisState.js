@@ -509,7 +509,7 @@ class UserStateRedis {
     return this.makeKeyName(`roomsToSockets:${room}`)
   }
 
-  makeRoomLock (room = '') {
+  makeRoomLock (room) {
     return this.makeKeyName(`roomLock:${room}`)
   }
 
@@ -596,7 +596,7 @@ class UserStateRedis {
 // Implements global state API.
 class RedisState {
 
-  constructor (server, options = {}) {
+  constructor (server, options) {
     this.server = server
     this.options = options
     this.closed = false
