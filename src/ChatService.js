@@ -136,13 +136,6 @@ class ChatService extends EventEmitter {
    */
 
   /**
-   * @name chat-service.ChatService#validator
-   * @type chat-service.ArgumentsValidator
-   * @readonly
-   *
-   */
-
-  /**
    * Service is ready, state and transport are up.
    * @event ready
    *
@@ -261,6 +254,20 @@ class ChatService extends EventEmitter {
       }
     })()
     this.validator = new ArgumentsValidator(this)
+    /**
+     * Check command arguments.
+     *
+     * @method chat-service.ChatService#checkArguments
+     *
+     * @param {String} name Command name.
+     * @param {...*} args Command arguments.
+     * @param {Callback} [cb] Optional callback.
+     *
+     * @return {Promise<undefined>} Promise that resolves without any
+     * data if validation is successful, otherwise a promise is
+     * rejected.
+     */
+    this.checkArguments = this.validator.checkArguments.bind(this.validator)
     this.state = new State(this, this.stateOptions)
     this.transport = new Transport(
       this, this.transportOptions,

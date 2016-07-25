@@ -43,9 +43,9 @@ module.exports = function () {
     })
   })
 
-  it('should have a message validator instance', function (done) {
+  it('should have a message validation method', function (done) {
     chatService = startService()
-    chatService.validator.checkArguments(
+    chatService.checkArguments(
       'roomGetAccessList', roomName1, 'userlist', function (error) {
         expect(error).not.ok
         done()
