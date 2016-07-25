@@ -1,7 +1,7 @@
 /*eslint no-unused-vars: 0*/
 
 /**
- * {@link ChatService} configuration.
+ * {@link chat-service.ChatService} options.
  * @see chat-service.HooksInterface
  *
  * @namespace config
@@ -18,7 +18,7 @@
  *
  * @property {Object|Array<Object>} [redisOptions] ioredis client
  *   constructor arguments. If `useCluster` is set, used as arguments
- *   for a Cluster client.
+ *   for a cluster client constructor.
  */
 
 /**
@@ -44,28 +44,29 @@
  * @property {boolean} [port=8000] Port number.
  *
  * @property {boolean} [enableAccessListsUpdates=false] Enables
- *   {rpc.clientRequests#roomModeChanged},
- *   {rpc.clientRequests#roomAccessListAdded} and
- *   {rpc.clientRequests#roomAccessListRemoved} notifications.
+ *   {@link rpc.serverNotifications.roomModeChanged},
+ *   {@link rpc.serverNotifications.roomAccessListAdded} and
+ *   {@link rpc.serverNotifications.roomAccessListRemoved} notifications.
  *
  * @property {boolean} [enableDirectMessages=false] Enables user to
- *   user {rpc.clientRequests#directMessage} communication.
+ *   user {@link rpc.clientRequests.directMessage} communication.
  *
  * @property {boolean} [enableRoomsManagement=false] Allows to use
- *   {rpc.clientRequests#roomCreate} and
- *   {rpc.clientRequests#roomDelete}.
+ *   {@link rpc.clientRequests.roomCreate} and
+ *   {@link rpc.clientRequests.roomDelete}.
  *
  * @property {boolean} [enableUserlistUpdates=false] Enables
- *   {ServerMessages#roomUserJoined} and {ServerMessages#roomUserLeft}
- *   messages.
+ *   {@link rpc.serverNotifications.roomUserJoined} and
+ *   {@link rpc.serverNotifications.roomUserLeft} messages.
  *
  * @property {number} [historyMaxGetMessages=100] Room history size
- *   available via {rpc.clientRequests#roomRecentHistory} or via a
- *   single invocation {rpc.clientRequests#roomHistoryGet}.
+ *   available via {@link rpc.clientRequests.roomRecentHistory} or via a
+ *   single invocation {@link rpc.clientRequests.roomHistoryGet}.
  *
- * @property {number} [defaultHistoryLimit=10000] Is used for
- *   {rpc.clientRequests#roomCreate} or when {ServiceAPI~addRoom} is
- *   called without `historyMaxSize` option.
+ * @property {number} [defaultHistoryLimit=10000] Is used for {@link
+ *   rpc.clientRequests.roomCreate} or when
+ *   {chat-service.ServiceAPI#addRoom} is called without
+ *   `historyMaxSize` option.
  *
  * @property {boolean} [useRawErrorObjects=false] Send error objects
  *   instead of strings. See {ChatServiceError}.
