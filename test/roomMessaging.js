@@ -148,7 +148,6 @@ module.exports = function () {
     })
   })
 
-
   it('should update userlist on join and leave operations', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, null, () => parallel([
