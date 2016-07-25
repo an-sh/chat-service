@@ -46,6 +46,20 @@ module.exports = function () {
     })
   })
 
+  it('should be able to delete empty rooms', function (done) {
+    chatService = startService({ enableRoomsManagement: true })
+    socket1 = clientConnect(user1)
+    socket1.on('loginConfirmed', u => {
+      socket1.emit('roomCreate', roomName1, false, () => {
+        socket1.emit('roomDelete', roomName1, (error, data) => {
+          expect(error).not.ok
+          expect(data).null
+          done()
+        })
+      })
+    })
+  })
+
   it('should reject to delete a room for a non-owner', function (done) {
     chatService = startService({ enableRoomsManagement: true })
     socket1 = clientConnect(user1)
