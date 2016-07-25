@@ -8,8 +8,8 @@ const hasBinary = require('has-binary')
 const { EventEmitter } = require('events')
 const { debuglog, execHook, checkNameSymbols } = require('./utils')
 
-// Cluster bus.
-class ClusterBus extends EventEmitter {
+// Cluster bus implementation for a socket.io adapter.
+class SocketIOClusterBus extends EventEmitter {
 
   constructor (server, adapter) {
     super()
@@ -20,6 +20,7 @@ class ClusterBus extends EventEmitter {
                            'socketRoomLeft',
                            'disconnectUserSockets' ]
     this.types = [ 2, 5 ]
+    this.injectBusHook()
   }
 
   listen () {
@@ -60,6 +61,26 @@ class ClusterBus extends EventEmitter {
       return super.emit(ev, ...args)
     }
   }
+
+  broadcastHook (packet, opts) {
+    let isBusCahnnel = _.indexOf(opts.rooms, this.channel) >= 0
+    let isBusType = _.indexOf(this.types, packet.type) >= 0
+    if (isBusCahnnel && isBusType) {
+      this.onPacket(packet)
+    }
+  }
+
+  // TODO: Use an API from socket.io if(when) it will be available.
+  injectBusHook () {
+    let broadcastHook = this.broadcastHook.bind(this)
+    let adapter = this.adapter
+    let orig = this.adapter.broadcast
+    adapter.broadcast = function (...args) {
+      broadcastHook(...args)
+      orig.apply(adapter, args)
+    }
+  }
+
 }
 
 // Socket.io transport.
@@ -105,43 +126,8 @@ class SocketIOTransport {
     this.nsp = this.io.of(this.namespace)
     this.server.io = this.io
     this.server.nsp = this.nsp
-    this.clusterBus = new ClusterBus(this.server, this.nsp.adapter)
-    this.injectBusHook()
-    this.attachBusListeners()
-    this.server.clusterBus = this.clusterBus
+    this.clusterBus = new SocketIOClusterBus(this.server, this.nsp.adapter)
     this.closed = false
-  }
-
-  broadcastHook (packet, opts) {
-    let isBusCahnnel = _.indexOf(opts.rooms, this.clusterBus.channel) >= 0
-    let isBusType = _.indexOf(this.clusterBus.types, packet.type) >= 0
-    if (isBusCahnnel && isBusType) {
-      this.clusterBus.onPacket(packet)
-    }
-  }
-
-  // TODO: Use an API from socket.io if(when) it will be available.
-  injectBusHook () {
-    let broadcastHook = this.broadcastHook.bind(this)
-    let { adapter } = this.nsp
-    let orig = adapter.broadcast
-    adapter.broadcast = function (...args) {
-      broadcastHook(...args)
-      orig.apply(adapter, args)
-    }
-  }
-
-  attachBusListeners () {
-    this.clusterBus.on('roomLeaveSocket', (id, roomName) => {
-      return this.leaveChannel(id, roomName)
-        .then(() => this.clusterBus.emit('socketRoomLeft', id, roomName))
-        .catchReturn()
-    })
-    return this.clusterBus.on('disconnectUserSockets', userName => {
-      return this.server.state.getUser(userName)
-        .then(user => user.disconnectInstanceSockets())
-        .catchReturn()
-    })
   }
 
   rejectLogin (socket, error) {

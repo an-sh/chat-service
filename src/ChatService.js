@@ -87,6 +87,7 @@ class ChatService extends EventEmitter {
     this.setOptions()
     this.setIntegraionOptions()
     this.setComponents()
+    this.attachBusListeners()
     mixin(this, ServiceAPI, this.state,
           () => new User(this), this.clusterBus)
     mixin(this, RecoveryAPI, this.state, this.transport,
@@ -278,6 +279,20 @@ class ChatService extends EventEmitter {
     this.transport = new Transport(
       this, this.transportOptions,
       this.adapterConstructor, this.adapterOptions)
+    this.clusterBus = this.transport.clusterBus
+  }
+
+  attachBusListeners () {
+    this.clusterBus.on('roomLeaveSocket', (id, roomName) => {
+      return this.transport.leaveChannel(id, roomName)
+        .then(() => this.clusterBus.emit('socketRoomLeft', id, roomName))
+        .catchReturn()
+    })
+    this.clusterBus.on('disconnectUserSockets', userName => {
+      return this.state.getUser(userName)
+        .then(user => user.disconnectInstanceSockets())
+        .catchReturn()
+    })
   }
 
   startServer () {
