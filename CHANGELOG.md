@@ -1,8 +1,4 @@
 
-### 1.0.0
-
-- TODO
-
 ### 0.8.0 (2016/07/07)
 
 - Added ChatService clusterBus.
