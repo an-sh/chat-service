@@ -7,12 +7,12 @@ const _ = require('lodash')
 const config = require('./config')
 const io = require('socket.io-client')
 
-let makeURL = function (port) {
+function makeURL (port) {
   port = port || config.port
   return `${config.host}:${port}${config.namespace}`
 }
 
-let makeParams = function (userName) {
+function makeParams (userName) {
   let params = {
     query: `user=${userName}`,
     multiplex: false,
@@ -31,13 +31,13 @@ function setState (s) { state = s }
 let customCleanup = null
 function setCustomCleanup (fn) { customCleanup = fn }
 
-let clientConnect = function (name, port) {
+function clientConnect (name, port) {
   let url = makeURL(port)
   let params = makeParams(name)
   return io.connect(url, params)
 }
 
-let startService = function (opts, hooks) {
+function startService (opts, hooks) {
   let options = { port: config.port }
   _.assign(options, state)
   _.assign(options, opts)
@@ -61,7 +61,7 @@ if (process.env.TEST_REDIS_CLUSTER) {
   cleanDB = () => redis.flushall()
 }
 
-let closeInstance = function (service) {
+function closeInstance (service) {
   if (!service) { return Promise.resolve() }
   return service.close()
     .timeout(2000)
@@ -74,7 +74,7 @@ let closeInstance = function (service) {
     })
 }
 
-let cleanup = function (services, sockets, done) {
+function cleanup (services, sockets, done) {
   services = _.castArray(services)
   sockets = _.castArray(sockets)
   return Promise.try(() => {

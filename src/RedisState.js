@@ -12,7 +12,7 @@ const { mixin } = require('es6-mixin')
 let namespace = 'chatservice'
 
 function initSet (redis, set, values) {
-  redis.del(set).then(() => {
+  return redis.del(set).then(() => {
     if (!values) {
       return Promise.resolve()
     } else {

@@ -10,7 +10,7 @@ let asyncLimit = 32
 
 let nameChecker = /^[^\u0000-\u001F:{}\u007F]+$/
 
-let possiblyCallback = function (args) {
+function possiblyCallback (args) {
   let cb = _.last(args)
   if (_.isFunction(cb)) {
     args = _.slice(args, 0, -1)
@@ -20,7 +20,7 @@ let possiblyCallback = function (args) {
   return [args, cb]
 }
 
-let checkNameSymbols = function (name) {
+function checkNameSymbols (name) {
   if (_.isString(name) && nameChecker.test(name)) {
     return Promise.resolve()
   } else {
@@ -28,7 +28,7 @@ let checkNameSymbols = function (name) {
   }
 }
 
-let execHook = function (hook, ...args) {
+function execHook (hook, ...args) {
   if (!hook) { return Promise.resolve() }
   let cb = null
   let callbackData = null
@@ -48,7 +48,7 @@ let execHook = function (hook, ...args) {
   }
 }
 
-let run = function (self, gen) {
+function run (self, gen) {
   return Promise.coroutine(gen).call(self)
 }
 

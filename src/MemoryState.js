@@ -11,12 +11,12 @@ const promiseRetry = require('promise-retry')
 const uid = require('uid-safe')
 const { mixin } = require('es6-mixin')
 
-let initState = function (state, values) {
-  if (state) {
-    state.clear()
-    if (values) {
-      return state.addEach(values)
-    }
+function initState (state, values) {
+  state.clear()
+  if (!values) {
+    return Promise.resolve()
+  } else {
+    return state.addEach(values)
   }
 }
 
