@@ -52,11 +52,23 @@ function run (self, gen) {
   return Promise.coroutine(gen).call(self)
 }
 
+function convertError (error, useRawErrorObjects) {
+  if (error) {
+    if (!(error instanceof ChatServiceError)) {
+      debuglog(error)
+    }
+    if (!useRawErrorObjects) {
+      return error.toString()
+    }
+  }
+  return error
+}
+
 module.exports = {
   asyncLimit,
   checkNameSymbols,
-  debuglog,
   execHook,
   possiblyCallback,
+  convertError,
   run
 }

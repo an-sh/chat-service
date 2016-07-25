@@ -5,7 +5,7 @@ const RedisAdapter = require('socket.io-redis')
 const SocketIOClusterBus = require('./SocketIOClusterBus')
 const SocketServer = require('socket.io')
 const _ = require('lodash')
-const { debuglog, execHook, checkNameSymbols } = require('./utils')
+const { convertError, execHook, checkNameSymbols } = require('./utils')
 
 // Socket.io transport.
 class SocketIOTransport {
@@ -55,13 +55,7 @@ class SocketIOTransport {
   }
 
   rejectLogin (socket, error) {
-    let { useRawErrorObjects } = this.server
-    if ((error != null) && !(error instanceof ChatServiceError)) {
-      debuglog(error)
-    }
-    if ((error != null) && !useRawErrorObjects) {
-      error = error.toString()
-    }
+    error = convertError(error, this.server.useRawErrorObjects)
     socket.emit('loginRejected', error)
     socket.disconnect()
     return Promise.resolve()

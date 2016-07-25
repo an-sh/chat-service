@@ -1,9 +1,8 @@
 
-const ChatServiceError = require('./ChatServiceError')
 const ExecInfo = require('./ExecInfo')
 const Promise = require('bluebird')
 const _ = require('lodash')
-const { debuglog, execHook, possiblyCallback } = require('./utils')
+const { convertError, execHook, possiblyCallback } = require('./utils')
 
 // Implements command implementation functions binding and wrapping.
 class CommandBinder {
@@ -15,16 +14,11 @@ class CommandBinder {
   }
 
   bindAck (cb) {
-    let { useRawErrorObjects } = this.server
+    let useRawErrorObjects = this.server.useRawErrorObjects
     return function (error, data, ...rest) {
-      if ((error != null) && !(error instanceof ChatServiceError)) {
-        debuglog(error)
-      }
+      error = convertError(error, useRawErrorObjects)
       if (error == null) { error = null }
       if (data == null) { data = null }
-      if ((error != null) && !useRawErrorObjects) {
-        error = error.toString()
-      }
       return cb(error, data, ...rest)
     }
   }
