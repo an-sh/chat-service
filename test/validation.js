@@ -23,7 +23,8 @@ module.exports = function () {
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
       socket1.emit('roomGetAccessList', roomName1, 'nolist', function (error) {
-        expect(error.name).equal('noRoom')
+        expect(error.name).equal('ChatServiceError')
+        expect(error.code).equal('noRoom')
         expect(error.args).length.above(0)
         expect(error.args[0]).equal('room1')
         done()

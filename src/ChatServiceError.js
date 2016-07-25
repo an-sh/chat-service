@@ -1,21 +1,20 @@
 
 const util = require('util')
 
-// ChatService errors, that are intended to be returned to clients as a
-// part of a normal service functioning. {ChatServiceError} constructor
-// is available as a static member of {ChatService} class. Can be used
-// to create custom error subclasses.
-
-// TODO rewrite
-function ChatServiceError (name, ...args) {
-  this.name = name
+function ChatServiceError (code, ...args) {
+  this.name = 'ChatServiceError'
+  this.code = code
   this.args = args
 }
 
 util.inherits(ChatServiceError, Error)
 
-// @property [Object] Error strings.
-ChatServiceError.prototype.errorStrings = {
+/**
+ * @constant
+ * @default
+ * @memberof rpc.datatypes
+ */
+const codesToFormat = {
   badArgument: 'Bad argument at position %d, value %j',
   invalidName: 'String %s contains invalid characters',
   invalidSocket: 'Socket %s is not connected',
@@ -35,12 +34,14 @@ ChatServiceError.prototype.errorStrings = {
   wrongArgumentsCount: 'Expected %s arguments, got %s'
 }
 
+ChatServiceError.prototype.codesToFormat = codesToFormat
+
 ChatServiceError.prototype.toString = function () {
-  let str = this.errorStrings[this.name]
+  let str = this.codesToFormat[this.code]
   if (str) {
     return util.format(`ChatServiceError: ${str}`, ...this.args)
   } else {
-    return this.name
+    return Error.prototype.toString.call(this)
   }
 }
 

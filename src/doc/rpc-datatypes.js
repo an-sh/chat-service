@@ -76,5 +76,8 @@
  * @typedef {Object} ChatServiceError
  * @memberof rpc.datatypes
  * @property {string} name - Error name.
- * @property {Array} args - Additional error data.
+ * @property {string} code - Error code.
+ * @property {Array} args - Error format arguments.
+ *
+ * @see rpc.datatypes.codesToFormat
  */
