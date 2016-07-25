@@ -10,6 +10,7 @@ const Promise = require('bluebird')
 const RecoveryAPI = require('./RecoveryAPI')
 const RedisState = require('./RedisState')
 const ServiceAPI = require('./ServiceAPI')
+const SocketIOClusterBus = require('./SocketIOClusterBus')
 const SocketIOTransport = require('./SocketIOTransport')
 const User = require('./User')
 const _ = require('lodash')
@@ -105,6 +106,15 @@ class ChatService extends EventEmitter {
    */
 
   /**
+   * @name SocketIOClusterBus
+   * @type Class
+   * @static
+   * @readonly
+   *
+   * @memberof chat-service.ChatService
+   */
+
+  /**
    * @name chat-service.ChatService#instanceUID
    * @type string
    * @readonly
@@ -114,28 +124,24 @@ class ChatService extends EventEmitter {
    * @name chat-service.ChatService#redis
    * @type Object|undefined
    * @readonly
-   *
    */
 
   /**
    * @name chat-service.ChatService#io
    * @type Object|undefined
    * @readonly
-   *
    */
 
   /**
    * @name chat-service.ChatService#nsp
    * @type Object|undefined
    * @readonly
-   *
    */
 
   /**
    * @name chat-service.ChatService#clusterBus
    * @type EventEmitter
    * @readonly
-   *
    */
 
   /**
@@ -349,5 +355,6 @@ class ChatService extends EventEmitter {
 }
 
 ChatService.ChatServiceError = ChatServiceError
+ChatService.SocketIOClusterBus = SocketIOClusterBus
 
 module.exports = ChatService
