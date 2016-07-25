@@ -369,7 +369,7 @@ module.exports = function () {
   })
 
   it('should remove users on permissions changes', function (done) {
-    chatService = startService()
+    chatService = startService({enableUserlistUpdates: true})
     chatService.addRoom(
       roomName1, { adminlist: [user1, user3] }, () => parallel([
         cb => {

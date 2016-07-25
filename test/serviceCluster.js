@@ -113,8 +113,11 @@ module.exports = function () {
   })
 
   it('should correctly update a presence info on a shutdown', function (done) {
-    instance1 = startService(_.assign({port}, redisConfig))
-    instance2 = startService(_.assign({port: port + 1}, redisConfig))
+    let enableUserlistUpdates = true
+    instance1 = startService(_.assign({port, enableUserlistUpdates},
+                                      redisConfig))
+    instance2 = startService(_.assign({port: port + 1, enableUserlistUpdates},
+                                      redisConfig))
     let ids = {}
     instance1.addRoom(roomName1, null, () => parallel([
       cb => {

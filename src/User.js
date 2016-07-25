@@ -25,16 +25,18 @@ class User extends DirectMessaging {
     let State = this.server.state.UserState
     this.userState = new State(this.server, this.userName)
     mixin(this, CommandBinder, this.server, this.transport, this.userName)
-    let opts = { transport: this.transport,
-                 state: this.state,
-                 userState: this.userState,
-                 userName: this.userName,
-                 echoChannel: this.echoChannel,
-                 clusterBus: this.server.clusterBus,
-                 busAckTimeout: this.server.busAckTimeout,
-                 lockTTL: this.state.lockTTL,
-                 consistencyFailure: this.consistencyFailure.bind(this)
-               }
+    let opts = {
+      busAckTimeout: this.server.busAckTimeout,
+      clusterBus: this.server.clusterBus,
+      consistencyFailure: this.consistencyFailure.bind(this),
+      echoChannel: this.echoChannel,
+      enableUserlistUpdates: this.enableUserlistUpdates,
+      lockTTL: this.state.lockTTL,
+      state: this.state,
+      transport: this.transport,
+      userName: this.userName,
+      userState: this.userState
+    }
     mixin(this, UserAssociations, opts)
   }
 

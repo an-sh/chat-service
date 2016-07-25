@@ -14,38 +14,42 @@ class UserAssociations {
   }
 
   userJoinRoomReport (userName, roomName) {
-    return this.transport.emitToChannel(
+    if (!this.enableUserlistUpdates) return
+    this.transport.emitToChannel(
       roomName, 'roomUserJoined', roomName, userName)
   }
 
   userLeftRoomReport (userName, roomName) {
-    return this.transport.emitToChannel(
+    if (!this.enableUserlistUpdates) return
+    this.transport.emitToChannel(
       roomName, 'roomUserLeft', roomName, userName)
   }
 
   userRemovedReport (userName, roomName) {
     this.transport.emitToChannel(
       this.echoChannel, 'roomAccessRemoved', roomName)
-    return this.userLeftRoomReport(userName, roomName)
+    if (this.enableUserlistUpdates) {
+      this.userLeftRoomReport(userName, roomName)
+    }
   }
 
   socketJoinEcho (id, roomName, njoined) {
-    return this.transport.sendToChannel(
+    this.transport.sendToChannel(
       id, this.echoChannel, 'roomJoinedEcho', roomName, id, njoined)
   }
 
   socketLeftEcho (id, roomName, njoined) {
-    return this.transport.sendToChannel(
+    this.transport.sendToChannel(
       id, this.echoChannel, 'roomLeftEcho', roomName, id, njoined)
   }
 
   socketConnectEcho (id, nconnected) {
-    return this.transport.sendToChannel(
+    this.transport.sendToChannel(
       id, this.echoChannel, 'socketConnectEcho', id, nconnected)
   }
 
   socketDisconnectEcho (id, nconnected) {
-    return this.transport.sendToChannel(
+    this.transport.sendToChannel(
       id, this.echoChannel, 'socketDisconnectEcho', id, nconnected)
   }
 
