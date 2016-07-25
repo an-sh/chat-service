@@ -83,7 +83,9 @@ class ChatService extends EventEmitter {
     super()
     this.options = options
     this.hooks = hooks
+    this.initVariables()
     this.setOptions()
+    this.setIntegraionOptions()
     this.setComponents()
     mixin(this, ServiceAPI, this.state,
           () => new User(this), this.clusterBus)
@@ -190,12 +192,14 @@ class ChatService extends EventEmitter {
    * @memberof chat-service
    */
 
-  setOptions () {
+  initVariables () {
     this.instanceUID = uid.sync(18)
     this.runningCommands = 0
     this.rpcRequestsNames = rpcRequestsNames
     this.closed = false
+  }
 
+  setOptions () {
     this.closeTimeout = this.options.closeTimeout || 15000
     this.busAckTimeout = this.options.busAckTimeout || 5000
     this.heartbeatRate = this.options.heartbeatRate || 10000
@@ -215,19 +219,21 @@ class ChatService extends EventEmitter {
         this.defaultHistoryLimit < 0) {
       this.defaultHistoryLimit = 10000
     }
-
     this.port = this.options.port || 8000
-    this.useRawErrorObjects = this.options.useRawErrorObjects || false
-
-    this.adapterConstructor = this.options.adapter || 'memory'
-    this.adapterOptions = _.castArray(this.options.adapterOptions)
-    this.stateConstructor = this.options.state || 'memory'
-    this.stateOptions = this.options.stateOptions || {}
-    this.transportConstructor = this.options.transport || 'socket.io'
-    this.transportOptions = this.options.transportOptions || {}
-
     this.directMessagesChecker = this.hooks.directMessagesChecker
     this.roomMessagesChecker = this.hooks.roomMessagesChecker
+    this.useRawErrorObjects = this.options.useRawErrorObjects || false
+  }
+
+  setIntegraionOptions () {
+    this.adapterConstructor = this.options.adapter || 'memory'
+    this.adapterOptions = _.castArray(this.options.adapterOptions)
+
+    this.stateConstructor = this.options.state || 'memory'
+    this.stateOptions = this.options.stateOptions || {}
+
+    this.transportConstructor = this.options.transport || 'socket.io'
+    this.transportOptions = this.options.transportOptions || {}
   }
 
   setComponents () {

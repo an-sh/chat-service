@@ -24,7 +24,7 @@ module.exports = function () {
     instance1 = instance2 = socket1 = socket2 = socket3 = null
   })
 
-  it('should to able to send custom messages via a bus', function (done) {
+  it('should be able to send custom messages via a bus', function (done) {
     let event = 'someEvent'
     let data = { key: 'value' }
     instance1 = startService(_.assign({port}, redisConfig))
