@@ -346,7 +346,7 @@ function roomRemoveFromList (roomName, listName, userNames) {}
   * @returns {undefined} Acknowledgment without data.
   *
   * @see rpc.clientRequests.roomGetWhitelistMode
-  * @see rpc.serverNotificationsy.roomAccessRemoved
+  * @see rpc.serverNotifications.roomAccessRemoved
   *
   * @memberof rpc.clientRequests
   */
@@ -373,4 +373,4 @@ function roomUserSeen (roomName, userName) {}
   *
   * @memberof rpc.clientRequests
   */
-function selfBroadcast (message) {}
+function systemMessage (message) {}

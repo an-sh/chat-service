@@ -65,7 +65,7 @@ class RecoveryAPI {
    * Sync user to sockets associations.
    *
    * @param {string} userName User name.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    */
@@ -79,7 +79,7 @@ class RecoveryAPI {
    * Sync room to users associations.
    *
    * @param {string} roomName Room name.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    */
@@ -93,7 +93,7 @@ class RecoveryAPI {
    * Fix instance data after an incorrect service shutdown.
    *
    * @param {string} id Instance id.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    */
@@ -110,7 +110,7 @@ class RecoveryAPI {
    * Get instance heartbeat.
    *
    * @param {string} id Instance id.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<integer>} Heartbeat timestamp.
    */

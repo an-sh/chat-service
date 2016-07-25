@@ -1,5 +1,12 @@
 
 /**
+ * Node style callback.
+ * @callback callback
+ * @param {Error} error
+ * @param {...*} results
+ */
+
+/**
  * @namespace chat-service
  */
 
@@ -60,9 +67,25 @@ const rpcRequestsNames = [
  * @fires chat-service.transportConsistencyFailure
  * @fires chat-service.lockTimeExceeded
  *
- * @example <caption>Starting a server.</caption>
+ * @example <caption>starting a server</caption>
  *   let ChatService = require('chat-service')
  *   let service = new ChatService(options, hooks)
+ *
+ * @example <caption>server-side: adding a room</caption>
+ *   let owner = 'admin'
+ *   let whitelistOnly = true
+ *   let whitelist = [ 'user' ]
+ *   let state = { owner, whitelistOnly, whitelist }
+ *   chatService.addRoom('roomName', state).then(fn)
+ *
+ * @example <caption>server-side: sending a room message</caption>
+ *   let msg = { textMessage: 'some message' }
+ *   let context = {
+ *     userName: 'system',
+ *     bypassPermissions: true
+ *   }
+ *   chatService.execUserCommand(context, 'roomMessage', 'roomName', msg)
+ *     .then(fn)
  *
  * @memberof chat-service
  *
@@ -74,11 +97,11 @@ class ChatService extends EventEmitter {
    * chat-service.ChatService#close} method __MUST__ be called before
    * the node process exit.
    *
-   * @param {chat-service.config.options} options Service
+   * @param {chat-service.config.options} [options] Service
    * configuration options.
    *
-   * @param {chat-service.HooksInterface} hooks Service customisation
-   * hooks.
+   * @param {chat-service.hooks.HooksInterface} [hooks] Service
+   * customisation hooks.
    */
   constructor (options = {}, hooks = {}) {
     super()
@@ -268,13 +291,14 @@ class ChatService extends EventEmitter {
     })()
     this.validator = new ArgumentsValidator(this)
     /**
-     * Check command arguments.
+     * Check command arguments. This method is called automatically by
+     * all client request handlers.
      *
      * @method chat-service.ChatService#checkArguments
      *
      * @param {String} name Command name.
      * @param {...*} args Command arguments.
-     * @param {Callback} [cb] Optional callback.
+     * @param {callback} [cb] Optional callback.
      *
      * @return {Promise<undefined>} Promise that resolves without any
      * data if validation is successful, otherwise a promise is
@@ -328,7 +352,7 @@ class ChatService extends EventEmitter {
    * Closes server.
    * @note __MUST__ be called before node process shutdown to correctly
    *   update the state.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    * @return {Promise<undefined>} Promise that resolves without any data.
    */
   close (cb) {

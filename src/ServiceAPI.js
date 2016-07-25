@@ -17,14 +17,14 @@ class ServiceAPI {
   }
 
   /**
-   * Executes ClientRequests handlers.
+   * Executes {@link rpc.clientRequests} handlers.
    *
    * @param {string|boolean|Object} context Is a `userName` if string,
    *   or a `bypassPermissions` if boolean, or an options hash if
    *   Object.
    * @param {string} command Command name.
    * @param {...*} args Command arguments.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @property {string} context.userName User name.
    * @property {string} context.id Socket id, it is required for
@@ -62,7 +62,7 @@ class ServiceAPI {
    *
    * @param {string} userName User name.
    * @param {Object} state User state.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @property {Array<string>} state.whitelist User direct messages whitelist.
    * @property {Array<string>} state.blacklist User direct messages blacklist.
@@ -83,7 +83,7 @@ class ServiceAPI {
    * sockets.
    *
    * @param {string} userName User name.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    */
@@ -106,7 +106,7 @@ class ServiceAPI {
    * Checks user existence.
    *
    * @param {string} userName User name.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<boolean>} Predicate result.
    */
@@ -122,7 +122,7 @@ class ServiceAPI {
    * @param {string} userName User name.
    * @param {string} listName List name.
    * @param {string} item List element.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<boolean>} Predicate result.
    */
@@ -137,7 +137,7 @@ class ServiceAPI {
    *
    * @param {string} recipient Recipient name.
    * @param {string} sender Sender name.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<boolean>} Predicate result.
    */
@@ -166,7 +166,7 @@ class ServiceAPI {
    *
    * @param {string} roomName Room name.
    * @param {Object} state Room state.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @property {Array<string>} state.whitelist Room whitelist.
    * @property {Array<string>} state.blacklist Room blacklist
@@ -189,7 +189,7 @@ class ServiceAPI {
    * Removes all room data, and removes joined user from the room.
    *
    * @param {string} roomName Room name.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    */
@@ -203,7 +203,7 @@ class ServiceAPI {
    * Checks room existence.
    *
    * @param {string} roomName Room name.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<boolean>} Predicate result.
    */
@@ -219,7 +219,7 @@ class ServiceAPI {
    * @param {string} roomName Room name.
    * @param {string} listName List name.
    * @param {string} item List element.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<boolean>} Predicate result.
    */
@@ -234,7 +234,7 @@ class ServiceAPI {
    *
    * @param {string} roomName Room name.
    * @param {string} userName User name.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<boolean>} Predicate result.
    */
@@ -251,7 +251,7 @@ class ServiceAPI {
    *
    * @param {string} roomName Room name.
    * @param {string} owner Owner user name.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    */
@@ -267,7 +267,7 @@ class ServiceAPI {
    *
    * @param {string} roomName Room name.
    * @param {Integer} size Room history size.
-   * @param {Callback} [cb] Optional callback.
+   * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    */

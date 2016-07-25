@@ -31,7 +31,7 @@
  * @property {string} textMessage - Text message.
  * @property {number} timestamp - Timestamp.
  * @property {string} author - Message sender.
- * @property {number|void} id - Message id, for room messages only.
+ * @property {number} [id] - Message id, for room messages only.
  */
 
 /**

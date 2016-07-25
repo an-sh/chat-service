@@ -2,7 +2,6 @@
 
 /**
  * {@link chat-service.ChatService} options.
- * @see chat-service.HooksInterface
  *
  * @namespace config
  * @memberof chat-service
