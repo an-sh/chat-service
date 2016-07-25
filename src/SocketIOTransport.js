@@ -91,7 +91,7 @@ class SocketIOTransport {
       this.http = this.options.http
       if (this.http) {
         this.dontCloseIO = true
-        this.io = new SocketServer(this.options.http)
+        this.io = new SocketServer(this.options.http, this.ioOptions)
       } else {
         this.io = new SocketServer(this.server.port, this.ioOptions)
       }
