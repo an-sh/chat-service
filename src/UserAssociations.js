@@ -14,13 +14,13 @@ class UserAssociations {
   }
 
   userJoinRoomReport (userName, roomName) {
-    if (!this.enableUserlistUpdates) return
+    if (!this.enableUserlistUpdates) { return }
     this.transport.emitToChannel(
       roomName, 'roomUserJoined', roomName, userName)
   }
 
   userLeftRoomReport (userName, roomName) {
-    if (!this.enableUserlistUpdates) return
+    if (!this.enableUserlistUpdates) { return }
     this.transport.emitToChannel(
       roomName, 'roomUserLeft', roomName, userName)
   }
