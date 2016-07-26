@@ -326,6 +326,19 @@ class ChatService extends EventEmitter {
     })
   }
 
+  onConnect (id) {
+    if (this.hooks.onConnect) {
+      return Promise.try(() => {
+        return execHook(this.hooks.onConnect, this, id)
+      }).then(loginData => {
+        loginData = _.castArray(loginData)
+        return Promise.resolve(loginData)
+      })
+    } else {
+      return Promise.resolve([])
+    }
+  }
+
   waitCommands () {
     if (this.runningCommands > 0) {
       return Promise.fromCallback(cb => {

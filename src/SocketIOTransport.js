@@ -98,18 +98,11 @@ class SocketIOTransport {
         this.nsp.use(fn)
       }
     }
-    if (this.hooks.onConnect) {
-      this.nsp.on('connection', socket => {
-        return Promise.try(() => {
-          return execHook(this.hooks.onConnect, this.server, socket.id)
-        }).then(loginData => {
-          loginData = _.castArray(loginData)
-          return this.addClient(socket, ...loginData)
-        }).catch(error => this.rejectLogin(socket, error))
-      })
-    } else {
-      this.nsp.on('connection', this.addClient.bind(this))
-    }
+    this.nsp.on('connection', socket => {
+      return this.server.onConnect(socket.id)
+        .then((loginData) => this.addClient(socket, ...loginData))
+        .catch(error => this.rejectLogin(socket, error))
+    })
     return Promise.resolve()
   }
 
