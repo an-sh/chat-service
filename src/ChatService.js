@@ -326,6 +326,22 @@ class ChatService extends EventEmitter {
     })
   }
 
+  waitCommands () {
+    if (this.runningCommands > 0) {
+      return Promise.fromCallback(cb => {
+        return this.once('commandsFinished', cb)
+      })
+    } else {
+      return Promise.resolve()
+    }
+  }
+
+  closeTransport () {
+    return this.transport.close()
+      .then(() => this.waitCommands())
+      .timeout(this.closeTimeout)
+  }
+
   startServer () {
     return Promise.try(() => {
       if (this.hooks.onStart) {
@@ -343,7 +359,7 @@ class ChatService extends EventEmitter {
       return this.emit('ready')
     }).catch(error => {
       this.closed = true
-      return this.transport.close()
+      return this.closeTransport()
         .then(() => this.state.close())
         .finally(() => this.emit('closed', error))
     })
@@ -361,7 +377,7 @@ class ChatService extends EventEmitter {
     this.closed = true
     clearInterval(this.hbtimer)
     let closeError = null
-    return this.transport.close().then(
+    return this.closeTransport().then(
       () => execHook(this.hooks.onClose, this, null),
       error => {
         if (this.hooks.onClose) {

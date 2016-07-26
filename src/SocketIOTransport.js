@@ -113,16 +113,6 @@ class SocketIOTransport {
     return Promise.resolve()
   }
 
-  waitCommands () {
-    if (this.server.runningCommands > 0) {
-      return Promise.fromCallback(cb => {
-        return this.server.once('commandsFinished', cb)
-      })
-    } else {
-      return Promise.resolve()
-    }
-  }
-
   close () {
     this.closed = true
     this.nsp.removeAllListeners('connection')
@@ -137,8 +127,8 @@ class SocketIOTransport {
           socket.disconnect()
         }
       }
-    }).then(() => this.waitCommands())
-      .timeout(this.server.closeTimeout)
+      return Promise.resolve()
+    })
   }
 
   bindHandler (id, name, fn) {
