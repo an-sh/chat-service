@@ -17,6 +17,7 @@ class SocketIOTransport {
     this.adapterOptions = adapterOptions
     this.hooks = this.server.hooks
     this.io = this.options.io
+    this.middleware = options.middleware
     this.namespace = this.options.namespace || '/chat-service'
     let Adapter = (() => {
       switch (true) {
@@ -91,8 +92,8 @@ class SocketIOTransport {
   }
 
   setEvents () {
-    if (this.hooks.middleware) {
-      let middleware = _.castArray(this.hooks.middleware)
+    if (this.middleware) {
+      let middleware = _.castArray(this.middleware)
       for (let fn of middleware) {
         this.nsp.use(fn)
       }

@@ -26,6 +26,9 @@
  *
  * @property {string} [namespace='/chat-service'] Socket.io namespace.
  *
+ * @property {Array<function>|funcition} [middleware] Socket.io
+ * middleware to use on namespace.
+ *
  * @property {Object} [io] Socket.io instance that should be used by
  *   ChatService.
  *

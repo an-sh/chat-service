@@ -44,7 +44,7 @@ module.exports = function () {
   it('should execute socket.io middleware', function (done) {
     let reason = 'some error'
     let auth = (socket, cb) => nextTick(cb, new Error(reason))
-    chatService = startService(null, { middleware: auth })
+    chatService = startService({ transportOptions: {middleware: auth} })
     socket1 = clientConnect()
     socket1.on('error', e => {
       expect(e).deep.equal(reason)
