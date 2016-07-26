@@ -222,6 +222,21 @@ class ChatService extends EventEmitter {
    * @memberof chat-service
    */
 
+  /**
+   * Exposes an internal arguments validation method, it is run
+   * automatically by all client request handlers.
+   *
+   * @method chat-service.ChatService#checkArguments
+   *
+   * @param {String} name Command name.
+   * @param {...*} args Command arguments.
+   * @param {callback} [cb] Optional callback.
+   *
+   * @return {Promise<undefined>} Promise that resolves without any
+   * data if validation is successful, otherwise a promise is
+   * rejected.
+   */
+
   initVariables () {
     this.instanceUID = uid.sync(18)
     this.runningCommands = 0
@@ -290,20 +305,6 @@ class ChatService extends EventEmitter {
       }
     })()
     this.validator = new ArgumentsValidator(this)
-    /**
-     * Exposes an internal arguments validation method, it is run
-     * automatically by all client request handlers.
-     *
-     * @method chat-service.ChatService#checkArguments
-     *
-     * @param {String} name Command name.
-     * @param {...*} args Command arguments.
-     * @param {callback} [cb] Optional callback.
-     *
-     * @return {Promise<undefined>} Promise that resolves without any
-     * data if validation is successful, otherwise a promise is
-     * rejected.
-     */
     this.checkArguments = this.validator.checkArguments.bind(this.validator)
     this.state = new State(this, this.stateOptions)
     this.transport = new Transport(
