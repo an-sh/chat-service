@@ -13,8 +13,9 @@
 
 /**
  * Message. Other fields instead of `textMessage` can be used if an
- * appropriate ChatService `directMessagesChecker` or
- * `roomMessagesChecker` hook is set.
+ * appropriate {@link
+ * chat-service.hooks.HooksInterface#directMessagesChecker} or {@link
+ * chat-service.hooks.HooksInterface#roomMessagesChecker} hook is set.
  *
  * @typedef {Object} Message
  * @memberof rpc.datatypes
@@ -23,8 +24,10 @@
 
 /**
  * Processed Message. Other fields instead of `textMessage` can be
- * used if an appropriate ChatService `directMessagesChecker` or
- * `roomMessagesChecker` hook is set. Includes server assigned data.
+ * used if an appropriate {@link
+ * chat-service.hooks.HooksInterface#directMessagesChecker} or {@link
+ * chat-service.hooks.HooksInterface#roomMessagesChecker} hook is
+ * set. Includes server assigned data.
  *
  * @typedef {Object} ProcessedMessage
  * @memberof rpc.datatypes
@@ -71,7 +74,8 @@
  */
 
 /**
- * Chat service error representation.
+ * Chat service error representation. Used when {@link
+ * chat-service.config.options} `useRawErrorObjects` is set.
  *
  * @typedef {Object} ChatServiceError
  * @memberof rpc.datatypes
@@ -79,5 +83,5 @@
  * @property {string} code - Error code.
  * @property {Array} args - Error format arguments.
  *
- * @see rpc.datatypes.codesToFormat
+ * @see rpc.datatypes.codeToFormat
  */

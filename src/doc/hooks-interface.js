@@ -1,6 +1,8 @@
 /*eslint no-unused-vars: 0*/
 
 /**
+ * {@link chat-service.ChatService} hooks.
+ *
  * @namespace hooks
  * @memberof chat-service
  *
@@ -162,7 +164,7 @@ class HooksInterface extends RequestsHooks {
    *
    * @see rpc.clientRequests.directMessage
    */
-  directMessagesValidator (message, cb) {}
+  directMessagesChecker (message, cb) {}
 
   /**
    * Validator for `roomMessage` message objects. When is set, a
@@ -177,6 +179,6 @@ class HooksInterface extends RequestsHooks {
    *
    * @see rpc.clientRequests.roomMessage
    */
-  roomMessagesValidator (message, cb) {}
+  roomMessagesChecker (message, cb) {}
 
 }

@@ -5,6 +5,7 @@ const _ = require('lodash')
 /**
  * @mixin
  * @memberof chat-service
+ * @see chat-service.ChatService
  */
 class RecoveryAPI {
 

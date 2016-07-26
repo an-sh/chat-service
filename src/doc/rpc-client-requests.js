@@ -8,7 +8,8 @@
  * `string`. Otherwise errors have a {@link
  * rpc.datatypes.ChatServiceError} type. Details of how results or
  * errors are returned depend on a transport used, for more
- * information see examples below.
+ * information see examples below. Essentially each request executes a
+ * command in socket+user context.
  *
  * @example <caption>Socket.io client example.</caption>
  *   let socket = io.connect(url, opts)

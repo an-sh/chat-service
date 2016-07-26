@@ -1,7 +1,7 @@
 
 /**
  * ExecInfo is available for {@link rpc.clientRequests} hooks.
- * @see chat-service.HooksInterface
+ * @see chat-service.hooks.HooksInterface
  * @memberof chat-service
  * @interface
  */

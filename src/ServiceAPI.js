@@ -7,6 +7,7 @@ const { checkNameSymbols, possiblyCallback } = require('./utils')
 /**
  * @mixin
  * @memberof chat-service
+ * @see chat-service.ChatService
  */
 class ServiceAPI {
 

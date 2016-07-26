@@ -291,8 +291,8 @@ class ChatService extends EventEmitter {
     })()
     this.validator = new ArgumentsValidator(this)
     /**
-     * Check command arguments. This method is called automatically by
-     * all client request handlers.
+     * Exposes an internal arguments validation method, it is run
+     * automatically by all client request handlers.
      *
      * @method chat-service.ChatService#checkArguments
      *
