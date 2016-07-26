@@ -14,7 +14,7 @@ util.inherits(ChatServiceError, Error)
  * @default
  * @memberof rpc.datatypes
  */
-const codesToFormat = {
+const codeToFormat = {
   badArgument: 'Bad argument at position %d, value %j',
   invalidName: 'String %s contains invalid characters',
   invalidSocket: 'Socket %s is not connected',
@@ -34,10 +34,10 @@ const codesToFormat = {
   wrongArgumentsCount: 'Expected %s arguments, got %s'
 }
 
-ChatServiceError.prototype.codesToFormat = codesToFormat
+ChatServiceError.prototype.codeToFormat = codeToFormat
 
 ChatServiceError.prototype.toString = function () {
-  let str = this.codesToFormat[this.code]
+  let str = this.codeToFormat[this.code]
   if (str) {
     return util.format(`ChatServiceError: ${str}`, ...this.args)
   } else {
