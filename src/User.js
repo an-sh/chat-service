@@ -24,7 +24,8 @@ class User {
     this.directMessaging = new DirectMessaging(server, userName)
     let State = this.server.state.UserState
     this.userState = new State(this.server, this.userName)
-    mixin(this, CommandBinder, this.server, this.transport, this.userName)
+    this.commandBinder =
+      new CommandBinder(this.server, this.transport, this.userName)
     let opts = {
       busAckTimeout: this.server.busAckTimeout,
       clusterBus: this.server.clusterBus,
@@ -72,7 +73,7 @@ class User {
       return Promise.reject(error)
     }
     let fn = this[command].bind(this)
-    let cmd = this.makeCommand(command, fn)
+    let cmd = this.commandBinder.makeCommand(command, fn)
     return Promise.fromCallback(
       cb => cmd(args, options, cb),
       {multiArgs: true})
@@ -109,7 +110,7 @@ class User {
         } else {
           let commands = this.server.rpcRequestsNames
           for (let cmd of commands) {
-            this.bindCommand(id, cmd, this[cmd].bind(this))
+            this.commandBinder.bindCommand(id, cmd, this[cmd].bind(this))
           }
           return [ this, nconnected ]
         }
