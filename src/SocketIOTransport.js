@@ -5,7 +5,7 @@ const RedisAdapter = require('socket.io-redis')
 const SocketIOClusterBus = require('./SocketIOClusterBus')
 const SocketServer = require('socket.io')
 const _ = require('lodash')
-const { convertError, execHook, checkNameSymbols } = require('./utils')
+const { convertError, run } = require('./utils')
 
 // Socket.io transport.
 class SocketIOTransport {
@@ -15,7 +15,6 @@ class SocketIOTransport {
     this.options = options
     this.adapterConstructor = adapterConstructor
     this.adapterOptions = adapterOptions
-    this.hooks = this.server.hooks
     this.io = this.options.io
     this.middleware = options.middleware
     this.namespace = this.options.namespace || '/chat-service'
@@ -68,8 +67,7 @@ class SocketIOTransport {
     return Promise.resolve()
   }
 
-  addClient (socket, userName, authData = {}) {
-    let { id } = socket
+  ensureUserName (socket, userName) {
     return Promise.try(() => {
       if (!userName) {
         let { query } = socket.handshake
@@ -78,17 +76,8 @@ class SocketIOTransport {
           return Promise.reject(new ChatServiceError('noLogin'))
         }
       }
-      return Promise.resolve()
-    }).then(() => checkNameSymbols(userName))
-      .then(() => this.server.state.getOrAddUser(userName))
-      .then(user => user.registerSocket(id))
-      .spread((user, nconnected) => {
-        return this.joinChannel(id, user.echoChannel)
-          .then(() => {
-            user.socketConnectEcho(id, nconnected)
-            return this.confirmLogin(socket, userName, authData)
-          })
-      }).catch(error => this.rejectLogin(socket, error))
+      return Promise.resolve(userName)
+    })
   }
 
   setEvents () {
@@ -99,9 +88,13 @@ class SocketIOTransport {
       }
     }
     this.nsp.on('connection', socket => {
-      return this.server.onConnect(socket.id)
-        .then((loginData) => this.addClient(socket, ...loginData))
-        .catch(error => this.rejectLogin(socket, error))
+      return run(this, function * () {
+        let id = socket.id
+        let [userName, authData = {}] = yield this.server.onConnect(id)
+        userName = yield this.ensureUserName(socket, userName)
+        yield this.server.registerClient(userName, id)
+        yield this.confirmLogin(socket, userName, authData)
+      }).catch(error => this.rejectLogin(socket, error))
     })
     return Promise.resolve()
   }

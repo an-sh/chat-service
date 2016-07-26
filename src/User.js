@@ -112,7 +112,10 @@ class User {
           for (let cmd of commands) {
             this.commandBinder.bindCommand(id, cmd, this[cmd].bind(this))
           }
-          return [ this, nconnected ]
+          return this.transport.joinChannel(id, this.echoChannel).then(() => {
+            this.socketConnectEcho(id, nconnected)
+            return Promise.resolve()
+          })
         }
       })
   }

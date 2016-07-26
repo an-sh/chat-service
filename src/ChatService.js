@@ -23,7 +23,7 @@ const User = require('./User')
 const _ = require('lodash')
 const uid = require('uid-safe')
 const { EventEmitter } = require('events')
-const { execHook } = require('./utils')
+const { checkNameSymbols, execHook } = require('./utils')
 const { mixin } = require('es6-mixin')
 
 const rpcRequestsNames = [
@@ -337,6 +337,12 @@ class ChatService extends EventEmitter {
     } else {
       return Promise.resolve([])
     }
+  }
+
+  registerClient (userName, id) {
+    return checkNameSymbols(userName)
+      .then(() => this.state.getOrAddUser(userName))
+      .then(user => user.registerSocket(id))
   }
 
   waitCommands () {
