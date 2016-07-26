@@ -128,7 +128,7 @@ class ServiceAPI {
    */
   userHasInList (userName, listName, item, cb) {
     return this.state.getUser(userName)
-      .then(user => user.hasInList(listName, item))
+      .then(user => user.directMessaging.hasInList(listName, item))
       .asCallback(cb)
   }
 
@@ -143,7 +143,7 @@ class ServiceAPI {
    */
   hasDirectAccess (recipient, sender, cb) {
     return this.state.getUser(recipient)
-      .then(user => user.checkAcess(sender))
+      .then(user => user.directMessaging.checkAcess(sender))
       .return(true)
       .catchReturn(ChatServiceError, false)
       .asCallback(cb)

@@ -9,10 +9,9 @@ const { asyncLimit, checkNameSymbols } = require('./utils')
 const { mixin } = require('es6-mixin')
 
 // Client commands implementation.
-class User extends DirectMessaging {
+class User {
 
   constructor (server, userName) {
-    super(server, userName)
     this.server = server
     this.userName = userName
     this.echoChannel = `echo:${this.userName}`
@@ -22,6 +21,7 @@ class User extends DirectMessaging {
     this.enableAccessListsUpdates = this.server.enableAccessListsUpdates
     this.enableRoomsManagement = this.server.enableRoomsManagement
     this.enableDirectMessages = this.server.enableDirectMessages
+    this.directMessaging = new DirectMessaging(server, userName)
     let State = this.server.state.UserState
     this.userState = new State(this.server, this.userName)
     mixin(this, CommandBinder, this.server, this.transport, this.userName)
@@ -41,11 +41,11 @@ class User extends DirectMessaging {
   }
 
   initState (state) {
-    return super.initState(state)
+    return this.directMessaging.initState(state)
   }
 
   removeState () {
-    return super.removeState()
+    return this.directMessaging.removeState()
   }
 
   processMessage (msg, setTimestamp = false) {
@@ -126,15 +126,16 @@ class User extends DirectMessaging {
   }
 
   directAddToList (listName, values) {
-    return this.addToList(this.userName, listName, values).return()
+    return this.directMessaging.addToList(this.userName, listName, values)
+      .return()
   }
 
   directGetAccessList (listName) {
-    return this.getList(this.userName, listName)
+    return this.directMessaging.getList(this.userName, listName)
   }
 
   directGetWhitelistMode () {
-    return this.getMode(this.userName)
+    return this.directMessaging.getMode(this.userName)
   }
 
   directMessage (recipientName, msg, {id, bypassPermissions}) {
@@ -145,7 +146,8 @@ class User extends DirectMessaging {
     this.processMessage(msg, true)
     return this.server.state.getUser(recipientName).then(recipient => {
       let channel = recipient.echoChannel
-      return recipient.message(this.userName, msg, bypassPermissions)
+      return recipient.directMessaging
+        .message(this.userName, msg, bypassPermissions)
         .then(() => recipient.checkOnline())
         .then(() => {
           this.transport.emitToChannel(channel, 'directMessage', msg)
@@ -157,11 +159,12 @@ class User extends DirectMessaging {
   }
 
   directRemoveFromList (listName, values) {
-    return this.removeFromList(this.userName, listName, values).return()
+    return this.directMessaging.removeFromList(this.userName, listName, values)
+      .return()
   }
 
   directSetWhitelistMode (mode) {
-    return this.changeMode(this.userName, mode).return()
+    return this.directMessaging.changeMode(this.userName, mode).return()
   }
 
   disconnect (reason, {id}) {
