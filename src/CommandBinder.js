@@ -79,6 +79,16 @@ class CommandBinder {
     }
   }
 
+  bindDisconnect (id, fn) {
+    let server = this.server
+    let hook = this.server.hooks.onDisconnect
+    this.transport.bindHandler(id, 'disconnect', () => {
+      return Promise.using(
+        this.commandWatcher(id, 'disconnect'),
+        () => fn(id).then(() => execHook(hook, server, id)).catchReturn())
+    })
+  }
+
   bindCommand (id, name, fn) {
     let cmd = this.makeCommand(name, fn)
     let info = {id}

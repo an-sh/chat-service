@@ -101,8 +101,9 @@ class RecoveryAPI {
   instanceRecovery (id, cb) {
     return this.state.getInstanceSockets(id).then(sockets => {
       return Promise.each(_.toPairs(sockets), ([id, userName]) => {
-        let context = {userName, id}
-        return this.execUserCommand(context, 'disconnect', 'instance recovery')
+        return this.state.getUser(userName)
+          .then((user) => user.removeSocket(id))
+          .catchReturn()
       })
     }).asCallback(cb)
   }

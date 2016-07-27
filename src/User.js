@@ -112,12 +112,17 @@ class User {
           for (let cmd of commands) {
             this.commandBinder.bindCommand(id, cmd, this[cmd].bind(this))
           }
+          this.commandBinder.bindDisconnect(id, this.removeSocket.bind(this))
           return this.transport.joinChannel(id, this.echoChannel).then(() => {
             this.socketConnectEcho(id, nconnected)
             return Promise.resolve()
           })
         }
       })
+  }
+
+  removeSocket (id) {
+    return this.removeSocketFromServer(id)
   }
 
   disconnectInstanceSockets () {
@@ -169,10 +174,6 @@ class User {
 
   directSetWhitelistMode (mode) {
     return this.directMessaging.changeMode(this.userName, mode).return()
-  }
-
-  disconnect (reason, {id}) {
-    return this.removeSocketFromServer(id)
   }
 
   listOwnSockets () {

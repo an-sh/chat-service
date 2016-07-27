@@ -214,20 +214,14 @@ module.exports = function () {
     })
   })
 
-  it('should execute disconnect Before and After hooks', function (done) {
-    let before = false
-    let disconnectBefore = (execInfo, cb) => {
-      before = true
+  it('should execute onDisconnect hook', function (done) {
+    let onDisconnect = (server, id, cb) => {
+      expect(server).instanceof(ChatService)
+      expect(id).a.string
       nextTick(cb)
+      nextTick(done)
     }
-    let disconnectAfter = (execInfo, cb) => {
-      expect(before).true
-      nextTick(() => {
-        cb()
-        done()
-      })
-    }
-    let chatService1 = startService(null, { disconnectAfter, disconnectBefore })
+    let chatService1 = startService(null, { onDisconnect })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => chatService1.close())
   })

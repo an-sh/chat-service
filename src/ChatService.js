@@ -33,7 +33,6 @@ const rpcRequestsNames = [
   'directMessage',
   'directRemoveFromList',
   'directSetWhitelistMode',
-  'disconnect',
   'listOwnSockets',
   'roomAddToList',
   'roomCreate',

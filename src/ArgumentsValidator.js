@@ -118,12 +118,6 @@ class ArgumentsValidator {
     ]
   }
 
-  disconnect (reason) {
-    return [
-      check.string
-    ]
-  }
-
   listOwnSockets () {
     return []
   }

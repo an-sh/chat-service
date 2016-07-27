@@ -145,11 +145,12 @@ class HooksInterface extends RequestsHooks {
    * all clients are disconnected, but a state is still up).
    *
    * @param {ChatService} server Service instance.
+   * @param {Error} [error] An error occurred during closing.
    * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    */
-  onClose (server, cb) {}
+  onClose (server, error, cb) {}
 
   /**
    * Validator for `directMessage` message objects. When is set, a
