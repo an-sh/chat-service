@@ -15,19 +15,24 @@
  * Before hooks are available for all {@link rpc.clientRequests} and
  * are executed after an arguments validation.
  *
+ * @callback beforeHook
+ *
  * @param {chat-service.ExecInfo} execInfo Command execution details.
  * @param {callback} [cb] Optional callback.
  *
  * @return {Promise<Array|undefined>} Resolves without a data to
  * continue a command execution. Rejections or a resolved array will
  * stop further execution, and return results to the command issuer.
- * @instance
+ *
+ * @static
  */
-function beforeHook (execInfo, cb) {}
+// function beforeHook (execInfo, cb) {}
 
 /**
  * After hooks are available for all {@link rpc.clientRequests} and
  * are executed after ChatService default event handlers.
+ *
+ * @callback afterHook
  *
  * @param {chat-service.ExecInfo} execInfo Command execution details.
  * @param {callback} [cb] Optional callback.
@@ -35,13 +40,15 @@ function beforeHook (execInfo, cb) {}
  * @return {Promise<Array|undefined>} Resolves without a data to
  * return unchanged command results to the command issuer. Rejections
  * or a resolved array will override command results.
- * @instance
+ *
+ * @static
  */
-function afterHook (execInfo, cb) {}
+// function afterHook (execInfo, cb) {}
 
 /**
- * Requests hooks. For a concise description see {@link beforeHook}
- * and {@link afterHook}.
+ * Requests hooks full list, they are available for all {@link
+ * rpc.clientRequests}. For a concise description see {@link
+ * beforeHook} and {@link afterHook}.
  *
  * @interface
  * @borrows beforeHook as RequestsHooks#directAddToListBefore
@@ -106,7 +113,7 @@ class HooksInterface extends RequestsHooks {
    * Client connection hook. Client can send requests only after this
    * hook is resolved.
    *
-   * @param {ChatService} server Service instance.
+   * @param {chat-service.ChatService} server Service instance.
    * @param {string} id Socket id.
    * @param {callback} [cb] Optional callback.
    *
@@ -115,17 +122,21 @@ class HooksInterface extends RequestsHooks {
    * data object. User name and auth data are send back with a {@link
    * rpc.serverNotifications.loginConfirmed} message. Error is sent as
    * a {@link rpc.serverNotifications.loginRejected} message.
+   *
+   * @static
    */
   onConnect (server, id, cb) {}
 
   /**
    * Client disconnection hook.
    *
-   * @param {ChatService} server Service instance.
+   * @param {chat-service.ChatService} server Service instance.
    * @param {string} id Socket id.
    * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
+   *
+   * @static
    */
   onDisconnect (server, id, cb) {}
 
@@ -133,10 +144,12 @@ class HooksInterface extends RequestsHooks {
    * Executes when server is started (after a state and a transport are
    * up, but before requests processing is started).
    *
-   * @param {ChatService} server Service instance.
+   * @param {chat-service.ChatService} server Service instance.
    * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
+   *
+   * @static
    */
   onStart (server, cb) {}
 
@@ -144,11 +157,13 @@ class HooksInterface extends RequestsHooks {
    * Executes when server is closed (after a transport is closed and
    * all clients are disconnected, but a state is still up).
    *
-   * @param {ChatService} server Service instance.
+   * @param {chat-service.ChatService} server Service instance.
    * @param {Error} [error] An error occurred during closing.
    * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
+   *
+   * @static
    */
   onClose (server, error, cb) {}
 
@@ -164,6 +179,8 @@ class HooksInterface extends RequestsHooks {
    * @return {Promise<undefined>} Promise that resolves without any data.
    *
    * @see rpc.clientRequests.directMessage
+   *
+   * @static
    */
   directMessagesChecker (message, cb) {}
 
@@ -179,6 +196,8 @@ class HooksInterface extends RequestsHooks {
    * @return {Promise<undefined>} Promise that resolves without any data.
    *
    * @see rpc.clientRequests.roomMessage
+   *
+   * @static
    */
   roomMessagesChecker (message, cb) {}
 

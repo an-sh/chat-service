@@ -7,6 +7,11 @@
  */
 
 /**
+ * Server side related documentation.
+ *
+ * @example <caption>npm package usage</caption>
+ *   let ChatService = require('chat-service')
+ *
  * @namespace chat-service
  */
 
@@ -187,10 +192,10 @@ class ChatService extends EventEmitter {
    * @event storeConsistencyFailure
    * @param {Error} error Error.
    * @param {Object} operationInfo Operation details.
-   * @property {String} operationInfo.userName User name.
-   * @property {String} operationInfo.opType Operation type.
-   * @property {String} [operationInfo.roomName] Room name.
-   * @property {String} [operationInfo.id] Socket id.
+   * @property {string} operationInfo.userName User name.
+   * @property {string} operationInfo.opType Operation type.
+   * @property {string} [operationInfo.roomName] Room name.
+   * @property {string} [operationInfo.id] Socket id.
    *
    * @memberof chat-service
    */
@@ -201,10 +206,10 @@ class ChatService extends EventEmitter {
    *
    * @param {Error} error Error.
    * @param {Object} operationInfo Operation details.
-   * @property {String} operationInfo.userName User name.
-   * @property {String} operationInfo.opType Operation type.
-   * @property {String} [operationInfo.roomName] Room name.
-   * @property {String} [operationInfo.id] Socket id.
+   * @property {string} operationInfo.userName User name.
+   * @property {string} operationInfo.opType Operation type.
+   * @property {string} [operationInfo.roomName] Room name.
+   * @property {string} [operationInfo.id] Socket id.
    *
    * @memberof chat-service
    */
@@ -213,10 +218,10 @@ class ChatService extends EventEmitter {
    * Lock was hold longer than a lock ttl.
    * @event lockTimeExceeded
    *
-   * @param {String} id Lock id.
+   * @param {string} id Lock id.
    * @param {Object} lockInfo Lock resource details.
-   * @property {String} [lockInfo.userName] User name.
-   * @property {String} [lockInfo.roomName] Room name.
+   * @property {string} [lockInfo.userName] User name.
+   * @property {string} [lockInfo.roomName] Room name.
    *
    * @memberof chat-service
    */
@@ -227,7 +232,7 @@ class ChatService extends EventEmitter {
    *
    * @method chat-service.ChatService#checkArguments
    *
-   * @param {String} name Command name.
+   * @param {string} name Command name.
    * @param {...*} args Command arguments.
    * @param {callback} [cb] Optional callback.
    *

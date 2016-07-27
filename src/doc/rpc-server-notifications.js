@@ -5,7 +5,7 @@
  * Notifications that are sent from a server to a client, no client's
  * reply is expected.
  *
- * @example <caption>Socket.io client example.</caption>
+ * @example <caption>socket.io client example</caption>
  *   let socket = io.connect(url, opts)
  *   socket.once('loginConfirmed', () => {
  *     socket.on('directMessage', message => {
@@ -18,11 +18,9 @@
  */
 
  /**
-  * Direct message. A message will have timestamp and author fields,
-  * but other fields can be used if `directMessagesChecker` hook is
-  * set.
+  * Direct message.
   *
-  * @param {rpcTypes.ProcessedMessage} message Message.
+  * @param {rpc.datatypes.ProcessedMessage} message Message.
   *
   * @see rpc.clientRequests.directMessage
   *
@@ -37,7 +35,7 @@ function directMessage (message) {}
   * message echo.
   *
   * @param {string} toUser Message receiver.
-  * @param {rpcTypes.ProcessedMessage} message Message.
+  * @param {rpc.datatypes.ProcessedMessage} message Message.
   *
   * @see rpc.clientRequests.directMessage
   *
@@ -46,13 +44,14 @@ function directMessage (message) {}
 function directMessageEcho (toUser, message) {}
 
 /**
- * A client should wait until this event before issuing requests. If
- * auth has failed {@link ServerNotification.loginRejected}
- * notification will be emitted instead. Only one of these events will
- * be emitted once per connection.
+ * A client should wait until this event before issuing any
+ * requests. If auth has failed {@link
+ * rpc.serverNotifications.loginRejected} notification will be emitted
+ * instead. Only one of these two events will be emitted once per
+ * connection.
  *
  * @param {string} userName User name.
- * @param {rpcTypes.AuthData} authData Additional auth data.
+ * @param {rpc.datatypes.AuthData} authData Additional auth data.
  *
  * @see rpc.serverNotifications.loginRejected
  *
@@ -63,7 +62,7 @@ function loginConfirmed (userName, authData) {}
 /**
  * An auth error event.
  *
- * @param {rpcTypes.ChatServiceError|Error|string} reason Error.
+ * @param {rpc.datatypes.ChatServiceError|Error|string} reason Error.
  *
  * @see rpc.serverNotifications.loginConfirmed
  *
@@ -116,7 +115,7 @@ function roomAccessListRemoved (roomName, listName, userNames) {}
   *
   * @param {string} roomName User name.
   * @param {string} id Socket id.
-  * @param {integer} njoined Number of sockets that are still joined.
+  * @param {number} njoined Number of sockets that are still joined.
   *
   * @see rpc.clientRequests.roomJoin
   *
@@ -129,7 +128,7 @@ function roomJoinedEcho (roomName, id, njoined) {}
   *
   * @param {string} roomName User name.
   * @param {string} id Socket id.
-  * @param {integer} njoined Number of sockets that are still joined.
+  * @param {number} njoined Number of sockets that are still joined.
   *
   * @see rpc.clientRequests.roomLeave
   *
@@ -138,12 +137,10 @@ function roomJoinedEcho (roomName, id, njoined) {}
 function roomLeftEcho (roomName, id, njoined) {}
 
  /**
-  * Room message. A message will have timestamp, id and author fields,
-  * but other fields can be used if ChatService `roomMessagesChecker`
-  * hook is set.
+  * Room message.
   *
   * @param {string} roomName Rooms name.
-  * @param {rpcTypes.ProcessedMessage} message Message.
+  * @param {rpc.datatypes.ProcessedMessage} message Message.
   *
   * @see rpc.clientRequests.roomMessage
   *
@@ -188,19 +185,10 @@ function roomUserJoined (roomName, userName) {}
 function roomUserLeft (roomName, userName) {}
 
  /**
-  * Custom message from an another socket of the same user.
-  *
-  * @param {Object} message Arbitrary data.
-  *
-  * @memberof rpc.serverNotifications
-  */
-function selfBroadcast (message) {}
-
- /**
   * Indicates a connection of an another socket with the same user.
   *
   * @param {string} id Socket id.
-  * @param {integer} nconnected Total number of users's sockets.
+  * @param {number} nconnected Total number of users's sockets.
   *
   * @memberof rpc.serverNotifications
   */
@@ -210,8 +198,17 @@ function socketConnectEcho (id, nconnected) {}
   * Indicates a disconnection of an another socket with the same user.
   *
   * @param {string} id Socket id.
-  * @param {integer} nconnected Total number of users's sockets.
+  * @param {number} nconnected Total number of users's sockets.
   *
   * @memberof rpc.serverNotifications
   */
 function socketDisconnectEcho (id, nconnected) {}
+
+ /**
+  * Custom message from an another socket of the same user.
+  *
+  * @param {Object} message Arbitrary data.
+  *
+  * @memberof rpc.serverNotifications
+  */
+function systemMessage (message) {}

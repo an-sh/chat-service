@@ -5,6 +5,8 @@ const _ = require('lodash')
 const { checkNameSymbols, possiblyCallback } = require('./utils')
 
 /**
+ * Server side operations.
+ *
  * @mixin
  * @memberof chat-service
  * @see chat-service.ChatService
@@ -21,20 +23,21 @@ class ServiceAPI {
    * Executes {@link rpc.clientRequests} handlers.
    *
    * @param {string|boolean|Object} context Is a `userName` if string,
-   *   or a `bypassPermissions` if boolean, or an options hash if
-   *   Object.
+   * or a `bypassPermissions` if boolean, or an options hash if
+   * Object.
    * @param {string} command Command name.
    * @param {...*} args Command arguments.
    * @param {callback} [cb] Optional callback.
    *
    * @property {string} context.userName User name.
    * @property {string} context.id Socket id, it is required for
-   *   `disconnect`, `roomJoin`, `roomLeave` commands.
+   * {@link rpc.clientRequests.roomJoin} and {@link
+   * rpc.clientRequests.roomLeave} commands.
    * @property {boolean} context.bypassHooks If `false` executes
-   *   command without before and after hooks, default is `false`.
+   * command without before and after hooks, default is `false`.
    * @property {boolean} context.bypassPermissions If `true` executes
-   *   command (except `roomJoin`) bypassing any permissions checking,
-   *   default is `false`.
+   * command (except {@link rpc.clientRequests.roomJoin}) bypassing
+   * any permissions checking, default is `false`.
    *
    * @return {Promise<Array>} Array of command results.
    */
@@ -68,7 +71,7 @@ class ServiceAPI {
    * @property {Array<string>} state.whitelist User direct messages whitelist.
    * @property {Array<string>} state.blacklist User direct messages blacklist.
    * @property {boolean} state.whitelistOnly User direct messages
-   *   whitelistOnly mode, default is `false`.
+   * whitelistOnly mode, default is `false`.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    */
@@ -173,9 +176,9 @@ class ServiceAPI {
    * @property {Array<string>} state.blacklist Room blacklist
    * @property {Array<string>} state.adminlist Room adminlist.
    * @property {boolean} state.whitelistOnly Room whitelistOnly mode,
-   *   default is `false`.
+   * default is `false`.
    * @property {string} state.owner Room owner.
-   * @property {Integer} state.historyMaxSize Room history maximum size.
+   * @property {number} state.historyMaxSize Room history maximum size.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    */
@@ -267,7 +270,7 @@ class ServiceAPI {
    * Changes a room history size.
    *
    * @param {string} roomName Room name.
-   * @param {Integer} size Room history size.
+   * @param {number} size Room history size.
    * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.

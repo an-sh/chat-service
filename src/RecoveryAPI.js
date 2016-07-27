@@ -3,6 +3,8 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 
 /**
+ * Service infrastructure failures recovery.
+ *
  * @mixin
  * @memberof chat-service
  * @see chat-service.ChatService
@@ -114,7 +116,7 @@ class RecoveryAPI {
    * @param {string} id Instance id.
    * @param {callback} [cb] Optional callback.
    *
-   * @return {Promise<integer>} Heartbeat timestamp.
+   * @return {Promise<number>} Heartbeat timestamp.
    */
   getInstanceHeartbeat (id, cb) {
     return this.state.getInstanceHeartbeat(id).asCallback(cb)

@@ -15,19 +15,19 @@ class ExecInfo {
   /**
    * User name.
    * @name chat-service.ExecInfo#userName
-   * @type String|null
+   * @type string|null
    */
 
   /**
    * Socket id.
    * @name chat-service.ExecInfo#id
-   * @type String|null
+   * @type string|null
    */
 
   /**
    * Bypass permissions.
    * @name chat-service.ExecInfo#bypassPermissions
-   * @type Boolean
+   * @type boolean
    * @default false
    * @see chat-service.ServiceAPI#execUserCommand
    */
@@ -35,7 +35,7 @@ class ExecInfo {
   /**
    * Don't call requests hooks if `true`.
    * @name chat-service.ExecInfo#bypassHooks
-   * @type Boolean
+   * @type boolean
    * @default false
    * @see chat-service.ServiceAPI#execUserCommand
    */

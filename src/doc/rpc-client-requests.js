@@ -8,18 +8,18 @@
  * `string`. Otherwise errors have a {@link
  * rpc.datatypes.ChatServiceError} type. Details of how results or
  * errors are returned depend on a transport used, for more
- * information see examples below. Essentially each request executes a
- * command in socket+user context.
+ * information see examples below. Essentially each request triggers
+ * an execution of a command in a socket+user context.
  *
- * @example <caption>Socket.io client example.</caption>
+ * @example <caption>socket.io client example</caption>
  *   let socket = io.connect(url, opts)
  *   socket.once('loginConfirmed', () => {
  *     socket.emit('roomJoin', roomName, (error, result) => {
- *       // this is a socket.io ack waiting callback. socket is joined
+ *       // This is a socket.io ack waiting callback. Socket is joined
  *       // the room, or an error occurred, we get here only when the
- *       // server has finished roomJoin command processing.
- *       // error or results are passed as arguments, using Node.js
- *       // style callbacks.
+ *       // server has finished roomJoin command processing. Error
+ *       // or results are passed as arguments, using Node.js style
+ *       // callbacks.
  *     })
  *   })
  *
@@ -67,9 +67,10 @@ function directGetWhitelistMode () {}
 
  /**
   * Sends {@link rpc.serverNotifications.directMessage} to an another
-  * user, if ChatService `enableDirectMessages` option is true. Also
-  * sends {@link rpc.serverNotifications.directMessageEcho} to other
-  * senders's sockets.
+  * user, if {@link chat-service.config.options}
+  * `enableDirectMessages` option is true. Also sends {@link
+  * rpc.serverNotifications.directMessageEcho} to other senders's
+  * sockets.
   *
   * @param {string} toUser Message receiver.
 
@@ -130,7 +131,8 @@ function listOwnSockets () {}
   * an operation, sending {@link
   * rpc.serverNotifications.roomAccessRemoved}. Also sends {@link
   * rpc.serverNotifications.roomAccessListAdded} to all room users if
-  * ChatService `enableAccessListsUpdates` option is true.
+  * {@link chat-service.config.options} `enableAccessListsUpdates`
+  * option is true.
   *
   * @param {string} roomName Room name.
   * @param {string} listName List name. Possible values are:
@@ -147,8 +149,8 @@ function listOwnSockets () {}
 function roomAddToList (roomName, listName, userNames) {}
 
  /**
-  * Creates a room if ChatService `enableRoomsManagement` option is
-  * true.
+  * Creates a room if {@link chat-service.config.options}
+  * `enableRoomsManagement` option is true.
   *
   * @param {string} roomName Rooms name.
   * @param {bool} mode Room mode.
@@ -160,9 +162,10 @@ function roomAddToList (roomName, listName, userNames) {}
 function roomCreate (roomName, mode) {}
 
  /**
-  * Deletes a room if ChatService `enableRoomsManagement` is true and
-  * the user has an owner status. Sends {@link
-  * rpc.serverNotifications.roomAccessRemoved} to all room users.
+  * Deletes a room if {@link chat-service.config.options}
+  * `enableRoomsManagement` is true and the user has an owner
+  * status. Sends {@link rpc.serverNotifications.roomAccessRemoved} to
+  * all room users.
   *
   * @param {string} roomName Rooms name.
   *
@@ -212,9 +215,9 @@ function roomGetOwner (roomName) {}
 function roomGetWhitelistMode (roomName) {}
 
  /**
-  * Gets latest room messages. The maximum size is set by ChatService
-  * `historyMaxGetMessages` option. Messages are sorted as newest
-  * first.
+  * Gets latest room messages. The maximum size is set by {@link
+  * chat-service.config.options} `historyMaxGetMessages`
+  * option. Messages are sorted as newest first.
   *
   * @param {string} roomName Room name.
   *
@@ -230,20 +233,21 @@ function roomRecentHistory (roomName) {}
  /**
   * Returns messages that were sent after a message with the specified
   * id. The returned number of messages is limited by the limit
-  * parameter. The maximum limit is bounded by ChatService
-  * `historyMaxGetMessages` option. If the specified id was deleted
-  * due to history limit, it returns messages starting from the oldest
-  * available. Messages are sorted as newest first.
+  * parameter. The maximum limit is bounded by {@link
+  * chat-service.config.options} `historyMaxGetMessages` option. If
+  * the specified id was deleted due to history limit, it returns
+  * messages starting from the oldest available. Messages are sorted
+  * as newest first.
   *
   * @param {string} roomName Room name.
-  * @param {integer} id Starting message id.
-  * @param {integer} limit Maximum number of messages to return. The
-  *   maximum number is limited by ChatService `historyMaxGetMessages`
-  *   option.
+  * @param {number} id Starting message id.
+  * @param {number} limit Maximum number of messages to return. The
+  *   maximum number is limited by {@link chat-service.config.options}
+  *   `historyMaxGetMessages` option.
   *
   * @returns {Array<rpc.datatypes.ProcessedMessage>} An array of messages.
   *
-  * @see rpc.clientRequests.roomHistoryLastId
+  * @see rpc.clientRequests.roomHistoryInfo
   * @see rpc.clientRequests.roomMessage
   *
   * @memberof rpc.clientRequests
@@ -268,12 +272,12 @@ function roomHistoryInfo (roomName) {}
   * execute requests with a `room` prefix. Sends {@link
   * rpc.serverNotifications.roomJoinedEcho} to other user's
   * sockets. Also sends {@link rpc.serverNotifications.roomUserJoined}
-  * to other room users if ChatService `enableUserlistUpdates` option
-  * is true.
+  * to other room users if {@link chat-service.config.options}
+  * `enableUserlistUpdates` option is true.
   *
   * @param {string} roomName Room name.
   *
-  * @returns {integer} A number of still joined user's sockets to the room.
+  * @returns {number} A number of still joined user's sockets to the room.
   *
   * @see rpc.serverNotifications.roomJoinedEcho
   * @see rpc.serverNotifications.roomUserJoined
@@ -283,14 +287,15 @@ function roomHistoryInfo (roomName) {}
 function roomJoin (roomName) {}
 
  /**
-  * Leaves room. Sends {@link rpc.serverNotifications.roomLeftEcho}
-  * to other user's sockets. Also sends {@link
+  * Leaves room. Sends {@link rpc.serverNotifications.roomLeftEcho} to
+  * other user's sockets. Also sends {@link
   * rpc.serverNotifications.roomUserLeft} to other room users if
-  * ChatService `enableUserlistUpdates` option is true.
+  * {@link chat-service.config.options} `enableUserlistUpdates` option
+  * is true.
   *
   * @param {string} roomName Room name.
   *
-  * @returns {integer} A number of joined user's sockets to the room.
+  * @returns {number} A number of joined user's sockets to the room.
   *
   * @see rpc.serverNotifications.roomLeftEcho
   * @see rpc.serverNotifications.roomUserLeft
@@ -306,7 +311,7 @@ function roomLeave (roomName) {}
   * @param {string} roomName Room name.
   * @param {rpc.datatypes.Message} message Message.
   *
-  * @returns {integer} The message id.
+  * @returns {number} The message id.
   *
   * @see rpc.serverNotifications.roomMessage
   *
@@ -320,7 +325,8 @@ function roomMessage (roomName, message) {}
   * in the result of an operation, sending {@link
   * rpc.serverNotifications.roomAccessRemoved}.  Also sends {@link
   * rpc.serverNotifications.roomAccessListRemoved} to all room users
-  * if ChatService `enableAccessListsUpdates` option is true.
+  * if {@link chat-service.config.options} `enableAccessListsUpdates`
+  * option is true.
   *
   * @param {string} roomName Room name.
   * @param {string} listName List name.  Possible values are:
