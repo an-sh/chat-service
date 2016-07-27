@@ -33,6 +33,14 @@ class ExecInfo {
    */
 
   /**
+   * If command is executed from a server side.
+   * @name chat-service.ExecInfo#isLocalCall
+   * @type boolean
+   * @default false
+   * @see chat-service.ServiceAPI#execUserCommand
+   */
+
+  /**
    * Don't call requests hooks if `true`.
    * @name chat-service.ExecInfo#bypassHooks
    * @type boolean
@@ -70,15 +78,16 @@ class ExecInfo {
    */
 
   constructor () {
+    this.args = []
+    this.bypassHooks = false
+    this.bypassPermissions = null
+    this.error = null
+    this.id = null
+    this.isLocalCall = false
+    this.restArgs = []
+    this.results = null
     this.server = null
     this.userName = null
-    this.id = null
-    this.bypassPermissions = null
-    this.bypassHooks = false
-    this.error = null
-    this.results = null
-    this.args = []
-    this.restArgs = []
   }
 
 }

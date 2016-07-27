@@ -66,8 +66,7 @@ class User {
       let error = new ChatServiceError('noCommand', command)
       return Promise.reject(error)
     }
-    let requiresSocket = command === 'disconnect' ||
-          command === 'roomJoin' || command === 'roomLeave'
+    let requiresSocket = command === 'roomJoin' || command === 'roomLeave'
     if (!id && requiresSocket) {
       let error = new ChatServiceError('noSocket', command)
       return Promise.reject(error)

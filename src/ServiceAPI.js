@@ -44,12 +44,14 @@ class ServiceAPI {
   execUserCommand (context, command, ...args) {
     if (_.isObject(context)) {
       var { userName } = context
+      context = _.clone(context)
     } else if (_.isBoolean(context)) {
       context = {bypassPermissions: context}
     } else {
       userName = context
       context = {}
     }
+    context.isLocalCall = true
     let [nargs, cb] = possiblyCallback(args)
     return Promise.try(() => {
       if (userName) {
