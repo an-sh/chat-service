@@ -6,6 +6,7 @@
 [![Appveyor status](https://ci.appveyor.com/api/projects/status/qy7v2maica2urkss?svg=true)](https://ci.appveyor.com/project/an-sh/chat-service)
 [![Coverage Status](https://codecov.io/gh/an-sh/chat-service/branch/master/graph/badge.svg)](https://codecov.io/gh/an-sh/chat-service)
 [![Dependency Status](https://david-dm.org/an-sh/chat-service.svg)](https://david-dm.org/an-sh/chat-service)
+[![JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
 
 Messaging service designed to handle a vast variety of use cases that
 are fit into a chat-like pattern, including exchanging data in
