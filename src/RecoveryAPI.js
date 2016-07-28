@@ -104,7 +104,7 @@ class RecoveryAPI {
     return this.state.getInstanceSockets(id).then(sockets => {
       return Promise.each(_.toPairs(sockets), ([id, userName]) => {
         return this.state.getUser(userName)
-          .then((user) => user.removeSocket(id))
+          .then(user => user.removeSocket(id))
           .catchReturn()
       })
     }).asCallback(cb)

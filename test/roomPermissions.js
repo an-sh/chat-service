@@ -405,7 +405,7 @@ module.exports = function () {
             expect(u).equal(user2)
             cb()
           })
-        ], (error) => setTimeout(done, 1000, error))
+        ], error => setTimeout(done, 1000, error))
       })
     )
   })
