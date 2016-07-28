@@ -89,7 +89,7 @@ module.exports = function () {
     let orig = chatService.state.addSocket
     chatService.state.addSocket = function (id) {
       return orig.apply(chatService.state, arguments)
-        .finally(() => chatService.transport.disconnectClient(id))
+        .finally(() => chatService.transport.disconnectSocket(id))
     }
     let tst = chatService.transport.rejectLogin
     chatService.transport.rejectLogin = function () {
@@ -108,8 +108,7 @@ module.exports = function () {
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', () => {
-        chatService.transport.getConnectionObject =
-          function () { return null }
+        chatService.transport.getSocket = function () { return null }
         socket1.emit('roomJoin', roomName1, (error, data) => {
           expect(error).ok
           done()

@@ -23,7 +23,7 @@ class RecoveryAPI {
     return user.userState.getSocketsToInstance().then(sockets => {
       return Promise.each(_.toPairs(sockets), ([socket, instance]) => {
         if (instance === this.instanceUID) {
-          if (!this.transport.getConnectionObject(socket)) {
+          if (!this.transport.getSocket(socket)) {
             return user.userState.removeSocket(socket)
           }
         }

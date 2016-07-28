@@ -118,31 +118,31 @@ class SocketIOTransport {
   }
 
   bindHandler (id, name, fn) {
-    let socket = this.getConnectionObject(id)
+    let socket = this.getSocket(id)
     if (socket) {
       socket.on(name, fn)
     }
   }
 
-  getConnectionObject (id) {
+  getSocket (id) {
     return this.nsp.connected[id]
   }
 
-  emitToChannel (channel, messageName, ...messageData) {
-    this.nsp.to(channel).emit(messageName, ...messageData)
+  emitToChannel (channel, eventName, ...eventData) {
+    this.nsp.to(channel).emit(eventName, ...eventData)
   }
 
-  sendToChannel (id, channel, messageName, ...messageData) {
-    let socket = this.getConnectionObject(id)
+  sendToChannel (id, channel, eventName, ...eventData) {
+    let socket = this.getSocket(id)
     if (!socket) {
-      this.emitToChannel(channel, messageName, ...messageData)
+      this.emitToChannel(channel, eventName, ...eventData)
     } else {
-      socket.to(channel).emit(messageName, ...messageData)
+      socket.to(channel).emit(eventName, ...eventData)
     }
   }
 
   joinChannel (id, channel) {
-    let socket = this.getConnectionObject(id)
+    let socket = this.getSocket(id)
     if (!socket) {
       return Promise.reject(new ChatServiceError('invalidSocket', id))
     } else {
@@ -151,13 +151,13 @@ class SocketIOTransport {
   }
 
   leaveChannel (id, channel) {
-    let socket = this.getConnectionObject(id)
+    let socket = this.getSocket(id)
     if (!socket) { return Promise.resolve() }
     return Promise.fromCallback(fn => socket.leave(channel, fn))
   }
 
-  disconnectClient (id) {
-    let socket = this.getConnectionObject(id)
+  disconnectSocket (id) {
+    let socket = this.getSocket(id)
     if (socket) {
       socket.disconnect()
     }

@@ -26,7 +26,6 @@
  *
  * @static
  */
-// function beforeHook (execInfo, cb) {}
 
 /**
  * After hooks are available for all {@link rpc.clientRequests} and
@@ -43,7 +42,6 @@
  *
  * @static
  */
-// function afterHook (execInfo, cb) {}
 
 /**
  * Requests hooks full list, they are available for all {@link

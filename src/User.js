@@ -101,7 +101,7 @@ class User {
     return this.state.addSocket(id, this.userName)
       .then(() => this.userState.addSocket(id, this.server.instanceUID))
       .then(nconnected => {
-        if (!this.transport.getConnectionObject(id)) {
+        if (!this.transport.getSocket(id)) {
           return this.removeUserSocket(id).then(() => {
             let error = new ChatServiceError('noSocket', 'connection')
             return Promise.reject(error)
@@ -128,7 +128,7 @@ class User {
     return this.userState.getAllSockets().then(sockets => {
       return Promise.map(
         sockets,
-        sid => this.transport.disconnectClient(sid),
+        sid => this.transport.disconnectSocket(sid),
         { concurrency: asyncLimit })
     })
   }

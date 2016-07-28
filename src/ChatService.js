@@ -172,6 +172,12 @@ class ChatService extends EventEmitter {
    */
 
   /**
+   * @name chat-service.ChatService#transport
+   * @type chat-service.TransportInterface
+   * @readonly
+   */
+
+  /**
    * Service is ready, state and transport are up.
    * @event ready
    *
