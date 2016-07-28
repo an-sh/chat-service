@@ -95,8 +95,8 @@ class UserAssociations {
   rollbackRoomJoin (error, roomName, id) {
     return this.userState.removeSocketFromRoom(id, roomName).catch(e => {
       this.consistencyFailure(e, { roomName, opType: 'userRooms' })
-      return 1
-    }).then(njoined => {
+      return [1]
+    }).spread(njoined => {
       if (!njoined) {
         return this.leaveRoom(roomName)
       } else {
@@ -134,16 +134,17 @@ class UserAssociations {
   leaveSocketFromRoom (id, roomName, isLocalCall) {
     let lock = this.userState.lockToRoom(roomName, this.lockTTL)
     return Promise.using(lock, co(function * () {
-      let njoined = yield this.userState.removeSocketFromRoom(id, roomName)
+      let [njoined, hasChanged] =
+            yield this.userState.removeSocketFromRoom(id, roomName)
       yield this.leaveChannel(id, roomName)
-      this.socketLeftEcho(id, roomName, njoined, isLocalCall)
-      if (!njoined) {
+      if (njoined === 0) {
         yield this.leaveRoom(roomName)
-        this.userLeftRoomReport(this.userName, roomName)
-        return 0
-      } else {
-        return njoined
       }
+      if (hasChanged) {
+        this.socketLeftEcho(id, roomName, njoined, isLocalCall)
+        this.userLeftRoomReport(this.userName, roomName)
+      }
+      return njoined
     }).bind(this))
   }
 

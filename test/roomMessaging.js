@@ -148,6 +148,25 @@ module.exports = function () {
     })
   })
 
+  it('should remove disconnected users', function (done) {
+    this.timeout(4000)
+    this.slow(2000)
+    chatService = startService({ enableUserlistUpdates: true })
+    chatService.addRoom(roomName1, null, () => {
+      socket1 = clientConnect(user1)
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket2 = clientConnect(user2)
+          socket2.on('loginConfirmed', () => {
+            socket2.emit('roomLeave', roomName1)
+            socket1.on('roomLeftEcho', () => done(new Error('Wrong echo')))
+            setTimeout(done, 1000)
+          })
+        })
+      })
+    })
+  })
+
   it('should update userlist on join and leave operations', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, null, () => parallel([

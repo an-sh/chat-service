@@ -556,11 +556,15 @@ class UserStateRedis {
 
   removeSocketFromRoom (id, roomName) {
     return this.redis.multi()
+      .scard(this.makeRoomToSockets(roomName))
       .srem(this.makeSocketToRooms(id), roomName)
       .srem(this.makeRoomToSockets(roomName), id)
       .scard(this.makeRoomToSockets(roomName))
       .exec()
-      .then(([, , [, njoined]]) => Promise.resolve(njoined))
+      .then(([[, wasjoined], , , [, njoined]]) => {
+        let hasChanged = njoined !== wasjoined
+        return Promise.resolve([njoined, hasChanged])
+      })
   }
 
   removeAllSocketsFromRoom (roomName) {

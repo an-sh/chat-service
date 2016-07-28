@@ -369,6 +369,8 @@ module.exports = function () {
   })
 
   it('should remove users on permissions changes', function (done) {
+    this.timeout(4000)
+    this.slow(2000)
     chatService = startService({enableUserlistUpdates: true})
     chatService.addRoom(
       roomName1, { adminlist: [user1, user3] }, () => parallel([
@@ -403,12 +405,14 @@ module.exports = function () {
             expect(u).equal(user2)
             cb()
           })
-        ], done)
+        ], (error) => setTimeout(done, 1000, error))
       })
     )
   })
 
   it('should remove affected users on mode changes', function (done) {
+    this.timeout(4000)
+    this.slow(2000)
     chatService = startService()
     chatService.addRoom(roomName1, { adminlist: [user1] }, () => {
       socket1 = clientConnect(user1)
@@ -423,7 +427,7 @@ module.exports = function () {
               })
               socket2.on('roomAccessRemoved', r => {
                 expect(r).equal(roomName1)
-                done()
+                setTimeout(done, 1000)
               })
             })
           })
@@ -433,6 +437,8 @@ module.exports = function () {
   })
 
   it('should remove users on permissions changes in wl mode', function (done) {
+    this.timeout(4000)
+    this.slow(2000)
     chatService = startService()
     chatService.addRoom(
       roomName1,
@@ -453,7 +459,7 @@ module.exports = function () {
                                done(new Error('Wrong user removed.')))
                     socket2.on('roomAccessRemoved', r => {
                       expect(r).equal(roomName1)
-                      done()
+                      setTimeout(done, 1000)
                     })
                   })
                 })

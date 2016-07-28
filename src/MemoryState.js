@@ -354,14 +354,19 @@ class UserStateMemory {
   removeSocketFromRoom (id, roomName) {
     let roomsset = this.socketsToRooms.get(id)
     let socketsset = this.roomsToSockets.get(roomName)
+    let wasjoined = (socketsset && socketsset.length) || 0
     if (roomsset) {
       roomsset.delete(roomName)
     }
     if (socketsset) {
       socketsset.delete(id)
     }
-    let njoined = (socketsset && socketsset.length) || 0
-    return Promise.resolve(njoined)
+    let njoined = 0
+    if (wasjoined > 0) {
+      njoined = socketsset.length
+    }
+    let hasChanged = njoined !== wasjoined
+    return Promise.resolve([njoined, hasChanged])
   }
 
   removeAllSocketsFromRoom (roomName) {
