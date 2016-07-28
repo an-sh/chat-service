@@ -69,6 +69,7 @@ module.exports = function () {
   })
 
   it('should be able to use a custom state constructor', function (done) {
+    this.timeout(5000)
     let MemoryState = require('../src/MemoryState')
     chatService = startService({ state: MemoryState })
     socket1 = clientConnect(user1)
@@ -79,6 +80,7 @@ module.exports = function () {
   })
 
   it('should be able to use a custom transport constructor', function (done) {
+    this.timeout(5000)
     let Transport = require('../src/SocketIOTransport')
     chatService = startService({ transport: Transport })
     socket1 = clientConnect(user1)
@@ -89,6 +91,7 @@ module.exports = function () {
   })
 
   it('should be able to use a custom adapter constructor', function (done) {
+    this.timeout(5000)
     let Adapter = require('socket.io-redis')
     chatService = startService(
       { adapter: Adapter, adapterOptions: redisConnect })
