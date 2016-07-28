@@ -145,9 +145,11 @@ module.exports = function () {
   it('should check for socket ids if required', function (done) {
     chatService = startService()
     chatService.addUser(user1, null, () => {
-      chatService.execUserCommand(user1, 'roomJoin', error => {
-        expect(error).ok
-        done()
+      chatService.addRoom(roomName1, null, () => {
+        chatService.execUserCommand(user1, 'roomJoin', roomName1, error => {
+          expect(error).ok
+          done()
+        })
       })
     })
   })
@@ -227,5 +229,34 @@ module.exports = function () {
               done()
             })
         }))
+  })
+
+  it('should be able to leave and join sockets', function (done) {
+    chatService = startService()
+    chatService.addRoom(roomName1, null, () => {
+      socket1 = clientConnect(user1)
+      let context = { userName: user1 }
+      socket1.on('loginConfirmed', (userName, {id}) => {
+        context.id = id
+        chatService.execUserCommand(context, 'roomJoin', roomName1)
+        socket1.on('roomJoinedEcho', (roomName, id, njoined) => {
+          expect(roomName).equal(roomName1)
+          expect(id).equal(context.id)
+          expect(njoined).equal(1)
+          let msg = { textMessage: 'Text message' }
+          chatService.execUserCommand(context, 'roomMessage', roomName1, msg)
+          socket1.on('roomMessage', (roomName, message) => {
+            expect(roomName).equal(roomName1)
+            chatService.execUserCommand(context, 'roomLeave', roomName1)
+            socket1.on('roomLeftEcho', (roomName, id, njoined) => {
+              expect(roomName).equal(roomName1)
+              expect(id).equal(context.id)
+              expect(njoined).equal(0)
+              done()
+            })
+          })
+        })
+      })
+    })
   })
 }

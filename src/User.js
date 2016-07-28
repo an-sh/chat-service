@@ -249,14 +249,14 @@ class User {
       .then(room => room.getHistoryInfo(this.userName, bypassPermissions))
   }
 
-  roomJoin (roomName, {id}) {
+  roomJoin (roomName, {id, isLocalCall}) {
     return this.state.getRoom(roomName)
-      .then(room => this.joinSocketToRoom(id, roomName))
+      .then(room => this.joinSocketToRoom(id, roomName, isLocalCall))
   }
 
-  roomLeave (roomName, {id}) {
+  roomLeave (roomName, {id, isLocalCall}) {
     return this.state.getRoom(roomName)
-      .then(room => this.leaveSocketFromRoom(id, room.roomName))
+      .then(room => this.leaveSocketFromRoom(id, room.roomName, isLocalCall))
   }
 
   roomMessage (roomName, msg, {bypassPermissions}) {

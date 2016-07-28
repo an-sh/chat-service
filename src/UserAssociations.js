@@ -33,14 +33,24 @@ class UserAssociations {
     }
   }
 
-  socketJoinEcho (id, roomName, njoined) {
-    this.transport.sendToChannel(
-      id, this.echoChannel, 'roomJoinedEcho', roomName, id, njoined)
+  socketJoinEcho (id, roomName, njoined, isLocalCall) {
+    if (isLocalCall) {
+      this.transport.emitToChannel(
+        this.echoChannel, 'roomJoinedEcho', roomName, id, njoined)
+    } else {
+      this.transport.sendToChannel(
+        id, this.echoChannel, 'roomJoinedEcho', roomName, id, njoined)
+    }
   }
 
-  socketLeftEcho (id, roomName, njoined) {
-    this.transport.sendToChannel(
-      id, this.echoChannel, 'roomLeftEcho', roomName, id, njoined)
+  socketLeftEcho (id, roomName, njoined, isLocalCall) {
+    if (isLocalCall) {
+      this.transport.emitToChannel(
+        this.echoChannel, 'roomLeftEcho', roomName, id, njoined)
+    } else {
+      this.transport.sendToChannel(
+        id, this.echoChannel, 'roomLeftEcho', roomName, id, njoined)
+    }
   }
 
   socketConnectEcho (id, nconnected) {
@@ -105,7 +115,7 @@ class UserAssociations {
       })
   }
 
-  joinSocketToRoom (id, roomName) {
+  joinSocketToRoom (id, roomName, isLocalCall) {
     let lock = this.userState.lockToRoom(roomName, this.lockTTL)
     return Promise.using(lock, co(function * () {
       let room = yield this.state.getRoom(roomName)
@@ -115,18 +125,18 @@ class UserAssociations {
           if (njoined === 1) {
             this.userJoinRoomReport(this.userName, roomName)
           }
-          return this.socketJoinEcho(id, roomName, njoined)
+          return this.socketJoinEcho(id, roomName, njoined, isLocalCall)
         }).return(njoined)
       }).catch(e => this.rollbackRoomJoin(e, roomName, id))
     }).bind(this))
   }
 
-  leaveSocketFromRoom (id, roomName) {
+  leaveSocketFromRoom (id, roomName, isLocalCall) {
     let lock = this.userState.lockToRoom(roomName, this.lockTTL)
     return Promise.using(lock, co(function * () {
       let njoined = yield this.userState.removeSocketFromRoom(id, roomName)
       yield this.leaveChannel(id, roomName)
-      this.socketLeftEcho(id, roomName, njoined)
+      this.socketLeftEcho(id, roomName, njoined, isLocalCall)
       if (!njoined) {
         yield this.leaveRoom(roomName)
         this.userLeftRoomReport(this.userName, roomName)
