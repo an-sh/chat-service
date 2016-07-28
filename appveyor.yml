@@ -16,12 +16,13 @@ install:
   - redis-64\tools\redis-server.exe --service-install
   - redis-64\tools\redis-server.exe --service-start
   - '@ECHO Redis Started'
+  - ps: Install-Product node $env:nodejs_version x64
   - npm install
 
 test_script:
   - node --version
   - npm --version
-  - npm test
+  - npm run test-legacy
 
 build: off
 

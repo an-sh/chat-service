@@ -1,9 +1,8 @@
 
 *.log
 logs
-doc
-coverage
+/docs
+/coverage
 node_modules
-example/node_modules
-example/build
 npm-debug.log
+.nyc_output

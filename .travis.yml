@@ -1,11 +1,12 @@
 language: node_js
-node_js:
-  - "6"
-  - "4"
-  - "0.12"
-script:
-  - npm run-script coverage
-  - npm run-script pipe-coverage
+matrix:
+  include:
+  - node_js: "6"
+    script: npm test && npm run coverage
+  - node_js: "4"
+    script: npm run test-legacy
+  - node_js: "0.12"
+    script: npm run test-legacy
 services:
   - redis-server
 git:
