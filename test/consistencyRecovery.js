@@ -10,10 +10,7 @@ const { cleanup, clientConnect, closeInstance, nextTick,
 const { cleanupTimeout, user1, roomName1 } = require('./config')
 
 module.exports = function () {
-  let instance1 = null
-  let socket1 = null
-  let socket2 = null
-  let socket3 = null
+  let instance1, socket1, socket2, socket3
 
   afterEach(function (cb) {
     this.timeout(cleanupTimeout)

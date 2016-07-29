@@ -10,10 +10,7 @@ const { cleanupTimeout, user1, user2,
         roomName1, roomName2 } = require('./config')
 
 module.exports = function () {
-  let chatService = null
-  let socket1 = null
-  let socket2 = null
-  let socket3 = null
+  let chatService, socket1, socket2, socket3
 
   afterEach(function (cb) {
     this.timeout(cleanupTimeout)
@@ -60,9 +57,7 @@ module.exports = function () {
 
   it('should execute before and after hooks', function (done) {
     let someData = 'data'
-    let before = null
-    let after = null
-    let sid = null
+    let before, after, sid
     let roomCreateBefore = (execInfo, cb) => {
       let { server, userName, id, args } = execInfo
       let [name, mode] = args
@@ -108,8 +103,7 @@ module.exports = function () {
 
   it('should execute hooks using promises api', function (done) {
     let someData = 'data'
-    let before = null
-    let after = null
+    let before, after
     let roomCreateBefore = execInfo => {
       before = true
       return Promise.resolve()
@@ -134,8 +128,7 @@ module.exports = function () {
 
   it('should execute hooks with sync callbacks', function (done) {
     let someData = 'data'
-    let before = null
-    let after = null
+    let before, after
     let roomCreateBefore = (execInfo, cb) => {
       before = true
       cb()

@@ -8,10 +8,7 @@ const { ChatService, cleanup, clientConnect,
 const { cleanupTimeout, user1 } = require('./config')
 
 module.exports = function () {
-  let chatService = null
-  let socket1 = null
-  let socket2 = null
-  let socket3 = null
+  let chatService, socket1, socket2, socket3
 
   afterEach(function (cb) {
     this.timeout(cleanupTimeout)
@@ -71,7 +68,7 @@ module.exports = function () {
   })
 
   it('should reject a login if onConnect passes an error', function (done) {
-    let err = null
+    let err
     let onConnect = (server, id, cb) => {
       expect(server).instanceof(ChatService)
       expect(id).a('string')
@@ -91,8 +88,7 @@ module.exports = function () {
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
       socket2 = clientConnect(user1)
-      let sid2 = null
-      let sid2e = null
+      let sid2, sid2e
       parallel([
         cb => socket1.on('socketConnectEcho', (id, nconnected) => {
           sid2e = id

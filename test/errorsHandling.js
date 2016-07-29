@@ -8,10 +8,7 @@ const { ChatService, cleanup, clientConnect,
 const { cleanupTimeout, user1, roomName1 } = require('./config')
 
 module.exports = function () {
-  let chatService = null
-  let socket1 = null
-  let socket2 = null
-  let socket3 = null
+  let chatService, socket1, socket2, socket3
 
   afterEach(function (cb) {
     this.timeout(cleanupTimeout)

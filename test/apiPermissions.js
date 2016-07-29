@@ -9,10 +9,7 @@ const { cleanupTimeout, user1, user2, user3, roomName1 } =
         require('./config')
 
 module.exports = function () {
-  let chatService = null
-  let socket1 = null
-  let socket2 = null
-  let socket3 = null
+  let chatService, socket1, socket2, socket3
 
   afterEach(function (cb) {
     this.timeout(cleanupTimeout)
@@ -112,8 +109,7 @@ module.exports = function () {
   })
 
   it('should be able to bypass command hooks', function (done) {
-    let before = null
-    let after = null
+    let before, after
     let roomAddToListBefore = (callInfo, args, cb) => {
       before = true
       cb()
@@ -135,8 +131,8 @@ module.exports = function () {
                 'roomAddToList', roomName1, 'whitelist', [user1]
                 , (error, data) => {
                   expect(error).not.ok
-                  expect(before).null
-                  expect(after).null
+                  expect(before).undefined
+                  expect(after).undefined
                   expect(data).null
                   done()
                 })

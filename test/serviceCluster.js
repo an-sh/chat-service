@@ -10,18 +10,13 @@ const { cleanupTimeout, port, user1, user2, user3,
         roomName1, redisConfig } = require('./config')
 
 module.exports = function () {
-  let instance1 = null
-  let instance2 = null
-  let socket1 = null
-  let socket2 = null
-  let socket3 = null
-  let socket4 = null
-  let socket5 = null
+  let instance1, instance2, socket1, socket2, socket3, socket4, socket5
 
   afterEach(function (cb) {
     this.timeout(cleanupTimeout)
     cleanup([instance1, instance2], [socket1, socket2, socket3], cb)
-    instance1 = instance2 = socket1 = socket2 = socket3 = null
+    instance1 = instance2 = null
+    socket1 = socket2 = socket3 = socket4 = socket5 = null
   })
 
   it('should be able to send custom messages via a bus', function (done) {
