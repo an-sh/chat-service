@@ -8,10 +8,14 @@
 [![Dependency Status](https://david-dm.org/an-sh/chat-service.svg)](https://david-dm.org/an-sh/chat-service)
 [![JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
 
-Messaging service designed to handle a vast variety of use cases that
-are fit into a chat-like pattern, including exchanging data in
-collaborative applications, logging with realtime updates, or a full
-protocol/API tunnelling for IoT devices.
+Room messaging server implementation that is using a bidirectional RPC
+protocol to implement chat-like communication. Designed to handle
+common public network messaging problems like reliable delivery,
+multiple connections from a single user, real-time permissions and
+presence. RPC requests processing and a room messages format is
+customisable via hooks, allowing to implement anything from a
+chat-rooms server to a collaborative application with a complex
+conflict resolution or M2M communication tunnelling for IoT devices.
 
 
 ## Features
@@ -20,42 +24,39 @@ protocol/API tunnelling for IoT devices.
 - Reliable room messaging using a server side history storage and a
   synchronisation API.
 
-- Customisable JSON messages format via just a validation function
-  (hook), allowing custom or heterogeneous room messages format
-  (including support of a binary data inside JSON).
+- Arbitrary messages format via just a validation function (hook),
+  allowing custom/heterogeneous messages formats (including a binary
+  data inside messages).
 
-- Per-room user presence API and notifications.
+- Per-room user presence API with notifications.
 
-- Room creation and room permissions management APIs (with changes
-  notifications). Supports for blacklist or whitelist based access
-  modes and a room administrators management.
+- Realtime room creation and per-room users permissions management
+  APIs. Supports for blacklist or whitelist based access modes and an
+  optional administrators group.
 
-- Lightweight online user to online user messages with a server side
-  permissions management API.
+- Seamless support of multiple users' connections from various devises
+  to any service instance.
 
-- Seamless support of multiple socket connections for a single user,
-  including a reasonable amount of user's action notifications from
-  other sockets.
-
-- Written as a stateless microservice, using Redis as a state store,
-  can be easily scaled across many machines. Also supports Redis in
-  cluster configurations as a store.
+- Written as a stateless microservice, uses Redis (also supports
+  cluster configurations) as a state store, can be horizontally scaled
+  on demand.
 
 - Extensive customisation support. Custom functionality can be added
-  via hooks before/after any client message (command). And client
-  messages (commands) handlers can be invoked server side as simple
-  functions.
+  via hooks before/after for any client request processing. And
+  requests (commands) handlers can be invoked server side via an API.
 
-- Simple networking, only a socket.io client implementation is
-  required, making it possible to use the same server for web (SPA),
-  mobile and desktop clients.
+- Pluginable networking transport. Client-server communication is done
+  via a bidirectional RPC protocol. Socket.io transport implementation
+  is included.
+
+- Supports lightweight online user to online user messaging.
 
 
-## Tutorial
+## Quickstart with socket.io
 
-On a server, define a socket connection hook, as the service is
-relying on an extern auth implementation. A user just needs to pass an
-auth check, no explicit user adding step is required.
+On a server define a socket connection hook, as the service is relying
+on an extern auth implementation. A user just needs to pass an auth
+check, no explicit user adding step is required.
 
 ```javascript
 function onConnect(service, id) {
@@ -97,9 +98,7 @@ returned in socket.io ack callback. To listen to server messages use
 ```javascript
 let io = require('socket.io-client')
 let url = 'localhost:8000/chat-service'
-let user = 'someLogin'
-let password = 'somePassword'
-let query = `user=${user}&password=${password}`
+let query = `user=${user}&secret=${secret}` // auth data
 let params = { query }
 // Connect to server.
 let socket = io.connect(url, params)
@@ -122,9 +121,6 @@ socket.once('loginRejected', (error) => {
 })
 ```
 
-Look in the API documentation for details about custom message
-formats, rooms management, rooms permission and users presence.
-
 
 ## Concepts overview
 
@@ -132,8 +128,8 @@ formats, rooms management, rooms permission and users presence.
 
 Service completely abstracts a connection concept from a user concept,
 so a single user can have more than one connection (including
-connections across different nodes). For the user presence the number
-of joined sockets must be just greater than zero. All APIs designed to
+connections across different nodes). For user presence the number of
+joined sockets must be just greater than zero. All APIs designed to
 work on the user level, handling seamlessly user's multiple
 connections.
 
@@ -158,9 +154,9 @@ can also delete it via `roomDelete` command.
 
 ### Reliable messaging and history synchronisation
 
-When a user sends a room message, in the ack callback the message `id`
-is returned. It means that the message has been saved in a store (in
-an append only circular buffer like structure). Room message ids are a
+When a user sends a room message, in RPC reply the message `id` is
+returned. It means that the message has been saved in a store (in an
+append only circular buffer like structure). Room message ids are a
 sequence than increases by one for each successfully sent message in
 the room. A client can always check the last room message id via
 `roomHistoryInfo` command, and use `roomHistoryGet` command to get
@@ -182,10 +178,11 @@ arbitrary data types (even binary), but no nested objects with a field
 ### Integration and customisations
 
 Each user command supports before and after hook adding, and a client
-connection hook is supported too. Command and hooks are executed
-sequentially: before hook - command - after hook. Sequence termination
-in before hooks is supported. Clients can send additional command
-arguments, hooks can read them, and reply with additional arguments.
+connection/disconnection hooks are supported too. Command and hooks
+are executed sequentially: before hook - command - after
+hook. Sequence termination in before hooks is possible. Clients can
+send additional command arguments, hooks can read them, and reply with
+additional arguments.
 
 To execute an user command server side `execUserCommand` is
 provided. Also there are some more server side only methods provided
@@ -234,45 +231,28 @@ regarding joined devices types should be sent from `roomGetAccessList`
 after hook (when list name is equal to `'userlist'`).
 
 
-## API documentation
+## Documentation
 
-Is available online at
-[gitpages](https://an-sh.github.io/chat-service/0.8/).
-
-- `ServerMessages` class describes socket.io messages that are sent
-  from the server to a client.
-
-- `UserCommands` class describes socket.io messages that a client
-  sends to a server and receives reply as a command ack.
-
-- `ChatService` class is the package exported object and a service
-  instance constructor, describes options. It also contains mixin
-  methods for using server side API.
-
-Run `npm install -g codo` and `codo` to generate local documentation.
+Server-side and RPC APIs documentation is available
+[online](https://an-sh.github.io/chat-service/0.9/).
 
 
-## Frontend example
+## Usage examples
 
-An Angular single page chat application with a basic features
-demonstration is now in a separate
-[repo](https://github.com/an-sh/chat-service-frontend-angular1). You
-can also run this example as a cluster with several node
-processes. Check `README.md` file in that repository for more
-information.
+Single page chat
+[application](https://github.com/an-sh/chat-service-frontend-angular1).
 
 
 ## Debugging
 
 In normal circumstances all errors that are returned to a service user
-(via commands ack, `loginConfirmed` or `loginRejected` messages)
-should be instances of `ChatServiceError`. All other errors mean a
-bug, or some failures in the service infrastructure. To enable debug
-logging of such errors use `export NODE_DEBUG=ChatService`. The
-library is using bluebird `^3.0.0` promises implementation, so to
-enable long stack traces use `export BLUEBIRD_DEBUG=1`. It is highly
-recommended to follow this conventions for extension hooks
-development.
+(via replies, `loginConfirmed` or `loginRejected` messages) should be
+instances of `ChatServiceError`. All other errors mean a bug, or some
+failures in a service infrastructure. To enable debug logging of such
+errors use `export NODE_DEBUG=ChatService`. The library is using
+bluebird `^3.0.0` promises implementation, so to enable long stack
+traces use `export BLUEBIRD_DEBUG=1`. It is highly recommended to
+follow this conventions for hooks development.
 
 ## Bug reporting
 
