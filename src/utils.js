@@ -54,11 +54,14 @@ function run (self, gen) {
 
 function convertError (error, useRawErrorObjects) {
   if (error) {
-    if (!(error instanceof ChatServiceError)) {
+    let isServiceError = error instanceof ChatServiceError
+    if (!isServiceError) {
       debuglog(error)
     }
     if (!useRawErrorObjects) {
       return error.toString()
+    } else if (!isServiceError) {
+      return new ChatServiceError('internalError', error.toString())
     }
   }
   return error

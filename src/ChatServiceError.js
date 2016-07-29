@@ -7,7 +7,8 @@ function ChatServiceError (code, ...args) {
   this.args = args
 }
 
-util.inherits(ChatServiceError, Error)
+// pretend to be an error
+ChatServiceError.prototype = Object.create(Error.prototype)
 
 /**
  * @constant
@@ -16,6 +17,7 @@ util.inherits(ChatServiceError, Error)
  */
 const codeToFormat = {
   badArgument: 'Bad argument at position %d, value %j',
+  internalError: '%s',
   invalidName: 'String %s contains invalid characters',
   invalidSocket: 'Socket %s is not connected',
   noCommand: 'No such command %s',

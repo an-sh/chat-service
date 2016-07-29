@@ -174,4 +174,21 @@ module.exports = function () {
         done()
       }))
   })
+
+  it('should return converted internal error objects', function (done) {
+    let msg
+    let onConnect = (server, id, cb) => {
+      let err = new Error('DB error')
+      msg = err.toString()
+      throw err
+    }
+    chatService = startService({useRawErrorObjects: true}, {onConnect})
+    socket1 = clientConnect(user1)
+    socket1.on('loginRejected', e => {
+      expect(e).an.Object
+      expect(e.code).equal('internalError')
+      expect(e.args[0]).equal(msg)
+      done()
+    })
+  })
 }
