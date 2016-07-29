@@ -124,6 +124,11 @@ class ChatService extends EventEmitter {
   }
 
   /**
+   * ChatService errors constructor. This errors are intended to be
+   * returned to clients as a part of a normal service functioning
+   * (something like 403 errors). Can be also used to create custom
+   * errors subclasses.
+   *
    * @name ChatServiceError
    * @type Class
    * @static
@@ -142,36 +147,49 @@ class ChatService extends EventEmitter {
    */
 
   /**
+   * Service instance UID.
+   *
    * @name chat-service.ChatService#instanceUID
    * @type string
    * @readonly
    */
 
   /**
+   * `ioredis` instance if `redis` state is used.
+   *
    * @name chat-service.ChatService#redis
    * @type Object|undefined
    * @readonly
    */
 
   /**
+   * Socket.io server, if `socket.io` transport is used.
+   *
    * @name chat-service.ChatService#io
    * @type Object|undefined
    * @readonly
    */
 
   /**
+   * Socket.io server namespace, if `socket.io` transport is used.
+   *
    * @name chat-service.ChatService#nsp
    * @type Object|undefined
    * @readonly
    */
 
   /**
+   * Cluster communication via an adapter. Emits messages to all
+   * services nodes, including the sender node.
+   *
    * @name chat-service.ChatService#clusterBus
    * @type EventEmitter
    * @readonly
    */
 
   /**
+   * Transport wrapper.
+   *
    * @name chat-service.ChatService#transport
    * @type chat-service.TransportInterface
    * @readonly
