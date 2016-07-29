@@ -30,16 +30,16 @@ function checkNameSymbols (name) {
 
 function execHook (hook, ...args) {
   if (!hook) { return Promise.resolve() }
-  let cb = null
-  let callbackData = null
+  let cb, callbackResults, hasResults
   let wrapper = function (...data) {
-    callbackData = data
+    hasResults = true
+    callbackResults = data
     if (cb) { cb(...data) }
   }
   let res = hook(...args, wrapper)
-  if (callbackData) {
+  if (hasResults) {
     return Promise.fromCallback(
-      fn => { fn(...callbackData) },
+      fn => { fn(...callbackResults) },
       {multiArgs: true})
   } else if ((res != null) && typeof res.then === 'function') {
     return res
