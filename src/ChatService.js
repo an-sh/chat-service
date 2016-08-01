@@ -65,11 +65,11 @@ const rpcRequestsNames = [
  * @mixes chat-service.ServiceAPI
  * @mixes chat-service.RecoveryAPI
  *
- * @fires chat-service.ready
- * @fires chat-service.closed
- * @fires chat-service.storeConsistencyFailure
- * @fires chat-service.transportConsistencyFailure
- * @fires chat-service.lockTimeExceeded
+ * @fires chat-service.ChatService.ready
+ * @fires chat-service.ChatService.closed
+ * @fires chat-service.ChatService.storeConsistencyFailure
+ * @fires chat-service.ChatService.transportConsistencyFailure
+ * @fires chat-service.ChatService.lockTimeExceeded
  *
  * @example <caption>starting a server</caption>
  *   let ChatService = require('chat-service')
@@ -199,7 +199,7 @@ class ChatService extends EventEmitter {
    * Service is ready, state and transport are up.
    * @event ready
    *
-   * @memberof chat-service
+   * @memberof chat-service.ChatService
    */
 
   /**
@@ -207,12 +207,13 @@ class ChatService extends EventEmitter {
    * @event closed
    * @param {Error} [error] If was closed due to an error.
    *
-   * @memberof chat-service
+   * @memberof chat-service.ChatService
    */
 
   /**
-   * State store failed to be updated to reflect the current user
-   * connections or presence state
+   * State store failed to be updated to reflect an user's connection
+   * or presence state.
+   *
    * @event storeConsistencyFailure
    * @param {Error} error Error.
    * @param {Object} operationInfo Operation details.
@@ -221,11 +222,14 @@ class ChatService extends EventEmitter {
    * @property {string} [operationInfo.roomName] Room name.
    * @property {string} [operationInfo.id] Socket id.
    *
-   * @memberof chat-service
+   * @see chat-service.RecoveryAPI
+   *
+   * @memberof chat-service.ChatService
    */
 
   /**
    * Failed to teardown a transport connection.
+   *
    * @event transportConsistencyFailure
    *
    * @param {Error} error Error.
@@ -235,11 +239,12 @@ class ChatService extends EventEmitter {
    * @property {string} [operationInfo.roomName] Room name.
    * @property {string} [operationInfo.id] Socket id.
    *
-   * @memberof chat-service
+   * @memberof chat-service.ChatService
    */
 
   /**
    * Lock was hold longer than a lock ttl.
+   *
    * @event lockTimeExceeded
    *
    * @param {string} id Lock id.
@@ -247,12 +252,14 @@ class ChatService extends EventEmitter {
    * @property {string} [lockInfo.userName] User name.
    * @property {string} [lockInfo.roomName] Room name.
    *
-   * @memberof chat-service
+   * @see chat-service.RecoveryAPI
+   *
+   * @memberof chat-service.ChatService
    */
 
   /**
    * Exposes an internal arguments validation method, it is run
-   * automatically by all client request handlers.
+   * automatically by all client request (command) handlers.
    *
    * @method chat-service.ChatService#checkArguments
    *

@@ -7,7 +7,7 @@ const _ = require('lodash')
  *
  * @mixin
  * @memberof chat-service
- * @see chat-service.ChatService
+ * @see chat-service.ChatService.event:storeConsistencyFailure
  */
 class RecoveryAPI {
 
@@ -93,7 +93,7 @@ class RecoveryAPI {
   }
 
   /**
-   * Fix instance data after an incorrect service shutdown.
+   * Fixes an instance data after an incorrect service shutdown.
    *
    * @param {string} id Instance id.
    * @param {callback} [cb] Optional callback.
@@ -111,7 +111,7 @@ class RecoveryAPI {
   }
 
   /**
-   * Get instance heartbeat.
+   * Gets an instance heartbeat.
    *
    * @param {string} id Instance id.
    * @param {callback} [cb] Optional callback.

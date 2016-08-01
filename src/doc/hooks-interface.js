@@ -6,14 +6,14 @@
  * @namespace hooks
  * @memberof chat-service
  *
- * @see chat-service.ChatService
  * @see chat-service.hooks.HooksInterface
- * @see chat-service.hooks.RequestsHooks
+ * @see chat-service.hooks.CommandsHooks
  */
 
 /**
  * Before hooks are available for all {@link rpc.clientRequests} and
- * are executed after an arguments validation.
+ * are executed after a command arguments validation, but before
+ * ChatService standard handler.
  *
  * @callback beforeHook
  *
@@ -29,7 +29,8 @@
 
 /**
  * After hooks are available for all {@link rpc.clientRequests} and
- * are executed after ChatService default event handlers.
+ * are executed after ChatService standard handlers, but before
+ * returning results to the command issuer.
  *
  * @callback afterHook
  *
@@ -44,68 +45,70 @@
  */
 
 /**
- * Requests hooks full list, they are available for all {@link
- * rpc.clientRequests}. For a concise description see {@link
- * beforeHook} and {@link afterHook}.
+ * Commands hooks full list, they are available for all {@link
+ * rpc.clientRequests}. There are just two types of command hooks, for
+ * a concise description see {@link beforeHook} and {@link afterHook}.
  *
  * @interface
- * @borrows beforeHook as RequestsHooks#directAddToListBefore
- * @borrows afterHook as RequestsHooks#directAddToListAfter
- * @borrows beforeHook as RequestsHooks#directGetAccessListBefore
- * @borrows afterHook as RequestsHooks#directGetAccessListAfter
- * @borrows beforeHook as RequestsHooks#directGetWhitelistModeBefore
- * @borrows afterHook as RequestsHooks#directGetWhitelistModeAfter
- * @borrows beforeHook as RequestsHooks#directMessageBefore
- * @borrows afterHook as RequestsHooks#directMessageAfter
- * @borrows beforeHook as RequestsHooks#directRemoveFromListBefore
- * @borrows afterHook as RequestsHooks#directRemoveFromListAfter
- * @borrows beforeHook as RequestsHooks#directSetWhitelistModeBefore
- * @borrows afterHook as RequestsHooks#directSetWhitelistModeAfter
- * @borrows beforeHook as RequestsHooks#listOwnSocketsBefore
- * @borrows afterHook as RequestsHooks#listOwnSocketsAfter
- * @borrows beforeHook as RequestsHooks#roomAddToListBefore
- * @borrows afterHook as RequestsHooks#roomAddToListAfter
- * @borrows beforeHook as RequestsHooks#roomCreateBefore
- * @borrows afterHook as RequestsHooks#roomCreateAfter
- * @borrows beforeHook as RequestsHooks#roomDeleteBefore
- * @borrows afterHook as RequestsHooks#roomDeleteAfter
- * @borrows beforeHook as RequestsHooks#roomGetAccessListBefore
- * @borrows afterHook as RequestsHooks#roomGetAccessListAfter
- * @borrows beforeHook as RequestsHooks#roomGetOwnerBefore
- * @borrows afterHook as RequestsHooks#roomGetOwnerAfter
- * @borrows beforeHook as RequestsHooks#roomGetWhitelistModeBefore
- * @borrows afterHook as RequestsHooks#roomGetWhitelistModeAfter
- * @borrows beforeHook as RequestsHooks#roomHistoryGetBefore
- * @borrows afterHook as RequestsHooks#roomHistoryGetAfter
- * @borrows beforeHook as RequestsHooks#roomHistoryInfoBefore
- * @borrows afterHook as RequestsHooks#roomHistoryInfoAfter
- * @borrows beforeHook as RequestsHooks#roomJoinBefore
- * @borrows afterHook as RequestsHooks#roomJoinAfter
- * @borrows beforeHook as RequestsHooks#roomLeaveBefore
- * @borrows afterHook as RequestsHooks#roomLeaveAfter
- * @borrows beforeHook as RequestsHooks#roomMessageBefore
- * @borrows afterHook as RequestsHooks#roomMessageAfter
- * @borrows beforeHook as RequestsHooks#roomRecentHistoryBefore
- * @borrows afterHook as RequestsHooks#roomRecentHistoryAfter
- * @borrows beforeHook as RequestsHooks#roomRemoveFromListBefore
- * @borrows afterHook as RequestsHooks#roomRemoveFromListAfter
- * @borrows beforeHook as RequestsHooks#roomSetWhitelistModeBefore
- * @borrows afterHook as RequestsHooks#roomSetWhitelistModeAfter
- * @borrows beforeHook as RequestsHooks#roomUserSeenBefore
- * @borrows afterHook as RequestsHooks#roomUserSeenAfter
- * @borrows beforeHook as RequestsHooks#systemMessageBefore
- * @borrows afterHook as RequestsHooks#systemMessageAfter
+ * @borrows beforeHook as CommandsHooks#directAddToListBefore
+ * @borrows afterHook as CommandsHooks#directAddToListAfter
+ * @borrows beforeHook as CommandsHooks#directGetAccessListBefore
+ * @borrows afterHook as CommandsHooks#directGetAccessListAfter
+ * @borrows beforeHook as CommandsHooks#directGetWhitelistModeBefore
+ * @borrows afterHook as CommandsHooks#directGetWhitelistModeAfter
+ * @borrows beforeHook as CommandsHooks#directMessageBefore
+ * @borrows afterHook as CommandsHooks#directMessageAfter
+ * @borrows beforeHook as CommandsHooks#directRemoveFromListBefore
+ * @borrows afterHook as CommandsHooks#directRemoveFromListAfter
+ * @borrows beforeHook as CommandsHooks#directSetWhitelistModeBefore
+ * @borrows afterHook as CommandsHooks#directSetWhitelistModeAfter
+ * @borrows beforeHook as CommandsHooks#listOwnSocketsBefore
+ * @borrows afterHook as CommandsHooks#listOwnSocketsAfter
+ * @borrows beforeHook as CommandsHooks#roomAddToListBefore
+ * @borrows afterHook as CommandsHooks#roomAddToListAfter
+ * @borrows beforeHook as CommandsHooks#roomCreateBefore
+ * @borrows afterHook as CommandsHooks#roomCreateAfter
+ * @borrows beforeHook as CommandsHooks#roomDeleteBefore
+ * @borrows afterHook as CommandsHooks#roomDeleteAfter
+ * @borrows beforeHook as CommandsHooks#roomGetAccessListBefore
+ * @borrows afterHook as CommandsHooks#roomGetAccessListAfter
+ * @borrows beforeHook as CommandsHooks#roomGetOwnerBefore
+ * @borrows afterHook as CommandsHooks#roomGetOwnerAfter
+ * @borrows beforeHook as CommandsHooks#roomGetWhitelistModeBefore
+ * @borrows afterHook as CommandsHooks#roomGetWhitelistModeAfter
+ * @borrows beforeHook as CommandsHooks#roomHistoryGetBefore
+ * @borrows afterHook as CommandsHooks#roomHistoryGetAfter
+ * @borrows beforeHook as CommandsHooks#roomHistoryInfoBefore
+ * @borrows afterHook as CommandsHooks#roomHistoryInfoAfter
+ * @borrows beforeHook as CommandsHooks#roomJoinBefore
+ * @borrows afterHook as CommandsHooks#roomJoinAfter
+ * @borrows beforeHook as CommandsHooks#roomLeaveBefore
+ * @borrows afterHook as CommandsHooks#roomLeaveAfter
+ * @borrows beforeHook as CommandsHooks#roomMessageBefore
+ * @borrows afterHook as CommandsHooks#roomMessageAfter
+ * @borrows beforeHook as CommandsHooks#roomRecentHistoryBefore
+ * @borrows afterHook as CommandsHooks#roomRecentHistoryAfter
+ * @borrows beforeHook as CommandsHooks#roomRemoveFromListBefore
+ * @borrows afterHook as CommandsHooks#roomRemoveFromListAfter
+ * @borrows beforeHook as CommandsHooks#roomSetWhitelistModeBefore
+ * @borrows afterHook as CommandsHooks#roomSetWhitelistModeAfter
+ * @borrows beforeHook as CommandsHooks#roomUserSeenBefore
+ * @borrows afterHook as CommandsHooks#roomUserSeenAfter
+ * @borrows beforeHook as CommandsHooks#systemMessageBefore
+ * @borrows afterHook as CommandsHooks#systemMessageAfter
  * @memberof chat-service.hooks
+ *
+ * @see rpc.clientRequests
  */
-class RequestsHooks {}
+class CommandsHooks {}
 
 /**
- * Hooks interface.
+ * {@link chat-service.ChatService} hooks interface.
  * @interface
- * @extends chat-service.hooks.RequestsHooks
+ * @extends chat-service.hooks.CommandsHooks
  * @memberof chat-service.hooks
  */
-class HooksInterface extends RequestsHooks {
+class HooksInterface extends CommandsHooks {
 
   /**
    * Client connection hook. Client can send requests only after this

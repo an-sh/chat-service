@@ -40,6 +40,8 @@ class ServiceAPI {
    * any permissions checking, default is `false`.
    *
    * @return {Promise<Array>} Array of command results.
+   *
+   * @see rpc.clientRequests
    */
   execUserCommand (context, command, ...args) {
     if (_.isObject(context)) {
@@ -109,7 +111,7 @@ class ServiceAPI {
   }
 
   /**
-   * Checks user existence.
+   * Checks an user existence.
    *
    * @param {string} userName User name.
    * @param {callback} [cb] Optional callback.
@@ -206,7 +208,7 @@ class ServiceAPI {
   }
 
   /**
-   * Checks room existence.
+   * Checks a room existence.
    *
    * @param {string} roomName Room name.
    * @param {callback} [cb] Optional callback.

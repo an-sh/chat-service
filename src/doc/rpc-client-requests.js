@@ -2,12 +2,13 @@
 
 /**
  * Requests that are sent from a client to a server, for each request
- * a reply will be sent back with a possible result data. Result data
- * types are described as returned values. If ChatService
- * `useRawErrorObjects` option is off, then errors type is
- * `string`. Otherwise errors have a {@link
- * rpc.datatypes.ChatServiceError} type. Details of how results or
- * errors are returned depend on a transport used, for more
+ * a reply will be sent back with a possible result data. Some
+ * requests will trigger sending {@link rpc.serverNotifications} to
+ * other clients. Result data types are described as returned
+ * values. If {@link chat-service.config.options} `useRawErrorObjects`
+ * option is off, then errors type is `string`. Otherwise errors have
+ * a {@link rpc.datatypes.ChatServiceError} type. Details of how
+ * results or errors are returned depend on a transport used, for more
  * information see examples below. Essentially each request triggers
  * an execution of a command in a socket+user context.
  *
@@ -26,6 +27,9 @@
  * @namespace clientRequests
  * @memberof rpc
  *
+ * @see rpc.serverNotifications
+ * @see chat-service.ServiceAPI#execUserCommand
+ * @see chat-service.hooks.CommandsHooks
  */
 
  /**

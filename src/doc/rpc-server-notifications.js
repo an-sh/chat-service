@@ -15,6 +15,8 @@
  *
  * @namespace serverNotifications
  * @memberof rpc
+ *
+ * @see rpc.clientRequests
  */
 
  /**
