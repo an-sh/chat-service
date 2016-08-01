@@ -249,16 +249,27 @@ class ListsStateRedis {
     return `${namespace}:${this.prefix}:{${this.name}}:${keyName}`
   }
 
-  checkList (listName) {
+  checkList (listName, num, limit) {
     if (!this.hasList(listName)) {
       let error = new ChatServiceError('noList', listName)
       return Promise.reject(error)
     }
-    return Promise.resolve()
+    if (listName === 'userlist') {
+      return Promise.resolve()
+    }
+    return this.redis.scard(listName).then(sz => {
+      if (sz + num > limit) {
+        let error = new ChatServiceError('listLimitExceeded', listName)
+        return Promise.reject(error)
+      } else {
+        return Promise.resolve()
+      }
+    })
   }
 
-  addToList (listName, elems) {
-    return this.checkList(listName)
+  addToList (listName, elems, limit) {
+    let num = elems.length
+    return this.checkList(listName, num, limit)
       .then(() => this.redis.sadd(this.makeKeyName(listName), elems))
   }
 

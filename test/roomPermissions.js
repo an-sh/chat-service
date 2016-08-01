@@ -466,4 +466,21 @@ module.exports = function () {
         })
       })
   })
+
+  it('should honour room list size limit', function (done) {
+    chatService = startService({ roomListSizeLimit: 1 })
+    chatService.addRoom(
+      roomName1, { owner: user1 },
+      () => {
+        socket1 = clientConnect(user1)
+        socket1.on('loginConfirmed', () => {
+          socket1.emit(
+            'roomAddToList', roomName1, 'blacklist', [user2, user3],
+            (error, data) => {
+              expect(error).ok
+              done()
+            })
+        })
+      })
+  })
 }

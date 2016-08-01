@@ -4,7 +4,7 @@ const { expect } = require('chai')
 
 const { cleanup, clientConnect, startService } = require('./testutils')
 
-const { cleanupTimeout, user1, user2 } = require('./config')
+const { cleanupTimeout, user1, user2, user3 } = require('./config')
 
 module.exports = function () {
   let chatService, socket1, socket2, socket3
@@ -163,6 +163,19 @@ module.exports = function () {
           done()
         })
       })
+    })
+  })
+
+  it('should honour direct list size limit', function (done) {
+    chatService = startService({ enableDirectMessages: true,
+                                 directListSizeLimit: 1 })
+    socket1 = clientConnect(user1)
+    socket1.on('loginConfirmed', () => {
+      socket1.emit(
+        'directAddToList', 'blacklist', [user2, user3], (error, data) => {
+          expect(error).ok
+          done()
+        })
     })
   })
 }

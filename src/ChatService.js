@@ -277,6 +277,8 @@ class ChatService extends EventEmitter {
     this.busAckTimeout = this.options.busAckTimeout || 5000
     this.heartbeatRate = this.options.heartbeatRate || 10000
     this.heartbeatTimeout = this.options.heartbeatTimeout || 30000
+    this.directListSizeLimit = this.options.directListSizeLimit || 1000
+    this.roomListSizeLimit = this.options.roomListSizeLimit || 10000
     this.enableAccessListsUpdates =
       this.options.enableAccessListsUpdates || false
     this.enableDirectMessages = this.options.enableDirectMessages || false

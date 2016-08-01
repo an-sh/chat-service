@@ -70,6 +70,13 @@
  * chat-service.ServiceAPI#addRoom} is called without `historyMaxSize`
  * option.
  *
+ * @property {number} [directListSizeLimit=1000] Maximum number of
+ * entries allowed in direct messaging permissions lists.
+ *
+ * @property {number} [roomListSizeLimit=10000] Maximum number of
+ * entries allowed in room messaging permissions lists (the `userlist`
+ * is not affected by this option).
+ *
  * @property {boolean} [useRawErrorObjects=false] Send error objects
  * instead of strings. See {@link rpc.datatypes.ChatServiceError}.
  *

@@ -53,6 +53,7 @@ class DirectMessaging {
   constructor (server, userName) {
     this.server = server
     this.userName = userName
+    this.listSizeLimit = this.server.directListSizeLimit
     let State = this.server.state.DirectMessagingState
     this.directMessagingState = new State(this.server, this.userName)
     mixin(this, DirectMessagingPermissions,
@@ -78,7 +79,8 @@ class DirectMessaging {
 
   addToList (author, listName, values) {
     return this.checkListValues(author, listName, values)
-      .then(() => this.directMessagingState.addToList(listName, values))
+      .then(() => this.directMessagingState.addToList(
+        listName, values, this.listSizeLimit))
   }
 
   removeFromList (author, listName, values) {

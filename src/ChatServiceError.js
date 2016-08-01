@@ -21,6 +21,7 @@ const codeToFormat = {
   invalidName: 'String %s contains invalid characters',
   invalidSocket: 'Socket %s is not connected',
   noCommand: 'No such command %s',
+  listLimitExceeded: 'Exceeded %s size limit',
   noList: 'No such list %s',
   noLogin: 'No login provided',
   noRoom: 'No such room %s',

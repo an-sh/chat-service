@@ -128,6 +128,7 @@ class Room {
   constructor (server, roomName) {
     this.server = server
     this.roomName = roomName
+    this.listSizeLimit = this.server.roomListSizeLimit
     let State = this.server.state.RoomState
     this.roomState = new State(this.server, this.roomName)
     mixin(this, RoomPermissions, this.roomName,
@@ -204,7 +205,7 @@ class Room {
 
   addToList (author, listName, values, bypassPermissions) {
     return this.checkListChanges(author, listName, values, bypassPermissions)
-      .then(() => this.roomState.addToList(listName, values))
+      .then(() => this.roomState.addToList(listName, values, this.listSizeLimit))
       .then(() => {
         return Promise.filter(
           values,

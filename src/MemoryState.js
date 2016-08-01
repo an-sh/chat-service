@@ -56,17 +56,25 @@ class LockOperations {
 // Implements state API lists management.
 class ListsStateMemory {
 
-  checkList (listName) {
+  checkList (listName, num, limit) {
     if (!this.hasList(listName)) {
       let error = new ChatServiceError('noList', listName)
+      return Promise.reject(error)
+    }
+    if (listName === 'userlist') {
+      return Promise.resolve()
+    }
+    if (this[listName].length + num > limit) {
+      let error = new ChatServiceError('listLimitExceeded', listName)
       return Promise.reject(error)
     } else {
       return Promise.resolve()
     }
   }
 
-  addToList (listName, elems) {
-    return this.checkList(listName).then(() => {
+  addToList (listName, elems, limit) {
+    let num = elems.length
+    return this.checkList(listName, num, limit).then(() => {
       this[listName].addEach(elems)
       return Promise.resolve()
     })
