@@ -51,7 +51,7 @@ conflict resolution or M2M communication tunnelling for IoT devices.
 
 - Supports lightweight online user to online user messaging.
 
-- Now fully rewritten in es6, runs natively on node `^6` (es5 babel
+- Now fully rewritten in es6, runs natively on node `>= 6` (es5 babel
   transpired code is included for node `4.x` and `0.12`
   compatibility).
 
