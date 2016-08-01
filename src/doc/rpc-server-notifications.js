@@ -111,7 +111,8 @@ function roomAccessListAdded (roomName, listName, userNames) {}
 function roomAccessListRemoved (roomName, listName, userNames) {}
 
  /**
-  * Echoes room join from other user's connections.
+  * Echoes room join events from other connections of the same user,
+  * or room joining for this connection made by the server.
   *
   * @param {string} roomName User name.
   * @param {string} id Socket id.
@@ -124,7 +125,8 @@ function roomAccessListRemoved (roomName, listName, userNames) {}
 function roomJoinedEcho (roomName, id, njoined) {}
 
  /**
-  * Echoes room leave from other user's connections.
+  * Echoes room leave events from other connections of the same user,
+  * or room leaving for this connection made by the server.
   *
   * @param {string} roomName User name.
   * @param {string} id Socket id.
