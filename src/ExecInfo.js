@@ -79,10 +79,18 @@ class ExecInfo {
    * @default []
    */
 
+  /**
+   * Custom data set by hooks.
+   * @name chat-service.ExecInfo#data
+   * @type {Object}
+   * @default {}
+   */
+
   constructor () {
     this.args = []
     this.bypassHooks = false
     this.bypassPermissions = null
+    this.data = {}
     this.error = null
     this.id = null
     this.isLocalCall = false
