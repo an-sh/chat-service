@@ -141,6 +141,16 @@ class SocketIOTransport {
     }
   }
 
+  getHandshakeData (id) {
+    let res = { isConnected: false, query: {}, headers: {} }
+    let socket = this.getSocket(id)
+    if (!socket) { return res }
+    res.isConnected = true
+    res.query = socket.handshake.query
+    res.headers = socket.handshake.headers
+    return res
+  }
+
   joinChannel (id, channel) {
     let socket = this.getSocket(id)
     if (!socket) {

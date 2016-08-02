@@ -49,6 +49,24 @@ module.exports = function () {
     })
   })
 
+  it('should store and return a handshake data', function (done) {
+    let onConnect = (server, id, cb) => {
+      let data = server.transport.getHandshakeData(id)
+      expect(data).an('Object')
+      expect(data.isConnected).true
+      expect(data.query.user).equal(user1)
+      nextTick(cb)
+    }
+    chatService = startService(null, {onConnect})
+    socket1 = clientConnect(user1)
+    socket1.on('loginConfirmed', () => {
+      let data = chatService.transport.getHandshakeData('id')
+      expect(data).an('Object')
+      expect(data.isConnected).false
+      done()
+    })
+  })
+
   it('should use an username and a data passed by onConnect', function (done) {
     let name = 'someUser'
     let data = { token: 'token' }

@@ -11,12 +11,25 @@
  */
 class TransportInterface {
   /**
+   * Connection handshake data. May include other fields.
+   *
+   * @typedef {Object} HandshakeData
+   * @memberof chat-service.TransportInterface
+   *
+   * @property {boolean} isConnected If the socket is still
+   * connected. If it is not, then headers and query will be empty.
+   *
+   * @property {Object} headers Parsed headers.
+   * @property {Object} query Parsed query string.
+   */
+
+  /**
    * @param {chat-service.ChatService} server ChatService.
    * @param {chat-service.config.SocketIOTransportOptions} options
    * Transport options.
-   * @param {Class} adapterConstructor socket.io-adapter compatible
+   * @param {Class} [adapterConstructor] socket.io-adapter compatible
    * adapter constructor.
-   * @param {Array} adapterOptions Adapter constructor arguments.
+   * @param {Array} [adapterOptions] Adapter constructor arguments.
    *
    * @private
    */
@@ -89,6 +102,14 @@ class TransportInterface {
    * @return {Promise<undefined>} Promise that resolves without any data.
    */
   sendToChannel (id, channel, eventName, ...eventData) {}
+
+  /**
+   * Gets socket handshake data.
+   *
+   * @param {string} id Socket id.
+   * @returns {chat-service.TransportInterface.HandshakeData} Handshake data.
+   */
+  getHandshakeData (id) {}
 
   /**
    * Adds a socket to a channel.
