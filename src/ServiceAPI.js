@@ -125,7 +125,7 @@ class ServiceAPI {
   }
 
   /**
-   * Checks for a name existence in an user list.
+   * Checks for a name existence in a direct messaging list.
    *
    * @param {string} userName User name.
    * @param {string} listName List name.

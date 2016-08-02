@@ -1,5 +1,5 @@
 
-# Chat service
+# Chat Service
 
 [![NPM Version](https://badge.fury.io/js/chat-service.svg)](https://badge.fury.io/js/chat-service)
 [![Build Status](https://travis-ci.org/an-sh/chat-service.svg?branch=master)](https://travis-ci.org/an-sh/chat-service)
@@ -12,7 +12,7 @@ Room messaging server implementation that is using a bidirectional RPC
 protocol to implement chat-like communication. Designed to handle
 common public network messaging problems like reliable delivery,
 multiple connections from a single user, real-time permissions and
-presence. RPC requests processing and a room messages format is
+presence. RPC requests processing and a room messages format are
 customisable via hooks, allowing to implement anything from a
 chat-rooms server to a collaborative application with a complex
 conflict resolution or M2M communication tunnelling for IoT devices.
@@ -51,16 +51,16 @@ conflict resolution or M2M communication tunnelling for IoT devices.
 
 - Supports lightweight online user to online user messaging.
 
-- Now fully rewritten in es6, runs natively on node `>= 6` (es5 babel
-  transpired code is included for node `4.x` and `0.12`
+- Now fully rewritten in __ES6__, runs natively on Node.js `>= 6` (ES5
+  Babel transpired code is included for Node.js `4.x` and `0.12`
   compatibility).
 
 
 ## Quickstart with socket.io
 
-On a server define a socket connection hook, as the service is relying
-on an extern auth implementation. A user just needs to pass an auth
-check, no explicit user adding step is required.
+On a server-side define a socket connection hook, as the service is
+relying on an extern auth implementation. A user just needs to pass an
+auth check, no explicit user adding step is required.
 
 ```javascript
 function onConnect(service, id) {
@@ -73,8 +73,8 @@ function onConnect(service, id) {
 }
 ```
 
-Creating a server is a simple object instantiation. __Note:__ that a
-`close` method _must_ be called to correctly shutdown a service (see
+Creating a server is a simple object instantiation. Note: A `close`
+method _must_ be called to correctly shutdown a service instance (see
 [Failures recovery](#failures-recovery)).
 
 ```javascript
@@ -123,6 +123,8 @@ socket.once('loginRejected', (error) => {
 })
 ```
 
+For details and advanced usage see [Documentation](#documentation).
+
 
 ## Concepts overview
 
@@ -153,6 +155,8 @@ that have lost an access permission.
 If `enableRoomsManagement` options is enabled users can create rooms
 via `roomCreate` command. The creator of a room will be it's owner and
 can also delete it via `roomDelete` command.
+
+Before hooks can be used to implement additional permissions systems.
 
 ### Reliable messaging and history synchronisation
 
@@ -237,12 +241,6 @@ after hook (when list name is equal to `'userlist'`).
 
 Server-side and RPC APIs documentation is available
 [online](https://an-sh.github.io/chat-service/0.9/).
-
-
-## Usage examples
-
-Single page chat
-[application](https://github.com/an-sh/chat-service-frontend-angular1).
 
 
 ## Debugging

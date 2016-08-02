@@ -13,7 +13,7 @@
 /**
  * Before hooks are available for all {@link rpc.clientRequests} and
  * are executed after a command arguments validation, but before
- * ChatService standard handler.
+ * Chat Service standard handler.
  *
  * @callback beforeHook
  *
@@ -29,7 +29,7 @@
 
 /**
  * After hooks are available for all {@link rpc.clientRequests} and
- * are executed after ChatService standard handlers, but before
+ * are executed after Chat Service standard handlers, but before
  * returning results to the command issuer.
  *
  * @callback afterHook
@@ -99,6 +99,7 @@
  * @memberof chat-service.hooks
  *
  * @see rpc.clientRequests
+ * @see chat-service.hooks.HooksInterface
  */
 class CommandsHooks {}
 
@@ -111,8 +112,8 @@ class CommandsHooks {}
 class HooksInterface extends CommandsHooks {
 
   /**
-   * Client connection hook. Client can send requests only after this
-   * hook is resolved.
+   * Client connection hook. Client can send requests or receive
+   * notifications only after this hook is resolved.
    *
    * @param {chat-service.ChatService} server Service instance.
    * @param {string} id Socket id.

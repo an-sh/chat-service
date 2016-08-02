@@ -24,7 +24,7 @@ class TransportInterface {
    */
 
   /**
-   * @param {chat-service.ChatService} server ChatService.
+   * @param {chat-service.ChatService} server Service instance.
    * @param {chat-service.config.SocketIOTransportOptions} options
    * Transport options.
    * @param {Class} [adapterConstructor] socket.io-adapter compatible
@@ -55,8 +55,10 @@ class TransportInterface {
   close () {}
 
   /**
-   * Creates a handler for a custom transport event. Must not coincide
-   * with {@link rpc.clientRequests} or transport system event names.
+   * Binds a handler for a custom transport event for the provided
+   * socket. Must not coincide with {@link rpc.clientRequests} or
+   * transport system event names. May be used inside {@link
+   * chat-service.hooks.HooksInterface.onConnect} hook.
    *
    * @param {string} id Socket id.
    * @param {string} name Event name.

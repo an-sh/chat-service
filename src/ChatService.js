@@ -1,6 +1,8 @@
 
 /**
- * Node style callback.
+ * Node style callback. All callbacks are optional, promises may be
+ * used instead. But only one API must be used per invocation.
+ *
  * @callback callback
  * @param {Error} error
  * @param {...*} results
@@ -148,6 +150,8 @@ class ChatService extends EventEmitter {
    */
 
   /**
+   * May be used in a custom transport implementation.
+   *
    * @name SocketIOClusterBus
    * @type Class
    * @static

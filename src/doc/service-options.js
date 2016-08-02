@@ -30,7 +30,7 @@
  * middleware to use on namespace.
  *
  * @property {Object} [io] Socket.io instance that should be used by
- * ChatService.
+ * Chat Service.
  *
  * @property {Object} [http] Use socket.io http server integration, used
  * only when no `io` object is passed.
