@@ -252,7 +252,7 @@ Single page chat
 Under normal circumstances all errors that are returned to a service
 user (via request replies, `loginConfirmed` or `loginRejected`
 messages) should be instances of `ChatServiceError`. All other errors
-indicate bug, or some failures in a service infrastructure. To enable
+indicate a bug or a failure in a service infrastructure. To enable
 debug logging of such errors use `export NODE_DEBUG=ChatService`. The
 library is using bluebird `^3.0.0` promises implementation, so to
 enable long stack traces use `export BLUEBIRD_DEBUG=1`. It is highly

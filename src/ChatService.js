@@ -143,6 +143,8 @@ class ChatService extends EventEmitter {
    * @readonly
    *
    * @memberof chat-service.ChatService
+   *
+   * @see rpc.datatypes.ChatServiceError
    */
 
   /**
