@@ -173,22 +173,6 @@ class ChatService extends EventEmitter {
    */
 
   /**
-   * Socket.io server, if `socket.io` transport is used.
-   *
-   * @name chat-service.ChatService#io
-   * @type Object|undefined
-   * @readonly
-   */
-
-  /**
-   * Socket.io server namespace, if `socket.io` transport is used.
-   *
-   * @name chat-service.ChatService#nsp
-   * @type Object|undefined
-   * @readonly
-   */
-
-  /**
    * Cluster communication via an adapter. Emits messages to all
    * services nodes, including the sender node.
    *

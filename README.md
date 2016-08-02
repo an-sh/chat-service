@@ -64,10 +64,8 @@ check, no explicit user adding step is required.
 
 ```javascript
 function onConnect(service, id) {
-  // Get socket object by id, assuming socket.io transport.
-  let socket = service.nsp.connected[id]
   // Assuming that auth data is passed in a query string.
-  let query = socket.handshake.query
+  let { query } = service.transport.getHandshakeData(id)
   // Check query data.
   // ...
   // Return a promise that resolves with a login string.
