@@ -73,9 +73,7 @@ class User {
     }
     let fn = this[command].bind(this)
     let cmd = this.commandBinder.makeCommand(command, fn)
-    return Promise.fromCallback(
-      cb => cmd(args, options, cb),
-      {multiArgs: true})
+    return cmd(args, options)
   }
 
   checkOnline () {

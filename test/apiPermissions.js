@@ -35,7 +35,7 @@ module.exports = function () {
       chatService.execUserCommand(
         user1, 'directAddToList', 'whitelist', [user2], (error, data) => {
           expect(error).not.ok
-          expect(data).null
+          expect(data).not.ok
           chatService.execUserCommand(
             user1, 'directGetAccessList', 'whitelist', (error, data) => {
               expect(error).not.ok
@@ -133,7 +133,7 @@ module.exports = function () {
                   expect(error).not.ok
                   expect(before).undefined
                   expect(after).undefined
-                  expect(data).null
+                  expect(data).not.ok
                   done()
                 })
             })

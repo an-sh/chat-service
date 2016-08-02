@@ -2,7 +2,8 @@
 const ExecInfo = require('./ExecInfo')
 const Promise = require('bluebird')
 const _ = require('lodash')
-const { convertError, execHook, possiblyCallback } = require('./utils')
+const { convertError, execHook, possiblyCallback, transformResults } =
+        require('./utils')
 
 // Implements command implementation functions binding and wrapping.
 class CommandBinder {
@@ -11,16 +12,6 @@ class CommandBinder {
     this.server = server
     this.transport = transport
     this.userName = userName
-  }
-
-  bindAck (cb) {
-    let useRawErrorObjects = this.server.useRawErrorObjects
-    return function (error, data, ...rest) {
-      error = convertError(error, useRawErrorObjects)
-      if (error == null) { error = null }
-      if (data == null) { data = null }
-      return cb(error, data, ...rest)
-    }
   }
 
   commandWatcher (id, name) {
@@ -37,10 +28,8 @@ class CommandBinder {
     let { validator } = this.server
     let beforeHook = this.server.hooks[`${name}Before`]
     let afterHook = this.server.hooks[`${name}After`]
-    return (args, info, cb) => {
-      if (cb) {
-        var ack = this.bindAck(cb)
-      }
+    let useErrorObjects = this.server.useRawErrorObjects
+    return (args, info) => {
       let execInfo = new ExecInfo()
       _.assign(execInfo, { server: this.server, userName: this.userName })
       _.assign(execInfo, info)
@@ -74,8 +63,8 @@ class CommandBinder {
                   return execInfo.results
                 }
               })
-          })
-      ).asCallback(ack, { spread: true })
+          }))
+        .catch(error => Promise.reject(convertError(error, useErrorObjects)))
     }
   }
 
@@ -94,7 +83,8 @@ class CommandBinder {
     let info = {id}
     return this.transport.bindHandler(id, name, function () {
       let [args, cb] = possiblyCallback(arguments)
-      return cmd(args, info, cb)
+      let ack = transformResults(cb)
+      return cmd(args, info).asCallback(ack, { spread: true })
     })
   }
 

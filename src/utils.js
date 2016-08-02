@@ -67,11 +67,21 @@ function convertError (error, useRawErrorObjects) {
   return error
 }
 
+function transformResults (cb) {
+  if (!cb) { return null }
+  return function (error, data, ...rest) {
+    if (error == null) { error = null }
+    if (data == null) { data = null }
+    return cb(error, data, ...rest)
+  }
+}
+
 module.exports = {
   asyncLimit,
   checkNameSymbols,
+  convertError,
   execHook,
   possiblyCallback,
-  convertError,
-  run
+  run,
+  transformResults
 }
