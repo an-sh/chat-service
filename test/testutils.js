@@ -46,18 +46,18 @@ function startService (opts, hooks) {
 
 if (process.env.TEST_REDIS_CLUSTER) {
   var redis = new Redis.Cluster(config.redisClusterConnect)
-  var checkDB = done => Promise.map(
+  var checkDB = () => Promise.map(
     redis.nodes('master'),
     node => node.dbsize().then(data => {
       if (data) { throw new Error('Unclean Redis DB') }
-    })).asCallback(done)
+    }))
   var cleanDB = () => Promise.map(redis.nodes('master'), node => node.flushall()
   )
 } else {
   redis = new Redis(config.redisConnect)
-  checkDB = done => redis.dbsize().then(data => {
+  checkDB = () => redis.dbsize().then(data => {
     if (data) { throw new Error('Unclean Redis DB') }
-  }).asCallback(done)
+  })
   cleanDB = () => redis.flushall()
 }
 
