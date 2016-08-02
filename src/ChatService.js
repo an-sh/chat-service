@@ -165,14 +165,6 @@ class ChatService extends EventEmitter {
    */
 
   /**
-   * `ioredis` instance if `redis` state is used.
-   *
-   * @name chat-service.ChatService#redis
-   * @type Object|undefined
-   * @readonly
-   */
-
-  /**
    * Cluster communication via an adapter. Emits messages to all
    * services nodes, including the sender node.
    *
