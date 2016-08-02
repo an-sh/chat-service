@@ -91,6 +91,14 @@ const rpcRequestsNames = [
  *   chatService.execUserCommand(context, 'roomMessage', 'roomName', msg)
  *     .then(fn)
  *
+ * @example <caption>server-side: joining an user socket to a room</caption>
+ *   let context = {
+ *     userName: 'user',
+ *     id: id // socket id
+ *   }
+ *   chatService.execUserCommand(context, 'roomJoin', 'roomName')
+ *     .then(fn) // real sockets will get a notification
+ *
  * @memberof chat-service
  *
  */
