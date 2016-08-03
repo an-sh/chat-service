@@ -69,7 +69,7 @@
  * available via {@link rpc.clientRequests.roomRecentHistory} or via a
  * single invocation {@link rpc.clientRequests.roomHistoryGet}.
  *
- * @property {number} [defaultHistoryLimit=10000] Default value for
+ * @property {number} [historyMaxSize=10000] Default value for
  * rooms. Can be changed individually for any room via {@link
  * chat-service.ServiceAPI#changeRoomHistoryMaxSize}.
  *

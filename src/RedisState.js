@@ -380,7 +380,7 @@ class RoomStateRedis extends ListsStateRedis {
     if (_.isNumber(historyMaxSize) && historyMaxSize >= 0) {
       return this.redis.set(this.makeKeyName('historyMaxSize'), historyMaxSize)
     } else {
-      let limit = this.server.defaultHistoryLimit
+      let limit = this.server.historyMaxSize
       return this.redis.set(this.makeKeyName('historyMaxSize'), limit)
     }
   }

@@ -186,7 +186,7 @@ class ServiceAPI {
    * @property {string} [state.owner] Room owner.
    * @property {number} [state.historyMaxSize] Room history maximum
    * size. Defalut value is {@link chat-service.config.options}
-   * `defaultHistoryLimit`.
+   * `historyMaxSize`.
    * @property {boolean} [state.enableAccessListsUpdates] Room enable
    * access lists updates. Defalut value is {@link
    * chat-service.config.options} `enableAccessListsUpdates`.

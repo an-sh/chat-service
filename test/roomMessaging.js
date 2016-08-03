@@ -332,7 +332,7 @@ module.exports = function () {
   it('should drop a history if the limit is zero', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
-    chatService = startService({ defaultHistoryLimit: 0 })
+    chatService = startService({ historyMaxSize: 0 })
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', () => {
@@ -378,7 +378,7 @@ module.exports = function () {
 
   it('should send a room history maximum size', function (done) {
     let sz = 1000
-    chatService = startService({ defaultHistoryLimit: sz })
+    chatService = startService({ historyMaxSize: sz })
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', () => {
@@ -398,7 +398,7 @@ module.exports = function () {
     let message1 = { textMessage: txt1 }
     let txt2 = 'Test message 2.'
     let message2 = { textMessage: txt2 }
-    chatService = startService({ defaultHistoryLimit: 1 })
+    chatService = startService({ historyMaxSize: 1 })
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', () => {
@@ -520,7 +520,7 @@ module.exports = function () {
   it('should sync a history with respect to a history size', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
-    chatService = startService({ defaultHistoryLimit: 2 })
+    chatService = startService({ historyMaxSize: 2 })
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
       series([

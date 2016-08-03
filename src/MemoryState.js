@@ -121,7 +121,7 @@ class RoomStateMemory extends ListsStateMemory {
     this.server = server
     this.name = name
     this.historyMaxGetMessages = this.server.historyMaxGetMessages
-    this.historyMaxSize = this.server.defaultHistoryLimit
+    this.historyMaxSize = this.server.historyMaxSize
     this.whitelist = new FastSet()
     this.blacklist = new FastSet()
     this.adminlist = new FastSet()

@@ -286,10 +286,10 @@ class ChatService extends EventEmitter {
         this.historyMaxGetMessages < 0) {
       this.historyMaxGetMessages = 100
     }
-    this.defaultHistoryLimit = this.options.defaultHistoryLimit
-    if (!_.isNumber(this.defaultHistoryLimit) ||
-        this.defaultHistoryLimit < 0) {
-      this.defaultHistoryLimit = 10000
+    this.historyMaxSize = this.options.historyMaxSize
+    if (!_.isNumber(this.historyMaxSize) ||
+        this.historyMaxSize < 0) {
+      this.historyMaxSize = 10000
     }
     this.port = this.options.port || 8000
     this.directMessagesChecker = this.hooks.directMessagesChecker
