@@ -175,7 +175,7 @@ module.exports = function () {
   it('should return converted internal error objects', function (done) {
     let msg
     let onConnect = (server, id, cb) => {
-      let err = new Error('DB error')
+      let err = new Error('This is an error mockup for testing.')
       msg = err.toString()
       throw err
     }

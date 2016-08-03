@@ -52,24 +52,30 @@ function run (self, gen) {
   return Promise.coroutine(gen).call(self)
 }
 
+function logError (error) {
+  let isServiceError = error instanceof ChatServiceError
+  if (!isServiceError) {
+    debuglog(error)
+  }
+}
+
 function convertError (error, useRawErrorObjects) {
-  if (error) {
-    let isServiceError = error instanceof ChatServiceError
-    if (!isServiceError) {
-      debuglog(error)
-    }
+  if (error != null) {
     if (!useRawErrorObjects) {
       return error.toString()
-    } else if (!isServiceError) {
+    }
+    let isServiceError = error instanceof ChatServiceError
+    if (!isServiceError) {
       return new ChatServiceError('internalError', error.toString())
     }
   }
   return error
 }
 
-function transformResults (cb) {
+function resultsTransform (useRawErrorObjects, cb) {
   if (!cb) { return null }
   return function (error, data, ...rest) {
+    error = convertError(error, useRawErrorObjects)
     if (error == null) { error = null }
     if (data == null) { data = null }
     return cb(error, data, ...rest)
@@ -78,10 +84,11 @@ function transformResults (cb) {
 
 module.exports = {
   asyncLimit,
-  checkNameSymbols,
   convertError,
+  checkNameSymbols,
   execHook,
+  logError,
   possiblyCallback,
-  run,
-  transformResults
+  resultsTransform,
+  run
 }
