@@ -256,4 +256,49 @@ module.exports = function () {
       })
     })
   })
+
+  it('should be able to enable access lists updates', function (done) {
+    chatService = startService()
+    chatService.addRoom(roomName1, { owner: user1 }, () => {
+      socket1 = clientConnect(user1)
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          chatService.changeAccessListsUpdates(roomName1, true, (error) => {
+            expect(error).not.ok
+            chatService.execUserCommand(
+              user1, 'roomAddToList', roomName1, 'whitelist', [user2])
+            socket1.on('roomAccessListAdded', (roomName, listName, names) => {
+              expect(roomName).equal(roomName1)
+              expect(listName).equal('whitelist')
+              expect(names[0]).equal(user2)
+              done()
+            })
+          })
+        })
+      })
+    })
+  })
+
+  it('should be able to enable user list updates', function (done) {
+    chatService = startService()
+    chatService.addRoom(roomName1, { owner: user1 }, () => {
+      socket1 = clientConnect(user1)
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          chatService.changeUserlistUpdates(roomName1, true, (error) => {
+            expect(error).not.ok
+            socket1.on('roomUserJoined', (roomName, userName) => {
+              expect(roomName).equal(roomName1)
+              expect(userName).equal(user2)
+              done()
+            })
+            socket2 = clientConnect(user2)
+            socket2.on('loginConfirmed', () => {
+              socket2.emit('roomJoin', roomName1)
+            })
+          })
+        })
+      })
+    })
+  })
 }

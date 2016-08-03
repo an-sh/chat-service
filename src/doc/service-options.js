@@ -45,10 +45,12 @@
  *
  * @property {boolean} [port=8000] Port number.
  *
- * @property {boolean} [enableAccessListsUpdates=false] Enables {@link
- * rpc.serverNotifications.roomModeChanged}, {@link
- * rpc.serverNotifications.roomAccessListAdded} and {@link
- * rpc.serverNotifications.roomAccessListRemoved} notifications.
+ * @property {boolean} [enableAccessListsUpdates=false] Default value
+ * for new rooms. Enables {@link rpc.serverNotifications.roomModeChanged},
+ * {@link rpc.serverNotifications.roomAccessListAdded} and {@link
+ * rpc.serverNotifications.roomAccessListRemoved} notifications. Can
+ * be changed individually for any room via {@link
+ * chat-service.ServiceAPI#changeAccessListsUpdates}.
  *
  * @property {boolean} [enableDirectMessages=false] Enables user to
  * user {@link rpc.clientRequests.directMessage} communication.
@@ -57,18 +59,19 @@
  * {@link rpc.clientRequests.roomCreate} and {@link
  * rpc.clientRequests.roomDelete}.
  *
- * @property {boolean} [enableUserlistUpdates=false] Enables {@link
- * rpc.serverNotifications.roomUserJoined} and {@link
- * rpc.serverNotifications.roomUserLeft} messages.
+ * @property {boolean} [enableUserlistUpdates=false] Default value for
+ * new rooms. Enables {@link rpc.serverNotifications.roomUserJoined} and
+ * {@link rpc.serverNotifications.roomUserLeft} messages. Can be
+ * changed individually for any room via {@link
+ * chat-service.ServiceAPI#changeUserlistUpdates}.
  *
  * @property {number} [historyMaxGetMessages=100] Room history size
  * available via {@link rpc.clientRequests.roomRecentHistory} or via a
  * single invocation {@link rpc.clientRequests.roomHistoryGet}.
  *
- * @property {number} [defaultHistoryLimit=10000] Is used for {@link
- * rpc.clientRequests.roomCreate} or when {@link
- * chat-service.ServiceAPI#addRoom} is called without `historyMaxSize`
- * option.
+ * @property {number} [defaultHistoryLimit=10000] Default value for
+ * rooms. Can be changed individually for any room via {@link
+ * chat-service.ServiceAPI#changeRoomHistoryMaxSize}.
  *
  * @property {number} [directListSizeLimit=1000] Maximum number of
  * entries allowed in direct messaging permissions lists.

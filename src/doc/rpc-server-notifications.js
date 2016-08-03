@@ -93,6 +93,7 @@ function roomAccessRemoved (roomName) {}
   * @param {Array<string>} userNames User names removed from the list.
   *
   * @see rpc.clientRequests.roomAddToList
+  * @see chat-service.ServiceAPI#changeAccessListsUpdates
   *
   * @memberof rpc.serverNotifications
   */
@@ -107,6 +108,7 @@ function roomAccessListAdded (roomName, listName, userNames) {}
   * @param {Array<string>} userNames User names added to the list.
   *
   * @see rpc.clientRequests.roomRemoveFromList
+  * @see chat-service.ServiceAPI#changeAccessListsUpdates
   *
   * @memberof rpc.serverNotifications
   */
@@ -159,6 +161,7 @@ function roomMessage (roomName, message) {}
   * @param {boolean} mode Room mode.
   *
   * @see rpc.clientRequests.roomSetWhitelistMode
+  * @see chat-service.ServiceAPI#changeAccessListsUpdates
   *
   * @memberof rpc.serverNotifications
   */
@@ -171,6 +174,7 @@ function roomModeChanged (roomName, mode) {}
   * @param {string} userName User name.
   *
   * @see rpc.clientRequests.roomJoin
+  * @see chat-service.ServiceAPI#changeUserlistUpdates
   *
   * @memberof rpc.serverNotifications
   */
@@ -183,6 +187,7 @@ function roomUserJoined (roomName, userName) {}
   * @param {string} userName User name.
   *
   * @see rpc.clientRequests.roomLeave
+  * @see chat-service.ServiceAPI#changeUserlistUpdates
   *
   * @memberof rpc.serverNotifications
   */

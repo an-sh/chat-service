@@ -73,7 +73,7 @@ function directGetWhitelistMode () {}
   * Sends {@link rpc.serverNotifications.directMessage} to an another
   * user, if {@link chat-service.config.options}
   * `enableDirectMessages` option is true. Also sends {@link
-  * rpc.serverNotifications.directMessageEcho} to other senders's
+  * rpc.serverNotifications.directMessageEcho} to other sender's
   * sockets.
   *
   * @param {string} toUser Message receiver.

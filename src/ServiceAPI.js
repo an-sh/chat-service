@@ -185,11 +185,14 @@ class ServiceAPI {
    * whitelistOnly mode.
    * @property {string} [state.owner] Room owner.
    * @property {number} [state.historyMaxSize] Room history maximum
-   * size.
+   * size. Defalut value is {@link chat-service.config.options}
+   * `defaultHistoryLimit`.
    * @property {boolean} [state.enableAccessListsUpdates] Room enable
-   * access lists updates.
+   * access lists updates. Defalut value is {@link
+   * chat-service.config.options} `enableAccessListsUpdates`.
    * @property {boolean} [state.enableUserlistUpdates] Room enable
-   * userlist updates.
+   * userlist updates. Defalut value is {@link
+   * chat-service.config.options} `enableUserlistUpdates`.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    */
@@ -289,6 +292,38 @@ class ServiceAPI {
   changeRoomHistoryMaxSize (roomName, size, cb) {
     return this.state.getRoom(roomName)
       .then(room => room.roomState.historyMaxSizeSet(size))
+      .return()
+      .asCallback(cb)
+  }
+
+  /**
+   * Enables or disables access lists updates for the room.
+   *
+   * @param {string} roomName Room name.
+   * @param {boolean} mode Enable or disable.
+   * @param {callback} [cb] Optional callback.
+   *
+   * @return {Promise<undefined>} Promise that resolves without any data.
+   */
+  changeAccessListsUpdates (roomName, mode, cb) {
+    return this.state.getRoom(roomName)
+      .then(room => room.roomState.accessListsUpdatesSet(mode))
+      .return()
+      .asCallback(cb)
+  }
+
+  /**
+   * Enables or disables user list updates for the room.
+   *
+   * @param {string} roomName Room name.
+   * @param {boolean} mode Enable or disable.
+   * @param {callback} [cb] Optional callback.
+   *
+   * @return {Promise<undefined>} Promise that resolves without any data.
+   */
+  changeUserlistUpdates (roomName, mode, cb) {
+    return this.state.getRoom(roomName)
+      .then(room => room.roomState.userlistUpdatesSet(mode))
       .return()
       .asCallback(cb)
   }
