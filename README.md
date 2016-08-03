@@ -63,17 +63,18 @@ relying on an extern auth implementation. A user just needs to pass an
 auth check, no explicit user adding step is required.
 
 ```javascript
-function onConnect(service, id) {
+function onConnect (service, id) {
   // Assuming that auth data is passed in a query string.
   let { query } = service.transport.getHandshakeData(id)
-  // Check query data.
+  let { userName } = query
+  // Actually check auth data.
   // ...
   // Return a promise that resolves with a login string.
   return Promise.resolve(userName)
 }
 ```
 
-Creating a server is a simple object instantiation. Note: A `close`
+Creating a server is a simple object instantiation. Note: `close`
 method _must_ be called to correctly shutdown a service instance (see
 [Failures recovery](#failures-recovery)).
 
@@ -81,7 +82,7 @@ method _must_ be called to correctly shutdown a service instance (see
 const port = 8000
 const ChatService = require('chat-service')
 const chatService = new ChatService({port}, {onConnect})
-process.on('SIGINT', chatService.close().finally(() => process.exit()))
+process.on('SIGINT', () => chatService.close().finally(() => process.exit()))
 ```
 
 Server is now running on port `8000`, using memory state. By default
@@ -99,8 +100,10 @@ returned in socket.io ack callback. To listen to server messages use
 
 ```javascript
 let io = require('socket.io-client')
-let url = 'localhost:8000/chat-service'
-let query = `user=${user}&secret=${secret}` // auth data
+let url = 'ws://localhost:8000/chat-service'
+let userName = `user${Math.floor(Math.random() * 99) + 1}`
+let token = 'token' // auth token
+let query = `userName=${userName}&token=${token}`
 let params = { query }
 // Connect to server.
 let socket = io.connect(url, params)
@@ -108,6 +111,7 @@ socket.once('loginConfirmed', (userName) => {
   // Auth success.
   socket.on('roomMessage', (room, msg) => {
     // Rooms messages handler (own messages are here too).
+    console.log(`${msg.author}: ${msg.textMessage}`)
   })
   // Join room 'default'.
   socket.emit('roomJoin', 'default', (error, data) => {
@@ -120,10 +124,12 @@ socket.once('loginConfirmed', (userName) => {
 })
 socket.once('loginRejected', (error) => {
   // Auth error handler.
+  console.error(error)
 })
 ```
 
-For details and advanced usage see [Documentation](#documentation).
+It is a runnable code, files are in `example` directory. For more
+details and advanced usage see [Documentation](#documentation).
 
 
 ## Concepts overview
