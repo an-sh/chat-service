@@ -320,8 +320,10 @@ class RoomStateRedis extends ListsStateRedis {
   stateReset (state) {
     state = state || {}
     let { whitelist, blacklist, adminlist,
-          whitelistOnly, owner, historyMaxSize } = state
-    whitelistOnly = whitelistOnly ? true : ''
+          whitelistOnly, owner, historyMaxSize,
+          enableAccessListsUpdates = this.server.enableAccessListsUpdates,
+          enableUserlistUpdates = this.server.enableUserlistUpdates
+        } = state
     if (!owner) { owner = '' }
     return Promise.all([
       initSet(this.redis, this.makeKeyName('whitelist'), whitelist),
@@ -333,8 +335,10 @@ class RoomStateRedis extends ListsStateRedis {
       this.redis.del(this.makeKeyName('messagesIds')),
       this.redis.del(this.makeKeyName('usersseen')),
       this.redis.set(this.makeKeyName('lastMessageId'), 0),
-      this.redis.set(this.makeKeyName('whitelistMode'), whitelistOnly),
       this.redis.set(this.makeKeyName('owner'), owner),
+      this.whitelistOnlySet(whitelistOnly),
+      this.accessListsUpdatesSet(enableAccessListsUpdates),
+      this.userlistUpdatesSet(enableUserlistUpdates),
       this.historyMaxSizeSet(historyMaxSize)
     ]).return()
   }
@@ -350,6 +354,26 @@ class RoomStateRedis extends ListsStateRedis {
 
   ownerSet (owner) {
     return this.redis.set(this.makeKeyName('owner'), owner)
+  }
+
+  accessListsUpdatesSet (enableAccessListsUpdates) {
+    enableAccessListsUpdates = enableAccessListsUpdates ? true : ''
+    return this.redis.set(this.makeKeyName('enableAccessListsUpdates'),
+                          enableAccessListsUpdates)
+  }
+
+  accessListsUpdatesGet () {
+    return this.redis.get(this.makeKeyName('enableAccessListsUpdates'))
+  }
+
+  userlistUpdatesSet (enableUserlistUpdates) {
+    enableUserlistUpdates = enableUserlistUpdates ? true : ''
+    return this.redis.set(this.makeKeyName('enableUserlistUpdates'),
+                          enableUserlistUpdates)
+  }
+
+  userlistUpdatesGet () {
+    return this.redis.get(this.makeKeyName('enableUserlistUpdates'))
   }
 
   historyMaxSizeSet (historyMaxSize) {

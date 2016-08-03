@@ -136,8 +136,12 @@ class RoomStateMemory extends ListsStateMemory {
   }
 
   initState (state) {
+    state = state || {}
     let { whitelist, blacklist, adminlist,
-          whitelistOnly, owner, historyMaxSize } = state
+          whitelistOnly, owner, historyMaxSize,
+          enableAccessListsUpdates = this.server.enableAccessListsUpdates,
+          enableUserlistUpdates = this.server.enableUserlistUpdates
+        } = state
     initState(this.whitelist, whitelist)
     initState(this.blacklist, blacklist)
     initState(this.adminlist, adminlist)
@@ -146,6 +150,8 @@ class RoomStateMemory extends ListsStateMemory {
     initState(this.messagesIds)
     initState(this.usersseen)
     this.whitelistOnly = Boolean(whitelistOnly)
+    this.enableAccessListsUpdates = Boolean(enableAccessListsUpdates)
+    this.enableUserlistUpdates = Boolean(enableUserlistUpdates)
     this.owner = owner || null
     return this.historyMaxSizeSet(historyMaxSize)
   }
@@ -170,6 +176,24 @@ class RoomStateMemory extends ListsStateMemory {
   ownerSet (owner) {
     this.owner = owner
     return Promise.resolve()
+  }
+
+  accessListsUpdatesSet (enableAccessListsUpdates) {
+    this.enableAccessListsUpdates = Boolean(enableAccessListsUpdates)
+    return Promise.resolve()
+  }
+
+  accessListsUpdatesGet () {
+    return Promise.resolve(this.enableAccessListsUpdates)
+  }
+
+  userlistUpdatesSet (enableUserlistUpdates) {
+    this.enableUserlistUpdates = Boolean(enableUserlistUpdates)
+    return Promise.resolve()
+  }
+
+  userlistUpdatesGet () {
+    return Promise.resolve(this.enableUserlistUpdates)
   }
 
   historyMaxSizeSet (historyMaxSize) {
@@ -468,11 +492,7 @@ class MemoryState {
       let error = new ChatServiceError('roomExists', name)
       return Promise.reject(error)
     }
-    if (state) {
-      return room.initState(state).return(room)
-    } else {
-      return Promise.resolve(room)
-    }
+    return room.initState(state).return(room)
   }
 
   removeRoom (name) {

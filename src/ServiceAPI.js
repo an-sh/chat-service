@@ -72,10 +72,12 @@ class ServiceAPI {
    * @param {Object} state User state.
    * @param {callback} [cb] Optional callback.
    *
-   * @property {Array<string>} state.whitelist User direct messages whitelist.
-   * @property {Array<string>} state.blacklist User direct messages blacklist.
-   * @property {boolean} state.whitelistOnly User direct messages
-   * whitelistOnly mode, default is `false`.
+   * @property {Array<string>} [state.whitelist] User direct messages
+   * whitelist.
+   * @property {Array<string>} [state.blacklist] User direct messages
+   * blacklist.
+   * @property {boolean} [state.whitelistOnly=false] User direct
+   * messages whitelistOnly mode.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    */
@@ -87,7 +89,7 @@ class ServiceAPI {
   }
 
   /**
-   * Deletes an offline user. Will raise an error if user has online
+   * Deletes an offline user. Will raise an error if a user has online
    * sockets.
    *
    * @param {string} userName User name.
@@ -176,13 +178,18 @@ class ServiceAPI {
    * @param {Object} state Room state.
    * @param {callback} [cb] Optional callback.
    *
-   * @property {Array<string>} state.whitelist Room whitelist.
-   * @property {Array<string>} state.blacklist Room blacklist
-   * @property {Array<string>} state.adminlist Room adminlist.
-   * @property {boolean} state.whitelistOnly Room whitelistOnly mode,
-   * default is `false`.
-   * @property {string} state.owner Room owner.
-   * @property {number} state.historyMaxSize Room history maximum size.
+   * @property {Array<string>} [state.whitelist] Room whitelist.
+   * @property {Array<string>} [state.blacklist] Room blacklist
+   * @property {Array<string>} [state.adminlist] Room adminlist.
+   * @property {boolean} [state.whitelistOnly=false] Room
+   * whitelistOnly mode.
+   * @property {string} [state.owner] Room owner.
+   * @property {number} [state.historyMaxSize] Room history maximum
+   * size.
+   * @property {boolean} [state.enableAccessListsUpdates] Room enable
+   * access lists updates.
+   * @property {boolean} [state.enableUserlistUpdates] Room enable
+   * userlist updates.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    */

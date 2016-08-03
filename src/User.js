@@ -17,8 +17,6 @@ class User {
     this.echoChannel = `echo:${this.userName}`
     this.state = this.server.state
     this.transport = this.server.transport
-    this.enableUserlistUpdates = this.server.enableUserlistUpdates
-    this.enableAccessListsUpdates = this.server.enableAccessListsUpdates
     this.enableRoomsManagement = this.server.enableRoomsManagement
     this.enableDirectMessages = this.server.enableDirectMessages
     this.directMessaging = new DirectMessaging(server, userName)
@@ -31,7 +29,6 @@ class User {
       clusterBus: this.server.clusterBus,
       consistencyFailure: this.consistencyFailure.bind(this),
       echoChannel: this.echoChannel,
-      enableUserlistUpdates: this.enableUserlistUpdates,
       lockTTL: this.state.lockTTL,
       state: this.state,
       transport: this.transport,
@@ -179,14 +176,17 @@ class User {
 
   roomAddToList (roomName, listName, values, {bypassPermissions}) {
     return this.state.getRoom(roomName).then(room => {
-      return room.addToList(this.userName, listName, values, bypassPermissions)
-    }).then(userNames => {
-      if (this.enableAccessListsUpdates) {
-        this.transport.emitToChannel(
-          roomName, 'roomAccessListAdded', roomName, listName, values)
-      }
-      return this.removeRoomUsers(roomName, userNames).return()
-    })
+      return Promise.join(
+        room.addToList(this.userName, listName, values, bypassPermissions),
+        room.roomState.accessListsUpdatesGet(),
+        (userNames, update) => {
+          if (update) {
+            this.transport.emitToChannel(
+              roomName, 'roomAccessListAdded', roomName, listName, values)
+          }
+          return this.removeRoomUsers(roomName, userNames)
+        })
+    }).return()
   }
 
   roomCreate (roomName, whitelistOnly, {bypassPermissions}) {
@@ -269,27 +269,32 @@ class User {
 
   roomRemoveFromList (roomName, listName, values, {bypassPermissions}) {
     return this.state.getRoom(roomName).then(room => {
-      return room.removeFromList(
-        this.userName, listName, values, bypassPermissions)
-    }).then(userNames => {
-      if (this.enableAccessListsUpdates) {
-        this.transport.emitToChannel(
-          roomName, 'roomAccessListRemoved', roomName, listName, values)
-      }
-      return this.removeRoomUsers(roomName, userNames)
+      return Promise.join(
+        room.removeFromList(this.userName, listName, values, bypassPermissions),
+        room.roomState.accessListsUpdatesGet(),
+        (userNames, update) => {
+          if (update) {
+            this.transport.emitToChannel(
+              roomName, 'roomAccessListRemoved', roomName, listName, values)
+          }
+          return this.removeRoomUsers(roomName, userNames)
+        })
     }).return()
   }
 
   roomSetWhitelistMode (roomName, mode, {bypassPermissions}) {
     return this.state.getRoom(roomName).then(room => {
-      return room.changeMode(this.userName, mode, bypassPermissions)
-    }).spread((userNames, mode) => {
-      if (this.enableAccessListsUpdates) {
-        this.transport.emitToChannel(
-          roomName, 'roomModeChanged', roomName, mode)
-      }
-      return this.removeRoomUsers(roomName, userNames)
-    })
+      return Promise.join(
+        room.changeMode(this.userName, mode, bypassPermissions),
+        room.roomState.accessListsUpdatesGet(),
+        ([userNames, mode], update) => {
+          if (update) {
+            this.transport.emitToChannel(
+              roomName, 'roomModeChanged', roomName, mode)
+          }
+          return this.removeRoomUsers(roomName, userNames)
+        })
+    }).return()
   }
 
   roomUserSeen (roomName, userName, {bypassPermissions}) {
