@@ -41,9 +41,7 @@ class RoomPermissions {
       if (!hasUser) { return false }
       return this.isAdmin(userName)
         .then(admin => !(admin || listName !== 'blacklist'))
-    }).catch(e => {
-      return this.consistencyFailure(e, {userName})
-    })
+    }).catch(e => this.consistencyFailure(e, {userName}))
   }
 
   getModeChangedCurrentAccess (value) {
@@ -206,23 +204,19 @@ class Room {
   addToList (author, listName, values, bypassPermissions) {
     return this.checkListChanges(author, listName, values, bypassPermissions)
       .then(() => this.roomState.addToList(listName, values, this.listSizeLimit))
-      .then(() => {
-        return Promise.filter(
-          values,
-          val => this.hasAddChangedCurrentAccess(val, listName),
-          { concurrency: asyncLimit })
-      })
+      .then(() => Promise.filter(
+        values,
+        val => this.hasAddChangedCurrentAccess(val, listName),
+        { concurrency: asyncLimit }))
   }
 
   removeFromList (author, listName, values, bypassPermissions) {
     return this.checkListChanges(author, listName, values, bypassPermissions)
       .then(() => this.roomState.removeFromList(listName, values))
-      .then(() => {
-        return Promise.filter(
-          values,
-          val => this.hasRemoveChangedCurrentAccess(val, listName),
-          { concurrency: asyncLimit })
-      })
+      .then(() => Promise.filter(
+        values,
+        val => this.hasRemoveChangedCurrentAccess(val, listName),
+        { concurrency: asyncLimit }))
   }
 
   getMode (author, bypassPermissions) {
