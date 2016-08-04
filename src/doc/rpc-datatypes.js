@@ -49,6 +49,22 @@
  * @property {number} historyMaxSize - Room history limit.
  * @property {number} historySize - Room current history size.
  * @property {number} lastMessageId - Room last message id.
+ *
+ * @see chat-service.ServiceAPI#changeRoomHistoryMaxSize
+ */
+
+/**
+ * Room notifications information.
+ *
+ * @typedef {Object} NotificationsInfo
+ * @memberof rpc.datatypes
+ * @property {boolean} enableUserlistUpdates - If room userlist
+ * updates are enabled.
+ * @property {boolean} enableAccessListsUpdates - If room access lists
+ * updates are enabled.
+ *
+ * @see chat-service.ServiceAPI#changeAccessListsUpdates
+ * @see chat-service.ServiceAPI#changeUserlistUpdates
  */
 
 /**

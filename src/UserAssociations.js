@@ -113,11 +113,7 @@ class UserAssociations {
   getNotifySettings (roomName) {
     return Promise
       .try(() => this.state.getRoom(roomName))
-      .then(room => Promise.join(
-        room.roomState.userlistUpdatesGet(),
-        room.roomState.accessListsUpdatesGet(),
-        (enableUserlistUpdates, enableAccessListsUpdates) =>
-          ({ enableUserlistUpdates, enableAccessListsUpdates })))
+      .then(room => room.getNotificationsInfo(null, true))
       .catchReturn({})
   }
 

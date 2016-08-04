@@ -324,6 +324,20 @@ function roomLeave (roomName) {}
 function roomMessage (roomName, message) {}
 
  /**
+  * Gets the the notifications room.
+  *
+  * @param {string} roomName Room name.
+  *
+  * @returns {rpc.datatypes.NotificationsInfo} Room notifications
+  * information.
+  *
+  * @see rpc.serverNotifications
+  *
+  * @memberof rpc.clientRequests
+  */
+function roomNotificationsInfo (roomName) {}
+
+ /**
   * Removes user names from room's blacklist, adminlist and
   * whitelist. Also removes users that have lost an access permission
   * in the result of an operation, sending {@link

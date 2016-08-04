@@ -695,4 +695,23 @@ module.exports = function () {
       })
     })
   })
+
+  it('should send notifications configuration info', function (done) {
+    chatService = startService()
+    let config = {enableAccessListsUpdates: false, enableUserlistUpdates: true}
+    chatService.addRoom(roomName1, config, () => {
+      socket1 = clientConnect(user1)
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket1.emit('roomNotificationsInfo', roomName1, (error, data) => {
+            expect(error).not.ok
+            expect(data).an.object
+            expect(data.enableAccessListsUpdates).false
+            expect(data.enableUserlistUpdates).true
+            done()
+          })
+        })
+      })
+    })
+  })
 }

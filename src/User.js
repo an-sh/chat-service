@@ -267,6 +267,11 @@ class User {
     })
   }
 
+  roomNotificationsInfo (roomName, {bypassPermissions}) {
+    return this.state.getRoom(roomName)
+      .then(room => room.getNotificationsInfo(this.userName, bypassPermissions))
+  }
+
   roomRemoveFromList (roomName, listName, values, {bypassPermissions}) {
     return this.state.getRoom(roomName).then(room => {
       return Promise.join(

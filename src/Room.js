@@ -192,6 +192,15 @@ class Room {
       .then(() => this.roomState.historyInfo())
   }
 
+  getNotificationsInfo (author, bypassPermissions) {
+    return this.checkRead(author, bypassPermissions)
+      .then(() => Promise.join(
+        this.roomState.userlistUpdatesGet(),
+        this.roomState.accessListsUpdatesGet(),
+        (enableUserlistUpdates, enableAccessListsUpdates) =>
+          ({ enableUserlistUpdates, enableAccessListsUpdates })))
+  }
+
   getMessages (author, id, limit, bypassPermissions) {
     return this.checkRead(author, bypassPermissions).then(() => {
       if (!bypassPermissions) {

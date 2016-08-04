@@ -52,6 +52,7 @@ const rpcRequestsNames = [
   'roomJoin',
   'roomLeave',
   'roomMessage',
+  'roomNotificationsInfo',
   'roomRecentHistory',
   'roomRemoveFromList',
   'roomSetWhitelistMode',

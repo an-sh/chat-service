@@ -304,6 +304,10 @@ class ServiceAPI {
    * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
+   *
+   * @see rpc.serverNotifications.roomAccessListAdded
+   * @see rpc.serverNotifications.roomAccessListRemoved
+   * @see rpc.serverNotifications.roomModeChanged
    */
   changeAccessListsUpdates (roomName, mode, cb) {
     return this.state.getRoom(roomName)
@@ -320,6 +324,9 @@ class ServiceAPI {
    * @param {callback} [cb] Optional callback.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
+   *
+   * @see rpc.serverNotifications.roomUserJoined
+   * @see rpc.serverNotifications.roomUserLeft
    */
   changeUserlistUpdates (roomName, mode, cb) {
     return this.state.getRoom(roomName)

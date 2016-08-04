@@ -201,6 +201,12 @@ class ArgumentsValidator {
     ]
   }
 
+  roomNotificationsInfo (roomName) {
+    return [
+      check.string
+    ]
+  }
+
   roomRemoveFromList (roomName, listName, userNames) {
     return [
       check.string,

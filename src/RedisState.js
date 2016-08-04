@@ -364,6 +364,7 @@ class RoomStateRedis extends ListsStateRedis {
 
   accessListsUpdatesGet () {
     return this.redis.get(this.makeKeyName('enableAccessListsUpdates'))
+      .then(data => Promise.resolve(Boolean(data)))
   }
 
   userlistUpdatesSet (enableUserlistUpdates) {
@@ -374,6 +375,7 @@ class RoomStateRedis extends ListsStateRedis {
 
   userlistUpdatesGet () {
     return this.redis.get(this.makeKeyName('enableUserlistUpdates'))
+      .then(data => Promise.resolve(Boolean(data)))
   }
 
   historyMaxSizeSet (historyMaxSize) {
