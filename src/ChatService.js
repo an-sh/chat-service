@@ -399,7 +399,8 @@ class ChatService extends EventEmitter {
           .then(() => this.transport.setEvents())
       } else {
         // tests spec compatibility
-        return this.transport.setEvents().then(() => this.clusterBus.listen())
+        this.transport.setEvents()
+        return this.clusterBus.listen()
       }
     }).then(() => {
       this.state.updateHeartbeat()

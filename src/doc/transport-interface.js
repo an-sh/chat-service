@@ -93,19 +93,6 @@ class TransportInterface {
  */
 class TransportPlugin {
   /**
-   * Connection handshake data. May include other fields.
-   *
-   * @typedef {Object} HandshakeData
-   * @memberof chat-service.TransportInterface
-   *
-   * @property {boolean} isConnected If the socket is still
-   * connected. If it is not, then headers and query will be empty.
-   *
-   * @property {Object} headers Parsed headers.
-   * @property {Object} query Parsed query string.
-   */
-
-  /**
    * @param {chat-service.ChatService} server Service instance.
    * @param {Object} options Transport options.
    * @param {Class} [adapterConstructor] socket.io-adapter compatible
@@ -119,9 +106,14 @@ class TransportPlugin {
   constructor (server, options, adapterConstructor, adapterOptions) {}
 
   /**
-   * Starts accepting clients' connections.
+   * Starts accepting clients' connections. On connection
+   * `ChatService#registerClient(userName: string, id: string)` method
+   * must be called. Then a resolved or rejected promise value must be
+   * emitted via a `loginConfirmed` or a `loginRejected` notification,
+   * respectively. Also a `disconnect` event must be emitted when
+   * connection is closed.
    *
-   * @return {Promise<undefined>} Promise that resolves without any data.
+   * @return {undefined}
    */
   setEvents () {}
 

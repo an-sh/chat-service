@@ -59,13 +59,11 @@ class SocketIOTransport {
     error = convertError(error, this.server.useRawErrorObjects)
     socket.emit('loginRejected', error)
     socket.disconnect()
-    return Promise.resolve()
   }
 
   confirmLogin (socket, userName, authData) {
     authData.id = socket.id
     socket.emit('loginConfirmed', userName, authData)
-    return Promise.resolve()
   }
 
   ensureUserName (socket, userName) {
@@ -94,10 +92,9 @@ class SocketIOTransport {
         let [userName, authData = {}] = yield this.server.onConnect(id)
         userName = yield this.ensureUserName(socket, userName)
         yield this.server.registerClient(userName, id)
-        yield this.confirmLogin(socket, userName, authData)
+        this.confirmLogin(socket, userName, authData)
       }).catch(error => this.rejectLogin(socket, error))
     })
-    return Promise.resolve()
   }
 
   close () {

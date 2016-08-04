@@ -98,7 +98,8 @@
  *
  * @property {('memory'|'redis'|Class)} [state='memory'] Chat state.
  *
- * @property {('socket.io'|Class)} [transport='socket.io'] Transport.
+ * @property {('socket.io'|chat-service.TransportPlugin)}
+ * [transport='socket.io'] Transport.
  *
  * @property {('memory'|'redis'|Class)} [adapter='memory'] Adapter for
  * service instances communication, must implement a
