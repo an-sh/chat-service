@@ -3,8 +3,7 @@
 /*eslint no-useless-constructor: 0*/
 
 /**
- * Transport interface. A transport plugin also must implement all
- * private methods.
+ * Transport public interface.
  *
  * @interface
  * @memberof chat-service
@@ -22,37 +21,6 @@ class TransportInterface {
    * @property {Object} headers Parsed headers.
    * @property {Object} query Parsed query string.
    */
-
-  /**
-   * @param {chat-service.ChatService} server Service instance.
-   * @param {chat-service.config.SocketIOTransportOptions} options
-   * Transport options.
-   * @param {Class} [adapterConstructor] socket.io-adapter compatible
-   * adapter constructor.
-   * @param {Array} [adapterOptions] Adapter constructor arguments.
-   *
-   * @private
-   */
-  constructor (server, options, adapterConstructor, adapterOptions) {}
-
-  /**
-   * Starts accepting of clients connections.
-   *
-   * @return {Promise<undefined>} Promise that resolves without any data.
-   *
-   * @private
-   */
-  setEvents () {}
-
-  /**
-   * Stops accepting of clients connections. Disconnects currently
-   * connected clients.
-   *
-   * @return {Promise<undefined>} Promise that resolves without any data.
-   *
-   * @private
-   */
-  close () {}
 
   /**
    * Binds a handler for a custom transport event for the provided
@@ -113,6 +81,58 @@ class TransportInterface {
    */
   getHandshakeData (id) {}
 
+}
+
+/**
+ * Transport plugin. __Note:__ This methods __MUST NOT__ be called
+ * directly. For public methods see {@link
+ * chat-service.TransportInterface}
+ *
+ * @implements {chat-service.TransportInterface}
+ * @memberof chat-service
+ */
+class TransportPlugin {
+  /**
+   * Connection handshake data. May include other fields.
+   *
+   * @typedef {Object} HandshakeData
+   * @memberof chat-service.TransportInterface
+   *
+   * @property {boolean} isConnected If the socket is still
+   * connected. If it is not, then headers and query will be empty.
+   *
+   * @property {Object} headers Parsed headers.
+   * @property {Object} query Parsed query string.
+   */
+
+  /**
+   * @param {chat-service.ChatService} server Service instance.
+   * @param {Object} options Transport options.
+   * @param {Class} [adapterConstructor] socket.io-adapter compatible
+   * adapter constructor. May be ignored if integration is not
+   * required.
+   * @param {Array} [adapterOptions] Adapter constructor
+   * arguments. May be ignored if integration is not required.
+   *
+   * @private
+   */
+  constructor (server, options, adapterConstructor, adapterOptions) {}
+
+  /**
+   * Starts accepting clients' connections.
+   *
+   * @return {Promise<undefined>} Promise that resolves without any data.
+   */
+  setEvents () {}
+
+  /**
+   * Stops accepting clients' connections. Disconnects all currently
+   * connected clients.
+   *
+   * @return {Promise<undefined>} Promise that resolves without any data.
+   */
+  close () {}
+
   /**
    * Adds a socket to a channel.
    *
@@ -120,8 +140,6 @@ class TransportInterface {
    * @param {string} channel Transport channel.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
-   *
-   * @private
    */
   joinChannel (id, channel) {}
 
@@ -132,8 +150,6 @@ class TransportInterface {
    * @param {string} channel Transport channel.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
-   *
-   * @private
    */
   leaveChannel (id, channel) {}
 
@@ -143,8 +159,6 @@ class TransportInterface {
    * @param {string} id Socket id.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
-   *
-   * @private
    */
   disconnectSocket (id) {}
 
