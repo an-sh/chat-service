@@ -267,6 +267,8 @@ class ChatService extends EventEmitter {
     this.runningCommands = 0
     this.rpcRequestsNames = rpcRequestsNames
     this.closed = false
+    this.ChatServiceError = ChatServiceError
+    this.SocketIOClusterBus = SocketIOClusterBus
   }
 
   setOptions () {

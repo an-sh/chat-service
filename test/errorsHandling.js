@@ -188,4 +188,14 @@ module.exports = function () {
       done()
     })
   })
+
+  it('should support extending ChatServiceError', function (done) {
+    chatService = startService()
+    let ChatServiceError = chatService.ChatServiceError
+    class MyError extends ChatServiceError {}
+    let error = new MyError()
+    expect(error).instanceof(ChatServiceError)
+    expect(error).instanceof(Error)
+    done()
+  })
 }

@@ -44,7 +44,7 @@ ChatServiceError.prototype.toString = function () {
   if (str) {
     return util.format(`ChatServiceError: ${str}`, ...this.args)
   } else {
-    return Error.prototype.toString.call(this)
+    return util.format(`ChatServiceError: ${this.code}`)
   }
 }
 
