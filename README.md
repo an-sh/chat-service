@@ -15,7 +15,8 @@ multiple connections from a single user, real-time permissions and
 presence. RPC requests processing and a room messages format are
 customisable via hooks, allowing to implement anything from a
 chat-rooms server to a collaborative application with a complex
-conflict resolution or M2M communication tunnelling for IoT devices.
+conflict resolution. Room messages also can be used to create public
+APIs or to tunnel M2M communications for IoT devices.
 
 
 ## Features
@@ -86,8 +87,9 @@ process.on('SIGINT', () => chatService.close().finally(() => process.exit()))
 ```
 
 Server is now running on port `8000`, using memory state. By default
-`'/chat-service'` socket.io namespace is used. Adding a room with
-`admin` user as an owner.
+`'/chat-service'` socket.io namespace is used. Add a room with `admin`
+user as the room owner. All rooms must be explicitly created (option
+to allow rooms creation from a client side is also provided).
 
 ```javascript
 chatService.addRoom('default', { owner: 'admin' })
@@ -101,7 +103,7 @@ returned in socket.io ack callback. To listen to server messages use
 ```javascript
 let io = require('socket.io-client')
 let url = 'ws://localhost:8000/chat-service'
-let userName = `user${Math.floor(Math.random() * 99) + 1}`
+let userName = 'user'
 let token = 'token' // auth token
 let query = `userName=${userName}&token=${token}`
 let params = { query }
