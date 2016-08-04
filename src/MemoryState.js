@@ -200,6 +200,10 @@ class RoomStateMemory extends ListsStateMemory {
     if (_.isNumber(historyMaxSize) && historyMaxSize >= 0) {
       this.historyMaxSize = historyMaxSize
     }
+    let limit = this.historyMaxSize
+    this.messagesHistory = new List(this.messagesHistory.slice(0, limit))
+    this.messagesTimestamps = new List(this.messagesTimestamps.slice(0, limit))
+    this.messagesIds = new List(this.messagesIds.slice(0, limit))
     return Promise.resolve()
   }
 

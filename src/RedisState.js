@@ -379,11 +379,25 @@ class RoomStateRedis extends ListsStateRedis {
   }
 
   historyMaxSizeSet (historyMaxSize) {
-    if (_.isNumber(historyMaxSize) && historyMaxSize >= 0) {
-      return this.redis.set(this.makeKeyName('historyMaxSize'), historyMaxSize)
+    let limit = historyMaxSize
+    if (!(_.isNumber(historyMaxSize) && historyMaxSize >= 0)) {
+      limit = this.server.historyMaxSize
+    }
+    if (limit === 0) {
+      return this.redis.multi()
+        .set(this.makeKeyName('historyMaxSize'), limit)
+        .del(this.makeKeyName('messagesHistory'))
+        .del(this.makeKeyName('messagesTimestamps'))
+        .del(this.makeKeyName('messagesIds'))
+        .exec()
     } else {
-      let limit = this.server.historyMaxSize
-      return this.redis.set(this.makeKeyName('historyMaxSize'), limit)
+      let last = limit - 1
+      return this.redis.multi()
+        .set(this.makeKeyName('historyMaxSize'), limit)
+        .ltrim(this.makeKeyName('messagesHistory'), 0, last)
+        .ltrim(this.makeKeyName('messagesTimestamps'), 0, last)
+        .ltrim(this.makeKeyName('messagesIds'), 0, last)
+        .exec()
     }
   }
 

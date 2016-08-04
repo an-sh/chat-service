@@ -564,6 +564,44 @@ module.exports = function () {
     })
   })
 
+  it('should trim history on size changes', function (done) {
+    let txt = 'Test message.'
+    let message = { textMessage: txt }
+    chatService = startService({ historyMaxSize: 2 })
+    socket1 = clientConnect(user1)
+    chatService.addRoom(roomName1, null, () => {
+      series([
+        cb => socket1.on('loginConfirmed',
+                         () => socket1.emit('roomJoin', roomName1, cb)),
+        cb => socket1.emit('roomMessage', roomName1, message, cb),
+        cb => socket1.emit('roomMessage', roomName1, message, cb)
+      ], error => {
+        expect(error).not.ok
+        chatService.changeRoomHistoryMaxSize(roomName1, 1, (error, data) => {
+          expect(error).not.ok
+          parallel([
+            cb =>
+              socket1.emit('roomHistoryGet', roomName1, 0, 9, (error, data) => {
+                expect(error).not.ok
+                expect(data).an.array
+                expect(data).lengthOf(1)
+                expect(data[0].id).equal(2)
+                cb()
+              }),
+            cb =>
+              socket1.emit('roomHistoryInfo', roomName1, (error, data) => {
+                expect(error).not.ok
+                expect(data).an.object
+                expect(data.historySize).equal(1)
+                expect(data.historyMaxSize).equal(1)
+                cb()
+              })
+          ], done)
+        })
+      })
+    })
+  })
+
   it('should send and update a room sync info', function (done) {
     let txt = 'Test message.'
     let message = { textMessage: txt }
