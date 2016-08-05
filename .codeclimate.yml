@@ -1,9 +1,0 @@
-engines:
-  eslint:
-    enabled: true
-    channel: "eslint-2"
-ratings:
-   paths:
-   - src/**/*
-exclude_paths:
-- "test/**/*"
