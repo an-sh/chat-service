@@ -122,6 +122,10 @@ class SocketIOTransport {
     }
   }
 
+  getServer () {
+    return this.io
+  }
+
   getSocket (id) {
     return this.nsp.connected[id]
   }

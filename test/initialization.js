@@ -60,6 +60,7 @@ module.exports = function () {
       .asCallback(cb))
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', u => {
+      expect(chatService1.transport.getServer()).equal(io)
       expect(u).equal(user1)
       done()
     })

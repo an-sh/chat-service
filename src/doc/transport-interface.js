@@ -46,6 +46,13 @@ class TransportInterface {
   getSocket (id) {}
 
   /**
+   * Gets a transport server.
+   *
+   * @return {Object} Transport server.
+   */
+  getServer () {}
+
+  /**
    *
    * Sends an event directly to a transport channel. May be used to
    * implement lightweight room notifications.
@@ -84,7 +91,7 @@ class TransportInterface {
 }
 
 /**
- * Transport plugin. __Note:__ This methods __MUST NOT__ be called
+ * Transport plugin. __Note:__ These methods __MUST NOT__ be called
  * directly. For public methods see {@link
  * chat-service.TransportInterface}
  *
@@ -116,7 +123,7 @@ class TransportPlugin {
 
   /**
    * Starts accepting clients' connections. See
-   * `src/SocketIOTransport` for details about integration.
+   * `src/SocketIOTransport.js` for details about integration.
    *
    * @return {undefined}
    */
