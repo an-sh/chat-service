@@ -96,9 +96,9 @@ chatService.addRoom('default', { owner: 'admin' })
 ```
 
 On a client just a `socket.io-client` implementation is required. To
-send a command use `emit` method, the result (or an error) will be
-returned in socket.io ack callback. To listen to server messages use
-`on` method.
+send a request (command) use `emit` method, the result (or an error)
+will be returned in socket.io ack callback. To listen to server
+messages use `on` method.
 
 ```javascript
 let io = require('socket.io-client')
@@ -171,11 +171,12 @@ Before hooks can be used to implement additional permissions systems.
 When a user sends a room message, in RPC reply the message `id` is
 returned. It means that the message has been saved in a store (in an
 append only circular buffer like structure). Room message ids are a
-sequence than increases by one for each successfully sent message in
-the room. A client can always check the last room message id via
-`roomHistoryInfo` command, and use `roomHistoryGet` command to get
-missing messages. Such approach ensures that a message can be
-received, unless it is deleted due to rotation.
+sequence starting from `1`, that increases by one for each
+successfully sent message in the room. A client can always check the
+last room message id via `roomHistoryInfo` command, and use
+`roomHistoryGet` command to get missing messages. Such approach
+ensures that a message can be received, unless it is deleted due to
+rotation.
 
 ### Custom messages format
 
@@ -193,15 +194,15 @@ arbitrary data types (even binary), but no nested objects with a field
 
 Each user command supports before and after hook adding, and a client
 connection/disconnection hooks are supported too. Command and hooks
-are executed sequentially: before hook - command - after
-hook. Sequence termination in before hooks is possible. Clients can
-send additional command arguments, hooks can read them, and reply with
-additional arguments.
+are executed sequentially: before hook - command - after hook (it will
+be called on command errors too). Sequence termination in before hooks
+is possible. Clients can send additional command arguments, hooks can
+read them, and reply with additional arguments.
 
 To execute an user command server side `execUserCommand` is
 provided. Also there are some more server side only methods provided
-by `ServiceAPI` and `Transport`. Look for some customisation cases in
-[Customisation examples](#customisation-examples).
+by `ServiceAPI` and `TransportInterface`. Look for some customisation
+cases in [Customisation examples](#customisation-examples).
 
 ### Failures recovery
 
@@ -217,8 +218,8 @@ experience various kind of network, software or hardware failures. In
 some edge cases (like operation on multiple users) such failures can
 cause inconsistencies (for the most part errors will be returned to
 the command's issuers). Such events are reported via instance events
-(see `ChatServiceEvents`), and data can be sync via `RecoveryAPI`
-methods.
+(like `storeConsistencyFailure`), and data can be sync via
+`RecoveryAPI` methods.
 
 
 ## Customisation examples

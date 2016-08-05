@@ -135,8 +135,7 @@ function listOwnSockets () {}
   * an operation, sending {@link
   * rpc.serverNotifications.roomAccessRemoved}. Also sends {@link
   * rpc.serverNotifications.roomAccessListAdded} to all room users if
-  * {@link chat-service.config.options} `enableAccessListsUpdates`
-  * option is true.
+  * room's `enableAccessListsUpdates` option is true.
   *
   * @param {string} roomName Room name.
   * @param {string} listName List name. Possible values are:
@@ -244,10 +243,10 @@ function roomRecentHistory (roomName) {}
   * as newest first.
   *
   * @param {string} roomName Room name.
-  * @param {number} id Starting message id.
+  * @param {number} id Starting message id (not included in result).
   * @param {number} limit Maximum number of messages to return. The
-  *   maximum number is limited by {@link chat-service.config.options}
-  *   `historyMaxGetMessages` option.
+  * maximum number is limited by {@link chat-service.config.options}
+  * `historyMaxGetMessages` option.
   *
   * @returns {Array<rpc.datatypes.ProcessedMessage>} An array of messages.
   *
@@ -276,8 +275,8 @@ function roomHistoryInfo (roomName) {}
   * execute requests with a `room` prefix. Sends {@link
   * rpc.serverNotifications.roomJoinedEcho} to other user's
   * sockets. Also sends {@link rpc.serverNotifications.roomUserJoined}
-  * to other room users if {@link chat-service.config.options}
-  * `enableUserlistUpdates` option is true.
+  * to other room users if room's `enableUserlistUpdates` option is
+  * true.
   *
   * @param {string} roomName Room name.
   *
@@ -294,8 +293,7 @@ function roomJoin (roomName) {}
   * Leaves room. Sends {@link rpc.serverNotifications.roomLeftEcho} to
   * other user's sockets. Also sends {@link
   * rpc.serverNotifications.roomUserLeft} to other room users if
-  * {@link chat-service.config.options} `enableUserlistUpdates` option
-  * is true.
+  * room's `enableUserlistUpdates` option is true.
   *
   * @param {string} roomName Room name.
   *
@@ -324,7 +322,7 @@ function roomLeave (roomName) {}
 function roomMessage (roomName, message) {}
 
  /**
-  * Gets the the notifications room.
+  * Gets room's notifications configuration.
   *
   * @param {string} roomName Room name.
   *
@@ -343,8 +341,7 @@ function roomNotificationsInfo (roomName) {}
   * in the result of an operation, sending {@link
   * rpc.serverNotifications.roomAccessRemoved}.  Also sends {@link
   * rpc.serverNotifications.roomAccessListRemoved} to all room users
-  * if {@link chat-service.config.options} `enableAccessListsUpdates`
-  * option is true.
+  * if room's `enableAccessListsUpdates` option is true.
   *
   * @param {string} roomName Room name.
   * @param {string} listName List name.  Possible values are:
@@ -363,7 +360,9 @@ function roomRemoveFromList (roomName, listName, userNames) {}
  /**
   * Sets room messaging whitelist only mode. Also removes users that
   * have lost an access permission in the result of an operation,
-  * sending {@link rpc.serverNotifications.roomAccessRemoved}.
+  * sending {@link rpc.serverNotifications.roomAccessRemoved}. Also
+  * sends {@link rpc.serverNotifications.roomModeChanged} to all room
+  * users if room's `enableAccessListsUpdates` option is true.
   *
   * @param {string} roomName Room name.
   * @param {boolean} mode Room mode.
@@ -371,7 +370,7 @@ function roomRemoveFromList (roomName, listName, userNames) {}
   * @returns {undefined} Acknowledgment without data.
   *
   * @see rpc.clientRequests.roomGetWhitelistMode
-  * @see rpc.serverNotifications.roomAccessRemoved
+  * @see rpc.serverNotifications.roomModeChanged
   *
   * @memberof rpc.clientRequests
   */

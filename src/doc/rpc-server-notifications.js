@@ -50,7 +50,8 @@ function directMessageEcho (toUser, message) {}
  * requests. If auth has failed {@link
  * rpc.serverNotifications.loginRejected} notification will be emitted
  * instead. Only one of these two events will be emitted once per
- * connection.
+ * connection. Also transport plugins may use other means of login
+ * confirmation.
  *
  * @param {string} userName User name.
  * @param {rpc.datatypes.AuthData} authData Additional auth data.
@@ -62,9 +63,10 @@ function directMessageEcho (toUser, message) {}
 function loginConfirmed (userName, authData) {}
 
 /**
- * An auth error event.
+ * An auth error event. Also transport plugins may use other means of
+ * login rejection.
  *
- * @param {rpc.datatypes.ChatServiceError|Error|string} reason Error.
+ * @param {rpc.datatypes.ChatServiceError|string} reason Error.
  *
  * @see rpc.serverNotifications.loginConfirmed
  *
@@ -116,7 +118,7 @@ function roomAccessListRemoved (roomName, listName, userNames) {}
 
  /**
   * Echoes room join events from other connections of the same user,
-  * or room joining for this connection made by the server.
+  * or a room join event for this connection triggered by the server.
   *
   * @param {string} roomName User name.
   * @param {string} id Socket id.
@@ -130,7 +132,7 @@ function roomJoinedEcho (roomName, id, njoined) {}
 
  /**
   * Echoes room leave events from other connections of the same user,
-  * or room leaving for this connection made by the server.
+  * or a room leave event for this connection triggered by the server.
   *
   * @param {string} roomName User name.
   * @param {string} id Socket id.

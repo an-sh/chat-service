@@ -22,22 +22,22 @@ class ServiceAPI {
   /**
    * Executes {@link rpc.clientRequests} handlers.
    *
-   * @param {string|boolean|Object} context Is a `userName` if string,
-   * or a `bypassPermissions` if boolean, or an options hash if
-   * Object.
+   * @param {string|boolean|Object} context Is a `userName` if
+   * `string`, or a `bypassPermissions` if `boolean`, or an options
+   * object if `Object`.
    * @param {string} command Command name.
    * @param {...*} args Command arguments.
    * @param {callback} [cb] Optional callback.
    *
-   * @property {string} context.userName User name.
-   * @property {string} context.id Socket id, it is required for
+   * @property {string} [context.userName] User name.
+   * @property {string} [context.id] Socket id, it is required for
    * {@link rpc.clientRequests.roomJoin} and {@link
    * rpc.clientRequests.roomLeave} commands.
-   * @property {boolean} context.bypassHooks If `false` executes
-   * command without before and after hooks, default is `false`.
-   * @property {boolean} context.bypassPermissions If `true` executes
-   * command (except {@link rpc.clientRequests.roomJoin}) bypassing
-   * any permissions checking, default is `false`.
+   * @property {boolean} [context.bypassHooks=false] If `false`
+   * executes command without before and after hooks.
+   * @property {boolean} [context.bypassPermissions=false] If `true`
+   * executes command (except {@link rpc.clientRequests.roomJoin})
+   * bypassing built-in permissions checking.
    *
    * @return {Promise<Array>} Array of command results.
    *
@@ -69,12 +69,12 @@ class ServiceAPI {
    * Adds an user with a state.
    *
    * @param {string} userName User name.
-   * @param {Object} state User state.
+   * @param {Object} [state] User state.
    * @param {callback} [cb] Optional callback.
    *
-   * @property {Array<string>} [state.whitelist] User direct messages
+   * @property {Array<string>} [state.whitelist=[]] User direct messages
    * whitelist.
-   * @property {Array<string>} [state.blacklist] User direct messages
+   * @property {Array<string>} [state.blacklist=[]] User direct messages
    * blacklist.
    * @property {boolean} [state.whitelistOnly=false] User direct
    * messages whitelistOnly mode.
@@ -113,7 +113,7 @@ class ServiceAPI {
   }
 
   /**
-   * Checks an user existence.
+   * Checks for an user existence.
    *
    * @param {string} userName User name.
    * @param {callback} [cb] Optional callback.
@@ -175,12 +175,12 @@ class ServiceAPI {
    * Adds a room with a state.
    *
    * @param {string} roomName Room name.
-   * @param {Object} state Room state.
+   * @param {Object} [state] Room state.
    * @param {callback} [cb] Optional callback.
    *
-   * @property {Array<string>} [state.whitelist] Room whitelist.
-   * @property {Array<string>} [state.blacklist] Room blacklist
-   * @property {Array<string>} [state.adminlist] Room adminlist.
+   * @property {Array<string>} [state.whitelist=[]] Room whitelist.
+   * @property {Array<string>} [state.blacklist=[]] Room blacklist
+   * @property {Array<string>} [state.adminlist=[]] Room adminlist.
    * @property {boolean} [state.whitelistOnly=false] Room
    * whitelistOnly mode.
    * @property {string} [state.owner] Room owner.
@@ -204,7 +204,7 @@ class ServiceAPI {
   }
 
   /**
-   * Removes all room data, and removes joined user from the room.
+   * Removes all joined users from the room and removes all room data.
    *
    * @param {string} roomName Room name.
    * @param {callback} [cb] Optional callback.
@@ -218,7 +218,7 @@ class ServiceAPI {
   }
 
   /**
-   * Checks a room existence.
+   * Checks for a room existence.
    *
    * @param {string} roomName Room name.
    * @param {callback} [cb] Optional callback.
@@ -265,7 +265,7 @@ class ServiceAPI {
   }
 
   /**
-   * Changes a room owner.
+   * Changes the room owner.
    *
    * @param {string} roomName Room name.
    * @param {string} owner Owner user name.
@@ -281,7 +281,7 @@ class ServiceAPI {
   }
 
   /**
-   * Changes a room history size.
+   * Changes the room history size.
    *
    * @param {string} roomName Room name.
    * @param {number} size Room history size.

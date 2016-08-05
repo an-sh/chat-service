@@ -84,23 +84,25 @@ const rpcRequestsNames = [
  *   let whitelistOnly = true
  *   let whitelist = [ 'user' ]
  *   let state = { owner, whitelistOnly, whitelist }
- *   chatService.addRoom('roomName', state).then(fn)
+ *   chatService.addRoom('someRoom', state).then(fn)
  *
  * @example <caption>server-side: sending a room message</caption>
+ *   let room = 'someRoom'
  *   let msg = { textMessage: 'some message' }
  *   let context = {
  *     userName: 'system',
  *     bypassPermissions: true
  *   }
- *   chatService.execUserCommand(context, 'roomMessage', 'roomName', msg)
+ *   chatService.execUserCommand(context, 'roomMessage', room, msg)
  *     .then(fn)
  *
  * @example <caption>server-side: joining an user socket to a room</caption>
+ *   let room = 'someRoom'
  *   let context = {
  *     userName: 'user',
  *     id: id // socket id
  *   }
- *   chatService.execUserCommand(context, 'roomJoin', 'roomName')
+ *   chatService.execUserCommand(context, 'roomJoin', room)
  *     .then(fn) // real sockets will get a notification
  *
  * @memberof chat-service
@@ -180,7 +182,7 @@ class ChatService extends EventEmitter {
    */
 
   /**
-   * Transport wrapper.
+   * Transport object.
    *
    * @name chat-service.ChatService#transport
    * @type chat-service.TransportInterface

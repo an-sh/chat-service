@@ -37,7 +37,7 @@ class TransportInterface {
   bindHandler (id, name, fn) {}
 
   /**
-   * Gets a transport socket object by id.
+   * Gets a transport socket by id.
    *
    * @param {string} id Socket id.
    *
@@ -53,7 +53,6 @@ class TransportInterface {
   getServer () {}
 
   /**
-   *
    * Sends an event directly to a transport channel. May be used to
    * implement lightweight room notifications.
    *
@@ -116,13 +115,14 @@ class TransportPlugin {
    * Cluster communication via an adapter. Emits messages to all
    * services nodes, including the sender node.
    *
-   * @name chat-service.ChatService#clusterBus
+   * @name chat-service.TransportPlugin#clusterBus
    * @type EventEmitter
    * @readonly
    */
 
   /**
-   * Starts accepting clients' connections. See
+   * Starts accepting clients' connections. On each new connection
+   * `ChatService` integration methods must be called. See
    * `src/SocketIOTransport.js` for details about integration.
    *
    * @return {undefined}
