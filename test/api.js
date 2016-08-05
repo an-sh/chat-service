@@ -263,7 +263,7 @@ module.exports = function () {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', () => {
         socket1.emit('roomJoin', roomName1, () => {
-          chatService.changeAccessListsUpdates(roomName1, true, (error) => {
+          chatService.changeAccessListsUpdates(roomName1, true, error => {
             expect(error).not.ok
             chatService.execUserCommand(
               user1, 'roomAddToList', roomName1, 'whitelist', [user2])
@@ -285,7 +285,7 @@ module.exports = function () {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', () => {
         socket1.emit('roomJoin', roomName1, () => {
-          chatService.changeUserlistUpdates(roomName1, true, (error) => {
+          chatService.changeUserlistUpdates(roomName1, true, error => {
             expect(error).not.ok
             socket1.on('roomUserJoined', (roomName, userName) => {
               expect(roomName).equal(roomName1)

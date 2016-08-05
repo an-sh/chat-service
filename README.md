@@ -109,7 +109,7 @@ let query = `userName=${userName}&token=${token}`
 let params = { query }
 // Connect to server.
 let socket = io.connect(url, params)
-socket.once('loginConfirmed', (userName) => {
+socket.once('loginConfirmed', userName => {
   // Auth success.
   socket.on('roomMessage', (room, msg) => {
     // Rooms messages handler (own messages are here too).
@@ -124,7 +124,7 @@ socket.once('loginConfirmed', (userName) => {
     socket.emit('roomMessage', 'default', { textMessage: 'Hello!' })
   })
 })
-socket.once('loginRejected', (error) => {
+socket.once('loginRejected', error => {
   // Auth error handler.
   console.error(error)
 })

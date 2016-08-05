@@ -336,7 +336,7 @@ module.exports = function () {
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', () => {
-        socket1.emit('roomJoin', roomName1, (id) => {
+        socket1.emit('roomJoin', roomName1, () => {
           socket1.emit('roomMessage', roomName1, message, (error, id) => {
             expect(error).not.ok
             expect(id).equal(1)
