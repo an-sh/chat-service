@@ -63,10 +63,7 @@ class CommandBinder {
                 }
               })
           }))
-        .catch(error => {
-          logError(error)
-          return Promise.reject(error)
-        })
+        .catch(error => logError(error))
     }
   }
 

@@ -5,7 +5,7 @@ const RedisAdapter = require('socket.io-redis')
 const SocketIOClusterBus = require('./SocketIOClusterBus')
 const SocketServer = require('socket.io')
 const _ = require('lodash')
-const { convertError, logError, run } = require('./utils')
+const { run } = require('./utils')
 
 // Socket.io transport.
 class SocketIOTransport {
@@ -15,6 +15,7 @@ class SocketIOTransport {
     this.options = options
     this.adapterConstructor = adapterConstructor
     this.adapterOptions = adapterOptions
+    this.port = this.server.port
     this.io = this.options.io
     this.middleware = options.middleware
     this.namespace = this.options.namespace || '/chat-service'
@@ -38,7 +39,7 @@ class SocketIOTransport {
         this.dontCloseIO = true
         this.io = new SocketServer(this.options.http, this.ioOptions)
       } else {
-        this.io = new SocketServer(this.server.port, this.ioOptions)
+        this.io = new SocketServer(this.port, this.ioOptions)
       }
       if (Adapter) {
         this.adapter = new Adapter(...this.adapterOptions)
@@ -55,8 +56,7 @@ class SocketIOTransport {
   }
 
   rejectLogin (socket, error) {
-    logError(error)
-    error = convertError(error, this.server.useRawErrorObjects)
+    error = this.server.convertError(error)
     socket.emit('loginRejected', error)
     socket.disconnect()
   }

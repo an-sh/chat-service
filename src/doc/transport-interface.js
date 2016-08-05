@@ -106,12 +106,17 @@ class TransportPlugin {
   constructor (server, options, adapterConstructor, adapterOptions) {}
 
   /**
-   * Starts accepting clients' connections. On connection
-   * `ChatService#registerClient(userName: string, id: string)` method
-   * must be called. Then a resolved or rejected promise value must be
-   * emitted via a `loginConfirmed` or a `loginRejected` notification,
-   * respectively. Also a `disconnect` event must be emitted when
-   * connection is closed.
+   * Cluster communication via an adapter. Emits messages to all
+   * services nodes, including the sender node.
+   *
+   * @name chat-service.ChatService#clusterBus
+   * @type EventEmitter
+   * @readonly
+   */
+
+  /**
+   * Starts accepting clients' connections. See
+   * `src/SocketIOTransport` for details about integration.
    *
    * @return {undefined}
    */

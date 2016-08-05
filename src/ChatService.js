@@ -30,7 +30,8 @@ const User = require('./User')
 const _ = require('lodash')
 const uid = require('uid-safe')
 const { EventEmitter } = require('events')
-const { checkNameSymbols, execHook } = require('./utils')
+const { checkNameSymbols, convertError, execHook, logError } =
+        require('./utils')
 const { mixin } = require('es6-mixin')
 
 const rpcRequestsNames = [
@@ -356,6 +357,10 @@ class ChatService extends EventEmitter {
     })
   }
 
+  convertError (error) {
+    return convertError(error, this.useRawErrorObjects)
+  }
+
   onConnect (id) {
     if (this.hooks.onConnect) {
       return Promise.try(() => {
@@ -363,7 +368,7 @@ class ChatService extends EventEmitter {
       }).then(loginData => {
         loginData = _.castArray(loginData)
         return Promise.resolve(loginData)
-      })
+      }).catch(error => logError(error))
     } else {
       return Promise.resolve([])
     }
@@ -373,6 +378,7 @@ class ChatService extends EventEmitter {
     return checkNameSymbols(userName)
       .then(() => this.state.getOrAddUser(userName))
       .then(user => user.registerSocket(id))
+      .catch(error => logError(error))
   }
 
   waitCommands () {

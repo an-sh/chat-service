@@ -57,6 +57,7 @@ function logError (error) {
   if (!isServiceError) {
     debuglog(error)
   }
+  return Promise.reject(error)
 }
 
 function convertError (error, useRawErrorObjects) {
