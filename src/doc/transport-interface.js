@@ -90,12 +90,14 @@ class TransportInterface {
 }
 
 /**
- * Transport plugin. __Note:__ These methods __MUST NOT__ be called
- * directly. For public methods see {@link
- * chat-service.TransportInterface}
+ * Transport plugin. Methods __MUST__ return bluebird `^3.0.0`
+ * compatible promises (not just ES6 promises). __Note:__ These
+ * methods __MUST NOT__ be called directly. For public methods see
+ * {@link chat-service.TransportInterface}
  *
  * @implements {chat-service.TransportInterface}
  * @memberof chat-service
+ * @protected
  */
 class TransportPlugin {
   /**
@@ -107,7 +109,6 @@ class TransportPlugin {
    * @param {Array} [adapterOptions] Adapter constructor
    * arguments. May be ignored if integration is not required.
    *
-   * @private
    */
   constructor (server, options, adapterConstructor, adapterOptions) {}
 
@@ -118,6 +119,7 @@ class TransportPlugin {
    * @name chat-service.TransportPlugin#clusterBus
    * @type EventEmitter
    * @readonly
+   * @protected
    */
 
   /**
@@ -126,6 +128,7 @@ class TransportPlugin {
    * `src/SocketIOTransport.js` for details about integration.
    *
    * @return {undefined}
+   * @protected
    */
   setEvents () {}
 
@@ -134,6 +137,7 @@ class TransportPlugin {
    * connected clients.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
+   * @protected
    */
   close () {}
 
@@ -144,6 +148,7 @@ class TransportPlugin {
    * @param {string} channel Transport channel.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
+   * @protected
    */
   joinChannel (id, channel) {}
 
@@ -154,6 +159,7 @@ class TransportPlugin {
    * @param {string} channel Transport channel.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
+   * @protected
    */
   leaveChannel (id, channel) {}
 
@@ -163,6 +169,7 @@ class TransportPlugin {
    * @param {string} id Socket id.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
+   * @protected
    */
   disconnectSocket (id) {}
 

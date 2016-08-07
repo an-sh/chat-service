@@ -50,6 +50,8 @@ APIs or to tunnel M2M communications for IoT devices.
   via a bidirectional RPC protocol. Socket.io transport implementation
   is included.
 
+- Pluginable state store. Memory and Redis stores are included.
+
 - Supports lightweight online user to online user messaging.
 
 - Now fully rewritten in __ES6__, runs natively on Node.js `>= 6` (ES5
@@ -261,11 +263,11 @@ indicate a bug or a failure in a service infrastructure. To enable
 debug logging of such errors use `export NODE_DEBUG=ChatService`. The
 library is using bluebird `^3.0.0` promises implementation, so to
 enable long stack traces use `export BLUEBIRD_DEBUG=1`. It is highly
-recommended to follow this conventions for hooks development.
+recommended to use promise versions of APIs for hooks.
 
 ## Bug reporting
 
-If you encounter a bug in this package, please submit a bug report at
+If you encounter a bug in this package, please submit a bug report to
 github repo [issues](https://github.com/an-sh/chat-service/issues).
 
 

@@ -97,15 +97,16 @@
  * @property {number} [busAckTimeout=5000] Cluster bus ack waiting
  * timeout in ms.
  *
- * @property {('memory'|'redis'|Class)} [state='memory'] Service state.
+ * @property {('memory'|'redis'|chat-service.StorePlugin)}
+ * [state='memory'] Service state implementation.
  *
  * @property {('socket.io'|chat-service.TransportPlugin)}
  * [transport='socket.io'] Transport implementation.
  *
  * @property {('memory'|'redis'|Class)} [adapter='memory'] Adapter for
  * service instances communication, must implement a
- * `socket.io-adapter` API. Used with `socket.io` transport only if no
- * `io` object is passed in `SocketIOTransportOptions`.
+ * `socket.io-adapter` API. With `socket.io` transport used only when
+ * no `io` object is passed in `SocketIOTransportOptions`.
  *
  * @property {Options.RedisStateOptions|Object} [stateOptions={}] Options
  * for a state.
@@ -114,6 +115,5 @@
  * [transportOptions={}] Options for a transport.
  *
  * @property {Object|Array<Object>} [adapterOptions=[]] Adapter
- * constructor arguments, used only when no `io` object is passed in
- * `SocketIOTransportOptions`.
+ * constructor arguments.
  */

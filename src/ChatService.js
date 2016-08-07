@@ -24,6 +24,7 @@ const MemoryState = require('./MemoryState')
 const Promise = require('bluebird')
 const RecoveryAPI = require('./RecoveryAPI')
 const RedisState = require('./RedisState')
+const Room = require('./Room')
 const ServiceAPI = require('./ServiceAPI')
 const SocketIOClusterBus = require('./SocketIOClusterBus')
 const SocketIOTransport = require('./SocketIOTransport')
@@ -155,17 +156,6 @@ class ChatService extends EventEmitter {
    */
 
   /**
-   * May be used in a custom transport implementation.
-   *
-   * @name SocketIOClusterBus
-   * @type Class
-   * @static
-   * @readonly
-   *
-   * @memberof chat-service.ChatService
-   */
-
-  /**
    * Service instance UID.
    *
    * @name chat-service.ChatService#instanceUID
@@ -272,8 +262,11 @@ class ChatService extends EventEmitter {
     this.runningCommands = 0
     this.rpcRequestsNames = rpcRequestsNames
     this.closed = false
+    // constants
     this.ChatServiceError = ChatServiceError
     this.SocketIOClusterBus = SocketIOClusterBus
+    this.User = User
+    this.Room = Room
   }
 
   setOptions () {
@@ -360,10 +353,12 @@ class ChatService extends EventEmitter {
     })
   }
 
+  // for transport plugins integration
   convertError (error) {
     return convertError(error, this.useRawErrorObjects)
   }
 
+  // for transport plugins integration
   onConnect (id) {
     if (this.hooks.onConnect) {
       return Promise.try(() => {
@@ -377,6 +372,7 @@ class ChatService extends EventEmitter {
     }
   }
 
+  // for transport plugins integration
   registerClient (userName, id) {
     return checkNameSymbols(userName)
       .then(() => this.state.getOrAddUser(userName))
@@ -454,7 +450,14 @@ class ChatService extends EventEmitter {
   }
 }
 
+// for custom errors
 ChatService.ChatServiceError = ChatServiceError
+
+// for transport plugin implementations
 ChatService.SocketIOClusterBus = SocketIOClusterBus
+
+// for store plugin implementations
+ChatService.User = User
+ChatService.Room = Room
 
 module.exports = ChatService

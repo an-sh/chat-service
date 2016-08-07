@@ -8,13 +8,13 @@
  */
 
 /**
- * Custom rpc data types definitions.
+ * Custom RPC data types definitions.
  * @namespace rpc.datatypes
  * @memberof rpc
  */
 
 /**
- * Message. Other fields (that are not collide with {@link
+ * Message. Other fields (that do not collide with {@link
  * rpc.datatypes.ProcessedMessage} additional fields) instead of
  * `textMessage` can be used if an appropriate {@link
  * chat-service.hooks.HooksInterface.directMessagesChecker} or {@link
@@ -26,7 +26,7 @@
  */
 
 /**
- * Processed Message. Other fields (that are not collide with a server
+ * Processed Message. Other fields (that do not collide with a server
  * assigned data) instead of `textMessage` can be used if an
  * appropriate {@link
  * chat-service.hooks.HooksInterface.directMessagesChecker} or {@link
