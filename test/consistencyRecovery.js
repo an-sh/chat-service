@@ -1,3 +1,4 @@
+'use strict'
 /* eslint-env mocha */
 /*eslint no-proto: 0*/
 

@@ -1,3 +1,4 @@
+'use strict'
 
 const ChatServiceError = require('./ChatServiceError')
 const Promise = require('bluebird')

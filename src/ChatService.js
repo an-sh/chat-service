@@ -1,3 +1,4 @@
+'use strict'
 
 /**
  * Node style callback. All callbacks are optional, promises may be

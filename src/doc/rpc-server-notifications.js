@@ -1,4 +1,4 @@
-/*eslint valid-jsdoc: [2, { "requireReturn": false }]*/
+'use strict'
 /*eslint no-unused-vars: 0*/
 
 /**

@@ -1,3 +1,4 @@
+'use strict'
 /* eslint-env mocha */
 
 const Promise = require('bluebird')

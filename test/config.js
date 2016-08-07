@@ -1,3 +1,4 @@
+'use strict'
 
 let redisClusterConnect = [ { port: 30001, host: '127.0.0.1' } ]
 let redisConnect = 'localhost:6379'

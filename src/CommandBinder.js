@@ -1,3 +1,4 @@
+'use strict'
 
 const ExecInfo = require('./ExecInfo')
 const Promise = require('bluebird')

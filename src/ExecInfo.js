@@ -1,3 +1,4 @@
+'use strict'
 
 /**
  * Command execution context, it is available for {@link
