@@ -5,6 +5,11 @@ const _ = require('lodash')
 const hasBinary = require('has-binary')
 const { EventEmitter } = require('events')
 
+// from socket.io-protocol v4
+const EVENT = 2
+const BINARY_EVENT = 5
+
+// Instances communication via a socket.io-adapter implementation.
 class SocketIOClusterBus extends EventEmitter {
 
   constructor (server, adapter) {
@@ -15,7 +20,7 @@ class SocketIOClusterBus extends EventEmitter {
     this.intenalEvents = [ 'roomLeaveSocket',
                            'socketRoomLeft',
                            'disconnectUserSockets' ]
-    this.types = [ 2, 5 ]
+    this.types = [ EVENT, BINARY_EVENT ]
     this.injectBusHook()
   }
 
@@ -43,9 +48,9 @@ class SocketIOClusterBus extends EventEmitter {
   // TODO: Use an API from socket.io if(when) it will be available.
   emit (ev, ...args) {
     let data = [ ev, ...args ]
-    let packet = { type: (hasBinary(args) ? 5 : 2), data }
+    let packet = { type: (hasBinary(args) ? BINARY_EVENT : EVENT), data }
     let opts = { rooms: [ this.channel ] }
-    return this.adapter.broadcast(packet, opts, false)
+    this.adapter.broadcast(packet, opts, false)
   }
 
   onPacket (packet) {
@@ -59,8 +64,8 @@ class SocketIOClusterBus extends EventEmitter {
   }
 
   broadcastHook (packet, opts) {
-    let isBusCahnnel = _.indexOf(opts.rooms, this.channel) >= 0
-    let isBusType = _.indexOf(this.types, packet.type) >= 0
+    let isBusCahnnel = _.includes(opts.rooms, this.channel)
+    let isBusType = _.includes(this.types, packet.type)
     if (isBusCahnnel && isBusType) {
       this.onPacket(packet)
     }
