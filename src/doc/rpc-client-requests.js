@@ -15,7 +15,8 @@
  *
  * @example <caption>socket.io client example</caption>
  *   let socket = io.connect(url, opts)
- *   socket.once('loginConfirmed', () => {
+ *   socket.on('loginConfirmed', () => {
+ *     // Code is run after each reconnection.
  *     socket.emit('roomJoin', roomName, (error, result) => {
  *       // This is a socket.io ack waiting callback. Socket is joined
  *       // the room, or an error occurred, we get here only when the

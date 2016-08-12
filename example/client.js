@@ -1,19 +1,24 @@
 
-let io = require('socket.io-client')
+const io = require('socket.io-client')
+
+// Use https or wss in production.
 let url = 'ws://localhost:8000/chat-service'
 let userName = `user${Math.floor(Math.random() * 99) + 1}`
 let token = 'token' // auth token
 let query = `userName=${userName}&token=${token}`
-let params = { query }
-// Connect to server.
-let socket = io.connect(url, params)
-socket.once('loginConfirmed', userName => {
-  // Auth success.
-  socket.on('roomMessage', (room, msg) => {
-    // Rooms messages handler (own messages are here too).
-    console.log(`${msg.author}: ${msg.textMessage}`)
-  })
-  // Join room 'default'.
+let opts = { query }
+
+// Connect to a server.
+let socket = io.connect(url, opts)
+
+// Rooms messages handler (own messages are here too).
+socket.on('roomMessage', (room, msg) => {
+  console.log(`${msg.author}: ${msg.textMessage}`)
+})
+
+// Auth success handler.
+socket.on('loginConfirmed', userName => {
+  // Join room named 'default'.
   socket.emit('roomJoin', 'default', (error, data) => {
     // Check for a command error.
     if (error) { return }
@@ -22,7 +27,8 @@ socket.once('loginConfirmed', userName => {
     socket.emit('roomMessage', 'default', { textMessage: 'Hello!' })
   })
 })
-socket.once('loginRejected', error => {
-  // Auth error handler.
+
+// Auth error handler.
+socket.on('loginRejected', error => {
   console.error(error)
 })

@@ -61,11 +61,16 @@ APIs or to tunnel M2M communications for IoT devices.
 
 ## Quickstart with socket.io
 
-On a server-side define a socket connection hook, as the service is
-relying on an extern auth implementation. A user just needs to pass an
-auth check, no explicit user adding step is required.
+First define a server configuration. On a server-side define a socket
+connection hook, as the service is relying on an extern auth
+implementation. A user just needs to pass an auth check, no explicit
+user adding step is required.
 
 ```javascript
+const ChatService = require('chat-service')
+
+const port = 8000
+
 function onConnect (service, id) {
   // Assuming that auth data is passed in a query string.
   let { query } = service.transport.getHandshakeData(id)
@@ -82,19 +87,24 @@ method _must_ be called to correctly shutdown a service instance (see
 [Failures recovery](#failures-recovery)).
 
 ```javascript
-const port = 8000
-const ChatService = require('chat-service')
 const chatService = new ChatService({port}, {onConnect})
+
 process.on('SIGINT', () => chatService.close().finally(() => process.exit()))
 ```
 
-Server is now running on port `8000`, using memory state. By default
+Server is now running on port `8000`, using `memory` state. By default
 `'/chat-service'` socket.io namespace is used. Add a room with `admin`
 user as the room owner. All rooms must be explicitly created (option
 to allow rooms creation from a client side is also provided).
 
 ```javascript
-chatService.addRoom('default', { owner: 'admin' })
+// It is an error to add the same room twice. The room configuration
+// and messages will persist if redis state is used.
+chatService.hasRoom('default').then(hasRoom => {
+  if (!hasRoom) {
+    return chatService.addRoom('default', { owner: 'admin' })
+  }
+})
 ```
 
 On a client just a `socket.io-client` implementation is required. To
@@ -103,31 +113,37 @@ will be returned in socket.io ack callback. To listen to server
 messages use `on` method.
 
 ```javascript
-let io = require('socket.io-client')
+const io = require('socket.io-client')
+
+// Use https or wss in production.
 let url = 'ws://localhost:8000/chat-service'
-let userName = 'user'
+let userName = 'user' // for example and debug
 let token = 'token' // auth token
 let query = `userName=${userName}&token=${token}`
-let params = { query }
-// Connect to server.
-let socket = io.connect(url, params)
-socket.once('loginConfirmed', userName => {
-  // Auth success.
-  socket.on('roomMessage', (room, msg) => {
-    // Rooms messages handler (own messages are here too).
-    console.log(`${msg.author}: ${msg.textMessage}`)
-  })
-  // Join room 'default'.
+let opts = { query }
+
+// Connect to a server.
+let socket = io.connect(url, opts)
+
+// Rooms messages handler (own messages are here too).
+socket.on('roomMessage', (room, msg) => {
+  console.log(`${msg.author}: ${msg.textMessage}`)
+})
+
+// Auth success handler.
+socket.on('loginConfirmed', userName => {
+  // Join room named 'default'.
   socket.emit('roomJoin', 'default', (error, data) => {
     // Check for a command error.
-    if (error) return
+    if (error) { return }
     // Now we will receive 'default' room messages in 'roomMessage' handler.
     // Now we can also send a message to 'default' room:
     socket.emit('roomMessage', 'default', { textMessage: 'Hello!' })
   })
 })
-socket.once('loginRejected', error => {
-  // Auth error handler.
+
+// Auth error handler.
+socket.on('loginRejected', error => {
   console.error(error)
 })
 ```
