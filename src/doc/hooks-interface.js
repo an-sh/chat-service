@@ -87,6 +87,8 @@
  * @borrows afterHook as CommandsHooks#roomLeaveAfter
  * @borrows beforeHook as CommandsHooks#roomMessageBefore
  * @borrows afterHook as CommandsHooks#roomMessageAfter
+ * @borrows beforeHook as CommandsHooks#roomNotificationsInfoBefore
+ * @borrows afterHook as CommandsHooks#roomNotificationsInfoAfter
  * @borrows beforeHook as CommandsHooks#roomRecentHistoryBefore
  * @borrows afterHook as CommandsHooks#roomRecentHistoryAfter
  * @borrows beforeHook as CommandsHooks#roomRemoveFromListBefore
