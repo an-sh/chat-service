@@ -55,7 +55,7 @@ APIs or to tunnel M2M communications for IoT devices.
 - Supports lightweight online user to online user messaging.
 
 - Now fully rewritten in __ES6__, runs natively on Node.js `>= 6` (ES5
-  Babel transpired code is included for Node.js `4.x` and `0.12`
+  Babel transpiled code is included for Node.js `4.x` and `0.12`
   compatibility).
 
 
