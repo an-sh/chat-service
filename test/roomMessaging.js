@@ -145,7 +145,7 @@ module.exports = function () {
     })
   })
 
-  it('should remove disconnected users', function (done) {
+  it('should echo leaving when socket disconnects', function (done) {
     this.timeout(4000)
     this.slow(2000)
     chatService = startService({ enableUserlistUpdates: true })
