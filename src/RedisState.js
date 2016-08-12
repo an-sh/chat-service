@@ -68,8 +68,8 @@ class LockOperations {
 
   lock (key, val, ttl) {
     return promiseRetry(
-      {minTimeout: 100, retries: 10, factor: 1.5, randomize: true}
-      , (retry, n) => {
+      {minTimeout: 100, retries: 10, factor: 1.5, randomize: true},
+      (retry, n) => {
         return this.redis.set(key, val, 'NX', 'PX', ttl).then(res => {
           if (!res) {
             let error = new ChatServiceError('timeout')

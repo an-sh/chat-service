@@ -70,8 +70,8 @@ class ArgumentsValidator {
 
   checkTypes (checkers, args) {
     if (args.length !== checkers.length) {
-      return new ChatServiceError('wrongArgumentsCount'
-        , checkers.length, args.length)
+      return new ChatServiceError(
+        'wrongArgumentsCount', checkers.length, args.length)
     }
     for (let idx = 0; idx < checkers.length; idx++) {
       let checker = checkers[idx]
