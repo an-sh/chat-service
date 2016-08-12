@@ -279,21 +279,24 @@ Server-side and RPC APIs documentation is available
 [online](https://an-sh.github.io/chat-service/0.9/).
 
 
-## Debugging
+### Debugging
 
 Under normal circumstances all errors that are returned to a service
 user (via request replies, `loginConfirmed` or `loginRejected`
-messages) should be instances of `ChatServiceError`. All other errors
-indicate a bug or a failure in a service infrastructure. To enable
-debug logging of such errors use `export NODE_DEBUG=ChatService`. The
-library is using bluebird `^3.0.0` promises implementation, so to
-enable long stack traces use `export BLUEBIRD_DEBUG=1`. It is highly
-recommended to use promise versions of APIs for hooks.
+messages) are instances of `ChatServiceError`. All other errors
+indicate a program bug or a failure in a service infrastructure. To
+enable debug logging of such errors use `export
+NODE_DEBUG=ChatService`. The library is using bluebird `^3.0.0`
+promises implementation, so to enable long stack traces use `export
+BLUEBIRD_DEBUG=1`. It is highly recommended to use promise versions of
+APIs for hooks and `ChatServiceError` subclasses for hook errors.
 
-## Bug reporting
+## Contribute
 
 If you encounter a bug in this package, please submit a bug report to
 github repo [issues](https://github.com/an-sh/chat-service/issues).
+
+PRs are also accepted.
 
 
 ## License
