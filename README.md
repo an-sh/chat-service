@@ -253,6 +253,15 @@ accessible without a login. And vice versa some service commands can
 be executed by anonymous users via `execUserCommand` with bypassing
 permissions option turned on.
 
+### Messages aggregation and filtering
+
+A `roomMessage` after hook can be also used to forward messages from
+one room to another. So rooms can be used for messages aggregation
+from another rooms. Since hooks are just functions and have a full
+access to messages content, it allows to implement arbitrary
+content-based forwarding rules. Including implementing systems with
+highly personalised user (client) specific feeds.
+
 ### Explicit multi-device announcements
 
 By default there is no way for other users to know the number and
