@@ -6,7 +6,7 @@ const _ = require('lodash')
 const { execHook, logError, possiblyCallback, resultsTransform } =
         require('./utils')
 
-// Implements command implementation functions binding and wrapping.
+// Implements command functions binding and wrapping.
 class CommandBinder {
 
   constructor (server, transport, userName) {
@@ -74,7 +74,12 @@ class CommandBinder {
     this.transport.bindHandler(id, 'disconnect', () => {
       return Promise.using(
         this.commandWatcher(id, 'disconnect'),
-        () => fn(id).then(() => execHook(hook, server, id)).catchReturn())
+        () => fn(id)
+          .catch(error => logError(error))
+          .catchReturn()
+          .then(() => execHook(hook, server, id))
+          .catch(error => logError(error))
+          .catchReturn())
     })
   }
 
