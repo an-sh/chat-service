@@ -178,8 +178,7 @@ socket.on('loginRejected', error => {
 })
 ```
 
-It is a runnable code, files are in `example` directory. For more
-details and advanced usage see [Documentation](#documentation).
+It is a runnable code, files are in `example` directory.
 
 ### Debugging
 
