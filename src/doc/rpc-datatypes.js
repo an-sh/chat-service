@@ -17,8 +17,8 @@
  * Message. Other fields (that do not collide with {@link
  * rpc.datatypes.ProcessedMessage} additional fields) instead of
  * `textMessage` can be used if an appropriate {@link
- * chat-service.hooks.HooksInterface.directMessagesChecker} or {@link
- * chat-service.hooks.HooksInterface.roomMessagesChecker} hook is set.
+ * chat-service.hooks.HooksInterface#directMessagesChecker} or {@link
+ * chat-service.hooks.HooksInterface#roomMessagesChecker} hook is set.
  *
  * @typedef {Object} Message
  * @memberof rpc.datatypes
@@ -29,8 +29,8 @@
  * Processed Message. Other fields (that do not collide with a server
  * assigned data) instead of `textMessage` can be used if an
  * appropriate {@link
- * chat-service.hooks.HooksInterface.directMessagesChecker} or {@link
- * chat-service.hooks.HooksInterface.roomMessagesChecker} hook is
+ * chat-service.hooks.HooksInterface#directMessagesChecker} or {@link
+ * chat-service.hooks.HooksInterface#roomMessagesChecker} hook is
  * set. Includes server assigned data.
  *
  * @typedef {Object} ProcessedMessage

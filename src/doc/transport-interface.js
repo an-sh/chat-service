@@ -26,7 +26,7 @@ class TransportInterface {
    * Binds a handler for a custom transport event for the provided
    * socket. Must not coincide with {@link rpc.clientRequests} or
    * transport system event names. May be used inside {@link
-   * chat-service.hooks.HooksInterface.onConnect} hook.
+   * chat-service.hooks.HooksInterface#onConnect} hook.
    *
    * @param {string} id Socket id.
    * @param {string} name Event name.
@@ -118,6 +118,15 @@ class TransportPlugin {
    *
    * @name chat-service.TransportPlugin#clusterBus
    * @type EventEmitter
+   * @readonly
+   * @protected
+   */
+
+  /**
+   * Transport is closed and no any handlers invocations will be made.
+   *
+   * @name chat-service.TransportPlugin#closed
+   * @type boolean
    * @readonly
    * @protected
    */

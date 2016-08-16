@@ -16,7 +16,7 @@
  *
  * @property {number} [lockTTL=10000] Locks timeout in ms.
  *
- * @property {Object|Array<Object>} [redisOptions] ioredis client
+ * @property {Object|Array<Object>} [redisOptions=[]] ioredis client
  * constructor arguments. If `useCluster` is set, used as arguments
  * for a cluster client constructor.
  */
@@ -27,16 +27,16 @@
  *
  * @property {string} [namespace='/chat-service'] Socket.io namespace.
  *
- * @property {Array<function>|funcition} [middleware] Socket.io
+ * @property {Array<function>|function} [middleware=[]] Socket.io
  * middleware to use on namespace.
  *
- * @property {Object} [io] Socket.io instance that should be used by
+ * @property {Object} [io=null] Socket.io instance that should be used by
  * Chat Service.
  *
- * @property {Object} [http] Use socket.io http server integration, used
+ * @property {Object} [http=null] Use socket.io http server integration, used
  * only when no `io` object is passed.
  *
- * @property {Object} [ioOptions] Socket.io additional options, used
+ * @property {Object} [ioOptions={}] Socket.io additional options, used
  * only when no `io` object is passed.
  */
 
@@ -108,10 +108,10 @@
  * `socket.io-adapter` API. With `socket.io` transport used only when
  * no `io` object is passed in `SocketIOTransportOptions`.
  *
- * @property {Options.RedisStateOptions|Object} [stateOptions={}] Options
- * for a state.
+ * @property {chat-service.config.RedisStateOptions|Object}
+ * [stateOptions={}] Options for a state.
  *
- * @property {Options.SocketIOTransportOptions|Object}
+ * @property {chat-service.config.SocketIOTransportOptions|Object}
  * [transportOptions={}] Options for a transport.
  *
  * @property {Object|Array<Object>} [adapterOptions=[]] Adapter

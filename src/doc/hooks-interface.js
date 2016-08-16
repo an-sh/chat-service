@@ -25,7 +25,6 @@
  * continue a command execution. Rejections or a resolved array will
  * stop further execution, and return results to the command issuer.
  *
- * @static
  */
 
 /**
@@ -42,7 +41,6 @@
  * return unchanged command results to the command issuer. Rejections
  * or a resolved array will override command results.
  *
- * @static
  */
 
 /**
@@ -128,7 +126,6 @@ class HooksInterface extends CommandsHooks {
    * rpc.serverNotifications.loginConfirmed} message. Error is sent as
    * a {@link rpc.serverNotifications.loginRejected} message.
    *
-   * @static
    */
   onConnect (server, id, cb) {}
 
@@ -141,7 +138,6 @@ class HooksInterface extends CommandsHooks {
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    *
-   * @static
    */
   onDisconnect (server, id, cb) {}
 
@@ -154,7 +150,6 @@ class HooksInterface extends CommandsHooks {
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    *
-   * @static
    */
   onStart (server, cb) {}
 
@@ -168,7 +163,6 @@ class HooksInterface extends CommandsHooks {
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    *
-   * @static
    */
   onClose (server, error, cb) {}
 
@@ -185,7 +179,6 @@ class HooksInterface extends CommandsHooks {
    *
    * @see rpc.clientRequests.directMessage
    *
-   * @static
    */
   directMessagesChecker (message, cb) {}
 
@@ -202,7 +195,6 @@ class HooksInterface extends CommandsHooks {
    *
    * @see rpc.clientRequests.roomMessage
    *
-   * @static
    */
   roomMessagesChecker (message, cb) {}
 
