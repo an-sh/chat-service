@@ -19,7 +19,7 @@ conflict resolution. Room messages also can be used to create public
 APIs or to tunnel M2M communications for IoT devices.
 
 
-## Features
+### Features
 
 
 - Reliable room messaging using a server side history storage and a
@@ -59,7 +59,37 @@ APIs or to tunnel M2M communications for IoT devices.
   compatibility).
 
 
-## Quickstart with socket.io
+## Table of Contents
+
+- [Background](#background)
+- [Installation](#installation)
+- [Usage](#usage)
+- [API](#api)
+- [Concepts overview](#concepts-overview)
+- [Customisation examples](#customisation-examples)
+- [Contribute](#contribute)
+- [License](#license)
+
+
+## Background
+
+Read this article for more background information. (TODO)
+
+
+## Installation
+
+This project is a [node](http://nodejs.org) module available via
+[npm](https://npmjs.com). Go check them out if you don't have them
+locally installed.
+
+```sh
+$ npm i chat-service
+```
+
+
+## Usage
+
+### Quickstart with socket.io
 
 First define a server configuration. On a server-side define a socket
 connection hook, as the service is relying on an extern auth
@@ -150,6 +180,26 @@ socket.on('loginRejected', error => {
 
 It is a runnable code, files are in `example` directory. For more
 details and advanced usage see [Documentation](#documentation).
+
+### Debugging
+
+Under normal circumstances all errors that are returned to a service
+user (via request replies, `loginConfirmed` or `loginRejected`
+messages) are instances of `ChatServiceError`. All other errors
+indicate a program bug or a failure in a service infrastructure. To
+enable debug logging of such errors use `export
+NODE_DEBUG=ChatService`. The library is using bluebird `^3.0.0`
+promises implementation, so to enable long stack traces use `export
+BLUEBIRD_DEBUG=1`. It is highly recommended to use promise versions of
+APIs for hooks and `ChatServiceError` subclasses for hook errors.
+
+
+## API
+
+Server side
+[API](https://an-sh.github.io/chat-service/0.9/chat-service.html) and
+[RPC](https://an-sh.github.io/chat-service/0.9/rpc.html) documentation
+is available online.
 
 
 ## Concepts overview
@@ -272,24 +322,6 @@ directly transport `sendToChannel` method. Also additional information
 regarding joined devices types should be sent from `roomGetAccessList`
 after hook (when list name is equal to `'userlist'`).
 
-
-## Documentation
-
-Server-side and RPC APIs documentation is available
-[online](https://an-sh.github.io/chat-service/0.9/).
-
-
-### Debugging
-
-Under normal circumstances all errors that are returned to a service
-user (via request replies, `loginConfirmed` or `loginRejected`
-messages) are instances of `ChatServiceError`. All other errors
-indicate a program bug or a failure in a service infrastructure. To
-enable debug logging of such errors use `export
-NODE_DEBUG=ChatService`. The library is using bluebird `^3.0.0`
-promises implementation, so to enable long stack traces use `export
-BLUEBIRD_DEBUG=1`. It is highly recommended to use promise versions of
-APIs for hooks and `ChatServiceError` subclasses for hook errors.
 
 ## Contribute
 
