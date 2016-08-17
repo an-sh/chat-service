@@ -1,6 +1,7 @@
 'use strict'
 /* eslint-env mocha */
 
+const Buffer = require('safe-buffer').Buffer
 const Promise = require('bluebird')
 const { expect } = require('chai')
 
@@ -281,7 +282,7 @@ module.exports = function () {
   })
 
   it('should correctly send room messages with a binary data', function (done) {
-    let data = new Buffer([5])
+    let data = Buffer.from([5])
     let message = { data }
     let roomMessagesChecker = (msg, cb) => nextTick(cb)
     chatService = startService(null, { roomMessagesChecker })

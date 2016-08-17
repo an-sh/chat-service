@@ -46,6 +46,7 @@
     "ioredis": "^2.0.0",
     "lodash": "^4.11.1",
     "promise-retry": "^1.1.0",
+    "safe-buffer": "^5.0.1",
     "semver": "^5.3.0",
     "socket.io": "^1.4.5",
     "socket.io-redis": "^1.0.0",

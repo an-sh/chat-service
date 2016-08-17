@@ -1,5 +1,6 @@
 'use strict'
 
+const Buffer = require('safe-buffer').Buffer
 const ChatServiceError = require('./ChatServiceError')
 const Promise = require('bluebird')
 const Redis = require('ioredis')
@@ -449,7 +450,7 @@ class RoomStateRedis extends ListsStateRedis {
       let msg = msgs[idx]
       let obj = JSON.parse(msg, (key, val) => {
         if (val && val.type === 'Buffer') {
-          return new Buffer(val.data)
+          return Buffer.from(val.data)
         } else {
           return val
         }
