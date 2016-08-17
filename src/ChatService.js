@@ -366,7 +366,7 @@ class ChatService extends EventEmitter {
       }).then(loginData => {
         loginData = _.castArray(loginData)
         return Promise.resolve(loginData)
-      }).catch(error => logError(error))
+      }).catch(logError)
     } else {
       return Promise.resolve([])
     }
@@ -377,7 +377,7 @@ class ChatService extends EventEmitter {
     return checkNameSymbols(userName)
       .then(() => this.state.getOrAddUser(userName))
       .then(user => user.registerSocket(id))
-      .catch(error => logError(error))
+      .catch(logError)
   }
 
   waitCommands () {

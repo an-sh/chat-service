@@ -64,7 +64,7 @@ class CommandBinder {
                 }
               })
           }))
-        .catch(error => logError(error))
+        .catch(logError)
     }
   }
 
@@ -75,10 +75,10 @@ class CommandBinder {
       return Promise.using(
         this.commandWatcher(id, 'disconnect'),
         () => fn(id)
-          .catch(error => logError(error))
+          .catch(logError)
           .catchReturn()
           .then(() => execHook(hook, server, id))
-          .catch(error => logError(error))
+          .catch(logError)
           .catchReturn())
     })
   }
