@@ -61,7 +61,7 @@
     "docdash": "^0.4.0",
     "jsdoc": "^3.4.0",
     "mocha": "^3.0.0",
-    "nyc": "^7.0.0",
+    "nyc": "^8.1.0",
     "socket.io-client": "^1.4.5",
     "standard": "^7.1.2"
   },
