@@ -17,8 +17,8 @@ const chatService = new ChatService({port}, {onConnect})
 
 process.on('SIGINT', () => chatService.close().finally(() => process.exit()))
 
-// It is an error to add the same room twice. The room configuration
-// and messages will persist if redis state is used.
+// The room configuration and messages will persist if redis state is
+// used. addRoom will reject a promise if the room is already created.
 chatService.hasRoom('default').then(hasRoom => {
   if (!hasRoom) {
     return chatService.addRoom('default', { owner: 'admin' })

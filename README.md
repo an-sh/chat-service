@@ -128,8 +128,8 @@ user as the room owner. All rooms must be explicitly created (option
 to allow rooms creation from a client side is also provided).
 
 ```javascript
-// It is an error to add the same room twice. The room configuration
-// and messages will persist if redis state is used.
+// The room configuration and messages will persist if redis state is
+// used. addRoom will reject a promise if the room is already created.
 chatService.hasRoom('default').then(hasRoom => {
   if (!hasRoom) {
     return chatService.addRoom('default', { owner: 'admin' })
@@ -284,9 +284,9 @@ consistency. Transport communication instances and store instances can
 experience various kind of network, software or hardware failures. In
 some edge cases (like operation on multiple users) such failures can
 cause inconsistencies (for the most part errors will be returned to
-the command's issuers). Such events are reported via instance events
-(like `storeConsistencyFailure`), and data can be sync via
-`RecoveryAPI` methods.
+the command's issuers). These events are reported via an instance
+emitter (like `storeConsistencyFailure` event), and data can be sync
+via `RecoveryAPI` methods.
 
 
 ## Customisation examples
