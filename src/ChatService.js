@@ -383,7 +383,7 @@ class ChatService extends EventEmitter {
   waitCommands () {
     if (this.runningCommands > 0) {
       return Promise.fromCallback(cb => {
-        return this.once('commandsFinished', cb)
+        this.once('commandsFinished', cb)
       })
     } else {
       return Promise.resolve()
