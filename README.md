@@ -190,7 +190,8 @@ enable debug logging of such errors use `export
 NODE_DEBUG=ChatService`. The library is using bluebird `^3.0.0`
 promises implementation, so to enable long stack traces use `export
 BLUEBIRD_DEBUG=1`. It is highly recommended to use promise versions of
-APIs for hooks and `ChatServiceError` subclasses for hook errors.
+APIs for hooks and `ChatServiceError` subclasses for returning hooks
+custom errors.
 
 
 ## API
