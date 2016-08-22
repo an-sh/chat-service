@@ -197,8 +197,8 @@ custom errors.
 ## API
 
 Server side
-[API](https://an-sh.github.io/chat-service/0.9/chat-service.html) and
-[RPC](https://an-sh.github.io/chat-service/0.9/rpc.html) documentation
+[API](https://an-sh.github.io/chat-service/0.10/chat-service.html) and
+[RPC](https://an-sh.github.io/chat-service/0.10/rpc.html) documentation
 is available online.
 
 
