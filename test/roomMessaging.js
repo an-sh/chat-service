@@ -753,4 +753,58 @@ module.exports = function () {
       })
     })
   })
+
+  it('should not send notifications on duplicate joins', function (done) {
+    this.timeout(4000)
+    this.slow(2000)
+    chatService = startService()
+    let config = {enableUserlistUpdates: true}
+    chatService.addRoom(roomName1, config, () => parallel([
+      cb => {
+        socket1 = clientConnect(user1)
+        socket1.on('loginConfirmed', () => {
+          socket1.emit('roomJoin', roomName1, cb)
+        })
+      },
+      cb => {
+        socket3 = clientConnect(user2)
+        socket3.on('loginConfirmed', () => {
+          socket3.emit('roomJoin', roomName1, cb)
+        })
+      }
+    ], error => {
+      expect(error).not.ok
+      socket3.on('roomUserJoined', () => done(new Error('Wrong notification')))
+      socket1.emit('roomJoin', roomName1, (error) => {
+        expect(error).not.ok
+        setTimeout(done, 1000)
+      })
+    }))
+  })
+
+  it('should not send notifications on non-joined leave', function (done) {
+    this.timeout(4000)
+    this.slow(2000)
+    chatService = startService()
+    let config = {enableUserlistUpdates: true}
+    chatService.addRoom(roomName1, config, () => parallel([
+      cb => {
+        socket2 = clientConnect(user1)
+        socket2.on('loginConfirmed', () => cb())
+      },
+      cb => {
+        socket3 = clientConnect(user2)
+        socket3.on('loginConfirmed', () => {
+          socket3.emit('roomJoin', roomName1, cb)
+        })
+      }
+    ], error => {
+      expect(error).not.ok
+      socket3.on('roomUserLeft', () => done(new Error('Wrong notification')))
+      socket2.emit('roomLeave', roomName1, (error) => {
+        expect(error).not.ok
+        setTimeout(done, 1000)
+      })
+    }))
+  })
 }
