@@ -213,7 +213,8 @@ class Room {
 
   addToList (author, listName, values, bypassPermissions) {
     return this.checkListChanges(author, listName, values, bypassPermissions)
-      .then(() => this.roomState.addToList(listName, values, this.listSizeLimit))
+      .then(() => this.roomState.addToList(
+        listName, values, this.listSizeLimit))
       .then(() => Promise.filter(
         values,
         val => this.hasAddChangedCurrentAccess(val, listName),
