@@ -124,14 +124,17 @@ class UserAssociations {
       let room = yield this.state.getRoom(roomName)
       yield room.join(this.userName)
       let enableUserlistUpdates = yield room.roomState.userlistUpdatesGet()
-      return this.userState.addSocketToRoom(id, roomName).then(njoined => {
-        return this.transport.joinChannel(id, roomName).then(() => {
-          if (njoined === 1 && enableUserlistUpdates) {
-            this.userJoinRoomReport(this.userName, roomName)
-          }
-          return this.socketJoinEcho(id, roomName, njoined, isLocalCall)
-        }).return(njoined)
-      }).catch(e => this.rollbackRoomJoin(e, roomName, id))
+      return this.userState.addSocketToRoom(id, roomName).spread(
+        (njoined, hasChanged) => {
+          return this.transport.joinChannel(id, roomName).then(() => {
+            if (hasChanged) {
+              if (njoined === 1 && enableUserlistUpdates) {
+                this.userJoinRoomReport(this.userName, roomName)
+              }
+              this.socketJoinEcho(id, roomName, njoined, isLocalCall)
+            }
+          }).return(njoined)
+        }).catch(e => this.rollbackRoomJoin(e, roomName, id))
     }).bind(this))
   }
 

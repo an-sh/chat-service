@@ -378,6 +378,7 @@ class UserStateMemory {
   addSocketToRoom (id, roomName) {
     let roomsset = this.socketsToRooms.get(id)
     let socketsset = this.roomsToSockets.get(roomName)
+    let wasjoined = (socketsset && socketsset.length) || 0
     if (!socketsset) {
       socketsset = new FastSet()
       this.roomsToSockets.set(roomName, socketsset)
@@ -385,7 +386,8 @@ class UserStateMemory {
     roomsset.add(roomName)
     socketsset.add(id)
     let njoined = socketsset.length
-    return Promise.resolve(njoined)
+    let hasChanged = njoined !== wasjoined
+    return Promise.resolve([njoined, hasChanged])
   }
 
   removeSocketFromRoom (id, roomName) {
