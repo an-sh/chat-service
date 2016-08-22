@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.10.0"></a>
+# [0.10.0](https://github.com/an-sh/chat-service/compare/v0.9.2...v0.10.0) (2016-08-22)
+
+
+### Bug Fixes
+
+* don't use deprecated Buffer api on newer node ([6d4f5b4](https://github.com/an-sh/chat-service/commit/6d4f5b4))
+* **api:** remove notifications on duplicate joins ([c1c2cd2](https://github.com/an-sh/chat-service/commit/c1c2cd2))
+
+
+### BREAKING CHANGES
+
+* api: Store api UserState#addSocketToRoom method must return
+now two values.
+
+
+
 <a name="0.9.2"></a>
 ## [0.9.2](https://github.com/an-sh/chat-service/compare/v0.9.1...v0.9.2) (2016-08-16)
 
