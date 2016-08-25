@@ -1,5 +1,5 @@
 'use strict'
-/*eslint no-unused-vars: 0*/
+/* eslint no-unused-vars: 0 */
 
 /**
  * {@link chat-service.ChatService} hooks.

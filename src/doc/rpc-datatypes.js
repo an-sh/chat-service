@@ -1,5 +1,5 @@
 'use strict'
-/*eslint no-unused-vars: 0*/
+/* eslint no-unused-vars: 0 */
 
 /**
  * RPC description, can be implemented via any bi-directional

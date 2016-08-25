@@ -1,6 +1,6 @@
 'use strict'
-/*eslint no-unused-vars: 0*/
-/*eslint no-useless-constructor: 0*/
+/* eslint no-unused-vars: 0 */
+/* eslint no-useless-constructor: 0 */
 
 /**
  * Transport public interface.

@@ -1,6 +1,6 @@
 'use strict'
 /* eslint-env mocha */
-/*eslint no-proto: 0*/
+/* eslint no-proto: 0 */
 
 const Promise = require('bluebird')
 const { expect } = require('chai')

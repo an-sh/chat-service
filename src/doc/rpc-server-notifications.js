@@ -1,5 +1,5 @@
 'use strict'
-/*eslint no-unused-vars: 0*/
+/* eslint no-unused-vars: 0 */
 
 /**
  * Notifications that are sent from a server to a client, no client's

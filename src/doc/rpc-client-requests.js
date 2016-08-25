@@ -1,5 +1,5 @@
 'use strict'
-/*eslint no-unused-vars: 0*/
+/* eslint no-unused-vars: 0 */
 
 /**
  * Requests that are sent from a client to a server, for each request
