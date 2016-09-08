@@ -73,7 +73,9 @@ APIs or to tunnel M2M communications for IoT devices.
 
 ## Background
 
-Read this article for more background information. (TODO)
+Read this
+[article](https://medium.com/@an_sh_1/chat-service-project-announcement-and-overview-92283fe80d93)
+for more background information.
 
 
 ## Installation
