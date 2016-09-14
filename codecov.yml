@@ -1,5 +1,5 @@
 coverage:
   ignore:
-    - "tests/*"
+    - "test/*"
     - "src/doc/*"
     - "example/*"
