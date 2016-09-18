@@ -1,7 +1,6 @@
 'use strict'
 
 const ChatServiceError = require('./ChatServiceError')
-const FastMap = require('collections/fast-map')
 const Promise = require('bluebird')
 const _ = require('lodash')
 const check = require('check-types')
@@ -12,7 +11,7 @@ class ArgumentsValidator {
 
   constructor (server) {
     this.server = server
-    this.checkers = new FastMap()
+    this.checkers = new Map()
     this.directMessagesChecker = this.server.directMessagesChecker
     this.roomMessagesChecker = this.server.roomMessagesChecker
     this.customCheckers = {
