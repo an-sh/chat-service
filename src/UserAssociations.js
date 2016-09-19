@@ -91,10 +91,10 @@ class UserAssociations {
       let room = yield this.state.getRoom(roomName)
       yield room.join(this.userName)
       try {
-        let enableUserlistUpdates = yield room.roomState.userlistUpdatesGet()
-        let [njoined, hasChanged] =
-              yield this.userState.addSocketToRoom(id, roomName)
-        yield this.transport.joinChannel(id, roomName)
+        let [enableUserlistUpdates, [njoined, hasChanged]] = yield Promise.all([
+          room.roomState.userlistUpdatesGet(),
+          this.userState.addSocketToRoom(id, roomName),
+          this.transport.joinChannel(id, roomName)])
         if (hasChanged) {
           if (njoined === 1 && enableUserlistUpdates) {
             this.userJoinRoomReport(this.userName, roomName)
@@ -111,18 +111,18 @@ class UserAssociations {
   leaveSocketFromRoom (id, roomName, isLocalCall) {
     let lock = this.userState.lockToRoom(roomName, this.lockTTL)
     return Promise.using(lock, co(function * () {
-      let [njoined, hasChanged] =
-            yield this.userState.removeSocketFromRoom(id, roomName)
-      yield this.leaveChannel(id, roomName)
+      let [{enableUserlistUpdates}, [njoined, hasChanged]] = yield Promise.all([
+        this.getNotifySettings(roomName),
+        this.userState.removeSocketFromRoom(id, roomName),
+        this.leaveChannel(id, roomName)])
       if (njoined === 0) {
         yield this.leaveRoom(roomName)
       }
       if (hasChanged) {
-        let { enableUserlistUpdates } = yield this.getNotifySettings(roomName)
         this.socketLeftEcho(id, roomName, njoined, isLocalCall)
         this.userLeftRoomReport(this.userName, roomName, enableUserlistUpdates)
       }
-      return Promise.resolve(njoined)
+      return njoined
     }).bind(this))
   }
 
