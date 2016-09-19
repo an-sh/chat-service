@@ -38,8 +38,6 @@ class ArgumentsValidator {
       return Promise.each(customCheckers, (checker, idx) => {
         if (checker) {
           return Promise.fromCallback(fn => checker(nargs[idx], fn))
-        } else {
-          return Promise.resolve()
         }
       }).return()
     }).asCallback(cb)

@@ -97,8 +97,6 @@ class UserAssociations {
     }).spread(njoined => {
       if (!njoined) {
         return this.leaveRoom(roomName)
-      } else {
-        return Promise.resolve()
       }
     }).thenThrow(error)
   }
@@ -171,7 +169,7 @@ class UserAssociations {
       yield Promise.map(roomsRemoved, (roomName, idx) => {
         let njoined = joinedSockets[idx]
         this.socketLeftEcho(id, roomName, njoined)
-        if (njoined) { return Promise.resolve() }
+        if (njoined) { return }
         return this.leaveRoom(roomName)
           .then(() => this.getNotifySettings(roomName))
           .then(({enableUserlistUpdates}) => this.userLeftRoomReport(

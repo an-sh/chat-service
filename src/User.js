@@ -79,8 +79,6 @@ class User {
       if (!sockets || !sockets.length) {
         let error = new ChatServiceError('noUserOnline', this.userName)
         return Promise.reject(error)
-      } else {
-        return Promise.resolve()
       }
     })
   }
@@ -110,7 +108,6 @@ class User {
           this.commandBinder.bindDisconnect(id, this.removeSocket.bind(this))
           return this.transport.joinChannel(id, this.echoChannel).then(() => {
             this.socketConnectEcho(id, nconnected)
-            return Promise.resolve()
           })
         }
       })
