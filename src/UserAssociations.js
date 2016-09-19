@@ -4,6 +4,7 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 const eventToPromise = require('event-to-promise')
 const { asyncLimit } = require('./utils')
+const { run } = require('./utils')
 
 const co = Promise.coroutine
 
@@ -105,9 +106,9 @@ class UserAssociations {
   leaveRoom (roomName) {
     return Promise
       .try(() => this.state.getRoom(roomName))
-      .then(room => room.leave(this.userName)
-            .catch(error => this.consistencyFailure(
-              error, {roomName, opType: 'roomUserlist'})))
+      .then(room => room.leave(this.userName).catch(error => {
+        this.consistencyFailure(error, {roomName, opType: 'roomUserlist'})
+      }))
       .catchReturn()
   }
 
@@ -123,18 +124,21 @@ class UserAssociations {
     return Promise.using(lock, co(function * () {
       let room = yield this.state.getRoom(roomName)
       yield room.join(this.userName)
-      let enableUserlistUpdates = yield room.roomState.userlistUpdatesGet()
-      return this.userState.addSocketToRoom(id, roomName).spread(
-        (njoined, hasChanged) => {
-          return this.transport.joinChannel(id, roomName).then(() => {
-            if (hasChanged) {
-              if (njoined === 1 && enableUserlistUpdates) {
-                this.userJoinRoomReport(this.userName, roomName)
-              }
-              this.socketJoinEcho(id, roomName, njoined, isLocalCall)
-            }
-          }).return(njoined)
-        }).catch(e => this.rollbackRoomJoin(e, roomName, id))
+      try {
+        let enableUserlistUpdates = yield room.roomState.userlistUpdatesGet()
+        let [njoined, hasChanged] =
+              yield this.userState.addSocketToRoom(id, roomName)
+        yield this.transport.joinChannel(id, roomName)
+        if (hasChanged) {
+          if (njoined === 1 && enableUserlistUpdates) {
+            this.userJoinRoomReport(this.userName, roomName)
+          }
+          this.socketJoinEcho(id, roomName, njoined, isLocalCall)
+        }
+        return njoined
+      } catch (e) {
+        yield this.rollbackRoomJoin(e, roomName, id)
+      }
     }).bind(this))
   }
 
@@ -157,27 +161,25 @@ class UserAssociations {
   }
 
   removeUserSocket (id) {
-    return this.userState.removeSocket(id)
-      .spread((roomsRemoved, joinedSockets, nconnected) => {
-        roomsRemoved = roomsRemoved || []
-        joinedSockets = joinedSockets || []
-        nconnected = nconnected || 0
-        return this.socketLeaveChannels(id, roomsRemoved).then(() => {
-          return Promise.map(
-            roomsRemoved,
-            (roomName, idx) => {
-              let njoined = joinedSockets[idx]
-              this.socketLeftEcho(id, roomName, njoined)
-              if (njoined) { return Promise.resolve() }
-              return this.leaveRoom(roomName)
-                .then(() => this.getNotifySettings(roomName))
-                .then(({enableUserlistUpdates}) => this.userLeftRoomReport(
-                  this.userName, roomName, enableUserlistUpdates))
-            },
-            { concurrency: asyncLimit })
-            .then(() => this.socketDisconnectEcho(id, nconnected))
-        })
-      }).then(() => this.state.removeSocket(id))
+    return run(this, function * () {
+      let [roomsRemoved, joinedSockets, nconnected] =
+            yield this.userState.removeSocket(id)
+      roomsRemoved = roomsRemoved || []
+      joinedSockets = joinedSockets || []
+      nconnected = nconnected || 0
+      yield this.socketLeaveChannels(id, roomsRemoved)
+      yield Promise.map(roomsRemoved, (roomName, idx) => {
+        let njoined = joinedSockets[idx]
+        this.socketLeftEcho(id, roomName, njoined)
+        if (njoined) { return Promise.resolve() }
+        return this.leaveRoom(roomName)
+          .then(() => this.getNotifySettings(roomName))
+          .then(({enableUserlistUpdates}) => this.userLeftRoomReport(
+            this.userName, roomName, enableUserlistUpdates))
+      }, { concurrency: asyncLimit })
+      this.socketDisconnectEcho(id, nconnected)
+      return this.state.removeSocket(id)
+    })
   }
 
   removeSocketFromServer (id) {
@@ -216,8 +218,7 @@ class UserAssociations {
         return this.state.getUser(userName)
           .then(user => user.removeFromRoom(roomName))
           .catchReturn()
-      },
-      { concurrency: asyncLimit })
+      }, { concurrency: asyncLimit })
   }
 
 }
