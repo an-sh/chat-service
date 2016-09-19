@@ -83,6 +83,11 @@ class User {
     })
   }
 
+  socketConnectEcho (id, nconnected) {
+    this.transport.sendToChannel(
+      id, this.echoChannel, 'socketConnectEcho', id, nconnected)
+  }
+
   consistencyFailure (error, operationInfo) {
     operationInfo.userName = this.userName
     let name = operationInfo.opType === 'transportChannel'
@@ -114,7 +119,7 @@ class User {
   }
 
   removeSocket (id) {
-    return this.removeSocketFromServer(id)
+    return this.removeUserSocket(id)
   }
 
   disconnectInstanceSockets () {

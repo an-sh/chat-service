@@ -1,9 +1,11 @@
 'use strict'
 
 const Promise = require('bluebird')
+const UserReports = require('./UserReports')
 const _ = require('lodash')
 const eventToPromise = require('event-to-promise')
 const { asyncLimit } = require('./utils')
+const { mixin } = require('es6-mixin')
 const { run } = require('./utils')
 
 const co = Promise.coroutine
@@ -13,52 +15,7 @@ class UserAssociations {
 
   constructor (props) {
     _.defaults(this, props)
-  }
-
-  userJoinRoomReport (userName, roomName) {
-    this.transport.emitToChannel(roomName, 'roomUserJoined', roomName, userName)
-  }
-
-  userLeftRoomReport (userName, roomName, enableUserlistUpdates) {
-    if (enableUserlistUpdates) {
-      this.transport.emitToChannel(roomName, 'roomUserLeft', roomName, userName)
-    }
-  }
-
-  userRemovedReport (userName, roomName, enableUserlistUpdates) {
-    let cn = this.echoChannel
-    this.transport.emitToChannel(cn, 'roomAccessRemoved', roomName)
-    this.userLeftRoomReport(userName, roomName, enableUserlistUpdates)
-  }
-
-  socketJoinEcho (id, roomName, njoined, isLocalCall) {
-    if (isLocalCall) {
-      this.transport.emitToChannel(
-        this.echoChannel, 'roomJoinedEcho', roomName, id, njoined)
-    } else {
-      this.transport.sendToChannel(
-        id, this.echoChannel, 'roomJoinedEcho', roomName, id, njoined)
-    }
-  }
-
-  socketLeftEcho (id, roomName, njoined, isLocalCall) {
-    if (isLocalCall) {
-      this.transport.emitToChannel(
-        this.echoChannel, 'roomLeftEcho', roomName, id, njoined)
-    } else {
-      this.transport.sendToChannel(
-        id, this.echoChannel, 'roomLeftEcho', roomName, id, njoined)
-    }
-  }
-
-  socketConnectEcho (id, nconnected) {
-    this.transport.sendToChannel(
-      id, this.echoChannel, 'socketConnectEcho', id, nconnected)
-  }
-
-  socketDisconnectEcho (id, nconnected) {
-    this.transport.sendToChannel(
-      id, this.echoChannel, 'socketDisconnectEcho', id, nconnected)
+    mixin(this, UserReports, this.transport, this.echoChannel)
   }
 
   leaveChannel (id, channel) {
@@ -177,11 +134,7 @@ class UserAssociations {
       }, { concurrency: asyncLimit })
       this.socketDisconnectEcho(id, nconnected)
       return this.state.removeSocket(id)
-    })
-  }
-
-  removeSocketFromServer (id) {
-    return this.removeUserSocket(id).catch(e => {
+    }).catch(e => {
       let info = { id, opType: 'userSockets' }
       return this.consistencyFailure(e, info)
     })
