@@ -6,7 +6,7 @@ const DirectMessaging = require('./DirectMessaging')
 const Promise = require('bluebird')
 const UserAssociations = require('./UserAssociations')
 const _ = require('lodash')
-const { asyncLimit, checkNameSymbols } = require('./utils')
+const { asyncLimit, checkNameSymbols, run } = require('./utils')
 const { mixin } = require('es6-mixin')
 
 // Client commands implementation.
@@ -26,11 +26,8 @@ class User {
     this.commandBinder =
       new CommandBinder(this.server, this.transport, this.userName)
     let opts = {
-      busAckTimeout: this.server.busAckTimeout,
-      clusterBus: this.server.clusterBus,
-      consistencyFailure: this.consistencyFailure.bind(this),
+      server,
       echoChannel: this.echoChannel,
-      lockTTL: this.state.lockTTL,
       state: this.state,
       transport: this.transport,
       userName: this.userName,
@@ -47,6 +44,15 @@ class User {
     return this.directMessaging.removeState()
   }
 
+  checkOnline () {
+    return this.userState.getAllSockets().then(sockets => {
+      if (!sockets || !sockets.length) {
+        let error = new ChatServiceError('noUserOnline', this.userName)
+        return Promise.reject(error)
+      }
+    })
+  }
+
   processMessage (msg, setTimestamp = false) {
     delete msg.id
     delete msg.timestamp
@@ -55,6 +61,11 @@ class User {
     }
     msg.author = this.userName || msg.author
     return msg
+  }
+
+  socketConnectEcho (id, nconnected) {
+    this.transport.sendToChannel(
+      id, this.echoChannel, 'socketConnectEcho', id, nconnected)
   }
 
   exec (command, options, args) {
@@ -74,48 +85,17 @@ class User {
     return cmd(args, options)
   }
 
-  checkOnline () {
-    return this.userState.getAllSockets().then(sockets => {
-      if (!sockets || !sockets.length) {
-        let error = new ChatServiceError('noUserOnline', this.userName)
-        return Promise.reject(error)
-      }
-    })
-  }
-
-  socketConnectEcho (id, nconnected) {
-    this.transport.sendToChannel(
-      id, this.echoChannel, 'socketConnectEcho', id, nconnected)
-  }
-
-  consistencyFailure (error, operationInfo) {
-    operationInfo.userName = this.userName
-    let name = operationInfo.opType === 'transportChannel'
-          ? 'transportConsistencyFailure'
-          : 'storeConsistencyFailure'
-    this.server.emit(name, error, operationInfo)
-  }
-
   registerSocket (id) {
-    return this.state.addSocket(id, this.userName)
-      .then(() => this.userState.addSocket(id, this.server.instanceUID))
-      .then(nconnected => {
-        if (!this.transport.getSocket(id)) {
-          return this.removeUserSocket(id).then(() => {
-            let error = new ChatServiceError('noSocket', 'connection')
-            return Promise.reject(error)
-          })
-        } else {
-          let commands = this.server.rpcRequestsNames
-          for (let cmd of commands) {
-            this.commandBinder.bindCommand(id, cmd, this[cmd].bind(this))
-          }
-          this.commandBinder.bindDisconnect(id, this.removeSocket.bind(this))
-          return this.transport.joinChannel(id, this.echoChannel).then(() => {
-            this.socketConnectEcho(id, nconnected)
-          })
-        }
-      })
+    return run(this, function * () {
+      let nconnected = yield this.addUserSocket(id, this.userName)
+      let commands = this.server.rpcRequestsNames
+      for (let cmd of commands) {
+        this.commandBinder.bindCommand(id, cmd, this[cmd].bind(this))
+      }
+      this.commandBinder.bindDisconnect(id, this.removeSocket.bind(this))
+      yield this.transport.joinChannel(id, this.echoChannel)
+      return this.socketConnectEcho(id, nconnected)
+    })
   }
 
   removeSocket (id) {

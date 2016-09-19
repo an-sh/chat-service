@@ -1,12 +1,12 @@
 'use strict'
 
+const ChatServiceError = require('./ChatServiceError')
 const Promise = require('bluebird')
 const UserReports = require('./UserReports')
 const _ = require('lodash')
 const eventToPromise = require('event-to-promise')
-const { asyncLimit } = require('./utils')
+const { asyncLimit, run } = require('./utils')
 const { mixin } = require('es6-mixin')
-const { run } = require('./utils')
 
 const co = Promise.coroutine
 
@@ -15,7 +15,18 @@ class UserAssociations {
 
   constructor (props) {
     _.defaults(this, props)
+    this.busAckTimeout = this.server.busAckTimeout
+    this.clusterBus = this.server.clusterBus
+    this.lockTTL = this.state.lockTTL
     mixin(this, UserReports, this.transport, this.echoChannel)
+  }
+
+  consistencyFailure (error, operationInfo) {
+    operationInfo.userName = this.userName
+    let name = operationInfo.opType === 'transportChannel'
+          ? 'transportConsistencyFailure'
+          : 'storeConsistencyFailure'
+    this.server.emit(name, error, operationInfo)
   }
 
   leaveChannel (id, channel) {
@@ -113,6 +124,21 @@ class UserAssociations {
       }
       return Promise.resolve(njoined)
     }).bind(this))
+  }
+
+  addUserSocket (id) {
+    return this.state.addSocket(id, this.userName)
+      .then(() => this.userState.addSocket(id, this.server.instanceUID))
+      .then(nconnected => {
+        if (!this.transport.getSocket(id)) {
+          return this.removeUserSocket(id).then(() => {
+            let error = new ChatServiceError('noSocket', 'connection')
+            return Promise.reject(error)
+          })
+        } else {
+          return nconnected
+        }
+      })
   }
 
   removeUserSocket (id) {
