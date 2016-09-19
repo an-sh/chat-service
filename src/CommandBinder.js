@@ -6,6 +6,8 @@ const _ = require('lodash')
 const { execHook, logError, possiblyCallback, resultsTransform } =
         require('./utils')
 
+const co = Promise.coroutine
+
 // Implements command functions binding and wrapping.
 class CommandBinder {
 
@@ -31,40 +33,30 @@ class CommandBinder {
     let afterHook = this.server.hooks[`${name}After`]
     return (args, info) => {
       let execInfo = new ExecInfo()
-      _.assign(execInfo, { server: this.server, userName: this.userName })
-      _.assign(execInfo, info)
-      _.assign(execInfo, validator.splitArguments(name, args))
-      return Promise.using(
-        this.commandWatcher(info.id, name),
-        () => validator.checkArguments(name, ...execInfo.args)
-          .then(() => {
-            if (beforeHook && !execInfo.bypassHooks) {
-              return execHook(beforeHook, execInfo)
-            } else {
-              return Promise.resolve()
-            } })
-          .then(results => {
-            if (results && results.length) { return results }
-            return fn(...execInfo.args, execInfo)
-              .then(result => { execInfo.results = [result] },
-                    error => { execInfo.error = error })
-              .then(() => {
-                if (afterHook && !execInfo.bypassHooks) {
-                  return execHook(afterHook, execInfo)
-                } else {
-                  return Promise.resolve()
-                } })
-              .then(results => {
-                if (results && results.length) {
-                  return results
-                } else if (execInfo.error) {
-                  return Promise.reject(execInfo.error)
-                } else {
-                  return execInfo.results
-                }
-              })
-          }))
-        .catch(logError)
+      let context = { server: this.server, userName: this.userName }
+      let argsInfo = validator.splitArguments(name, args)
+      _.assign(execInfo, context, info, argsInfo)
+      return Promise.using(this.commandWatcher(info.id, name), co(function * () {
+        yield validator.checkArguments(name, ...execInfo.args)
+        let results
+        if (beforeHook && !execInfo.bypassHooks) {
+          results = yield execHook(beforeHook, execInfo)
+        }
+        if (results && results.length) { return results }
+        yield fn(...execInfo.args, execInfo)
+          .then(result => { execInfo.results = [result] })
+          .catch(error => { execInfo.error = error })
+        if (afterHook && !execInfo.bypassHooks) {
+          results = yield execHook(afterHook, execInfo)
+        }
+        if (results && results.length) {
+          return results
+        } else if (execInfo.error) {
+          return Promise.reject(execInfo.error)
+        } else {
+          return execInfo.results
+        }
+      })).catch(logError)
     }
   }
 
