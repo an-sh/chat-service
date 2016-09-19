@@ -260,9 +260,9 @@ class ChatService extends EventEmitter {
   initVariables () {
     this.instanceUID = uid.sync(18)
     this.runningCommands = 0
-    this.rpcRequestsNames = rpcRequestsNames
     this.closed = false
     // constants
+    this.rpcRequestsNames = rpcRequestsNames
     this.ChatServiceError = ChatServiceError
     this.SocketIOClusterBus = SocketIOClusterBus
     this.User = User
@@ -287,8 +287,7 @@ class ChatService extends EventEmitter {
       this.historyMaxGetMessages = 100
     }
     this.historyMaxSize = this.options.historyMaxSize
-    if (!_.isNumber(this.historyMaxSize) ||
-        this.historyMaxSize < 0) {
+    if (!_.isNumber(this.historyMaxSize) || this.historyMaxSize < 0) {
       this.historyMaxSize = 10000
     }
     this.port = this.options.port || 8000
@@ -309,28 +308,23 @@ class ChatService extends EventEmitter {
   }
 
   setComponents () {
-    let State = (() => {
-      switch (true) {
-        case this.stateConstructor === 'memory':
-          return MemoryState
-        case this.stateConstructor === 'redis':
-          return RedisState
-        case _.isFunction(this.stateConstructor):
-          return this.stateConstructor
-        default:
-          throw new Error(`Invalid state: ${this.stateConstructor}`)
-      }
-    })()
-    let Transport = (() => {
-      switch (true) {
-        case this.transportConstructor === 'socket.io':
-          return SocketIOTransport
-        case _.isFunction(this.transportConstructor):
-          return this.transportConstructor
-        default:
-          throw new Error(`Invalid transport: ${this.transportConstructor}`)
-      }
-    })()
+    let State, Transport
+    if (this.stateConstructor === 'memory') {
+      State = MemoryState
+    } else if (this.stateConstructor === 'redis') {
+      State = RedisState
+    } else if (_.isFunction(this.stateConstructor)) {
+      State = this.stateConstructor
+    } else {
+      throw new Error(`Invalid state: ${this.stateConstructor}`)
+    }
+    if (this.transportConstructor === 'socket.io') {
+      Transport = SocketIOTransport
+    } else if (_.isFunction(this.transportConstructor)) {
+      Transport = this.transportConstructor
+    } else {
+      throw new Error(`Invalid transport: ${this.transportConstructor}`)
+    }
     this.validator = new ArgumentsValidator(this)
     this.checkArguments = this.validator.checkArguments.bind(this.validator)
     this.state = new State(this, this.stateOptions)
@@ -342,12 +336,12 @@ class ChatService extends EventEmitter {
 
   attachBusListeners () {
     this.clusterBus.on('roomLeaveSocket', (id, roomName) => {
-      return this.transport.leaveChannel(id, roomName)
+      this.transport.leaveChannel(id, roomName)
         .then(() => this.clusterBus.emit('socketRoomLeft', id, roomName))
         .catchReturn()
     })
     this.clusterBus.on('disconnectUserSockets', userName => {
-      return this.state.getUser(userName)
+      this.state.getUser(userName)
         .then(user => user.disconnectInstanceSockets())
         .catchReturn()
     })
@@ -361,12 +355,9 @@ class ChatService extends EventEmitter {
   // for transport plugins integration
   onConnect (id) {
     if (this.hooks.onConnect) {
-      return Promise.try(() => {
-        return execHook(this.hooks.onConnect, this, id)
-      }).then(loginData => {
-        loginData = _.castArray(loginData)
-        return Promise.resolve(loginData)
-      }).catch(logError)
+      return Promise.try(() => execHook(this.hooks.onConnect, this, id))
+        .then(loginData => _.castArray(loginData))
+        .catch(logError)
     } else {
       return Promise.resolve([])
     }
