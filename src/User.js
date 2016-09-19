@@ -36,6 +36,8 @@ class User {
     mixin(this, UserAssociations, opts)
   }
 
+  // utils
+
   initState (state) {
     return this.directMessaging.initState(state)
   }
@@ -61,11 +63,6 @@ class User {
     }
     msg.author = this.userName || msg.author
     return msg
-  }
-
-  socketConnectEcho (id, nconnected) {
-    this.transport.sendToChannel(
-      id, this.echoChannel, 'socketConnectEcho', id, nconnected)
   }
 
   exec (command, options, args) {
@@ -94,13 +91,16 @@ class User {
       }
       this.commandBinder.bindDisconnect(id, this.removeSocket.bind(this))
       yield this.transport.joinChannel(id, this.echoChannel)
-      return this.socketConnectEcho(id, nconnected)
+      this.transport.sendToChannel(
+        id, this.echoChannel, 'socketConnectEcho', id, nconnected)
     })
   }
 
   removeSocket (id) {
     return this.removeUserSocket(id)
   }
+
+  // RPC handlers
 
   disconnectInstanceSockets () {
     return this.userState.getAllSockets().then(sockets => {
