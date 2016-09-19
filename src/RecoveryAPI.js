@@ -2,6 +2,7 @@
 
 const Promise = require('bluebird')
 const _ = require('lodash')
+const { run } = require('./utils')
 
 /**
  * Service infrastructure failures recovery.
@@ -21,26 +22,22 @@ class RecoveryAPI {
 
   checkUserSockets (user) {
     let { userName } = user
-    return user.userState.getSocketsToInstance().then(sockets => {
-      return Promise.each(_.toPairs(sockets), ([socket, instance]) => {
+    return run(this, function * () {
+      let sockets = yield user.userState.getSocketsToInstance()
+      yield Promise.each(_.toPairs(sockets), ([socket, instance]) => {
         if (instance === this.instanceUID) {
           if (!this.transport.getSocket(socket)) {
             return user.userState.removeSocket(socket)
           }
         }
-        return Promise.resolve()
       })
-    }).then(() => {
-      return user.userState.getSocketsToRooms()
-    }).then(data => {
+      let data = yield user.userState.getSocketsToRooms()
       let args = _.values(data)
-      return _.intersection(...args)
-    }).then(rooms => {
+      let rooms = _.intersection(...args)
       return Promise.each(rooms, roomName => {
         return this.state.getRoom(roomName)
           .then(room => room.roomState.hasInList('userlist', userName))
-          .then(isPresent =>
-                isPresent ? Promise.resolve() : user.removeFromRoom(roomName))
+          .then(isPresent => isPresent ? null : user.removeFromRoom(roomName))
           .catchReturn()
       })
     })
@@ -54,8 +51,6 @@ class RecoveryAPI {
           return user.userState.getRoomToSockets(roomName).then(sockets => {
             if (!sockets || !sockets.length) {
               return user.removeFromRoom(roomName)
-            } else {
-              return Promise.resolve()
             }
           }).catchReturn()
             .then(() => room.checkAcess(userName))
