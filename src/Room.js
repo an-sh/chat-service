@@ -59,7 +59,7 @@ class RoomPermissions {
     }
     if (bypassPermissions) { return Promise.resolve() }
     return this.roomState.ownerGet().then(owner => {
-      if (author === owner) { return Promise.resolve() }
+      if (author === owner) { return }
       if (listName === 'adminlist') {
         return Promise.reject(new ChatServiceError('notAllowed'))
       }
@@ -71,14 +71,13 @@ class RoomPermissions {
           if (name !== owner) { continue }
           return Promise.reject(new ChatServiceError('notAllowed'))
         }
-        return Promise.resolve()
       })
     })
   }
 
   checkModeChange (author, value, bypassPermissions) {
     return this.isAdmin(author).then(admin => {
-      if (admin || bypassPermissions) { return Promise.resolve() }
+      if (admin || bypassPermissions) { return }
       return Promise.reject(new ChatServiceError('notAllowed'))
     })
   }
@@ -86,15 +85,15 @@ class RoomPermissions {
   checkAcess (userName) {
     return run(this, function * () {
       let admin = yield this.isAdmin(userName)
-      if (admin) { return Promise.resolve() }
+      if (admin) { return }
       let blacklisted = yield this.roomState.hasInList('blacklist', userName)
       if (blacklisted) {
         return Promise.reject(new ChatServiceError('notAllowed'))
       }
       let whitelistOnly = yield this.roomState.whitelistOnlyGet()
-      if (!whitelistOnly) { return Promise.resolve() }
+      if (!whitelistOnly) { return }
       let whitelisted = yield this.roomState.hasInList('whitelist', userName)
-      if (whitelisted) { return Promise.resolve() }
+      if (whitelisted) { return }
       return Promise.reject(new ChatServiceError('notAllowed'))
     })
   }
@@ -103,9 +102,9 @@ class RoomPermissions {
     if (bypassPermissions) { return Promise.resolve() }
     return run(this, function * () {
       let hasAuthor = yield this.roomState.hasInList('userlist', author)
-      if (hasAuthor) { return Promise.resolve() }
+      if (hasAuthor) { return }
       let admin = yield this.isAdmin(author)
-      if (admin) { return Promise.resolve() }
+      if (admin) { return }
       return Promise.reject(new ChatServiceError('notJoined', this.roomName))
     })
   }
@@ -113,7 +112,7 @@ class RoomPermissions {
   checkIsOwner (author, bypassPermissions) {
     if (bypassPermissions) { return Promise.resolve() }
     return this.roomState.ownerGet().then(owner => {
-      if (owner === author) { return Promise.resolve() }
+      if (owner === author) { return }
       return Promise.reject(new ChatServiceError('notAllowed'))
     })
   }
@@ -152,7 +151,7 @@ class Room {
 
   leave (author) {
     return this.roomState.hasInList('userlist', author).then(hasAuthor => {
-      if (!hasAuthor) { return Promise.resolve() }
+      if (!hasAuthor) { return }
       return this.roomState.removeFromList('userlist', [author])
         .then(() => this.roomState.userSeenUpdate(author))
     })
@@ -162,7 +161,7 @@ class Room {
     return this.checkAcess(author)
       .then(() => this.roomState.hasInList('userlist', author))
       .then(hasAuthor => {
-        if (hasAuthor) { return Promise.resolve() }
+        if (hasAuthor) { return }
         return this.roomState.userSeenUpdate(author)
           .then(() => this.roomState.addToList('userlist', [author]))
       })
@@ -170,9 +169,9 @@ class Room {
 
   message (author, msg, bypassPermissions) {
     return Promise.try(() => {
-      if (bypassPermissions) { return Promise.resolve() }
+      if (bypassPermissions) { return }
       return this.roomState.hasInList('userlist', author).then(hasAuthor => {
-        if (hasAuthor) { return Promise.resolve() }
+        if (hasAuthor) { return }
         return Promise.reject(new ChatServiceError('notJoined', this.roomName))
       })
     }).then(() => this.roomState.messageAdd(msg))
