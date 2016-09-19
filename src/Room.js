@@ -58,20 +58,20 @@ class RoomPermissions {
       return Promise.reject(new ChatServiceError('notAllowed'))
     }
     if (bypassPermissions) { return Promise.resolve() }
-    return this.roomState.ownerGet().then(owner => {
+    return run(this, function * () {
+      let owner = yield this.roomState.ownerGet()
       if (author === owner) { return }
       if (listName === 'adminlist') {
         return Promise.reject(new ChatServiceError('notAllowed'))
       }
-      return this.roomState.hasInList('adminlist', author).then(admin => {
-        if (!admin) {
-          return Promise.reject(new ChatServiceError('notAllowed'))
-        }
-        for (let name of values) {
-          if (name !== owner) { continue }
-          return Promise.reject(new ChatServiceError('notAllowed'))
-        }
-      })
+      let admin = yield this.roomState.hasInList('adminlist', author)
+      if (!admin) {
+        return Promise.reject(new ChatServiceError('notAllowed'))
+      }
+      for (let name of values) {
+        if (name !== owner) { continue }
+        return Promise.reject(new ChatServiceError('notAllowed'))
+      }
     })
   }
 
