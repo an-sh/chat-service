@@ -77,21 +77,19 @@ class ListsStateMemory {
     let num = elems.length
     return this.checkList(listName, num, limit).then(() => {
       this[listName].addEach(elems)
-      return Promise.resolve()
     })
   }
 
   removeFromList (listName, elems) {
     return this.checkList(listName).then(() => {
       this[listName].deleteEach(elems)
-      return Promise.resolve()
     })
   }
 
   getList (listName) {
     return this.checkList(listName).then(() => {
       let data = this[listName].toArray()
-      return Promise.resolve(data)
+      return data
     })
   }
 
@@ -99,7 +97,7 @@ class ListsStateMemory {
     return this.checkList(listName).then(() => {
       let data = this[listName].has(elem)
       data = Boolean(data)
-      return Promise.resolve(data)
+      return data
     })
   }
 

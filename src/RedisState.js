@@ -14,13 +14,8 @@ const { mixin } = require('es6-mixin')
 let namespace = 'chatservice'
 
 function initSet (redis, set, values) {
-  return redis.del(set).then(() => {
-    if (!values) {
-      return Promise.resolve()
-    } else {
-      return redis.sadd(set, values)
-    }
-  })
+  return redis.del(set)
+    .then(() => values ? redis.sadd(set, values) : null)
 }
 
 
@@ -40,8 +35,6 @@ class StateOperations {
       if (!isnew) {
         let error = new ChatServiceError(this.exitsErrorName, this.name)
         return Promise.reject(error)
-      } else {
-        return Promise.resolve()
       }
     }).then(() => this.stateReset(state))
       .then(() => this.redis.setnx(this.makeKeyName('isInit'), true))
@@ -263,8 +256,6 @@ class ListsStateRedis {
       if (sz + num > limit) {
         let error = new ChatServiceError('listLimitExceeded', listName)
         return Promise.reject(error)
-      } else {
-        return Promise.resolve()
       }
     })
   }
@@ -288,7 +279,7 @@ class ListsStateRedis {
   hasInList (listName, elem) {
     return this.checkList(listName)
       .then(() => this.redis.sismember(this.makeKeyName(listName), elem))
-      .then(data => Promise.resolve(Boolean(data)))
+      .then(data => Boolean(data))
   }
 
   whitelistOnlySet (mode) {
@@ -298,7 +289,7 @@ class ListsStateRedis {
 
   whitelistOnlyGet () {
     return this.redis.get(this.makeKeyName('whitelistMode'))
-      .then(data => Promise.resolve(Boolean(data)))
+      .then(data => Boolean(data))
   }
 
 }
@@ -366,7 +357,7 @@ class RoomStateRedis extends ListsStateRedis {
 
   accessListsUpdatesGet () {
     return this.redis.get(this.makeKeyName('enableAccessListsUpdates'))
-      .then(data => Promise.resolve(Boolean(data)))
+      .then(data => Boolean(data))
   }
 
   userlistUpdatesSet (enableUserlistUpdates) {
@@ -377,7 +368,7 @@ class RoomStateRedis extends ListsStateRedis {
 
   userlistUpdatesGet () {
     return this.redis.get(this.makeKeyName('enableUserlistUpdates'))
-      .then(data => Promise.resolve(Boolean(data)))
+      .then(data => Boolean(data))
   }
 
   historyMaxSizeSet (historyMaxSize) {
@@ -413,11 +404,10 @@ class RoomStateRedis extends ListsStateRedis {
         historySize = parseInt(historySize)
         historyMaxSize = parseFloat(historyMaxSize)
         lastMessageId = parseInt(lastMessageId)
-        let info = { historySize,
-                     historyMaxSize,
-                     historyMaxGetMessages: this.historyMaxGetMessages,
-                     lastMessageId }
-        return Promise.resolve(info)
+        return { historySize,
+                 historyMaxSize,
+                 historyMaxGetMessages: this.historyMaxGetMessages,
+                 lastMessageId }
       })
   }
 
@@ -437,7 +427,7 @@ class RoomStateRedis extends ListsStateRedis {
       .spread(id => {
         msg.id = id
         msg.timestamp = timestamp
-        return Promise.resolve(msg)
+        return msg
       })
   }
 
@@ -571,7 +561,7 @@ class UserStateRedis {
       .hset(this.makeKeyName('sockets'), id, uid)
       .hlen(this.makeKeyName('sockets'))
       .exec()
-      .spread((_, [, nconnected]) => Promise.resolve(nconnected))
+      .spread((_, [, nconnected]) => nconnected)
   }
 
   getAllSockets () {
@@ -594,7 +584,7 @@ class UserStateRedis {
         for (let [k, v] of _.toPairs(data)) {
           if (_.isEmpty(v)) { data[k] = [] }
         }
-        return Promise.resolve(data)
+        return data
       })
   }
 
@@ -607,7 +597,7 @@ class UserStateRedis {
       .exec()
       .then(([[, wasjoined], , , [, njoined]]) => {
         let hasChanged = njoined !== wasjoined
-        return Promise.resolve([njoined, hasChanged])
+        return [njoined, hasChanged]
       })
   }
 
@@ -620,21 +610,21 @@ class UserStateRedis {
       .exec()
       .then(([[, wasjoined], , , [, njoined]]) => {
         let hasChanged = njoined !== wasjoined
-        return Promise.resolve([njoined, hasChanged])
+        return [njoined, hasChanged]
       })
   }
 
   removeAllSocketsFromRoom (roomName) {
     return this.redis.removeAllSocketsFromRoom(
       this.makeRoomToSockets(roomName), this.makeSocketToRooms(), roomName)
-      .spread(result => Promise.resolve(JSON.parse(result)))
+      .spread(result => JSON.parse(result))
   }
 
   removeSocket (id) {
     return this.redis.removeSocket(
       this.makeSocketToRooms(id), this.makeKeyName('sockets'),
       this.makeRoomToSockets(), id)
-      .spread(result => Promise.resolve(JSON.parse(result)))
+      .spread(result => JSON.parse(result))
   }
 
   lockToRoom (roomName, ttl) {
@@ -749,13 +739,9 @@ class RedisState {
 
   getOrAddUser (name, state) {
     let user = new User(this.server, name)
-    return this.hasUser(name).then(exists => {
-      if (!exists) {
-        return user.initState(state)
-      } else {
-        return Promise.resolve()
-      }
-    }).catch(ChatServiceError, e => user)
+    return this.hasUser(name)
+      .then(exists => exists ? null : user.initState(state))
+      .catch(ChatServiceError, e => user)
       .return(user)
   }
 
@@ -764,7 +750,7 @@ class RedisState {
     return this.hasUser(name).then(exists => {
       if (!exists) {
         if (isPredicate) {
-          return Promise.resolve(null)
+          return null
         } else {
           let error = new ChatServiceError('noUser', name)
           return Promise.reject(error)
