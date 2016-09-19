@@ -20,19 +20,15 @@ class SocketIOTransport {
     this.io = this.options.io
     this.middleware = options.middleware
     this.namespace = this.options.namespace || '/chat-service'
-    let Adapter = (() => {
-      switch (true) {
-        case this.adapterConstructor === 'memory':
-          return null
-        case this.adapterConstructor === 'redis':
-          return RedisAdapter
-        case _.isFunction(this.adapterConstructor):
-          return this.adapterConstructor
-        default:
-          let c = this.adapterConstructor
-          throw new Error(`Invalid transport adapter: ${c}`)
-      }
-    })()
+    let Adapter
+    if (this.adapterConstructor === 'memory') {
+    } else if (this.adapterConstructor === 'redis') {
+      Adapter = RedisAdapter
+    } else if (_.isFunction(this.adapterConstructor)) {
+      Adapter = this.adapterConstructor
+    } else {
+      throw new Error(`Invalid transport adapter: ${this.adapterConstructor}`)
+    }
     if (!this.io) {
       this.ioOptions = this.options.ioOptions
       this.http = this.options.http
@@ -76,7 +72,7 @@ class SocketIOTransport {
           return Promise.reject(new ChatServiceError('noLogin'))
         }
       }
-      return Promise.resolve(userName)
+      return userName
     })
   }
 
@@ -112,7 +108,6 @@ class SocketIOTransport {
           socket.disconnect()
         }
       }
-      return Promise.resolve()
     })
   }
 

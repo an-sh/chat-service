@@ -26,7 +26,7 @@ class SocketIOClusterBus extends EventEmitter {
 
   listen () {
     return Promise.fromCallback(cb => {
-      return this.adapter.add(this.server.instanceUID, this.channel, cb)
+      this.adapter.add(this.server.instanceUID, this.channel, cb)
     })
   }
 
@@ -57,9 +57,9 @@ class SocketIOClusterBus extends EventEmitter {
     let [ev, ...args] = packet.data
     if (_.includes(this.intenalEvents, ev)) {
       let [nev, nargs] = this.mergeEventName(ev, args)
-      return super.emit(nev, ...nargs)
+      super.emit(nev, ...nargs)
     } else {
-      return super.emit(ev, ...args)
+      super.emit(ev, ...args)
     }
   }
 
