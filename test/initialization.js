@@ -106,10 +106,24 @@ module.exports = function () {
     this.slow(2000)
     chatService = startService({ heartbeatRate: 500 })
     let start = _.now()
-    setTimeout(() => chatService.getInstanceHeartbeat(chatService.instanceUID)
-      .then(ts => {
-        expect(ts).within(start, start + 2000)
+    setTimeout(() => {
+      Promise.join(
+        chatService.getInstanceHeartbeat(chatService.instanceUID),
+        chatService.getInstanceHeartbeat(),
+        (ts1, ts2) => {
+          expect(ts1).within(start, start + 2000)
+          expect(ts2).within(start, start + 2000)
+          done()
+        })
+    }, 1000)
+  })
+
+  it('should return null heartbeat if instance is not found', function (done) {
+    chatService = startService()
+    chatService.getInstanceHeartbeat('instance').then(
+      ts => {
+        expect(ts).null
         done()
-      }), 1000)
+      })
   })
 }
