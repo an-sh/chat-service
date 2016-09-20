@@ -14,10 +14,13 @@ class RoomPermissions {
     this.emitFailure = emitFailure
   }
 
-  consistencyFailure (error, operationInfo) {
-    operationInfo.roomName = this.roomName
-    operationInfo.opType = 'roomUserlist'
-    this.emitFailure('storeConsistencyFailure', error, operationInfo)
+  makeConsistencyReporter (userName) {
+    return (error) => {
+      let operationInfo = { userName }
+      operationInfo.roomName = this.roomName
+      operationInfo.opType = 'roomUserlist'
+      this.emitFailure('storeConsistencyFailure', error, operationInfo)
+    }
   }
 
   isAdmin (userName) {
@@ -34,7 +37,7 @@ class RoomPermissions {
         if (admin || listName !== 'whitelist') { return false }
         return this.roomState.whitelistOnlyGet()
       })
-    }).catch(e => this.consistencyFailure(e, {userName}))
+    }).catch(this.makeConsistencyReporter(userName))
   }
 
   hasAddChangedCurrentAccess (userName, listName) {
@@ -42,7 +45,7 @@ class RoomPermissions {
       if (!hasUser) { return false }
       return this.isAdmin(userName)
         .then(admin => !(admin || listName !== 'blacklist'))
-    }).catch(e => this.consistencyFailure(e, {userName}))
+    }).catch(this.makeConsistencyReporter(userName))
   }
 
   getModeChangedCurrentAccess (value) {
