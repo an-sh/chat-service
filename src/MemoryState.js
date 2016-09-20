@@ -35,13 +35,11 @@ class LockOperations {
       (retry, n) => {
         if (this.locks.has(key)) {
           let err = new ChatServiceError('timeout')
-          return retry(err)
+          retry(err)
         } else {
           this.locks.set(key, val)
-          return Promise.resolve()
         }
-      }
-    )
+      })
   }
 
   unlock (key, val) {

@@ -67,9 +67,7 @@ class LockOperations {
         return this.redis.set(key, val, 'NX', 'PX', ttl).then(res => {
           if (!res) {
             let error = new ChatServiceError('timeout')
-            return retry(error)
-          } else {
-            return null
+            retry(error)
           }
         }).catch(retry)
       })
