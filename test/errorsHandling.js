@@ -134,11 +134,12 @@ module.exports = function () {
       return orig.apply(chatService.transport, arguments)
         .then(() => { throw new Error() })
     }
-    nextTick(
-      () => chatService.close().catch(error => {
+    nextTick(() => {
+      chatService.close().catch(error => {
         expect(error).ok
         done()
-      }))
+      })
+    })
   })
 
   it('should propagate onClose errors', function (done) {
@@ -148,11 +149,12 @@ module.exports = function () {
       nextTick(cb, new Error())
     }
     chatService = startService(null, { onClose })
-    nextTick(
-      () => chatService.close().catch(error => {
+    nextTick(() => {
+      chatService.close().catch(error => {
         expect(error).ok
         done()
-      }))
+      })
+    })
   })
 
   it('should propagate transport close errors', function (done) {
@@ -166,11 +168,12 @@ module.exports = function () {
       return orig.apply(chatService.transport, arguments)
         .then(() => { throw new Error() })
     }
-    nextTick(
-      () => chatService.close().catch(error => {
+    nextTick(() => {
+      chatService.close().catch(error => {
         expect(error).ok
         done()
-      }))
+      })
+    })
   })
 
   it('should return converted internal error objects', function (done) {
