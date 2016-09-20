@@ -173,26 +173,26 @@ module.exports = function () {
     chatService.addRoom(
       roomName1,
       { whitelistOnly: true, whitelist: [user1] },
-      () =>
-        chatService.addUser(
-          user2, null, () => {
-            socket1 = clientConnect(user1)
-            socket1.on('loginConfirmed', () => {
-              socket1.emit('roomJoin', roomName1, () => {
-                chatService.execUserCommand(
-                  { userName: user2, bypassPermissions: true },
-                  'roomMessage', roomName1, message)
-                socket1.on('roomMessage', (room, msg) => {
-                  expect(room).equal(roomName1)
-                  expect(msg.author).equal(user2)
-                  expect(msg.textMessage).equal(txt)
-                  expect(msg).ownProperty('timestamp')
-                  expect(msg).ownProperty('id')
-                  done()
-                })
+      () => {
+        chatService.addUser(user2, null, () => {
+          socket1 = clientConnect(user1)
+          socket1.on('loginConfirmed', () => {
+            socket1.emit('roomJoin', roomName1, () => {
+              chatService.execUserCommand(
+                { userName: user2, bypassPermissions: true },
+                'roomMessage', roomName1, message)
+              socket1.on('roomMessage', (room, msg) => {
+                expect(room).equal(roomName1)
+                expect(msg.author).equal(user2)
+                expect(msg.textMessage).equal(txt)
+                expect(msg).ownProperty('timestamp')
+                expect(msg).ownProperty('id')
+                done()
               })
             })
-          }))
+          })
+        })
+      })
   })
 
   it('should be able to send room messages without an user', function (done) {
