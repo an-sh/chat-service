@@ -775,7 +775,7 @@ module.exports = function () {
     ], error => {
       expect(error).not.ok
       socket3.on('roomUserJoined', () => done(new Error('Wrong notification')))
-      socket1.emit('roomJoin', roomName1, (error) => {
+      socket1.emit('roomJoin', roomName1, error => {
         expect(error).not.ok
         setTimeout(done, 1000)
       })
@@ -801,7 +801,7 @@ module.exports = function () {
     ], error => {
       expect(error).not.ok
       socket3.on('roomUserLeft', () => done(new Error('Wrong notification')))
-      socket2.emit('roomLeave', roomName1, (error) => {
+      socket2.emit('roomLeave', roomName1, error => {
         expect(error).not.ok
         setTimeout(done, 1000)
       })

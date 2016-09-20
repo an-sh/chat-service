@@ -23,9 +23,8 @@ module.exports = function () {
   it('should execute onStart hook', function (done) {
     let onStart = (server, cb) => {
       expect(server).instanceof(ChatService)
-      server.addRoom(roomName1,
-                     { whitelist: [ user1 ], owner: user2 },
-                     cb)
+      server.addRoom(
+        roomName1, { whitelist: [ user1 ], owner: user2 }, cb)
     }
     chatService = startService(null, {onStart})
     chatService.on('ready', () => {
