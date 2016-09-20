@@ -40,20 +40,20 @@ function clientConnect (name, port) {
 
 function startService (opts, hooks) {
   let options = { port: config.port }
-  _.assign(options, state)
-  _.assign(options, opts)
+  _.assign(options, state, opts)
   return new ChatService(options, hooks)
 }
 
+let redis, checkDB, cleanDB
+
 if (process.env.TEST_REDIS_CLUSTER) {
-  var redis = new Redis.Cluster(config.redisClusterConnect)
-  var checkDB = () => Promise.map(
+  redis = new Redis.Cluster(config.redisClusterConnect)
+  checkDB = () => Promise.map(
     redis.nodes('master'),
     node => node.dbsize().then(data => {
       if (data) { throw new Error('Unclean Redis DB') }
     }))
-  var cleanDB = () => Promise.map(redis.nodes('master'), node => node.flushall()
-  )
+  cleanDB = () => Promise.map(redis.nodes('master'), node => node.flushall())
 } else {
   redis = new Redis(config.redisConnect)
   checkDB = () => redis.dbsize().then(data => {
@@ -88,6 +88,8 @@ function cleanup (services, sockets, done) {
     } else {
       return Promise.map(services, closeInstance)
     }
+  }).timeout(3000).catch(Promise.TimeoutError, e => {
+    console.log('Service closing timeout: ', e)
   }).finally(() => {
     customCleanup = null
     return cleanDB()

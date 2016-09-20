@@ -3,15 +3,17 @@
 let redisClusterConnect = [ { port: 30001, host: '127.0.0.1' } ]
 let redisConnect = 'localhost:6379'
 
+let memoryConfig, redisConfig, states
+
 if (process.env.TEST_REDIS_CLUSTER) {
-  var redisConfig = { state: 'redis',
+  redisConfig = { state: 'redis',
                       stateOptions: { useCluster: true,
                                      redisOptions: [ redisClusterConnect ] },
                       adapter: 'redis',
                       adpterOptions: redisConnect }
-  var states = [ redisConfig ]
+  states = [ redisConfig ]
 } else {
-  var memoryConfig = { state: 'memory', adapter: 'memory' }
+  memoryConfig = { state: 'memory', adapter: 'memory' }
   redisConfig = { state: 'redis',
                   stateOptions: { redisOptions: redisConnect },
                   adapter: 'redis',
