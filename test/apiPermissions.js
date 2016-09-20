@@ -247,6 +247,8 @@ module.exports = function () {
               expect(data).true
               cb()
             })
+          },
+          cb => {
             chatService.hasDirectAccess(user1, user3, (error, data) => {
               expect(error).not.ok
               expect(data).false
@@ -267,6 +269,8 @@ module.exports = function () {
           expect(data).true
           cb()
         })
+      },
+      cb => {
         chatService.hasRoomAccess(roomName1, user3, (error, data) => {
           expect(error).not.ok
           expect(data).false
