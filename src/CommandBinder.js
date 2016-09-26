@@ -69,7 +69,7 @@ class CommandBinder {
         () => fn(id)
           .catch(logError)
           .catchReturn()
-          .then(() => execHook(hook, server, id))
+          .then(data => execHook(hook, server, _.assign({id}, data)))
           .catch(logError)
           .catchReturn())
     })

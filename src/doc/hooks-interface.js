@@ -133,13 +133,22 @@ class HooksInterface extends CommandsHooks {
    * Client disconnection hook.
    *
    * @param {chat-service.ChatService} server Service instance.
-   * @param {string} id Socket id.
+   * @param {Object} data Socket disconnection data.
    * @param {callback} [cb] Optional callback.
+   *
+   * @property {string} data.id Socket id.
+   * @property {number} data.nconnected Number of user's sockets that
+   * are still connected.
+   * @property {Array<String>} data.roomsRemoved Rooms that the socket
+   * was joined.
+   * @property {Array<number>} data.joinedSockets Corresponding number
+   * of still joined (after this socket disconnected) user's sockets
+   * to the roomsRemoved.
    *
    * @return {Promise<undefined>} Promise that resolves without any data.
    *
    */
-  onDisconnect (server, id, cb) {}
+  onDisconnect (server, data, cb) {}
 
   /**
    * Executes when server is started (after a state and a transport are

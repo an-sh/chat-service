@@ -159,7 +159,8 @@ class UserAssociations {
             this.userName, roomName, enableUserlistUpdates))
       }, { concurrency: asyncLimit })
       this.socketDisconnectEcho(id, nconnected)
-      return this.state.removeSocket(id)
+      yield this.state.removeSocket(id)
+      return { roomsRemoved, joinedSockets, nconnected }
     }).catch(e => {
       let info = { id, opType: 'userSockets' }
       return this.consistencyFailure(e, info)

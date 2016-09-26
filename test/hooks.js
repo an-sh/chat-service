@@ -209,11 +209,17 @@ module.exports = function () {
   })
 
   it('should execute onDisconnect hook', function (done) {
-    let onDisconnect = (server, id, cb) => {
-      expect(server).instanceof(ChatService)
-      expect(id).a.string
+    let onDisconnect = (server, data, cb) => {
+      nextTick(() => {
+        expect(server).instanceof(ChatService)
+        expect(data).an.Object
+        expect(data.id).a.string
+        expect(data.nconnected).a.Number
+        expect(data.roomsRemoved).an.Array
+        expect(data.joinedSockets).an.Array
+        done()
+      })
       nextTick(cb)
-      nextTick(done)
     }
     let chatService1 = startService(null, { onDisconnect })
     socket1 = clientConnect(user1)
