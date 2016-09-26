@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.11.0"></a>
+# [0.11.0](https://github.com/an-sh/chat-service/compare/v0.10.1...v0.11.0) (2016-09-26)
+
+
+### Bug Fixes
+
+* **transport:** remove debug code ([64e9977](https://github.com/an-sh/chat-service/commit/64e9977))
+
+
+### Features
+
+* optimisations for join and leave operations ([484823c](https://github.com/an-sh/chat-service/commit/484823c))
+* **hooks:** more information for disconnect hook ([67e18fe](https://github.com/an-sh/chat-service/commit/67e18fe))
+
+
+### BREAKING CHANGES
+
+* transport: Now onConnect hook must be provided in order to login
+an user, old fallback is removed.
+* hooks: onDisconnect hook will now receive an Object as a
+second argument (instead of string).
+
+
+
 <a name="0.10.1"></a>
 ## [0.10.1](https://github.com/an-sh/chat-service/compare/v0.10.0...v0.10.1) (2016-09-18)
 
