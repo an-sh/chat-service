@@ -25,11 +25,12 @@
     "chat",
     "messaging",
     "IoT",
+    "framework",
+    "websocket",
+    "websockets",
     "service",
     "microservice",
-    "cluster",
-    "socket.io",
-    "redis"
+    "cluster"
   ],
   "engines": {
     "node": ">=0.12.0"
