@@ -63,19 +63,6 @@ class SocketIOTransport {
     socket.emit('loginConfirmed', userName, authData)
   }
 
-  ensureUserName (socket, userName) {
-    return Promise.try(() => {
-      if (!userName) {
-        let { query } = socket.handshake
-        userName = query && query.user
-        if (!userName) {
-          return Promise.reject(new ChatServiceError('noLogin'))
-        }
-      }
-      return userName
-    })
-  }
-
   setEvents () {
     if (this.middleware) {
       let middleware = _.castArray(this.middleware)
@@ -87,7 +74,9 @@ class SocketIOTransport {
       return run(this, function * () {
         let id = socket.id
         let [userName, authData = {}] = yield this.server.onConnect(id)
-        userName = yield this.ensureUserName(socket, userName)
+        if (!userName) {
+          return Promise.reject(new ChatServiceError('noLogin'))
+        }
         yield this.server.registerClient(userName, id)
         this.confirmLogin(socket, userName, authData)
       }).catch(error => this.rejectLogin(socket, error))

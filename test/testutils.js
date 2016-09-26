@@ -38,8 +38,14 @@ function clientConnect (name, port) {
   return io.connect(url, params)
 }
 
-function startService (opts, hooks) {
+function onConnect (server, id) {
+  let {query} = server.transport.getHandshakeData(id)
+  return Promise.resolve(query.user)
+}
+
+function startService (opts, _hooks) {
   let options = { port: config.port }
+  let hooks = _.assign({onConnect}, _hooks)
   _.assign(options, state, opts)
   return new ChatService(options, hooks)
 }

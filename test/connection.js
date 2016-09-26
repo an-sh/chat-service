@@ -60,7 +60,7 @@ module.exports = function () {
     }
     chatService = startService(null, {onConnect})
     socket1 = clientConnect(user1)
-    socket1.on('loginConfirmed', () => {
+    socket1.on('loginRejected', () => {
       let data = chatService.transport.getHandshakeData('id')
       expect(data).an('Object')
       expect(data.isConnected).false
