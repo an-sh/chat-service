@@ -17,9 +17,9 @@ class SocketIOClusterBus extends EventEmitter {
     this.server = server
     this.adapter = adapter
     this.channel = 'cluster:bus'
-    this.intenalEvents = [ 'roomLeaveSocket',
-                           'socketRoomLeft',
-                           'disconnectUserSockets' ]
+    this.internalEvents = [ 'roomLeaveSocket',
+                            'socketRoomLeft',
+                            'disconnectUserSockets' ]
     this.types = [ EVENT, BINARY_EVENT ]
     this.injectBusHook()
   }
@@ -55,7 +55,7 @@ class SocketIOClusterBus extends EventEmitter {
 
   onPacket (packet) {
     let [ev, ...args] = packet.data
-    if (_.includes(this.intenalEvents, ev)) {
+    if (_.includes(this.internalEvents, ev)) {
       let [nev, nargs] = this.mergeEventName(ev, args)
       super.emit(nev, ...nargs)
     } else {
