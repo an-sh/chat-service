@@ -84,13 +84,30 @@ function resultsTransform (useRawErrorObjects, cb) {
   }
 }
 
+function roomLeftEventName (id, roomName) {
+  return `socketRoomLeft:${id}:${roomName}`
+}
+
+function mergeEventName (ev, args) {
+  switch (ev) {
+    case 'socketRoomLeft':
+      let [id, roomName, ...nargs] = args
+      let nev = roomLeftEventName(id, roomName)
+      return [nev, nargs]
+    default:
+      return [ev, args]
+  }
+}
+
 module.exports = {
   asyncLimit,
-  convertError,
   checkNameSymbols,
+  convertError,
   execHook,
   logError,
+  mergeEventName,
   possiblyCallback,
   resultsTransform,
+  roomLeftEventName,
   run
 }

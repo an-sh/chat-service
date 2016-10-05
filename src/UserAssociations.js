@@ -5,7 +5,7 @@ const Promise = require('bluebird')
 const UserReports = require('./UserReports')
 const _ = require('lodash')
 const eventToPromise = require('event-to-promise')
-const { asyncLimit, run } = require('./utils')
+const { asyncLimit, roomLeftEventName, run } = require('./utils')
 const { mixin } = require('es6-mixin')
 
 const co = Promise.coroutine
@@ -47,7 +47,7 @@ class UserAssociations {
     let bus = this.clusterBus
     return Promise.try(() => {
       bus.emit('roomLeaveSocket', id, channel)
-      return eventToPromise(bus, bus.makeSocketRoomLeftName(id, channel))
+      return eventToPromise(bus, roomLeftEventName(id, channel))
     }).timeout(this.busAckTimeout).catchReturn()
   }
 

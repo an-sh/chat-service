@@ -3,6 +3,7 @@
 const Promise = require('bluebird')
 const _ = require('lodash')
 const { EventEmitter } = require('events')
+const { mergeEventName } = require('./utils')
 
 // from socket.io-protocol v4
 const EVENT = 2
@@ -17,9 +18,6 @@ class SocketIOClusterBus extends EventEmitter {
     this.transport = transport
     this.adapter = this.transport.nsp.adapter
     this.channel = 'cluster:bus'
-    this.internalEvents = [ 'roomLeaveSocket',
-                            'socketRoomLeft',
-                            'disconnectUserSockets' ]
     this.types = [ EVENT, BINARY_EVENT ]
     this.injectBusHook()
   }
@@ -30,33 +28,14 @@ class SocketIOClusterBus extends EventEmitter {
     })
   }
 
-  makeSocketRoomLeftName (id, roomName) {
-    return `socketRoomLeft:${id}:${roomName}`
-  }
-
-  mergeEventName (ev, args) {
-    switch (ev) {
-      case 'socketRoomLeft':
-        let [id, roomName, ...nargs] = args
-        let nev = this.makeSocketRoomLeftName(id, roomName)
-        return [nev, nargs]
-      default:
-        return [ev, args]
-    }
-  }
-
   emit (ev, ...args) {
     this.transport.emitToChannel(this.channel, ev, ...args)
   }
 
   onPacket (packet) {
     let [ev, ...args] = packet.data
-    if (_.includes(this.internalEvents, ev)) {
-      let [nev, nargs] = this.mergeEventName(ev, args)
-      super.emit(nev, ...nargs)
-    } else {
-      super.emit(ev, ...args)
-    }
+    let [nev, nargs] = mergeEventName(ev, args)
+    super.emit(nev, ...nargs)
   }
 
   broadcastHook (packet, opts) {
