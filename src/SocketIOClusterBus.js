@@ -2,7 +2,6 @@
 
 const Promise = require('bluebird')
 const _ = require('lodash')
-const hasBinary = require('has-binary')
 const { EventEmitter } = require('events')
 
 // from socket.io-protocol v4
@@ -12,10 +11,11 @@ const BINARY_EVENT = 5
 // Instances communication via a socket.io-adapter implementation.
 class SocketIOClusterBus extends EventEmitter {
 
-  constructor (server, adapter) {
+  constructor (server, transport) {
     super()
     this.server = server
-    this.adapter = adapter
+    this.transport = transport
+    this.adapter = this.transport.nsp.adapter
     this.channel = 'cluster:bus'
     this.internalEvents = [ 'roomLeaveSocket',
                             'socketRoomLeft',
@@ -45,12 +45,8 @@ class SocketIOClusterBus extends EventEmitter {
     }
   }
 
-  // TODO: Use an API from socket.io if(when) it will be available.
   emit (ev, ...args) {
-    let data = [ ev, ...args ]
-    let packet = { type: (hasBinary(args) ? BINARY_EVENT : EVENT), data }
-    let opts = { rooms: [ this.channel ] }
-    this.adapter.broadcast(packet, opts, false)
+    this.transport.emitToChannel(this.channel, ev, ...args)
   }
 
   onPacket (packet) {

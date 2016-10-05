@@ -48,7 +48,7 @@ class SocketIOTransport {
     this.nsp = this.io.of(this.namespace)
     this.server.io = this.io
     this.server.nsp = this.nsp
-    this.clusterBus = new SocketIOClusterBus(this.server, this.nsp.adapter)
+    this.clusterBus = new SocketIOClusterBus(this.server, this)
     this.closed = false
   }
 
