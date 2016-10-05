@@ -16,9 +16,10 @@
  *
  * @property {number} [lockTTL=10000] Locks timeout in ms.
  *
- * @property {Object|Array<Object>} [redisOptions=[]] ioredis client
- * constructor arguments. If `useCluster` is set, used as arguments
- * for a cluster client constructor.
+ * @property {Object|Array<Object>} [redisOptions=[]]
+ * [ioredis](https://github.com/luin/ioredis) client constructor
+ * arguments. If `useCluster` is set, used as arguments for a cluster
+ * client constructor.
  */
 
 /**
@@ -38,6 +39,12 @@
  *
  * @property {Object} [ioOptions={}] Socket.io additional options, used
  * only when no `io` object is passed.
+ *
+ * @property {('memory'|'redis'|Class)} [adapter='memory'] Socket.io
+ * adapter constructor used only when no `io` object is passed.
+ *
+ * @property {Object|Array<Object>} [adapterOptions=[]] Adapter
+ * constructor arguments.
  */
 
 /**
@@ -103,17 +110,15 @@
  * @property {('socket.io'|chat-service.TransportPlugin)}
  * [transport='socket.io'] Transport implementation.
  *
- * @property {('memory'|'redis'|Class)} [adapter='memory'] Adapter for
- * service instances communication, must implement a
- * `socket.io-adapter` API. With `socket.io` transport used only when
- * no `io` object is passed in `SocketIOTransportOptions`.
- *
  * @property {chat-service.config.RedisStateOptions|Object}
  * [stateOptions={}] Options for a state.
  *
  * @property {chat-service.config.SocketIOTransportOptions|Object}
  * [transportOptions={}] Options for a transport.
  *
- * @property {Object|Array<Object>} [adapterOptions=[]] Adapter
- * constructor arguments.
+ * @property {('memory'|'redis'|Class)} [adapter='memory'] Legacy, use
+ * {@link chat-service.config.SocketIOTransportOptions}
+ *
+ * @property {Object|Array<Object>} [adapterOptions=[]] Legacy, use
+ * {@link chat-service.config.SocketIOTransportOptions}
  */
