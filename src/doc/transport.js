@@ -103,14 +103,8 @@ class TransportPlugin {
   /**
    * @param {chat-service.ChatService} server Service instance.
    * @param {Object} options Transport options.
-   * @param {Class} [adapterConstructor] socket.io-adapter compatible
-   * adapter constructor. May be ignored if integration is not
-   * required.
-   * @param {Array} [adapterOptions] Adapter constructor
-   * arguments. May be ignored if integration is not required.
-   *
    */
-  constructor (server, options, adapterConstructor, adapterOptions) {}
+  constructor (server, options) {}
 
   /**
    * Cluster communication via an adapter. Emits messages to all

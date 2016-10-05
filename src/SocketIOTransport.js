@@ -11,14 +11,14 @@ const { run } = require('./utils')
 // Socket.io transport.
 class SocketIOTransport {
 
-  constructor (server, options, adapterConstructor, adapterOptions) {
+  constructor (server, options) {
     this.server = server
     this.options = options
-    this.adapterConstructor = adapterConstructor
-    this.adapterOptions = adapterOptions
+    this.adapterConstructor = this.options.adapterConstructor
+    this.adapterOptions = this.options.adapterOptions
     this.port = this.server.port
     this.io = this.options.io
-    this.middleware = options.middleware
+    this.middleware = this.options.middleware
     this.namespace = this.options.namespace || '/chat-service'
     let Adapter
     if (this.adapterConstructor === 'memory') {

@@ -297,14 +297,22 @@ class ChatService extends EventEmitter {
   }
 
   setIntegraionOptions () {
-    this.adapterConstructor = this.options.adapter || 'memory'
-    this.adapterOptions = _.castArray(this.options.adapterOptions)
-
     this.stateConstructor = this.options.state || 'memory'
     this.stateOptions = this.options.stateOptions || {}
 
     this.transportConstructor = this.options.transport || 'socket.io'
     this.transportOptions = this.options.transportOptions || {}
+  }
+
+  setAdapterOptions () {
+    // adapter options compatibility
+    this.adapterConstructor = this.transportOptions.adapter ||
+      this.options.adapter || 'memory'
+    this.adapterOptions = _.castArray(
+      this.transportOptions.adapterOptions || this.options.adapterOptions)
+    let opts = { adapterConstructor: this.adapterConstructor,
+                 adapterOptions: this.adapterOptions }
+    this.transportOptions = _.assign(opts, this.transportOptions)
   }
 
   setComponents () {
@@ -325,12 +333,11 @@ class ChatService extends EventEmitter {
     } else {
       throw new Error(`Invalid transport: ${this.transportConstructor}`)
     }
+    this.setAdapterOptions()
     this.validator = new ArgumentsValidator(this)
     this.checkArguments = this.validator.checkArguments.bind(this.validator)
     this.state = new State(this, this.stateOptions)
-    this.transport = new Transport(
-      this, this.transportOptions,
-      this.adapterConstructor, this.adapterOptions)
+    this.transport = new Transport(this, this.transportOptions)
     this.clusterBus = this.transport.clusterBus
   }
 
