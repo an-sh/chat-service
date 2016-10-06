@@ -3,7 +3,7 @@
 
 [![NPM Version](https://badge.fury.io/js/chat-service.svg)](https://badge.fury.io/js/chat-service)
 [![Build Status](https://travis-ci.org/an-sh/chat-service.svg?branch=master)](https://travis-ci.org/an-sh/chat-service)
-[![Appveyor status](https://ci.appveyor.com/api/projects/status/qy7v2maica2urkss?svg=true)](https://ci.appveyor.com/project/an-sh/chat-service)
+[![Appveyor status](https://ci.appveyor.com/api/projects/status/qy7v2maica2urkss/branch/master?svg=true)](https://ci.appveyor.com/project/an-sh/chat-service)
 [![Coverage Status](https://codecov.io/gh/an-sh/chat-service/branch/master/graph/badge.svg)](https://codecov.io/gh/an-sh/chat-service)
 [![Dependency Status](https://david-dm.org/an-sh/chat-service.svg)](https://david-dm.org/an-sh/chat-service)
 [![JavaScript Style Guide](https://img.shields.io/badge/code%20style-standard-brightgreen.svg)](http://standardjs.com/)
@@ -319,10 +319,11 @@ highly personalised user (client) specific feeds.
 By default there is no way for other users to know the number and
 types of user connections joined to a room. Such information can be
 passed, for example in a query string and then saved via a connection
-hook. The announcement can be made in `roomJoin` after hook, using
-directly transport `sendToChannel` method. Also additional information
-regarding joined devices types should be sent from `roomGetAccessList`
-after hook (when list name is equal to `'userlist'`).
+hook. The announcement can be made in `onJoin` and `onLeave` hooks,
+using directly transport `sendToChannel` method. Also additional
+information regarding joined devices types should be sent from
+`roomGetAccessList` after hook (when list name is equal to
+`'userlist'`).
 
 
 ## Contribute
