@@ -27,9 +27,9 @@ module.exports = function () {
     })
   })
 
-  it('should reject an empty user query', function (done) {
-    chatService = startService()
-    socket1 = clientConnect()
+  it('should reject logins without an onConnect hook', function (done) {
+    chatService = startService(null, {onConnect: undefined})
+    socket1 = clientConnect(user1)
     socket1.on('loginRejected', () => done())
   })
 

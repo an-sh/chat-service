@@ -5,7 +5,7 @@ const Buffer = require('safe-buffer').Buffer
 const Promise = require('bluebird')
 const { expect } = require('chai')
 
-const { cleanup, clientConnect, closeInstance,
+const { cleanup, clientConnect, parallel, closeInstance,
         nextTick, ChatService, startService } = require('./testutils')
 
 const { cleanupTimeout, user1, user2,
@@ -249,6 +249,33 @@ module.exports = function () {
           expect(isRun).true
           done()
         })
+      })
+    })
+  })
+
+  it('should emit lock exceed with onJoin hook', function (done) {
+    this.timeout(4000)
+    this.slow(2000)
+    let isRun = false
+    let onJoin = (server, data, cb) => {
+      if (!isRun) {
+        isRun = true
+        setTimeout(cb, 1000)
+      } else {
+        cb()
+      }
+    }
+    chatService = startService({stateOptions: {lockTTL: 500}}, { onJoin })
+    chatService.addRoom(roomName1, null, () => {
+      socket1 = clientConnect(user1)
+      socket1.on('loginConfirmed', () => {
+        parallel([
+          cb => {
+            socket1.emit('roomJoin', roomName1, cb)
+          },
+          cb => {
+            chatService.on('lockTimeExceeded', () => cb())
+          }], done)
       })
     })
   })

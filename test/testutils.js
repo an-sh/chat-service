@@ -46,7 +46,7 @@ function onConnect (server, id) {
 function startService (opts, _hooks) {
   let options = { port: config.port }
   let hooks = _.assign({onConnect}, _hooks)
-  _.assign(options, state, opts)
+  _.merge(options, state, opts)
   return new ChatService(options, hooks)
 }
 
