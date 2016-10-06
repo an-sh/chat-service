@@ -176,6 +176,45 @@ class HooksInterface extends CommandsHooks {
   onClose (server, error, cb) {}
 
   /**
+   * Executes when a socket joins a room. It is run in a lock context,
+   * so the same socket leaving the same room operation will not be
+   * run until the join operation completes.
+   *
+   * @param {chat-service.ChatService} server Service instance.
+   * @param {Object} data Data.
+   * @param {callback} [cb] Optional callback.
+   *
+   * @property {string} data.id Socket id.
+   * @property {number} data.njoined Number of user's sockets that are
+   * joined the room (including this one).
+   * @property {string} data.roomName Room name.
+   *
+   * @return {Promise<undefined>} Promise that resolves without any
+   * data. If the promise is rejected rollbacks a join operation.
+   */
+  onJoin (server, data, cb) {}
+
+  /**
+   * Executes when a socket leaves a room (including due to disconnect
+   * or permission lost). It is run in a lock context, so the same
+   * socket joining the same room operation will not be run until the
+   * leave operation completes.
+   *
+   * @param {chat-service.ChatService} server Service instance.
+   * @param {Object} data Data.
+   * @param {callback} [cb] Optional callback.
+   *
+   * @property {string} data.id Socket id.
+   * @property {number} data.njoined Number of user's sockets that are
+   * joined the room (excluding this one).
+   * @property {string} data.roomName Room name.
+   *
+   * @return {Promise<undefined>} Promise that resolves without any
+   * data.
+   */
+  onLeave (server, data, cb) {}
+
+  /**
    * Validator for `directMessage` message objects. When is set, a
    * custom format in direct messages is enabled. When hooks resolves,
    * than a message format is considered valid, and the other way

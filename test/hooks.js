@@ -226,6 +226,137 @@ module.exports = function () {
     socket1.on('loginConfirmed', () => chatService1.close())
   })
 
+  it('should execute onJoin hook', function (done) {
+    let isRun = false
+    let onJoin = (server, data, cb) => {
+      nextTick(() => {
+        if (!isRun) {
+          expect(server).instanceof(ChatService)
+          expect(data).an.Object
+          expect(data.id).a.string
+          expect(data.njoined).eql(1)
+          expect(data.roomName).equal(roomName1)
+          isRun = true
+        }
+      })
+      cb()
+    }
+    chatService = startService(null, { onJoin })
+    chatService.addRoom(roomName1, null, () => {
+      socket1 = clientConnect(user1)
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          expect(isRun).true
+          done()
+        })
+      })
+    })
+  })
+
+  it('should execute onLeave hook when leaving', function (done) {
+    let isRun = false
+    let onLeave = (server, data, cb) => {
+      nextTick(() => {
+        if (!isRun) {
+          expect(server).instanceof(ChatService)
+          expect(data).an.Object
+          expect(data.id).a.string
+          expect(data.njoined).eql(0)
+          expect(data.roomName).equal(roomName1)
+          isRun = true
+        }
+        cb()
+      })
+    }
+    chatService = startService(null, { onLeave })
+    chatService.addRoom(roomName1, null, () => {
+      socket1 = clientConnect(user1)
+      socket1.on('loginConfirmed', () => {
+        socket1.emit('roomJoin', roomName1, () => {
+          socket1.emit('roomLeave', roomName1, () => {
+            expect(isRun).true
+            done()
+          })
+        })
+      })
+    })
+  })
+
+  it('should execute onLeave hook when disconnecting', function (done) {
+    let isRun = false
+    let id
+    let onLeave = (server, data, cb) => {
+      nextTick(() => {
+        if (!isRun) {
+          expect(server).instanceof(ChatService)
+          expect(data).an.Object
+          expect(data.id).a.string
+          expect(data.id).eql(id)
+          expect(data.njoined).eql(1)
+          expect(data.roomName).equal(roomName1)
+          isRun = true
+        }
+      })
+      cb()
+    }
+    chatService = startService(null, { onLeave })
+    chatService.addRoom(roomName1, null, () => {
+      socket1 = clientConnect(user1)
+      socket1.on('loginConfirmed', (userName, data) => {
+        id = data.id
+        socket1.emit('roomJoin', roomName1, () => {
+          socket2 = clientConnect(user1)
+          socket2.on('loginConfirmed', () => {
+            socket2.emit('roomJoin', roomName1, () => {
+              socket1.disconnect()
+              socket2.on('socketDisconnectEcho', () => {
+                expect(isRun).true
+                done()
+              })
+            })
+          })
+        })
+      })
+    })
+  })
+
+  it('should execute onLeave hook when removing', function (done) {
+    let isRun = false
+    let id
+    let onLeave = (server, data, cb) => {
+      nextTick(() => {
+        if (!isRun) {
+          expect(server).instanceof(ChatService)
+          expect(data).an.Object
+          expect(data.id).a.string
+          expect(data.id).eql(id)
+          expect(data.njoined).eql(0)
+          expect(data.roomName).equal(roomName1)
+          isRun = true
+        }
+      })
+      cb()
+    }
+    chatService = startService(null, { onLeave })
+    chatService.addRoom(roomName1, {owner: user2}, () => {
+      socket1 = clientConnect(user1)
+      socket1.on('loginConfirmed', (userName, data) => {
+        id = data.id
+        socket1.emit('roomJoin', roomName1, () => {
+          socket2 = clientConnect(user2)
+          socket2.on('loginConfirmed', () => {
+            socket2.emit('roomAddToList', roomName1, 'blacklist', [user1])
+            socket1.on('roomAccessRemoved', (roomName) => {
+              expect(roomName).eql(roomName1)
+              expect(isRun).true
+              done()
+            })
+          })
+        })
+      })
+    })
+  })
+
   it('should stop commands if before hook returns a data', function (done) {
     let val = 'asdf'
     let listOwnSocketsBefore = (execInfo, cb) => nextTick(cb, null, val)

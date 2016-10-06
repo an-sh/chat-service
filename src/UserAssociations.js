@@ -5,7 +5,7 @@ const Promise = require('bluebird')
 const UserReports = require('./UserReports')
 const _ = require('lodash')
 const eventToPromise = require('event-to-promise')
-const { asyncLimit, roomLeftEventName, run } = require('./utils')
+const { asyncLimit, execHook, roomLeftEventName, run } = require('./utils')
 const { mixin } = require('es6-mixin')
 
 const co = Promise.coroutine
@@ -17,6 +17,8 @@ class UserAssociations {
     _.defaults(this, props)
     this.busAckTimeout = this.server.busAckTimeout
     this.clusterBus = this.server.clusterBus
+    this.onJoin = this.server.hooks.onJoin
+    this.onLeave = this.server.hooks.onLeave
     this.lockTTL = this.state.lockTTL
     mixin(this, UserReports, this.transport, this.echoChannel)
   }
@@ -96,6 +98,9 @@ class UserAssociations {
           this.userState.addSocketToRoom(id, roomName),
           this.transport.joinChannel(id, roomName)])
         if (hasChanged) {
+          if (this.onJoin) {
+            yield execHook(this.onJoin, this.server, {id, roomName, njoined})
+          }
           if (njoined === 1 && enableUserlistUpdates) {
             this.userJoinRoomReport(this.userName, roomName)
           }
@@ -121,6 +126,10 @@ class UserAssociations {
       if (hasChanged) {
         this.socketLeftEcho(id, roomName, njoined, isLocalCall)
         this.userLeftRoomReport(this.userName, roomName, enableUserlistUpdates)
+        if (this.onLeave) {
+          yield execHook(this.onLeave, this.server, {id, roomName, njoined})
+            .catchReturn(Promise.resolve())
+        }
       }
       return njoined
     }).bind(this))
@@ -149,15 +158,18 @@ class UserAssociations {
       joinedSockets = joinedSockets || []
       nconnected = nconnected || 0
       yield this.socketLeaveChannels(id, roomsRemoved)
-      yield Promise.map(roomsRemoved, (roomName, idx) => {
+      yield Promise.map(roomsRemoved, co(function * (roomName, idx) {
         let njoined = joinedSockets[idx]
+        if (this.onLeave) {
+          yield execHook(this.onLeave, this.server, {id, roomName, njoined})
+            .catchReturn(Promise.resolve())
+        }
         this.socketLeftEcho(id, roomName, njoined)
         if (njoined) { return }
-        return this.leaveRoom(roomName)
-          .then(() => this.getNotifySettings(roomName))
-          .then(({enableUserlistUpdates}) => this.userLeftRoomReport(
-            this.userName, roomName, enableUserlistUpdates))
-      }, { concurrency: asyncLimit })
+        yield this.leaveRoom(roomName)
+        let {enableUserlistUpdates} = yield this.getNotifySettings(roomName)
+        this.userLeftRoomReport(this.userName, roomName, enableUserlistUpdates)
+      }).bind(this), { concurrency: asyncLimit })
       this.socketDisconnectEcho(id, nconnected)
       yield this.state.removeSocket(id)
       return { roomsRemoved, joinedSockets, nconnected }
@@ -181,6 +193,12 @@ class UserAssociations {
       removedSockets = removedSockets || []
       yield this.channelLeaveSockets(roomName, removedSockets)
       if (removedSockets.length) {
+        if (this.onLeave) {
+          yield Promise.map(removedSockets, (id) => {
+            return execHook(this.onLeave, this.server, {id, roomName, njoined: 0})
+              .catchReturn(Promise.resolve())
+          }, { concurrency: asyncLimit })
+        }
         let { enableUserlistUpdates } = yield this.getNotifySettings(roomName)
         this.userRemovedReport(this.userName, roomName, enableUserlistUpdates)
       }
@@ -190,13 +208,11 @@ class UserAssociations {
 
   removeRoomUsers (roomName, userNames) {
     userNames = userNames || []
-    return Promise.map(
-      userNames,
-      userName => {
-        return this.state.getUser(userName)
-          .then(user => user.removeFromRoom(roomName))
-          .catchReturn()
-      }, { concurrency: asyncLimit })
+    return Promise.map(userNames, userName => {
+      return this.state.getUser(userName)
+        .then(user => user.removeFromRoom(roomName))
+        .catchReturn()
+    }, { concurrency: asyncLimit })
   }
 
 }
