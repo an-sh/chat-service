@@ -3,7 +3,6 @@
 const Promise = require('bluebird')
 const _ = require('lodash')
 const { EventEmitter } = require('events')
-const { mergeEventName } = require('./utils')
 
 // from socket.io-protocol v4
 const EVENT = 2
@@ -34,8 +33,7 @@ class SocketIOClusterBus extends EventEmitter {
 
   onPacket (packet) {
     let [ev, ...args] = packet.data
-    let [nev, nargs] = mergeEventName(ev, args)
-    super.emit(nev, ...nargs)
+    super.emit(ev, ...args)
   }
 
   broadcastHook (packet, opts) {

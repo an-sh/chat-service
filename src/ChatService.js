@@ -352,6 +352,10 @@ class ChatService extends EventEmitter {
         .then(user => user.disconnectInstanceSockets())
         .catchReturn()
     })
+    this.clusterBus.on('socketRoomLeft', (id, roomName) => {
+      let emit = EventEmitter.prototype.emit
+      emit.call(this.clusterBus, `socketRoomLeft:${id}:${roomName}`)
+    })
   }
 
   // for transport plugins integration
