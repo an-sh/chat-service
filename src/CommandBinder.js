@@ -3,8 +3,7 @@
 const ExecInfo = require('./ExecInfo')
 const Promise = require('bluebird')
 const _ = require('lodash')
-const { execHook, logError, possiblyCallback, resultsTransform } =
-        require('./utils')
+const { execHook, logError } = require('./utils')
 
 const co = Promise.coroutine
 
@@ -77,13 +76,8 @@ class CommandBinder {
 
   bindCommand (id, name, fn) {
     let cmd = this.makeCommand(name, fn)
-    let useErrorObjects = this.server.useRawErrorObjects
     let info = {id}
-    return this.transport.bindHandler(id, name, function () {
-      let [args, cb] = possiblyCallback(arguments)
-      let ack = resultsTransform(useErrorObjects, cb)
-      return cmd(args, info).asCallback(ack, { spread: true })
-    })
+    return this.transport.bindHandler(id, name, (...args) => cmd(args, info))
   }
 
 }

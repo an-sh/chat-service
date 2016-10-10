@@ -74,16 +74,6 @@ function convertError (error, useRawErrorObjects) {
   return error
 }
 
-function resultsTransform (useRawErrorObjects, cb) {
-  if (!cb) { return null }
-  return function (error, data, ...rest) {
-    error = convertError(error, useRawErrorObjects)
-    if (error == null) { error = null }
-    if (data == null) { data = null }
-    return cb(error, data, ...rest)
-  }
-}
-
 function roomLeftEventName (id, roomName) {
   return `socketRoomLeft:${id}:${roomName}`
 }
@@ -107,7 +97,6 @@ module.exports = {
   logError,
   mergeEventName,
   possiblyCallback,
-  resultsTransform,
   roomLeftEventName,
   run
 }

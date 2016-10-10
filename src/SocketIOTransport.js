@@ -6,7 +6,7 @@ const RedisAdapter = require('socket.io-redis')
 const SocketIOClusterBus = require('./SocketIOClusterBus')
 const SocketServer = require('socket.io')
 const _ = require('lodash')
-const { run } = require('./utils')
+const { convertError, possiblyCallback, run } = require('./utils')
 
 // Socket.io transport.
 class SocketIOTransport {
@@ -18,6 +18,7 @@ class SocketIOTransport {
     this.adapterOptions = this.options.adapterOptions
     this.port = this.server.port
     this.io = this.options.io
+    this.useRawErrorObjects = this.server.useRawErrorObjects
     this.middleware = this.options.middleware
     this.namespace = this.options.namespace || '/chat-service'
     let Adapter
@@ -50,6 +51,16 @@ class SocketIOTransport {
     this.server.nsp = this.nsp
     this.clusterBus = new SocketIOClusterBus(this.server, this)
     this.closed = false
+  }
+
+  resultsTransform (cb) {
+    if (!cb) { return }
+    return (error, data, ...rest) => {
+      error = convertError(error, this.useRawErrorObjects)
+      if (error == null) { error = null }
+      if (data == null) { data = null }
+      cb(error, data, ...rest)
+    }
   }
 
   rejectLogin (socket, error) {
@@ -103,7 +114,11 @@ class SocketIOTransport {
   bindHandler (id, name, fn) {
     let socket = this.getSocket(id)
     if (socket) {
-      socket.on(name, fn)
+      socket.on(name, (...oargs) => {
+        let [args, cb] = possiblyCallback(oargs)
+        let ack = this.resultsTransform(cb)
+        fn(...args).asCallback(ack, { spread: true })
+      })
     }
   }
 
