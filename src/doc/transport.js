@@ -3,6 +3,14 @@
 /* eslint no-useless-constructor: 0 */
 
 /**
+ * Handler.
+ *
+ * @callback chat-service.TransportInterface#handler
+ * @param {...*} args
+ * @return {Promise<Array>} Array of results.
+ */
+
+/**
  * Transport public interface.
  *
  * @interface
@@ -30,7 +38,7 @@ class TransportInterface {
    *
    * @param {string} id Socket id.
    * @param {string} name Event name.
-   * @param {function} fn Handler.
+   * @param {chat-service.TransportInterface#handler} fn Handler.
    *
    * @return {undefined}
    */
