@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.12.0"></a>
+# [0.12.0](https://github.com/an-sh/chat-service/compare/v0.11.0...v0.12.0) (2016-10-12)
+
+
+### Code Refactoring
+
+* change transport constructor arguments ([02b04a3](https://github.com/an-sh/chat-service/commit/02b04a3))
+* don't change event names in transports ([7e9e26a](https://github.com/an-sh/chat-service/commit/7e9e26a))
+* return promises in transport handlers ([86874ff](https://github.com/an-sh/chat-service/commit/86874ff))
+
+
+### Features
+
+* add onJoin and onLeave hooks ([ac63e5b](https://github.com/an-sh/chat-service/commit/ac63e5b))
+
+
+### BREAKING CHANGES
+
+* Transport plugins must not manage cluster event names.
+* Transport plugins should expect command handlers to
+return promises instead of using callbacks.
+* Transport plugin constructor will now have only 2
+arguments, transport related options will be passed inside options.
+
+
+
 <a name="0.11.0"></a>
 # [0.11.0](https://github.com/an-sh/chat-service/compare/v0.10.1...v0.11.0) (2016-09-26)
 
