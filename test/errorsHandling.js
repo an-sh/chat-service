@@ -3,8 +3,8 @@
 
 const { expect } = require('chai')
 
-const { ChatService, cleanup, clientConnect,
-        nextTick, startService } = require('./testutils')
+const { ChatService, cleanup, clientConnect,  startService } =
+      require('./testutils')
 
 const { cleanupTimeout, user1, roomName1 } = require('./config')
 
@@ -22,7 +22,7 @@ module.exports = function () {
       chatService = startService({ state: {} })
     } catch (error) {
       expect(error).ok
-      nextTick(done)
+      process.nextTick(done)
     }
   })
 
@@ -31,7 +31,7 @@ module.exports = function () {
       chatService = startService({ transport: {} })
     } catch (error) {
       expect(error).ok
-      nextTick(done)
+      process.nextTick(done)
     }
   })
 
@@ -40,7 +40,7 @@ module.exports = function () {
       chatService = startService({ adapter: {} })
     } catch (error) {
       expect(error).ok
-      nextTick(done)
+      process.nextTick(done)
     }
   })
 
@@ -118,7 +118,7 @@ module.exports = function () {
   it('should emit closed on onStart hook error', function (done) {
     let onStart = (chatService, cb) => {
       expect(chatService).instanceof(ChatService)
-      nextTick(cb, new Error())
+      process.nextTick(cb, new Error())
     }
     chatService = startService(null, { onStart })
     chatService.on('closed', error => {
@@ -134,7 +134,7 @@ module.exports = function () {
       return orig.apply(chatService.transport, arguments)
         .then(() => { throw new Error() })
     }
-    nextTick(() => {
+    process.nextTick(() => {
       chatService.close().catch(error => {
         expect(error).ok
         done()
@@ -146,10 +146,10 @@ module.exports = function () {
     let onClose = (chatService, error, cb) => {
       expect(chatService).instanceof(ChatService)
       expect(error).not.ok
-      nextTick(cb, new Error())
+      process.nextTick(cb, new Error())
     }
     chatService = startService(null, { onClose })
-    nextTick(() => {
+    process.nextTick(() => {
       chatService.close().catch(error => {
         expect(error).ok
         done()
@@ -160,7 +160,7 @@ module.exports = function () {
   it('should propagate transport close errors', function (done) {
     let onClose = (chatService, error, cb) => {
       expect(error).ok
-      nextTick(cb, error)
+      process.nextTick(cb, error)
     }
     chatService = startService(null, { onClose })
     let orig = chatService.transport.close
@@ -168,7 +168,7 @@ module.exports = function () {
       return orig.apply(chatService.transport, arguments)
         .then(() => { throw new Error() })
     }
-    nextTick(() => {
+    process.nextTick(() => {
       chatService.close().catch(error => {
         expect(error).ok
         done()

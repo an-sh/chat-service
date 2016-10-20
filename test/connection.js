@@ -3,8 +3,8 @@
 
 const { expect } = require('chai')
 
-const { ChatService, cleanup, clientConnect,
-        nextTick, parallel, startService } = require('./testutils')
+const { ChatService, cleanup, clientConnect, parallel, startService } =
+      require('./testutils')
 
 const { cleanupTimeout, user1 } = require('./config')
 
@@ -41,7 +41,7 @@ module.exports = function () {
 
   it('should execute socket.io middleware', function (done) {
     let reason = 'some error'
-    let auth = (socket, cb) => nextTick(cb, new Error(reason))
+    let auth = (socket, cb) => process.nextTick(cb, new Error(reason))
     chatService = startService({ transportOptions: {middleware: auth} })
     socket1 = clientConnect()
     socket1.on('error', e => {
@@ -56,7 +56,7 @@ module.exports = function () {
       expect(data).an('Object')
       expect(data.isConnected).true
       expect(data.query.user).equal(user1)
-      nextTick(cb)
+      process.nextTick(cb)
     }
     chatService = startService(null, {onConnect})
     socket1 = clientConnect(user1)
@@ -74,7 +74,7 @@ module.exports = function () {
     let onConnect = (server, id, cb) => {
       expect(server).instanceof(ChatService)
       expect(id).a('string')
-      nextTick(cb, null, name, data)
+      process.nextTick(cb, null, name, data)
     }
     chatService = startService(null, {onConnect})
     socket1 = clientConnect(user1)

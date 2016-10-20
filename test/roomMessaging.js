@@ -278,7 +278,7 @@ module.exports = function () {
               expect(error).not.ok
               expect(data).length(1)
               let props = ['textMessage', 'author', 'timestamp', 'id']
-              expect(data[0]).include.keys(...props)
+              expect(data[0]).include.keys(props)
               expect(data[0].textMessage).equal(txt)
               expect(data[0].author).equal(user1)
               expect(data[0].timestamp).a('Number')
@@ -410,7 +410,7 @@ module.exports = function () {
                 expect(error).not.ok
                 expect(data).length(1)
                 let props = ['textMessage', 'author', 'timestamp', 'id']
-                expect(data[0]).include.keys(...props)
+                expect(data[0]).include.keys(props)
                 expect(data[0].textMessage).equal(txt2)
                 expect(data[0].author).equal(user1)
                 expect(data[0].timestamp).a('Number')
@@ -443,7 +443,7 @@ module.exports = function () {
               expect(error).not.ok
               expect(data).lengthOf(2)
               let props = ['textMessage', 'author', 'timestamp', 'id']
-              expect(data[0]).include.keys(...props)
+              expect(data[0]).include.keys(props)
               expect(data[0].textMessage).equal(txt)
               expect(data[0].author).equal(user1)
               expect(data[0].timestamp).a('Number')

@@ -69,7 +69,7 @@ module.exports = function () {
 
   it('should be able to use a custom state constructor', function (done) {
     this.timeout(5000)
-    let MemoryState = require('../src/MemoryState')
+    let MemoryState = require('../lib/MemoryState')
     chatService = startService({ state: MemoryState })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', u => {
@@ -80,7 +80,7 @@ module.exports = function () {
 
   it('should be able to use a custom transport constructor', function (done) {
     this.timeout(5000)
-    let Transport = require('../src/SocketIOTransport')
+    let Transport = require('../lib/SocketIOTransport')
     chatService = startService({ transport: Transport })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', u => {

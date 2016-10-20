@@ -6,7 +6,7 @@ const Promise = require('bluebird')
 const { expect } = require('chai')
 
 const { cleanup, clientConnect, parallel, closeInstance,
-        nextTick, ChatService, startService } = require('./testutils')
+        ChatService, startService } = require('./testutils')
 
 const { cleanupTimeout, user1, user2,
         roomName1, roomName2 } = require('./config')
@@ -50,7 +50,7 @@ module.exports = function () {
     let onClose = (server, error, cb) => {
       expect(server).instanceof(ChatService)
       expect(error).not.ok
-      nextTick(cb)
+      process.nextTick(cb)
     }
     let chatService1 = startService(null, {onClose})
     closeInstance(chatService1).asCallback(done)
@@ -70,7 +70,7 @@ module.exports = function () {
       expect(mode).a('boolean')
       expect(cb).instanceof(Function)
       before = true
-      nextTick(cb)
+      process.nextTick(cb)
     }
     let roomCreateAfter = (execInfo, cb) => {
       let { server, userName, id, args, results, error } = execInfo
@@ -85,7 +85,7 @@ module.exports = function () {
       expect(error).null
       expect(cb).instanceof(Function)
       after = true
-      nextTick(cb, null, someData)
+      process.nextTick(cb, null, someData)
     }
     chatService = startService({ enableRoomsManagement: true },
                                { roomCreateBefore, roomCreateAfter })
@@ -158,7 +158,7 @@ module.exports = function () {
       expect(restArgs).instanceof(Array)
       expect(restArgs).lengthOf(1)
       expect(restArgs[0]).true
-      nextTick(cb)
+      process.nextTick(cb)
     }
     chatService = startService(null, {listOwnSocketsAfter})
     socket1 = clientConnect(user1)
@@ -173,7 +173,7 @@ module.exports = function () {
   it('should support changing arguments in before hooks', function (done) {
     let roomGetWhitelistModeBefore = (execInfo, cb) => {
       execInfo.args = [roomName2]
-      nextTick(cb)
+      process.nextTick(cb)
     }
     chatService = startService({ enableRoomsManagement: true },
                                { roomGetWhitelistModeBefore })
@@ -193,7 +193,7 @@ module.exports = function () {
 
   it('should support additional values from after hooks', function (done) {
     let listOwnSocketsAfter = (execInfo, cb) =>
-          nextTick(cb, null, ...execInfo.results, true)
+          process.nextTick(cb, null, execInfo.results[0], true)
     chatService = startService(null, { listOwnSocketsAfter })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', (u, data) => {
@@ -210,7 +210,7 @@ module.exports = function () {
 
   it('should execute onDisconnect hook', function (done) {
     let onDisconnect = (server, data, cb) => {
-      nextTick(() => {
+      process.nextTick(() => {
         expect(server).instanceof(ChatService)
         expect(data).an.Object
         expect(data.id).a.string
@@ -219,7 +219,7 @@ module.exports = function () {
         expect(data.joinedSockets).an.Array
         done()
       })
-      nextTick(cb)
+      process.nextTick(cb)
     }
     let chatService1 = startService(null, { onDisconnect })
     socket1 = clientConnect(user1)
@@ -229,7 +229,7 @@ module.exports = function () {
   it('should execute onJoin hook', function (done) {
     let isRun = false
     let onJoin = (server, data, cb) => {
-      nextTick(() => {
+      process.nextTick(() => {
         if (!isRun) {
           expect(server).instanceof(ChatService)
           expect(data).an.Object
@@ -283,7 +283,7 @@ module.exports = function () {
   it('should execute onLeave hook when leaving', function (done) {
     let isRun = false
     let onLeave = (server, data, cb) => {
-      nextTick(() => {
+      process.nextTick(() => {
         if (!isRun) {
           expect(server).instanceof(ChatService)
           expect(data).an.Object
@@ -313,7 +313,7 @@ module.exports = function () {
     let isRun = false
     let id
     let onLeave = (server, data, cb) => {
-      nextTick(() => {
+      process.nextTick(() => {
         if (!isRun) {
           expect(server).instanceof(ChatService)
           expect(data).an.Object
@@ -351,7 +351,7 @@ module.exports = function () {
     let isRun = false
     let id
     let onLeave = (server, data, cb) => {
-      nextTick(() => {
+      process.nextTick(() => {
         if (!isRun) {
           expect(server).instanceof(ChatService)
           expect(data).an.Object
@@ -386,7 +386,7 @@ module.exports = function () {
 
   it('should stop commands if before hook returns a data', function (done) {
     let val = 'asdf'
-    let listOwnSocketsBefore = (execInfo, cb) => nextTick(cb, null, val)
+    let listOwnSocketsBefore = (execInfo, cb) => process.nextTick(cb, null, val)
     chatService = startService(null, { listOwnSocketsBefore })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
@@ -401,7 +401,7 @@ module.exports = function () {
   it('should accept custom direct messages using a hook', function (done) {
     let html = '<b>HTML message.</b>'
     let message = { htmlMessage: html }
-    let directMessagesChecker = (msg, cb) => nextTick(cb)
+    let directMessagesChecker = (msg, cb) => process.nextTick(cb)
     chatService =
       startService({ enableDirectMessages: true }, { directMessagesChecker })
     socket1 = clientConnect(user1)
@@ -423,7 +423,7 @@ module.exports = function () {
   it('should accept custom room messages using a hook', function (done) {
     let html = '<b>HTML message.</b>'
     let message = { htmlMessage: html }
-    let roomMessagesChecker = (msg, cb) => nextTick(cb)
+    let roomMessagesChecker = (msg, cb) => process.nextTick(cb)
     chatService = startService(null, { roomMessagesChecker })
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -447,7 +447,7 @@ module.exports = function () {
   it('should correctly send room messages with a binary data', function (done) {
     let data = Buffer.from([5])
     let message = { data }
-    let roomMessagesChecker = (msg, cb) => nextTick(cb)
+    let roomMessagesChecker = (msg, cb) => process.nextTick(cb)
     chatService = startService(null, { roomMessagesChecker })
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)

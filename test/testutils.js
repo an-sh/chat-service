@@ -102,14 +102,11 @@ function cleanup (services, sockets, done) {
   }).asCallback(done)
 }
 
-// fix for node 0.12
-let nextTick = (fn, ...args) => process.nextTick(() => fn(...args))
-
 let parallel = (fns, cb) =>
-      Promise.map(fns, Promise.fromCallback).asCallback(cb)
+    Promise.map(fns, Promise.fromCallback).asCallback(cb)
 
 let series = (fns, cb) =>
-      Promise.mapSeries(fns, Promise.fromCallback).asCallback(cb)
+    Promise.mapSeries(fns, Promise.fromCallback).asCallback(cb)
 
 module.exports = {
   ChatService,
@@ -117,7 +114,6 @@ module.exports = {
   cleanup,
   clientConnect,
   closeInstance,
-  nextTick,
   parallel,
   series,
   setCustomCleanup,

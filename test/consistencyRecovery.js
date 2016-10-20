@@ -5,7 +5,7 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 const { expect } = require('chai')
 
-const { cleanup, clientConnect, closeInstance, nextTick,
+const { cleanup, clientConnect, closeInstance,
         parallel, setCustomCleanup, startService } = require('./testutils')
 
 const { cleanupTimeout, user1, roomName1 } = require('./config')
@@ -43,7 +43,7 @@ module.exports = function () {
             cb()
           }),
           cb => instance1.on('storeConsistencyFailure', (error, data) => {
-            nextTick(() => {
+            process.nextTick(() => {
               expect(error).ok
               expect(data).an('Object')
               expect(data).include.keys('roomName', 'userName', 'opType')
@@ -90,7 +90,7 @@ module.exports = function () {
               cb()
             }),
             cb => instance1.on('storeConsistencyFailure', (error, data) => {
-              nextTick(() => {
+              process.nextTick(() => {
                 expect(error).ok
                 expect(data).an('Object')
                 expect(data).include.keys('roomName', 'userName', 'opType')
@@ -135,7 +135,7 @@ module.exports = function () {
         socket1.emit('roomJoin', roomName1, () => {
           socket1.disconnect()
           instance1.on('storeConsistencyFailure', (error, data) => {
-            nextTick(() => {
+            process.nextTick(() => {
               expect(error).ok
               instance1.state.UserState.prototype.removeSocket = orig
               expect(data).an('Object')
@@ -172,7 +172,7 @@ module.exports = function () {
             true, 'roomAddToList', roomName1, 'blacklist', [user1],
             error => expect(error).not.ok)
           instance1.on('storeConsistencyFailure', (error, data) => {
-            nextTick(() => {
+            process.nextTick(() => {
               expect(error).ok
               instance1.state.UserState.prototype.removeAllSocketsFromRoom = orig
               expect(data).an('Object')
@@ -218,7 +218,7 @@ module.exports = function () {
                 cb()
               }),
             cb => instance1.once('storeConsistencyFailure', (error, data) => {
-              nextTick(() => {
+              process.nextTick(() => {
                 expect(error).ok
                 instance1.state.RoomState.prototype.hasInList = orig
                 expect(data).an('Object')
@@ -262,7 +262,7 @@ module.exports = function () {
               cb()
             }),
             cb => instance1.on('transportConsistencyFailure', (error, data) => {
-              nextTick(() => {
+              process.nextTick(() => {
                 expect(error).ok
                 expect(data).an('Object')
                 expect(data).include.keys('roomName', 'userName', 'id', 'opType')
