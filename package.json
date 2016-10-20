@@ -10,9 +10,7 @@
     "generate-docs": "jsdoc --configure .jsdoc.json --verbose",
     "prepublish": "npm run compile",
     "pretest": "npm run compile",
-    "pretest-legacy": "npm run compile",
-    "test": "nyc mocha",
-    "test-legacy": "mocha --harmony-destructuring"
+    "test": "nyc mocha"
   },
   "author": {
     "name": "Andrey Sharapov",
