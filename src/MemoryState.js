@@ -10,18 +10,15 @@ const uid = require('uid-safe')
 const { mixin } = require('es6-mixin')
 
 function initState (state, values = []) {
-  if (state instanceof Array) {
-    state.length = 0
-    for (let val of values) {
-      state.push(val)
-    }
-  } else if (state instanceof Set) {
+  if (state instanceof Set) {
     state.clear()
     for (let val of values) {
       state.add(val)
     }
   } else if (state instanceof Map) {
     state.clear()
+  } else if (state instanceof Array) {
+    state.length = 0
   }
   return state
 }
