@@ -3,7 +3,6 @@
 const ChatServiceError = require('./ChatServiceError')
 const FastMap = require('collections/fast-map')
 const FastSet = require('collections/fast-set')
-const List = require('collections/list')
 const Promise = require('bluebird')
 const Room = require('./Room')
 const User = require('./User')
@@ -12,13 +11,22 @@ const promiseRetry = require('promise-retry')
 const uid = require('uid-safe')
 const { mixin } = require('es6-mixin')
 
-function initState (state, values) {
-  state.clear()
-  if (!values) {
-    return Promise.resolve()
+function initState (state, values = []) {
+  if (state instanceof Array) {
+    state.length = 0
+    for (let val of values) {
+      state.push(val)
+    }
+  } else if (state instanceof Set) {
+    state.clear()
+    for (let val of values) {
+      state.add(val)
+    }
   } else {
-    return state.addEach(values)
+    state.clear()
+    state.addEach(values)
   }
+  return state
 }
 
 // Memory lock operations.
@@ -123,9 +131,9 @@ class RoomStateMemory extends ListsStateMemory {
     this.blacklist = new FastSet()
     this.adminlist = new FastSet()
     this.userlist = new FastSet()
-    this.messagesHistory = new List()
-    this.messagesTimestamps = new List()
-    this.messagesIds = new List()
+    this.messagesHistory = []
+    this.messagesTimestamps = []
+    this.messagesIds = []
     this.usersseen = new FastMap()
     this.lastMessageId = 0
     this.whitelistOnly = false
@@ -198,9 +206,9 @@ class RoomStateMemory extends ListsStateMemory {
       this.historyMaxSize = historyMaxSize
     }
     let limit = this.historyMaxSize
-    this.messagesHistory = new List(this.messagesHistory.slice(0, limit))
-    this.messagesTimestamps = new List(this.messagesTimestamps.slice(0, limit))
-    this.messagesIds = new List(this.messagesIds.slice(0, limit))
+    this.messagesHistory = this.messagesHistory.slice(0, limit)
+    this.messagesTimestamps = this.messagesTimestamps.slice(0, limit)
+    this.messagesIds = this.messagesIds.slice(0, limit)
     return Promise.resolve()
   }
 
