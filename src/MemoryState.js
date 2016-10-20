@@ -1,7 +1,6 @@
 'use strict'
 
 const ChatServiceError = require('./ChatServiceError')
-const FastMap = require('collections/fast-map')
 const FastSet = require('collections/fast-set')
 const Promise = require('bluebird')
 const Room = require('./Room')
@@ -22,6 +21,8 @@ function initState (state, values = []) {
     for (let val of values) {
       state.add(val)
     }
+  } else if (state instanceof Map) {
+    state.clear()
   } else {
     state.clear()
     state.addEach(values)
@@ -134,7 +135,7 @@ class RoomStateMemory extends ListsStateMemory {
     this.messagesHistory = []
     this.messagesTimestamps = []
     this.messagesIds = []
-    this.usersseen = new FastMap()
+    this.usersseen = new Map()
     this.lastMessageId = 0
     this.whitelistOnly = false
     this.owner = null
@@ -338,10 +339,10 @@ class UserStateMemory {
   constructor (server, userName) {
     this.server = server
     this.userName = userName
-    this.socketsToRooms = new FastMap()
-    this.socketsToInstances = new FastMap()
-    this.roomsToSockets = new FastMap()
-    this.locks = new FastMap()
+    this.socketsToRooms = new Map()
+    this.socketsToInstances = new Map()
+    this.roomsToSockets = new Map()
+    this.locks = new Map()
     mixin(this, LockOperations, this.locks)
   }
 
@@ -468,9 +469,9 @@ class MemoryState {
     this.server = server
     this.options = options
     this.closed = false
-    this.users = new FastMap()
-    this.rooms = new FastMap()
-    this.sockets = new FastMap()
+    this.users = new Map()
+    this.rooms = new Map()
+    this.sockets = new Map()
     this.RoomState = RoomStateMemory
     this.UserState = UserStateMemory
     this.DirectMessagingState = DirectMessagingStateMemory
