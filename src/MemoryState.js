@@ -7,7 +7,7 @@ const User = require('./User')
 const _ = require('lodash')
 const promiseRetry = require('promise-retry')
 const uid = require('uid-safe')
-const { mixin } = require('es6-mixin')
+const { mixin } = require('./utils')
 
 function initState (state, values = []) {
   if (state instanceof Set) {

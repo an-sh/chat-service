@@ -61,6 +61,18 @@ function logError (error) {
   return Promise.reject(error)
 }
 
+// based on https://github.com/amercier/es6-mixin
+function mixin (target, MixinConstructor, ...args) {
+  let source = new MixinConstructor(...args)
+  let names = Object.getOwnPropertyNames(MixinConstructor.prototype)
+  for (let name of names) {
+    let val = source[name]
+    if (_.isFunction(val) && name !== 'constructor') {
+      target[name] = val.bind(source)
+    }
+  }
+}
+
 function convertError (error, useRawErrorObjects) {
   if (error != null) {
     if (!useRawErrorObjects) {
@@ -80,6 +92,7 @@ module.exports = {
   convertError,
   execHook,
   logError,
+  mixin,
   possiblyCallback,
   run
 }

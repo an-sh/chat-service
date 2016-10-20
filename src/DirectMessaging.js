@@ -2,8 +2,7 @@
 
 const ChatServiceError = require('./ChatServiceError')
 const Promise = require('bluebird')
-const { mixin } = require('es6-mixin')
-const { run } = require('./utils')
+const { mixin, run } = require('./utils')
 
 class DirectMessagingPermissions {
 

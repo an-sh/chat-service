@@ -32,9 +32,8 @@ const User = require('./User')
 const _ = require('lodash')
 const uid = require('uid-safe')
 const { EventEmitter } = require('events')
-const { checkNameSymbols, convertError, execHook, logError } =
+const { checkNameSymbols, convertError, execHook, logError, mixin } =
         require('./utils')
-const { mixin } = require('es6-mixin')
 
 const rpcRequestsNames = [
   'directAddToList',

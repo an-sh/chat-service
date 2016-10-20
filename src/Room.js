@@ -3,8 +3,7 @@
 const ChatServiceError = require('./ChatServiceError')
 const Promise = require('bluebird')
 const _ = require('lodash')
-const { mixin } = require('es6-mixin')
-const { asyncLimit, run } = require('./utils')
+const { asyncLimit, mixin, run } = require('./utils')
 
 class RoomPermissions {
 

@@ -5,8 +5,7 @@ const Promise = require('bluebird')
 const UserReports = require('./UserReports')
 const _ = require('lodash')
 const eventToPromise = require('event-to-promise')
-const { asyncLimit, execHook, run } = require('./utils')
-const { mixin } = require('es6-mixin')
+const { asyncLimit, execHook, mixin, run } = require('./utils')
 
 const co = Promise.coroutine
 

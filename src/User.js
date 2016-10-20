@@ -6,8 +6,7 @@ const DirectMessaging = require('./DirectMessaging')
 const Promise = require('bluebird')
 const UserAssociations = require('./UserAssociations')
 const _ = require('lodash')
-const { asyncLimit, checkNameSymbols, run } = require('./utils')
-const { mixin } = require('es6-mixin')
+const { asyncLimit, checkNameSymbols, mixin, run } = require('./utils')
 
 // Client commands implementation.
 class User {
