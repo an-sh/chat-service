@@ -1,19 +1,12 @@
 
 clone_depth: 5
 
-matrix:
-  - environment:
-      nodejs_version: "6"
-    test_script:
-      - node --version
-      - npm --version
-      - npm run test
-  - environment:
-      nodejs_version: "4"
-    test_script:
-      - node --version
-      - npm --version
-      - npm run -- --harmony-destructuring
+environment:
+  matrix:
+  - nodejs_version: "6"
+    TEST: "npm run test"
+  - nodejs_version: "4"
+    TEST: "npm run test -- --harmony-destructuring"
 
 platform:
   - x64
@@ -25,6 +18,11 @@ install:
   - '@ECHO Redis Started'
   - ps: Install-Product node $env:nodejs_version x64
   - npm install
+
+test_script:
+  - node --version
+  - npm --version
+  - cmd: "%TEST%"
 
 build: off
 
