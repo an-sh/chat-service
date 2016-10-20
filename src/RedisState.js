@@ -18,7 +18,6 @@ function initSet (redis, set, values) {
     .then(() => values ? redis.sadd(set, values) : null)
 }
 
-
 // State init/remove operations.
 class StateOperations {
 

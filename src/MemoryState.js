@@ -1,7 +1,6 @@
 'use strict'
 
 const ChatServiceError = require('./ChatServiceError')
-const FastSet = require('collections/fast-set')
 const Promise = require('bluebird')
 const Room = require('./Room')
 const User = require('./User')
@@ -23,11 +22,24 @@ function initState (state, values = []) {
     }
   } else if (state instanceof Map) {
     state.clear()
-  } else {
-    state.clear()
-    state.addEach(values)
   }
   return state
+}
+
+function mapToObject (m) {
+  let res = {}
+  for (let [k, v] of m) {
+    res[k] = v
+  }
+  return res
+}
+
+function setDifference (s1, s2) {
+  let res = new Set()
+  for (let v of s1) {
+    if (!s2.has(v)) { res.add(v) }
+  }
+  return res
 }
 
 // Memory lock operations.
@@ -72,7 +84,7 @@ class ListsStateMemory {
     if (listName === 'userlist') {
       return Promise.resolve()
     }
-    if (this[listName].length + num > limit) {
+    if (this[listName].size + num > limit) {
       let error = new ChatServiceError('listLimitExceeded', listName)
       return Promise.reject(error)
     } else {
@@ -83,20 +95,24 @@ class ListsStateMemory {
   addToList (listName, elems, limit) {
     let num = elems.length
     return this.checkList(listName, num, limit).then(() => {
-      this[listName].addEach(elems)
+      for (let elem of elems) {
+        this[listName].add(elem)
+      }
     })
   }
 
   removeFromList (listName, elems) {
     return this.checkList(listName).then(() => {
-      this[listName].deleteEach(elems)
+      for (let elem of elems) {
+        this[listName].delete(elem)
+      }
     })
   }
 
   getList (listName) {
     return this.checkList(listName).then(() => {
-      let data = this[listName].toArray()
-      return data
+      let data = this[listName]
+      return [...data]
     })
   }
 
@@ -128,10 +144,10 @@ class RoomStateMemory extends ListsStateMemory {
     this.name = name
     this.historyMaxGetMessages = this.server.historyMaxGetMessages
     this.historyMaxSize = this.server.historyMaxSize
-    this.whitelist = new FastSet()
-    this.blacklist = new FastSet()
-    this.adminlist = new FastSet()
-    this.userlist = new FastSet()
+    this.whitelist = new Set()
+    this.blacklist = new Set()
+    this.adminlist = new Set()
+    this.userlist = new Set()
     this.messagesHistory = []
     this.messagesTimestamps = []
     this.messagesIds = []
@@ -225,10 +241,9 @@ class RoomStateMemory extends ListsStateMemory {
   }
 
   getCommonUsers () {
-    let nonWL = this.userlist.difference(this.whitelist)
-    let nonAdmin = nonWL.difference(this.adminlist)
-    let data = nonAdmin.toArray()
-    return Promise.resolve(data)
+    let nonWL = setDifference(this.userlist, this.whitelist)
+    let nonAdmin = setDifference(nonWL, this.adminlist)
+    return Promise.resolve([...nonAdmin])
   }
 
   messageAdd (msg) {
@@ -291,7 +306,7 @@ class RoomStateMemory extends ListsStateMemory {
   }
 
   userSeenGet (userName) {
-    let joined = Boolean(this.userlist.get(userName))
+    let joined = Boolean(this.userlist.has(userName))
     let timestamp = this.usersseen.get(userName) || null
     return Promise.resolve({joined, timestamp})
   }
@@ -312,8 +327,8 @@ class DirectMessagingStateMemory extends ListsStateMemory {
     this.server = server
     this.userName = userName
     this.whitelistOnly = false
-    this.whitelist = new FastSet()
-    this.blacklist = new FastSet()
+    this.whitelist = new Set()
+    this.blacklist = new Set()
   }
 
   initState ({ whitelist, blacklist, whitelistOnly }) {
@@ -347,35 +362,34 @@ class UserStateMemory {
   }
 
   addSocket (id, uid) {
-    let roomsset = new FastSet()
+    let roomsset = new Set()
     this.socketsToRooms.set(id, roomsset)
     this.socketsToInstances.set(id, uid)
-    let nconnected = this.socketsToRooms.length
+    let nconnected = this.socketsToRooms.size
     return Promise.resolve(nconnected)
   }
 
   getAllSockets () {
-    let sockets = this.socketsToRooms.keysArray()
+    let sockets = [...this.socketsToRooms.keys()]
     return Promise.resolve(sockets)
   }
 
   getSocketsToInstance () {
-    let data = this.socketsToInstances.toObject()
+    let data = mapToObject(this.socketsToInstances)
     return Promise.resolve(data)
   }
 
   getRoomToSockets (roomName) {
     let socketsset = this.roomsToSockets.get(roomName)
-    let data = (socketsset && socketsset.toObject()) || {}
+    let data = socketsset ? mapToObject(socketsset) : {}
     return Promise.resolve(data)
   }
 
   getSocketsToRooms () {
     let result = {}
-    let sockets = this.socketsToRooms.keysArray()
-    for (let id of sockets) {
+    for (let id of this.socketsToRooms.keys()) {
       let socketsset = this.socketsToRooms.get(id)
-      result[id] = (socketsset && socketsset.toArray()) || []
+      result[id] = socketsset ? [...socketsset] : []
     }
     return Promise.resolve(result)
   }
@@ -383,14 +397,14 @@ class UserStateMemory {
   addSocketToRoom (id, roomName) {
     let roomsset = this.socketsToRooms.get(id)
     let socketsset = this.roomsToSockets.get(roomName)
-    let wasjoined = (socketsset && socketsset.length) || 0
+    let wasjoined = (socketsset && socketsset.size) || 0
     if (!socketsset) {
-      socketsset = new FastSet()
+      socketsset = new Set()
       this.roomsToSockets.set(roomName, socketsset)
     }
     roomsset.add(roomName)
     socketsset.add(id)
-    let njoined = socketsset.length
+    let njoined = socketsset.size
     let hasChanged = njoined !== wasjoined
     return Promise.resolve([njoined, hasChanged])
   }
@@ -398,7 +412,7 @@ class UserStateMemory {
   removeSocketFromRoom (id, roomName) {
     let roomsset = this.socketsToRooms.get(id)
     let socketsset = this.roomsToSockets.get(roomName)
-    let wasjoined = (socketsset && socketsset.length) || 0
+    let wasjoined = (socketsset && socketsset.size) || 0
     if (roomsset) {
       roomsset.delete(roomName)
     }
@@ -407,42 +421,41 @@ class UserStateMemory {
     }
     let njoined = 0
     if (wasjoined > 0) {
-      njoined = socketsset.length
+      njoined = socketsset.size
     }
     let hasChanged = njoined !== wasjoined
     return Promise.resolve([njoined, hasChanged])
   }
 
   removeAllSocketsFromRoom (roomName) {
-    let sockets = this.socketsToRooms.keysArray()
+    let sockets = [...this.socketsToRooms.keys()]
     let socketsset = this.roomsToSockets.get(roomName)
-    let removedSockets = (socketsset && socketsset.toArray()) || []
+    let removedSockets = socketsset || []
     for (let id of removedSockets) {
       let roomsset = this.socketsToRooms.get(id)
       roomsset.delete(roomName)
     }
     if (socketsset) {
-      socketsset = socketsset.difference(sockets)
+      socketsset = setDifference(socketsset, new Set(sockets))
       this.roomsToSockets.set(roomName, socketsset)
     }
-    return Promise.resolve(removedSockets)
+    return Promise.resolve([...removedSockets])
   }
 
   removeSocket (id) {
     let roomsset = this.socketsToRooms.get(id)
-    let removedRooms = (roomsset && roomsset.toArray()) || []
+    let removedRooms = roomsset || []
     let joinedSockets = []
-    for (let idx = 0; idx < removedRooms.length; idx++) {
-      let roomName = removedRooms[idx]
+    for (let roomName of removedRooms) {
       let socketsset = this.roomsToSockets.get(roomName)
       socketsset.delete(id)
-      let njoined = socketsset.length
-      joinedSockets[idx] = njoined
+      let njoined = socketsset.size
+      joinedSockets.push(njoined)
     }
     this.socketsToRooms.delete(id)
     this.socketsToInstances.delete(id)
-    let nconnected = this.socketsToRooms.length
-    return Promise.resolve([ removedRooms, joinedSockets, nconnected ])
+    let nconnected = this.socketsToRooms.size
+    return Promise.resolve([ [...removedRooms], joinedSockets, nconnected ])
   }
 
   lockToRoom (roomName, ttl) {
@@ -523,7 +536,7 @@ class MemoryState {
   }
 
   getInstanceSockets (uid = this.instanceUID) {
-    return Promise.resolve(this.sockets.toObject())
+    return Promise.resolve(mapToObject(this.sockets))
   }
 
   updateHeartbeat () {
