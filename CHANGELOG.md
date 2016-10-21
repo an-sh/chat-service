@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.13.0"></a>
+# [0.13.0](https://github.com/an-sh/chat-service/compare/v0.12.0...v0.13.0) (2016-10-21)
+
+
+### Code Refactoring
+
+* drop 0.12 support/testing ([756999b](https://github.com/an-sh/chat-service/commit/756999b))
+
+
+### Features
+
+* **store:** ES6 data structures for memory store ([bdc579c](https://github.com/an-sh/chat-service/commit/bdc579c))
+
+
+### BREAKING CHANGES
+
+* Now node >=4 is required.
+
+
+
 <a name="0.12.0"></a>
 # [0.12.0](https://github.com/an-sh/chat-service/compare/v0.11.0...v0.12.0) (2016-10-12)
 
