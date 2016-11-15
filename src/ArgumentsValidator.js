@@ -4,7 +4,7 @@ const ChatServiceError = require('./ChatServiceError')
 const Promise = require('bluebird')
 const _ = require('lodash')
 const check = require('check-types')
-const { possiblyCallback } = require('./utils')
+const { execHook, possiblyCallback } = require('./utils')
 
 // Commands arguments type and count validation.
 class ArgumentsValidator {
@@ -35,11 +35,9 @@ class ArgumentsValidator {
       let error = this.checkTypes(checkers, nargs)
       if (error) { return Promise.reject(error) }
       let customCheckers = this.customCheckers[name] || []
-      return Promise.each(customCheckers, (checker, idx) => {
-        if (checker) {
-          return Promise.fromCallback(fn => checker(nargs[idx], fn))
-        }
-      }).return()
+      return Promise.each(
+        customCheckers, (checker, idx) => execHook(checker, nargs[idx])
+      ).return()
     }).asCallback(cb)
   }
 
