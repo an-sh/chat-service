@@ -182,6 +182,38 @@ socket.on('loginRejected', error => {
 
 It is a runnable code, files are in `example` directory.
 
+### Integrating with other messaging systems
+
+It is possible to use other transports other than socket.io. There is
+a proof of concept
+[transport](https://github.com/an-sh/chat-service-ws-messaging), that
+is using a WebSocket connection with some minimal API abstraction
+layer [ws-messaging](https://github.com/an-sh/ws-messaging) and a
+simple
+[emitter-pubsub-broker](https://github.com/an-sh/emitter-pubsub-broker)
+as backend messaging fanout abstraction.
+
+Here are the main things that a transport must allow to do:
+
+- Send messages from a server to groups of clients (based on a single
+  string full match criteria, a.k.a. room messaging).
+
+- Implement request-reply communication from a client to a server.
+
+- Implement some kind of persistent connection (or semantically
+  equivalent), it is required for a presence tracking.
+
+### Integrating with other databases
+
+Chat Service is using Redis as a shared store with persistence. In a
+real application some of this information may be needed by other
+services, but it is not practical to fully reimplement the state
+store. A better alternative approach is to use hooks. For example, to
+save all room messages inside an another database just a
+`roomMessageAfter` hook can be used. Also `ServiceAPI` can be exposed
+via backend messaging buses to other internal servers.
+
+
 ### Debugging
 
 Under normal circumstances all errors that are returned to a service
@@ -324,6 +356,13 @@ using directly transport `sendToChannel` method. Also additional
 information regarding joined devices types should be sent from
 `roomGetAccessList` after hook (when list name is equal to
 `'userlist'`).
+
+### Messages editing and deletion
+
+There is no delete or edit operation, as they will make
+inconsistencies inside a room history. A common alternative for
+deleting and editing is to use room messages with a special meaning
+that clients will use to hide or alter messages.
 
 
 ## Contribute
