@@ -1,23 +1,24 @@
 'use strict'
 
 let redisClusterConnect = [ { port: 30001, host: '127.0.0.1' } ]
-let redisConnect = 'redis://localhost:6379'
+let redisConnect = 'redis://localhost:6379/1'
 
 let memoryConfig, redisConfig, states
 
 if (process.env.TEST_REDIS_CLUSTER) {
-  redisConfig = { state: 'redis',
-                      stateOptions: { useCluster: true,
-                                     redisOptions: [ redisClusterConnect ] },
-                      adapter: 'redis',
-                      adpterOptions: redisConnect }
+  redisConfig = {
+    state: 'redis',
+    stateOptions: { useCluster: true, redisOptions: [ redisClusterConnect ] },
+    adapter: 'redis',
+    adpterOptions: redisConnect }
   states = [ redisConfig ]
 } else {
   memoryConfig = { state: 'memory', adapter: 'memory' }
-  redisConfig = { state: 'redis',
-                  stateOptions: { redisOptions: redisConnect },
-                  adapter: 'redis',
-                  adpterOptions: redisConnect }
+  redisConfig = {
+    state: 'redis',
+    stateOptions: { redisOptions: redisConnect },
+    adapter: 'redis',
+    adpterOptions: redisConnect }
   states = [ memoryConfig, redisConfig ]
 }
 

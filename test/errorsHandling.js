@@ -3,7 +3,7 @@
 
 const { expect } = require('chai')
 
-const { ChatService, cleanup, clientConnect,  startService } =
+const { ChatService, cleanup, clientConnect, startService } =
       require('./testutils')
 
 const { cleanupTimeout, user1, roomName1 } = require('./config')
