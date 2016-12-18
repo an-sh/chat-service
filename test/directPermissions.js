@@ -168,8 +168,8 @@ module.exports = function () {
   })
 
   it('should honour direct list size limit', function (done) {
-    chatService = startService({ enableDirectMessages: true,
-                                 directListSizeLimit: 1 })
+    chatService = startService({
+      enableDirectMessages: true, directListSizeLimit: 1 })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
       socket1.emit(

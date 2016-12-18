@@ -154,8 +154,9 @@ class Room {
   leave (author) {
     return this.roomState.hasInList('userlist', author).then(hasAuthor => {
       if (!hasAuthor) { return }
-      return Promise.all([ this.roomState.removeFromList('userlist', [author]),
-                           this.roomState.userSeenUpdate(author) ])
+      return Promise.all([
+        this.roomState.removeFromList('userlist', [author]),
+        this.roomState.userSeenUpdate(author) ])
     })
   }
 
@@ -164,8 +165,9 @@ class Room {
       .then(() => this.roomState.hasInList('userlist', author))
       .then(hasAuthor => {
         if (hasAuthor) { return }
-        return Promise.all([ this.roomState.userSeenUpdate(author),
-                             this.roomState.addToList('userlist', [author]) ])
+        return Promise.all([
+          this.roomState.userSeenUpdate(author),
+          this.roomState.addToList('userlist', [author]) ])
       })
   }
 

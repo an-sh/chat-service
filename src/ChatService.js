@@ -309,8 +309,9 @@ class ChatService extends EventEmitter {
       this.options.adapter || 'memory'
     this.adapterOptions = _.castArray(
       this.transportOptions.adapterOptions || this.options.adapterOptions)
-    let opts = { adapterConstructor: this.adapterConstructor,
-                 adapterOptions: this.adapterOptions }
+    let opts = {
+      adapterConstructor: this.adapterConstructor,
+      adapterOptions: this.adapterOptions }
     this.transportOptions = _.assign(opts, this.transportOptions)
   }
 

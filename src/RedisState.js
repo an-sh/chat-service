@@ -401,10 +401,11 @@ class RoomStateRedis extends ListsStateRedis {
         historySize = parseInt(historySize)
         historyMaxSize = parseFloat(historyMaxSize)
         lastMessageId = parseInt(lastMessageId)
-        return { historySize,
-                 historyMaxSize,
-                 historyMaxGetMessages: this.historyMaxGetMessages,
-                 lastMessageId }
+        return {
+          historySize,
+          historyMaxSize,
+          historyMaxGetMessages: this.historyMaxGetMessages,
+          lastMessageId }
       })
   }
 
