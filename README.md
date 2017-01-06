@@ -95,7 +95,7 @@ $ npm i chat-service
 
 First define a server configuration. On a server-side define a socket
 connection hook, as the service is relying on an extern auth
-implementation. A user just needs to pass an auth check, no explicit
+implementation. An user just needs to pass an auth check, no explicit
 user adding step is required.
 
 ```javascript

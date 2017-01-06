@@ -30,7 +30,10 @@
 /**
  * After hooks are available for all {@link rpc.clientRequests} and
  * are executed after Chat Service standard handlers, but before
- * returning results to the command issuer.
+ * returning results to the command issuer. Note that after hooks will
+ * run unconditionally after a Chat Service handler, both when a
+ * normal result is return and an error occurred. Use `execInfo` to
+ * get errors or results.
  *
  * @callback afterHook
  *
