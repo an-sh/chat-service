@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.14.0"></a>
+# [0.14.0](https://github.com/an-sh/chat-service/compare/v0.13.1...v0.14.0) (2017-02-03)
+
+
+### Chores
+
+* use es2015-node4 preset ([a501223](https://github.com/an-sh/chat-service/commit/a501223))
+
+
+### BREAKING CHANGES
+
+* Possible node 4.x regression due to the preset change.
+
+
+
 <a name="0.13.1"></a>
 ## [0.13.1](https://github.com/an-sh/chat-service/compare/v0.13.0...v0.13.1) (2016-11-15)
 
