@@ -94,7 +94,6 @@ class TransportInterface {
    * @returns {chat-service.TransportInterface.HandshakeData} Handshake data.
    */
   getHandshakeData (id) {}
-
 }
 
 /**
@@ -183,5 +182,4 @@ class TransportPlugin {
    * @protected
    */
   disconnectSocket (id) {}
-
 }

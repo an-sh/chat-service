@@ -10,7 +10,6 @@ const { asyncLimit, checkNameSymbols, mixin, run } = require('./utils')
 
 // Client commands implementation.
 class User {
-
   constructor (server, userName) {
     this.server = server
     this.userName = userName
@@ -293,7 +292,6 @@ class User {
     this.transport.sendToChannel(id, this.echoChannel, 'systemMessage', data)
     return Promise.resolve()
   }
-
 }
 
 module.exports = User

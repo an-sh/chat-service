@@ -10,7 +10,6 @@ const { possiblyCallback, run } = require('./utils')
 
 // Socket.io transport.
 class SocketIOTransport {
-
   constructor (server, options) {
     this.server = server
     this.options = options
@@ -174,7 +173,6 @@ class SocketIOTransport {
     }
     return Promise.resolve()
   }
-
 }
 
 module.exports = SocketIOTransport

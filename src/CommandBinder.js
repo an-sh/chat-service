@@ -9,7 +9,6 @@ const co = Promise.coroutine
 
 // Implements command functions binding and wrapping.
 class CommandBinder {
-
   constructor (server, transport, userName) {
     this.server = server
     this.transport = transport
@@ -79,7 +78,6 @@ class CommandBinder {
     let info = {id}
     return this.transport.bindHandler(id, name, (...args) => cmd(args, info))
   }
-
 }
 
 module.exports = CommandBinder

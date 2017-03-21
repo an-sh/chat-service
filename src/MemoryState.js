@@ -42,7 +42,6 @@ function setDifference (s1, s2) {
 // Memory lock operations.
 // @mixin
 class LockOperations {
-
   constructor (locks) {
     this.locks = locks
   }
@@ -67,12 +66,10 @@ class LockOperations {
     }
     return Promise.resolve()
   }
-
 }
 
 // Implements state API lists management.
 class ListsStateMemory {
-
   checkList (listName, num, limit) {
     if (!this.hasList(listName)) {
       let error = new ChatServiceError('noList', listName)
@@ -129,12 +126,10 @@ class ListsStateMemory {
   whitelistOnlyGet () {
     return Promise.resolve(this.whitelistOnly)
   }
-
 }
 
 // Implements room state API.
 class RoomStateMemory extends ListsStateMemory {
-
   constructor (server, name) {
     super()
     this.server = server
@@ -313,12 +308,10 @@ class RoomStateMemory extends ListsStateMemory {
     this.usersseen.set(userName, timestamp)
     return Promise.resolve()
   }
-
 }
 
 // Implements direct messaging state API.
 class DirectMessagingStateMemory extends ListsStateMemory {
-
   constructor (server, userName) {
     super()
     this.server = server
@@ -342,12 +335,10 @@ class DirectMessagingStateMemory extends ListsStateMemory {
   hasList (listName) {
     return listName === 'whitelist' || listName === 'blacklist'
   }
-
 }
 
 // Implements user state API.
 class UserStateMemory {
-
   constructor (server, userName) {
     this.server = server
     this.userName = userName
@@ -469,12 +460,10 @@ class UserStateMemory {
       })
     })
   }
-
 }
 
 // Implements global state API.
 class MemoryState {
-
   constructor (server, options) {
     this.server = server
     this.options = options

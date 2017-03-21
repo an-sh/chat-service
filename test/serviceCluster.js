@@ -1,5 +1,6 @@
 'use strict'
 /* eslint-env mocha */
+/* eslint-disable no-unused-expressions */
 
 const _ = require('lodash')
 const { expect } = require('chai')

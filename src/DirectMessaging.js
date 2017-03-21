@@ -5,7 +5,6 @@ const Promise = require('bluebird')
 const { mixin, run } = require('./utils')
 
 class DirectMessagingPermissions {
-
   constructor (userName, directMessagingState) {
     this.userName = userName
     this.directMessagingState = directMessagingState
@@ -48,7 +47,6 @@ class DirectMessagingPermissions {
 // Implements direct messaging state manipulations with the respect to
 // user's permissions.
 class DirectMessaging {
-
   constructor (server, userName) {
     this.server = server
     this.userName = userName

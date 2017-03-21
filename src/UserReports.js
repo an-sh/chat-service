@@ -2,7 +2,6 @@
 
 // Notification reporting for user class.
 class UserReports {
-
   constructor (transport, echoChannel) {
     this.transport = transport
     this.echoChannel = echoChannel
@@ -48,7 +47,6 @@ class UserReports {
     this.transport.sendToChannel(
       id, this.echoChannel, 'socketDisconnectEcho', id, nconnected)
   }
-
 }
 
 module.exports = UserReports

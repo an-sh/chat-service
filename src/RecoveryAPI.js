@@ -12,7 +12,6 @@ const { run } = require('./utils')
  * @see chat-service.ChatService.event:storeConsistencyFailure
  */
 class RecoveryAPI {
-
   constructor (state, transport, execUserCommand, instanceUID) {
     this.state = state
     this.transport = transport
@@ -117,7 +116,6 @@ class RecoveryAPI {
   getInstanceHeartbeat (id, cb) {
     return this.state.getInstanceHeartbeat(id).asCallback(cb)
   }
-
 }
 
 module.exports = RecoveryAPI

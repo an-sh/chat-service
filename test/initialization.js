@@ -1,5 +1,6 @@
 'use strict'
 /* eslint-env mocha */
+/* eslint-disable no-unused-expressions */
 
 const Promise = require('bluebird')
 const _ = require('lodash')

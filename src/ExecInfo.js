@@ -100,7 +100,6 @@ class ExecInfo {
     this.server = null
     this.userName = null
   }
-
 }
 
 module.exports = ExecInfo

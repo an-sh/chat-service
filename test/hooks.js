@@ -1,5 +1,6 @@
 'use strict'
 /* eslint-env mocha */
+/* eslint-disable no-unused-expressions */
 
 const Buffer = require('safe-buffer').Buffer
 const Promise = require('bluebird')

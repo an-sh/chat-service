@@ -110,7 +110,6 @@ const rpcRequestsNames = [
  *
  */
 class ChatService extends EventEmitter {
-
   /**
    * Crates an object and starts a new service instance. The {@link
    * chat-service.ChatService#close} method __MUST__ be called before

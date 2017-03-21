@@ -11,7 +11,6 @@ const co = Promise.coroutine
 
 // Associations for user class.
 class UserAssociations {
-
   constructor (props) {
     _.defaults(this, props)
     this.busAckTimeout = this.server.busAckTimeout
@@ -214,7 +213,6 @@ class UserAssociations {
         .catchReturn()
     }, { concurrency: asyncLimit })
   }
-
 }
 
 module.exports = UserAssociations

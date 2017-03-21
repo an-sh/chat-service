@@ -13,7 +13,6 @@ const { checkNameSymbols, possiblyCallback } = require('./utils')
  * @see chat-service.ChatService
  */
 class ServiceAPI {
-
   constructor (state, makeUser, clusterBus) {
     this.state = state
     this.makeUser = makeUser
@@ -335,7 +334,6 @@ class ServiceAPI {
       .return()
       .asCallback(cb)
   }
-
 }
 
 module.exports = ServiceAPI

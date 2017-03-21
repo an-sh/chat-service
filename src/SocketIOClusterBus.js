@@ -10,7 +10,6 @@ const BINARY_EVENT = 5
 
 // Instances communication via a socket.io-adapter implementation.
 class SocketIOClusterBus extends EventEmitter {
-
   constructor (server, transport) {
     super()
     this.server = server
@@ -54,7 +53,6 @@ class SocketIOClusterBus extends EventEmitter {
       orig.apply(adapter, args)
     }
   }
-
 }
 
 module.exports = SocketIOClusterBus

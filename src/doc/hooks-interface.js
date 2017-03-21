@@ -114,7 +114,6 @@ class CommandsHooks {}
  * @memberof chat-service.hooks
  */
 class HooksInterface extends CommandsHooks {
-
   /**
    * Client connection hook. Client can send requests or receive
    * notifications only after this hook is resolved.
@@ -248,5 +247,4 @@ class HooksInterface extends CommandsHooks {
    *
    */
   roomMessagesChecker (message, cb) {}
-
 }

@@ -8,7 +8,6 @@ const { execHook, possiblyCallback } = require('./utils')
 
 // Commands arguments type and count validation.
 class ArgumentsValidator {
-
   constructor (server) {
     this.server = server
     this.checkers = new Map()

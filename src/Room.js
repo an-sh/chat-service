@@ -6,7 +6,6 @@ const _ = require('lodash')
 const { asyncLimit, mixin, run } = require('./utils')
 
 class RoomPermissions {
-
   constructor (roomName, roomState, emitFailure) {
     this.roomName = roomName
     this.roomState = roomState
@@ -118,13 +117,11 @@ class RoomPermissions {
       return Promise.reject(new ChatServiceError('notAllowed'))
     })
   }
-
 }
 
 // Implements room messaging state manipulations with the respect to
 // user's permissions.
 class Room {
-
   constructor (server, roomName) {
     this.server = server
     this.roomName = roomName
@@ -255,7 +252,6 @@ class Room {
     return this.checkRead(author, bypassPermissions)
       .then(() => this.roomState.userSeenGet(userName))
   }
-
 }
 
 module.exports = Room

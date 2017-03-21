@@ -20,7 +20,6 @@ function initSet (redis, set, values) {
 
 // State init/remove operations.
 class StateOperations {
-
   constructor (name, exitsErrorName, redis, makeKeyName, stateReset) {
     this.name = name
     this.exitsErrorName = exitsErrorName
@@ -49,12 +48,10 @@ class StateOperations {
   startRemoving () {
     return this.redis.del(this.makeKeyName('isInit'))
   }
-
 }
 
 // Redis lock operations.
 class LockOperations {
-
   constructor (redis) {
     this.redis = redis
   }
@@ -75,7 +72,6 @@ class LockOperations {
   unlock (key, val) {
     return this.redis.unlock(key, val)
   }
-
 }
 
 // Redis scripts.
@@ -236,7 +232,6 @@ return {jsonResult}`
 
 // Implements state API lists management.
 class ListsStateRedis {
-
   makeKeyName (keyName) {
     return `${namespace}:${this.prefix}:{${this.name}}:${keyName}`
   }
@@ -288,12 +283,10 @@ class ListsStateRedis {
     return this.redis.get(this.makeKeyName('whitelistMode'))
       .then(data => Boolean(data))
   }
-
 }
 
 // Implements room state API.
 class RoomStateRedis extends ListsStateRedis {
-
   constructor (server, roomName) {
     super()
     this.server = server
@@ -491,12 +484,10 @@ class RoomStateRedis extends ListsStateRedis {
     let timestamp = _.now()
     return this.redis.hset(this.makeKeyName('usersseen'), userName, timestamp)
   }
-
 }
 
 // Implements direct messaging state API.
 class DirectMessagingStateRedis extends ListsStateRedis {
-
   constructor (server, userName) {
     super()
     this.server = server
@@ -523,12 +514,10 @@ class DirectMessagingStateRedis extends ListsStateRedis {
       this.redis.set(this.makeKeyName('whitelistMode'), whitelistOnly)
     ]).return()
   }
-
 }
 
 // Implements user state API.
 class UserStateRedis {
-
   constructor (server, userName) {
     this.server = server
     this.userName = userName
@@ -639,12 +628,10 @@ class UserStateRedis {
       })
     })
   }
-
 }
 
 // Implements global state API.
 class RedisState {
-
   constructor (server, options) {
     this.server = server
     this.options = options
@@ -766,7 +753,6 @@ class RedisState {
   removeUser (name) {
     return Promise.resolve()
   }
-
 }
 
 module.exports = RedisState
