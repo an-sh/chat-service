@@ -297,16 +297,16 @@ class RoomStateRedis extends ListsStateRedis {
     this.exitsErrorName = 'roomExists'
     this.prefix = 'rooms'
     mixin(this, StateOperations, this.name, this.exitsErrorName, this.redis,
-          this.makeKeyName.bind(this), this.stateReset.bind(this))
+      this.makeKeyName.bind(this), this.stateReset.bind(this))
   }
 
   stateReset (state) {
     state = state || {}
     let { whitelist, blacklist, adminlist,
-          whitelistOnly, owner, historyMaxSize,
-          enableAccessListsUpdates = this.server.enableAccessListsUpdates,
-          enableUserlistUpdates = this.server.enableUserlistUpdates
-        } = state
+      whitelistOnly, owner, historyMaxSize,
+      enableAccessListsUpdates = this.server.enableAccessListsUpdates,
+      enableUserlistUpdates = this.server.enableUserlistUpdates
+    } = state
     if (!owner) { owner = '' }
     return Promise.all([
       initSet(this.redis, this.makeKeyName('whitelist'), whitelist),
@@ -342,7 +342,7 @@ class RoomStateRedis extends ListsStateRedis {
   accessListsUpdatesSet (enableAccessListsUpdates) {
     enableAccessListsUpdates = enableAccessListsUpdates ? true : ''
     return this.redis.set(this.makeKeyName('enableAccessListsUpdates'),
-                          enableAccessListsUpdates)
+      enableAccessListsUpdates)
   }
 
   accessListsUpdatesGet () {
@@ -353,7 +353,7 @@ class RoomStateRedis extends ListsStateRedis {
   userlistUpdatesSet (enableUserlistUpdates) {
     enableUserlistUpdates = enableUserlistUpdates ? true : ''
     return this.redis.set(this.makeKeyName('enableUserlistUpdates'),
-                          enableUserlistUpdates)
+      enableUserlistUpdates)
   }
 
   userlistUpdatesGet () {
@@ -404,8 +404,8 @@ class RoomStateRedis extends ListsStateRedis {
 
   getCommonUsers () {
     return this.redis.sdiff(this.makeKeyName('userlist'),
-                            this.makeKeyName('whitelist'),
-                            this.makeKeyName('adminlist'))
+      this.makeKeyName('whitelist'),
+      this.makeKeyName('adminlist'))
   }
 
   messageAdd (msg) {
@@ -497,7 +497,7 @@ class DirectMessagingStateRedis extends ListsStateRedis {
     this.exitsErrorName = 'userExists'
     this.redis = this.server.redis
     mixin(this, StateOperations, this.name, this.exitsErrorName, this.redis,
-          this.makeKeyName.bind(this), this.stateReset.bind(this))
+      this.makeKeyName.bind(this), this.stateReset.bind(this))
   }
 
   hasList (listName) {

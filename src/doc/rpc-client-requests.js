@@ -34,7 +34,7 @@
  * @see chat-service.hooks.CommandsHooks
  */
 
- /**
+/**
   * Adds user names to user's direct messaging blacklist or whitelist.
   *
   * @param {string} listName List name. Possible values are:
@@ -47,7 +47,7 @@
   */
 function directAddToList (listName, userNames) {}
 
- /**
+/**
   * Gets direct messaging blacklist or whitelist.
   *
   * @param {string} listName List name. Possible values are:
@@ -59,7 +59,7 @@ function directAddToList (listName, userNames) {}
   */
 function directGetAccessList (listName) {}
 
- /**
+/**
   * Gets direct messaging whitelist only mode. If it is true then
   * direct messages are allowed only for users that are in the
   * whitelist. Otherwise direct messages are accepted from all users
@@ -71,7 +71,7 @@ function directGetAccessList (listName) {}
   */
 function directGetWhitelistMode () {}
 
- /**
+/**
   * Sends {@link rpc.serverNotifications.directMessage} to an another
   * user, if {@link chat-service.config.options}
   * `enableDirectMessages` option is true. Also sends {@link
@@ -91,7 +91,7 @@ function directGetWhitelistMode () {}
   */
 function directMessage (toUser, message) {}
 
- /**
+/**
   * Removes user names from user's direct messaging blacklist or whitelist.
   *
   * @param {string} listName List name. Possible values are:
@@ -105,7 +105,7 @@ function directMessage (toUser, message) {}
   */
 function directRemoveFromList (listName, userNames) {}
 
- /**
+/**
   * Sets direct messaging whitelist only mode.
   *
   * @param {boolean} mode Room mode.
@@ -118,7 +118,7 @@ function directRemoveFromList (listName, userNames) {}
   */
 function directSetWhitelistMode (mode) {}
 
- /**
+/**
   * Gets a list of all sockets with corresponding joined rooms. This
   * returns information about all user's sockets.
   *
@@ -131,7 +131,7 @@ function directSetWhitelistMode (mode) {}
   */
 function listOwnSockets () {}
 
- /**
+/**
   * Adds user names to room's blacklist, adminlist and whitelist. Also
   * removes users that have lost an access permission in the result of
   * an operation, sending {@link
@@ -153,7 +153,7 @@ function listOwnSockets () {}
   */
 function roomAddToList (roomName, listName, userNames) {}
 
- /**
+/**
   * Creates a room if {@link chat-service.config.options}
   * `enableRoomsManagement` option is true.
   *
@@ -166,7 +166,7 @@ function roomAddToList (roomName, listName, userNames) {}
   */
 function roomCreate (roomName, mode) {}
 
- /**
+/**
   * Deletes a room if {@link chat-service.config.options}
   * `enableRoomsManagement` is true and the user has an owner
   * status. Sends {@link rpc.serverNotifications.roomAccessRemoved} to
@@ -180,7 +180,7 @@ function roomCreate (roomName, mode) {}
   */
 function roomDelete (roomName) {}
 
- /**
+/**
   * Gets room messaging userlist, blacklist, adminlist and whitelist.
   *
   * @param {string} roomName Room name.
@@ -194,7 +194,7 @@ function roomDelete (roomName) {}
   */
 function roomGetAccessList (roomName, listName) {}
 
- /**
+/**
   * Gets the room owner.
   *
   * @param {string} roomName Room name.
@@ -205,7 +205,7 @@ function roomGetAccessList (roomName, listName) {}
   */
 function roomGetOwner (roomName) {}
 
- /**
+/**
   * Gets the room messaging whitelist only mode. If it is true, then
   * join is allowed only for users that are in the
   * whitelist. Otherwise all users that are not in the blacklist can
@@ -219,7 +219,7 @@ function roomGetOwner (roomName) {}
   */
 function roomGetWhitelistMode (roomName) {}
 
- /**
+/**
   * Gets latest room messages. The maximum size is set by {@link
   * chat-service.config.options} `historyMaxGetMessages`
   * option. Messages are sorted as newest first.
@@ -235,7 +235,7 @@ function roomGetWhitelistMode (roomName) {}
   */
 function roomRecentHistory (roomName) {}
 
- /**
+/**
   * Returns messages that were sent after a message with the specified
   * id. The returned number of messages is limited by the limit
   * parameter. The maximum limit is bounded by {@link
@@ -259,7 +259,7 @@ function roomRecentHistory (roomName) {}
   */
 function roomHistoryGet (roomName, id, limit) {}
 
- /**
+/**
   * Gets the the room history information.
   *
   * @param {string} roomName Room name.
@@ -272,7 +272,7 @@ function roomHistoryGet (roomName, id, limit) {}
   */
 function roomHistoryInfo (roomName) {}
 
- /**
+/**
   * Joins room, an user must join the room to receive messages or
   * execute requests with a `room` prefix. Sends {@link
   * rpc.serverNotifications.roomJoinedEcho} to other user's
@@ -291,7 +291,7 @@ function roomHistoryInfo (roomName) {}
   */
 function roomJoin (roomName) {}
 
- /**
+/**
   * Leaves room. Sends {@link rpc.serverNotifications.roomLeftEcho} to
   * other user's sockets. Also sends {@link
   * rpc.serverNotifications.roomUserLeft} to other room users if
@@ -308,7 +308,7 @@ function roomJoin (roomName) {}
   */
 function roomLeave (roomName) {}
 
- /**
+/**
   * Sends {@link rpc.serverNotifications.roomMessage} to all room
   * users.
   *
@@ -323,7 +323,7 @@ function roomLeave (roomName) {}
   */
 function roomMessage (roomName, message) {}
 
- /**
+/**
   * Gets room's notifications configuration.
   *
   * @param {string} roomName Room name.
@@ -337,7 +337,7 @@ function roomMessage (roomName, message) {}
   */
 function roomNotificationsInfo (roomName) {}
 
- /**
+/**
   * Removes user names from room's blacklist, adminlist and
   * whitelist. Also removes users that have lost an access permission
   * in the result of an operation, sending {@link
@@ -359,7 +359,7 @@ function roomNotificationsInfo (roomName) {}
   */
 function roomRemoveFromList (roomName, listName, userNames) {}
 
- /**
+/**
   * Sets room messaging whitelist only mode. Also removes users that
   * have lost an access permission in the result of an operation,
   * sending {@link rpc.serverNotifications.roomAccessRemoved}. Also
@@ -378,7 +378,7 @@ function roomRemoveFromList (roomName, listName, userNames) {}
   */
 function roomSetWhitelistMode (roomName, mode) {}
 
- /**
+/**
   * Send user's joined state and last state change timestamp.
   *
   * @param {string} roomName Rooms name.
@@ -390,7 +390,7 @@ function roomSetWhitelistMode (roomName, mode) {}
   */
 function roomUserSeen (roomName, userName) {}
 
- /**
+/**
   * Send data to other connected users's sockets.
   *
   * @param {Object} message Arbitrary data.

@@ -152,10 +152,10 @@ class RoomStateMemory extends ListsStateMemory {
   initState (state) {
     state = state || {}
     let { whitelist, blacklist, adminlist,
-          whitelistOnly, owner, historyMaxSize,
-          enableAccessListsUpdates = this.server.enableAccessListsUpdates,
-          enableUserlistUpdates = this.server.enableUserlistUpdates
-        } = state
+      whitelistOnly, owner, historyMaxSize,
+      enableAccessListsUpdates = this.server.enableAccessListsUpdates,
+      enableUserlistUpdates = this.server.enableUserlistUpdates
+    } = state
     initState(this.whitelist, whitelist)
     initState(this.blacklist, blacklist)
     initState(this.adminlist, adminlist)

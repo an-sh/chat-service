@@ -187,7 +187,7 @@ module.exports = function () {
     chatService = startService({useRawErrorObjects: true}, {onConnect})
     socket1 = clientConnect(user1)
     socket1.on('loginRejected', e => {
-      expect(e).an.Object
+      expect(e).to.be.an('object')
       expect(e.code).equal('internalError')
       expect(e.args[0]).equal(msg)
       done()

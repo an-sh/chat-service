@@ -129,7 +129,7 @@ class Room {
     let State = this.server.state.RoomState
     this.roomState = new State(this.server, this.roomName)
     mixin(this, RoomPermissions, this.roomName,
-          this.roomState, this.server.emit.bind(this.server))
+      this.roomState, this.server.emit.bind(this.server))
   }
 
   initState (state) {

@@ -6,10 +6,10 @@ const _ = require('lodash')
 const { expect } = require('chai')
 
 const { cleanup, clientConnect, closeInstance,
-        parallel, startService } = require('./testutils')
+  parallel, startService } = require('./testutils')
 
 const { cleanupTimeout, port, user1, user2, user3,
-        roomName1, redisConfig } = require('./config')
+  roomName1, redisConfig } = require('./config')
 
 module.exports = function () {
   let instance1, instance2, socket1, socket2, socket3, socket4, socket5
@@ -59,21 +59,21 @@ module.exports = function () {
       cb => {
         socket1 = clientConnect(user1, port)
         socket1.on('roomMessage',
-                   () => done(new Error('Not removed from channel')))
+          () => done(new Error('Not removed from channel')))
         socket1.on('loginConfirmed',
-                   () => socket1.emit('roomJoin', roomName1, cb))
+          () => socket1.emit('roomJoin', roomName1, cb))
       },
       cb => {
         socket2 = clientConnect(user1, port + 1)
         socket2.on('roomMessage',
-                   () => done(new Error('Not removed from channel')))
+          () => done(new Error('Not removed from channel')))
         socket2.on('loginConfirmed',
-                   () => socket2.emit('roomJoin', roomName1, cb))
+          () => socket2.emit('roomJoin', roomName1, cb))
       },
       cb => {
         socket3 = clientConnect(user2, port)
         socket3.on('loginConfirmed',
-                   () => socket3.emit('roomJoin', roomName1, cb))
+          () => socket3.emit('roomJoin', roomName1, cb))
       }
     ], error => {
       expect(error).not.ok
@@ -112,20 +112,20 @@ module.exports = function () {
   it('should correctly update a presence info on a shutdown', function (done) {
     let enableUserlistUpdates = true
     instance1 = startService(_.assign({port, enableUserlistUpdates},
-                                      redisConfig))
+      redisConfig))
     instance2 = startService(_.assign({port: port + 1, enableUserlistUpdates},
-                                      redisConfig))
+      redisConfig))
     let ids = {}
     instance1.addRoom(roomName1, null, () => parallel([
       cb => {
         socket1 = clientConnect(user1, port)
         socket1.on('loginConfirmed',
-                   () => socket1.emit('roomJoin', roomName1, cb))
+          () => socket1.emit('roomJoin', roomName1, cb))
       },
       cb => {
         socket2 = clientConnect(user2, port)
         socket2.on('loginConfirmed',
-                   () => socket2.emit('roomJoin', roomName1, cb))
+          () => socket2.emit('roomJoin', roomName1, cb))
       },
       cb => {
         socket3 = clientConnect(user2, port + 1)
@@ -144,7 +144,7 @@ module.exports = function () {
       cb => {
         socket5 = clientConnect(user3, port + 1)
         socket5.on('loginConfirmed',
-                   () => socket5.emit('roomJoin', roomName1, cb))
+          () => socket5.emit('roomJoin', roomName1, cb))
       }
     ], error => {
       expect(error).not.ok

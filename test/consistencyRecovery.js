@@ -7,7 +7,7 @@ const _ = require('lodash')
 const { expect } = require('chai')
 
 const { cleanup, clientConnect, closeInstance,
-        parallel, setCustomCleanup, startService } = require('./testutils')
+  parallel, setCustomCleanup, startService } = require('./testutils')
 
 const { cleanupTimeout, user1, roomName1 } = require('./config')
 
@@ -62,8 +62,7 @@ module.exports = function () {
             instance1.execUserCommand(
               true, 'roomGetAccessList', roomName1, 'userlist'),
             (sockets, [list]) => {
-              expect(sockets[id]).an.array
-              expect(sockets[id]).empty
+              expect(sockets[id]).not.exist
               expect(list).empty
             })).asCallback(done)
         })
@@ -110,7 +109,7 @@ module.exports = function () {
                 instance1.execUserCommand(
                   true, 'roomGetAccessList', roomName1, 'userlist'),
                 ([sockets], [list]) => {
-                  expect(sockets[id]).an.array
+                  expect(sockets[id]).to.be.an('array')
                   expect(sockets[id]).empty
                   expect(list).empty
                 })).asCallback(done)
@@ -186,7 +185,7 @@ module.exports = function () {
                 instance1.execUserCommand(
                   true, 'roomGetAccessList', roomName1, 'userlist'),
                 ([sockets], [list]) => {
-                  expect(sockets[id]).an.array
+                  expect(sockets[id]).to.be.an('array')
                   expect(sockets[id]).empty
                   expect(list).empty
                 })).asCallback(done)

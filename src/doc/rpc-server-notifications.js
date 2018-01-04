@@ -18,7 +18,7 @@
  * @see rpc.clientRequests
  */
 
- /**
+/**
   * Direct message.
   *
   * @param {rpc.datatypes.ProcessedMessage} message Message.
@@ -29,7 +29,7 @@
   */
 function directMessage (message) {}
 
- /**
+/**
   * Direct message echo. If an user have several connections from
   * different sockets, and if one client sends {@link
   * rpc.clientRequests.directMessage}, others will receive a
@@ -73,7 +73,7 @@ function loginConfirmed (userName, authData) {}
  */
 function loginRejected (reason) {}
 
- /**
+/**
   * Indicates that a user has lost a room access permission.
   *
   * @param {string} roomName Room name.
@@ -85,7 +85,7 @@ function loginRejected (reason) {}
   */
 function roomAccessRemoved (roomName) {}
 
- /**
+/**
   * Indicates a room access list add.
   *
   * @param {string} roomName Rooms name.
@@ -100,7 +100,7 @@ function roomAccessRemoved (roomName) {}
   */
 function roomAccessListAdded (roomName, listName, userNames) {}
 
- /**
+/**
   * Indicates a room access list remove.
   *
   * @param {string} roomName Rooms name.
@@ -115,7 +115,7 @@ function roomAccessListAdded (roomName, listName, userNames) {}
   */
 function roomAccessListRemoved (roomName, listName, userNames) {}
 
- /**
+/**
   * Echoes room join events from other connections of the same user,
   * or a room join event for this connection triggered by the server.
   *
@@ -129,7 +129,7 @@ function roomAccessListRemoved (roomName, listName, userNames) {}
   */
 function roomJoinedEcho (roomName, id, njoined) {}
 
- /**
+/**
   * Echoes room leave events from other connections of the same user,
   * or a room leave event for this connection triggered by the server.
   *
@@ -143,7 +143,7 @@ function roomJoinedEcho (roomName, id, njoined) {}
   */
 function roomLeftEcho (roomName, id, njoined) {}
 
- /**
+/**
   * Room message.
   *
   * @param {string} roomName Rooms name.
@@ -155,7 +155,7 @@ function roomLeftEcho (roomName, id, njoined) {}
   */
 function roomMessage (roomName, message) {}
 
- /**
+/**
   * Indicates a room mode change.
   *
   * @param {string} roomName Rooms name.
@@ -168,7 +168,7 @@ function roomMessage (roomName, message) {}
   */
 function roomModeChanged (roomName, mode) {}
 
- /**
+/**
   * Indicates that an another user has joined a room.
   *
   * @param {string} roomName Rooms name.
@@ -181,7 +181,7 @@ function roomModeChanged (roomName, mode) {}
   */
 function roomUserJoined (roomName, userName) {}
 
- /**
+/**
   * Indicates that an another user has left a room.
   *
   * @param {string} roomName Rooms name.
@@ -194,7 +194,7 @@ function roomUserJoined (roomName, userName) {}
   */
 function roomUserLeft (roomName, userName) {}
 
- /**
+/**
   * Indicates a connection of an another socket with the same user.
   *
   * @param {string} id Socket id.
@@ -204,7 +204,7 @@ function roomUserLeft (roomName, userName) {}
   */
 function socketConnectEcho (id, nconnected) {}
 
- /**
+/**
   * Indicates a disconnection of an another socket with the same user.
   *
   * @param {string} id Socket id.
@@ -214,7 +214,7 @@ function socketConnectEcho (id, nconnected) {}
   */
 function socketDisconnectEcho (id, nconnected) {}
 
- /**
+/**
   * Custom message from an another socket of the same user.
   *
   * @param {Object} message Arbitrary data.

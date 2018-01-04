@@ -131,9 +131,9 @@ class ChatService extends EventEmitter {
     this.setComponents()
     this.attachBusListeners()
     mixin(this, ServiceAPI, this.state,
-          () => new User(this), this.clusterBus)
+      () => new User(this), this.clusterBus)
     mixin(this, RecoveryAPI, this.state, this.transport,
-          this.execUserCommand.bind(this), this.instanceUID)
+      this.execUserCommand.bind(this), this.instanceUID)
     this.startServer()
   }
 
@@ -442,12 +442,12 @@ class ChatService extends EventEmitter {
           return Promise.reject(error)
         }
       }).catch(error => {
-        closeError = error
-        return Promise.reject(error)
-      }).finally(() => {
-        return this.state.close()
-          .finally(() => this.emit('closed', closeError))
-      }).asCallback(cb)
+      closeError = error
+      return Promise.reject(error)
+    }).finally(() => {
+      return this.state.close()
+        .finally(() => this.emit('closed', closeError))
+    }).asCallback(cb)
   }
 }
 

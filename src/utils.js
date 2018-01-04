@@ -35,6 +35,7 @@ function execHook (hook, ...args) {
   let wrapper = function (...data) {
     hasResults = true
     callbackResults = data
+    // eslint-disable-next-line
     if (cb) { cb(...data) }
   }
   let res = hook(...args, wrapper)

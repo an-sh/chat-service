@@ -9,7 +9,7 @@ const http = require('http')
 const socketIO = require('socket.io')
 
 const { cleanup, clientConnect, closeInstance, ChatService,
-        setCustomCleanup, startService } = require('./testutils')
+  setCustomCleanup, startService } = require('./testutils')
 
 const { cleanupTimeout, port, user1, redisConnect } = require('./config')
 
@@ -45,7 +45,7 @@ module.exports = function () {
     setCustomCleanup(
       cb => closeInstance(chatService1)
         .finally(() =>
-                 Promise.fromCallback(fn => app.close(fn)).catchReturn())
+          Promise.fromCallback(fn => app.close(fn)).catchReturn())
         .asCallback(cb))
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', u => {

@@ -24,8 +24,8 @@ class UserAssociations {
   consistencyFailure (error, operationInfo) {
     operationInfo.userName = this.userName
     let name = operationInfo.opType === 'transportChannel'
-          ? 'transportConsistencyFailure'
-          : 'storeConsistencyFailure'
+      ? 'transportConsistencyFailure'
+      : 'storeConsistencyFailure'
     this.server.emit(name, error, operationInfo)
   }
 

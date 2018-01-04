@@ -5,10 +5,10 @@
 const { expect } = require('chai')
 
 const { cleanup, clientConnect,
-        parallel, series, startService } = require('./testutils')
+  parallel, series, startService } = require('./testutils')
 
 const { cleanupTimeout, user1, user2,
-        roomName1, roomName2 } = require('./config')
+  roomName1, roomName2 } = require('./config')
 
 module.exports = function () {
   let chatService, socket1, socket2, socket3
@@ -171,12 +171,12 @@ module.exports = function () {
       cb => {
         socket1 = clientConnect(user1)
         socket1.on('loginConfirmed',
-                   () => socket1.emit('roomJoin', roomName1, cb))
+          () => socket1.emit('roomJoin', roomName1, cb))
       },
       cb => {
         socket2 = clientConnect(user2)
         socket2.on('loginConfirmed',
-                   () => socket2.emit('roomJoin', roomName1, cb))
+          () => socket2.emit('roomJoin', roomName1, cb))
       }
     ], error => {
       expect(error).not.ok
@@ -234,12 +234,12 @@ module.exports = function () {
       cb => {
         socket1 = clientConnect(user1)
         socket1.on('loginConfirmed',
-                   () => socket1.emit('roomJoin', roomName1, cb))
+          () => socket1.emit('roomJoin', roomName1, cb))
       },
       cb => {
         socket2 = clientConnect(user2)
         socket2.on('loginConfirmed',
-                   () => socket2.emit('roomJoin', roomName1, cb))
+          () => socket2.emit('roomJoin', roomName1, cb))
       }
     ], error => {
       expect(error).not.ok
@@ -300,12 +300,12 @@ module.exports = function () {
       cb => {
         socket1 = clientConnect(user1)
         socket1.on('loginConfirmed',
-                   () => socket1.emit('roomJoin', roomName1, cb))
+          () => socket1.emit('roomJoin', roomName1, cb))
       },
       cb => {
         socket2 = clientConnect(user2)
         socket2.on('loginConfirmed',
-                   () => socket2.emit('roomJoin', roomName1, cb))
+          () => socket2.emit('roomJoin', roomName1, cb))
       }
     ], error => {
       expect(error).not.ok
@@ -433,7 +433,7 @@ module.exports = function () {
       socket1 = clientConnect(user1)
       series([
         cb => socket1.on('loginConfirmed',
-                         () => socket1.emit('roomJoin', roomName1, cb)),
+          () => socket1.emit('roomJoin', roomName1, cb)),
         cb => socket1.emit('roomMessage', roomName1, message, cb),
         cb => socket1.emit('roomMessage', roomName1, message, cb)
       ], error => {
@@ -478,7 +478,7 @@ module.exports = function () {
       socket1 = clientConnect(user1)
       series([
         cb => socket1.on('loginConfirmed',
-                         () => socket1.emit('roomJoin', roomName1, cb)),
+          () => socket1.emit('roomJoin', roomName1, cb)),
         cb => socket1.emit('roomMessage', roomName1, message, cb),
         cb => socket1.emit('roomMessage', roomName1, message, cb),
         cb => socket1.emit('roomMessage', roomName1, message, cb)
@@ -527,7 +527,7 @@ module.exports = function () {
       socket1 = clientConnect(user1)
       series([
         cb => socket1.on('loginConfirmed',
-                         () => socket1.emit('roomJoin', roomName1, cb)),
+          () => socket1.emit('roomJoin', roomName1, cb)),
         cb => socket1.emit('roomMessage', roomName1, message, cb),
         cb => socket1.emit('roomMessage', roomName1, message, cb),
         cb => socket1.emit('roomMessage', roomName1, message, cb)
@@ -574,7 +574,7 @@ module.exports = function () {
     chatService.addRoom(roomName1, null, () => {
       series([
         cb => socket1.on('loginConfirmed',
-                         () => socket1.emit('roomJoin', roomName1, cb)),
+          () => socket1.emit('roomJoin', roomName1, cb)),
         cb => socket1.emit('roomMessage', roomName1, message, cb),
         cb => socket1.emit('roomMessage', roomName1, message, cb)
       ], error => {
@@ -585,7 +585,7 @@ module.exports = function () {
             cb =>
               socket1.emit('roomHistoryGet', roomName1, 0, 9, (error, data) => {
                 expect(error).not.ok
-                expect(data).an.array
+                expect(data).to.be.an('array')
                 expect(data).lengthOf(1)
                 expect(data[0].id).equal(2)
                 cb()
@@ -593,7 +593,7 @@ module.exports = function () {
             cb =>
               socket1.emit('roomHistoryInfo', roomName1, (error, data) => {
                 expect(error).not.ok
-                expect(data).an.object
+                expect(data).to.be.an('object')
                 expect(data.historySize).equal(1)
                 expect(data.historyMaxSize).equal(1)
                 cb()
@@ -643,12 +643,12 @@ module.exports = function () {
         cb => {
           socket1 = clientConnect(user1)
           socket1.on('loginConfirmed',
-                     () => socket1.emit('roomJoin', roomName1, cb))
+            () => socket1.emit('roomJoin', roomName1, cb))
         },
         cb => {
           socket2 = clientConnect(user2)
           socket2.on('loginConfirmed',
-                     () => socket2.emit('roomJoin', roomName1, cb))
+            () => socket2.emit('roomJoin', roomName1, cb))
         }
       ], error => {
         expect(error).not.ok
@@ -703,7 +703,7 @@ module.exports = function () {
             socket1.on('loginConfirmed', (u, data) => {
               sid1 = data.id
               socket1.emit('roomJoin', roomName1,
-                           () => socket1.emit('roomJoin', roomName2, cb))
+                () => socket1.emit('roomJoin', roomName2, cb))
             })
           },
           cb => {
@@ -745,7 +745,7 @@ module.exports = function () {
         socket1.emit('roomJoin', roomName1, () => {
           socket1.emit('roomNotificationsInfo', roomName1, (error, data) => {
             expect(error).not.ok
-            expect(data).an.object
+            expect(data).to.be.an('object')
             expect(data.enableAccessListsUpdates).false
             expect(data.enableUserlistUpdates).true
             done()

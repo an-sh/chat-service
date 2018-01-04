@@ -5,10 +5,10 @@
 const { expect } = require('chai')
 
 const { cleanup, clientConnect,
-        parallel, startService } = require('./testutils')
+  parallel, startService } = require('./testutils')
 
 const { cleanupTimeout, user1, user2,
-        roomName1, roomName2 } = require('./config')
+  roomName1, roomName2 } = require('./config')
 
 module.exports = function () {
   let chatService, socket1, socket2, socket3
@@ -112,12 +112,12 @@ module.exports = function () {
       cb => {
         socket1 = clientConnect(user1)
         socket1.on('loginConfirmed',
-                   () => socket1.emit('roomJoin', roomName1, cb))
+          () => socket1.emit('roomJoin', roomName1, cb))
       },
       cb => {
         socket2 = clientConnect(user2)
         socket2.on('loginConfirmed',
-                   () => socket2.emit('roomJoin', roomName1, cb))
+          () => socket2.emit('roomJoin', roomName1, cb))
       }
     ], error => {
       expect(error).not.ok

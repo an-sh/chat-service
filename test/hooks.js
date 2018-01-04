@@ -7,10 +7,10 @@ const Promise = require('bluebird')
 const { expect } = require('chai')
 
 const { cleanup, clientConnect, parallel, closeInstance,
-        ChatService, startService } = require('./testutils')
+  ChatService, startService } = require('./testutils')
 
 const { cleanupTimeout, user1, user2,
-        roomName1, roomName2 } = require('./config')
+  roomName1, roomName2 } = require('./config')
 
 module.exports = function () {
   let chatService, socket1, socket2, socket3
@@ -89,7 +89,7 @@ module.exports = function () {
       process.nextTick(cb, null, someData)
     }
     chatService = startService({ enableRoomsManagement: true },
-                               { roomCreateBefore, roomCreateAfter })
+      { roomCreateBefore, roomCreateAfter })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', (u, data) => {
       sid = data.id
@@ -115,7 +115,7 @@ module.exports = function () {
       return Promise.resolve(someData)
     }
     chatService = startService({ enableRoomsManagement: true },
-                               { roomCreateBefore, roomCreateAfter })
+      { roomCreateBefore, roomCreateAfter })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
       socket1.emit('roomCreate', roomName1, true, (error, data) => {
@@ -140,7 +140,7 @@ module.exports = function () {
       cb(null, someData)
     }
     chatService = startService({ enableRoomsManagement: true },
-                               { roomCreateBefore, roomCreateAfter })
+      { roomCreateBefore, roomCreateAfter })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
       socket1.emit('roomCreate', roomName1, true, (error, data) => {
@@ -177,7 +177,7 @@ module.exports = function () {
       process.nextTick(cb)
     }
     chatService = startService({ enableRoomsManagement: true },
-                               { roomGetWhitelistModeBefore })
+      { roomGetWhitelistModeBefore })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
       socket1.emit('roomCreate', roomName2, false, () => {
@@ -194,14 +194,13 @@ module.exports = function () {
 
   it('should support additional values from after hooks', function (done) {
     let listOwnSocketsAfter = (execInfo, cb) =>
-          process.nextTick(cb, null, execInfo.results[0], true)
+      process.nextTick(cb, null, execInfo.results[0], true)
     chatService = startService(null, { listOwnSocketsAfter })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', (u, data) => {
       let sid = data.id
       socket1.emit('listOwnSockets', (error, data, moredata) => {
         expect(error).not.ok
-        expect(data[sid]).exits
         expect(data[sid]).empty
         expect(moredata).true
         done()
@@ -213,11 +212,11 @@ module.exports = function () {
     let onDisconnect = (server, data, cb) => {
       process.nextTick(() => {
         expect(server).instanceof(ChatService)
-        expect(data).an.Object
+        expect(data).to.be.an('object')
         expect(data.id).a.string
-        expect(data.nconnected).a.Number
-        expect(data.roomsRemoved).an.Array
-        expect(data.joinedSockets).an.Array
+        expect(data.nconnected).to.be.a('number')
+        expect(data.roomsRemoved).to.be.an('array')
+        expect(data.joinedSockets).to.be.an('array')
         done()
       })
       process.nextTick(cb)
@@ -233,7 +232,7 @@ module.exports = function () {
       process.nextTick(() => {
         if (!isRun) {
           expect(server).instanceof(ChatService)
-          expect(data).an.Object
+          expect(data).to.be.an('object')
           expect(data.id).a.string
           expect(data.njoined).eql(1)
           expect(data.roomName).equal(roomName1)
@@ -287,7 +286,7 @@ module.exports = function () {
       process.nextTick(() => {
         if (!isRun) {
           expect(server).instanceof(ChatService)
-          expect(data).an.Object
+          expect(data).to.be.an('object')
           expect(data.id).a.string
           expect(data.njoined).eql(0)
           expect(data.roomName).equal(roomName1)
@@ -317,7 +316,7 @@ module.exports = function () {
       process.nextTick(() => {
         if (!isRun) {
           expect(server).instanceof(ChatService)
-          expect(data).an.Object
+          expect(data).to.be.an('object')
           expect(data.id).a.string
           expect(data.id).eql(id)
           expect(data.njoined).eql(1)
@@ -355,7 +354,7 @@ module.exports = function () {
       process.nextTick(() => {
         if (!isRun) {
           expect(server).instanceof(ChatService)
-          expect(data).an.Object
+          expect(data).to.be.an('object')
           expect(data.id).a.string
           expect(data.id).eql(id)
           expect(data.njoined).eql(0)

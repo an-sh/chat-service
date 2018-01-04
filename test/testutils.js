@@ -103,10 +103,10 @@ function cleanup (services, sockets, done) {
 }
 
 let parallel = (fns, cb) =>
-    Promise.map(fns, Promise.fromCallback).asCallback(cb)
+  Promise.map(fns, Promise.fromCallback).asCallback(cb)
 
 let series = (fns, cb) =>
-    Promise.mapSeries(fns, Promise.fromCallback).asCallback(cb)
+  Promise.mapSeries(fns, Promise.fromCallback).asCallback(cb)
 
 module.exports = {
   ChatService,

@@ -5,10 +5,10 @@
 const { expect } = require('chai')
 
 const { cleanup, clientConnect, parallel,
-        startService } = require('./testutils')
+  startService } = require('./testutils')
 
 const { cleanupTimeout, user1, user2, user3,
-        roomName1 } = require('./config')
+  roomName1 } = require('./config')
 
 module.exports = function () {
   let chatService, socket1, socket2, socket3
@@ -376,25 +376,25 @@ module.exports = function () {
         cb => {
           socket1 = clientConnect(user1)
           socket1.on('loginConfirmed',
-                     () => socket1.emit('roomJoin', roomName1, cb))
+            () => socket1.emit('roomJoin', roomName1, cb))
         },
         cb => {
           socket2 = clientConnect(user2)
           socket2.on('loginConfirmed',
-                     () => socket2.emit('roomJoin', roomName1, cb))
+            () => socket2.emit('roomJoin', roomName1, cb))
         },
         cb => {
           socket3 = clientConnect(user3)
           socket3.on('loginConfirmed',
-                     () => socket3.emit('roomJoin', roomName1, cb))
+            () => socket3.emit('roomJoin', roomName1, cb))
         }
       ], error => {
         expect(error).not.ok
         socket3.on('roomAccessRemoved',
-                   () => done(new Error('Wrong user removed.')))
+          () => done(new Error('Wrong user removed.')))
         parallel([
           cb => socket1.emit('roomAddToList', roomName1,
-                             'blacklist', [user2, user3, 'nouser'], cb),
+            'blacklist', [user2, user3, 'nouser'], cb),
           cb => socket2.on('roomAccessRemoved', r => {
             expect(r).equal(roomName1)
             cb()
@@ -453,9 +453,9 @@ module.exports = function () {
                 socket3.on('loginConfirmed', () => {
                   socket3.emit('roomJoin', roomName1, () => {
                     socket1.emit('roomRemoveFromList', roomName1
-                                 , 'whitelist', [user2, user3, 'nouser'])
+                      , 'whitelist', [user2, user3, 'nouser'])
                     socket3.on('roomAccessRemoved', () =>
-                               done(new Error('Wrong user removed.')))
+                      done(new Error('Wrong user removed.')))
                     socket2.on('roomAccessRemoved', r => {
                       expect(r).equal(roomName1)
                       setTimeout(done, 1000)

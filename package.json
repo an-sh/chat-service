@@ -8,9 +8,9 @@
     "compile": "babel src --out-dir lib --ignore src/doc/",
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "generate-docs": "jsdoc --configure .jsdoc.json --verbose",
-    "prepublish": "npm run compile",
+    "prepare": "npm run compile",
     "pretest": "npm run compile",
-    "test": "nyc mocha"
+    "test": "nyc mocha --exit"
   },
   "author": {
     "name": "Andrey Sharapov",
@@ -38,7 +38,7 @@
   "dependencies": {
     "bluebird": "^3.3.5",
     "check-types": "^7.0.0",
-    "event-to-promise": "^0.7.0",
+    "event-to-promise": "^0.8.0",
     "ioredis": "^2.0.0",
     "lodash": "^4.11.1",
     "promise-retry": "^1.1.0",
@@ -51,14 +51,14 @@
   "devDependencies": {
     "babel-cli": "^6.11.4",
     "babel-preset-es2015-node4": "^2.1.0",
-    "chai": "^3.5.0",
-    "codecov": "^1.0.1",
+    "chai": "^4.1.2",
+    "codecov": "^3.0.0",
     "docdash": "^0.4.0",
     "jsdoc": "^3.4.0",
-    "mocha": "^3.0.0",
-    "nyc": "^10.0.0",
+    "mocha": "^4.1.0",
+    "nyc": "^11.4.1",
     "socket.io-client": "^1.4.5",
-    "standard": "^8.0.0"
+    "standard": "^10.0.3"
   },
   "nyc": {
     "include": [

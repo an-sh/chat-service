@@ -54,7 +54,7 @@ class DirectMessaging {
     let State = this.server.state.DirectMessagingState
     this.directMessagingState = new State(this.server, this.userName)
     mixin(this, DirectMessagingPermissions,
-          this.userName, this.directMessagingState)
+      this.userName, this.directMessagingState)
   }
 
   initState (state) {
