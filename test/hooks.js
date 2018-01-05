@@ -213,7 +213,7 @@ module.exports = function () {
       process.nextTick(() => {
         expect(server).instanceof(ChatService)
         expect(data).to.be.an('object')
-        expect(data.id).a.string
+        expect(data.id).to.be.a('string')
         expect(data.nconnected).to.be.a('number')
         expect(data.roomsRemoved).to.be.an('array')
         expect(data.joinedSockets).to.be.an('array')
@@ -233,7 +233,7 @@ module.exports = function () {
         if (!isRun) {
           expect(server).instanceof(ChatService)
           expect(data).to.be.an('object')
-          expect(data.id).a.string
+          expect(data.id).to.be.a('string')
           expect(data.njoined).eql(1)
           expect(data.roomName).equal(roomName1)
           isRun = true
@@ -287,7 +287,7 @@ module.exports = function () {
         if (!isRun) {
           expect(server).instanceof(ChatService)
           expect(data).to.be.an('object')
-          expect(data.id).a.string
+          expect(data.id).to.be.a('string')
           expect(data.njoined).eql(0)
           expect(data.roomName).equal(roomName1)
           isRun = true
@@ -317,7 +317,7 @@ module.exports = function () {
         if (!isRun) {
           expect(server).instanceof(ChatService)
           expect(data).to.be.an('object')
-          expect(data.id).a.string
+          expect(data.id).to.be.a('string')
           expect(data.id).eql(id)
           expect(data.njoined).eql(1)
           expect(data.roomName).equal(roomName1)
@@ -355,7 +355,7 @@ module.exports = function () {
         if (!isRun) {
           expect(server).instanceof(ChatService)
           expect(data).to.be.an('object')
-          expect(data.id).a.string
+          expect(data.id).to.be.a('string')
           expect(data.id).eql(id)
           expect(data.njoined).eql(0)
           expect(data.roomName).equal(roomName1)
