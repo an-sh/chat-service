@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.16.0"></a>
+# [0.16.0](https://github.com/an-sh/chat-service/compare/v0.15.0...v0.16.0) (2018-01-05)
+
+
+### Bug Fixes
+
+* **tests:** update some expect assertions ([ea5b2a3](https://github.com/an-sh/chat-service/commit/ea5b2a3))
+
+
+### Features
+
+* update to socket.io to 2.x ([ed12eda](https://github.com/an-sh/chat-service/commit/ed12eda))
+
+
+### BREAKING CHANGES
+
+* update socket.io to 2.x
+
+
+
 <a name="0.15.0"></a>
 # [0.15.0](https://github.com/an-sh/chat-service/compare/v0.14.0...v0.15.0) (2018-01-05)
 
