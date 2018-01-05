@@ -51,10 +51,12 @@ module.exports = function () {
     let onClose = (server, error, cb) => {
       expect(server).instanceof(ChatService)
       expect(error).not.ok
-      process.nextTick(cb)
+      cb()
     }
     let chatService1 = startService(null, {onClose})
-    closeInstance(chatService1).asCallback(done)
+    chatService1.on('ready', () => {
+      closeInstance(chatService1).asCallback(done)
+    })
   })
 
   it('should execute before and after hooks', function (done) {

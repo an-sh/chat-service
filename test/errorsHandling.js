@@ -36,15 +36,6 @@ module.exports = function () {
     }
   })
 
-  it('should check adapter constructor type', function (done) {
-    try {
-      chatService = startService({ adapter: {} })
-    } catch (error) {
-      expect(error).ok
-      process.nextTick(done)
-    }
-  })
-
   it('should rollback a failed room join', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
@@ -135,7 +126,7 @@ module.exports = function () {
       return orig.apply(chatService.transport, arguments)
         .then(() => { throw new Error() })
     }
-    process.nextTick(() => {
+    chatService.once('ready', () => {
       chatService.close().catch(error => {
         expect(error).ok
         done()
@@ -150,7 +141,7 @@ module.exports = function () {
       process.nextTick(cb, new Error())
     }
     chatService = startService(null, { onClose })
-    process.nextTick(() => {
+    chatService.once('ready', () => {
       chatService.close().catch(error => {
         expect(error).ok
         done()
@@ -169,7 +160,7 @@ module.exports = function () {
       return orig.apply(chatService.transport, arguments)
         .then(() => { throw new Error() })
     }
-    process.nextTick(() => {
+    chatService.once('ready', () => {
       chatService.close().catch(error => {
         expect(error).ok
         done()
@@ -196,11 +187,13 @@ module.exports = function () {
 
   it('should support extending ChatServiceError', function (done) {
     chatService = startService()
-    let ChatServiceError = chatService.ChatServiceError
-    class MyError extends ChatServiceError {}
-    let error = new MyError()
-    expect(error).instanceof(ChatServiceError)
-    expect(error).instanceof(Error)
-    done()
+    chatService.once('ready', () => {
+      let ChatServiceError = chatService.ChatServiceError
+      class MyError extends ChatServiceError {}
+      let error = new MyError()
+      expect(error).instanceof(ChatServiceError)
+      expect(error).instanceof(Error)
+      done()
+    })
   })
 }

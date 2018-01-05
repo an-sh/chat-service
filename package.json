@@ -44,8 +44,8 @@
     "promise-retry": "^1.1.0",
     "safe-buffer": "^5.0.1",
     "semver": "^5.3.0",
-    "socket.io": "^1.4.5",
-    "socket.io-redis": "^1.0.0",
+    "socket.io": "^2.0.4",
+    "socket.io-redis": "^5.2.0",
     "uid-safe": "^2.1.0"
   },
   "devDependencies": {
@@ -57,8 +57,9 @@
     "jsdoc": "^3.4.0",
     "mocha": "^4.1.0",
     "nyc": "^11.4.1",
-    "socket.io-client": "^1.4.5",
-    "standard": "^10.0.3"
+    "socket.io-client": "^2.0.4",
+    "standard": "^10.0.3",
+    "wtfnode": "^0.5.7"
   },
   "nyc": {
     "include": [

@@ -206,10 +206,7 @@ module.exports = function () {
         socket1.emit('roomJoin', roomName1, () => {
           socket2 = clientConnect(user2)
           socket2.on('loginConfirmed', () => {
-            instance1.redis.disconnect()
-            instance1.io.httpServer.close()
             clearInterval(instance1.hbtimer)
-            instance1 = null
             instance2.instanceRecovery(uid, error => {
               expect(error).not.ok
               parallel([

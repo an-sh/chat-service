@@ -8,8 +8,8 @@ const { expect } = require('chai')
 const http = require('http')
 const socketIO = require('socket.io')
 
-const { cleanup, clientConnect, closeInstance, ChatService,
-  setCustomCleanup, startService } = require('./testutils')
+const { cleanup, clientConnect,
+  ChatService, startService } = require('./testutils')
 
 const { cleanupTimeout, port, user1, redisConnect } = require('./config')
 
@@ -40,13 +40,8 @@ module.exports = function () {
 
   it('should be able to integrate with a http server', function (done) {
     let app = http.createServer((req, res) => res.end())
-    let chatService1 = startService({ transportOptions: { http: app } })
+    chatService = startService({ transportOptions: { http: app } })
     app.listen(port)
-    setCustomCleanup(
-      cb => closeInstance(chatService1)
-        .finally(() =>
-          Promise.fromCallback(fn => app.close(fn)).catchReturn())
-        .asCallback(cb))
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', u => {
       expect(u).equal(user1)
@@ -56,13 +51,10 @@ module.exports = function () {
 
   it('should be able to integrate with an io server', function (done) {
     let io = socketIO(port)
-    let chatService1 = startService({ transportOptions: {io} })
-    setCustomCleanup(cb => closeInstance(chatService1)
-      .finally(() => io.close())
-      .asCallback(cb))
+    chatService = startService({ transportOptions: {io} })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', u => {
-      expect(chatService1.transport.getServer()).equal(io)
+      expect(chatService.transport.getServer()).equal(io)
       expect(u).equal(user1)
       done()
     })

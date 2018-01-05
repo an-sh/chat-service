@@ -1,56 +1,57 @@
 'use strict'
 
 const Promise = require('bluebird')
-const _ = require('lodash')
 const { EventEmitter } = require('events')
+const eventToPromise = require('event-to-promise')
 
-// from socket.io-protocol v4
-const EVENT = 2
-const BINARY_EVENT = 5
-
-// Instances communication via a socket.io-adapter implementation.
+// Instances communication via a socket.io redis adapter.
 class SocketIOClusterBus extends EventEmitter {
   constructor (server, transport) {
     super()
     this.server = server
     this.transport = transport
     this.adapter = this.transport.nsp.adapter
-    this.channel = 'cluster:bus'
-    this.types = [ EVENT, BINARY_EVENT ]
-    this.injectBusHook()
+    this.marker = 'cluster-bus'
+    this.adapter.customHook = this.customHook.bind(this)
   }
 
   listen () {
-    return Promise.fromCallback(cb => {
-      this.adapter.add(this.server.instanceUID, this.channel, cb)
-    })
-  }
-
-  emit (ev, ...args) {
-    this.transport.emitToChannel(this.channel, ev, ...args)
-  }
-
-  onPacket (packet) {
-    let [ev, ...args] = packet.data
-    super.emit(ev, ...args)
-  }
-
-  broadcastHook (packet, opts) {
-    let isBusCahnnel = _.includes(opts.rooms, this.channel)
-    let isBusType = _.includes(this.types, packet.type)
-    if (isBusCahnnel && isBusType) {
-      this.onPacket(packet)
+    if (this.adapter.subClient) {
+      if (this.adapter.subClient.connected) {
+        return Promise.resolve()
+      } else {
+        return Promise.all([
+          eventToPromise(this.adapter.subClient, 'psubscribe'),
+          eventToPromise(this.adapter.subClient, 'subscribe')
+        ])
+      }
+    } else {
+      return Promise.resolve()
     }
   }
 
-  // TODO: Use an API from socket.io if(when) it will be available.
-  injectBusHook () {
-    let broadcastHook = this.broadcastHook.bind(this)
-    let adapter = this.adapter
-    let orig = this.adapter.broadcast
-    adapter.broadcast = function (...args) {
-      broadcastHook(...args)
-      orig.apply(adapter, args)
+  emit (ev, ...args) {
+    if (this.adapter.customRequest) {
+      const data = {
+        marker: this.marker,
+        ev,
+        args
+      }
+      this.adapter.customRequest(data)
+    } else {
+      super.emit(ev, ...args)
+    }
+  }
+
+  customHook (data, cb) {
+    try {
+      if (data.marker === this.marker) {
+        let { ev, args } = data
+        super.emit(ev, ...args)
+      }
+      cb()
+    } catch (e) {
+      cb(e)
     }
   }
 }

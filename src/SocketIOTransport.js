@@ -5,6 +5,7 @@ const Promise = require('bluebird')
 const RedisAdapter = require('socket.io-redis')
 const SocketIOClusterBus = require('./SocketIOClusterBus')
 const SocketServer = require('socket.io')
+const eventToPromise = require('event-to-promise')
 const _ = require('lodash')
 const { possiblyCallback, run } = require('./utils')
 
@@ -32,7 +33,6 @@ class SocketIOTransport {
       this.ioOptions = this.options.ioOptions
       this.http = this.options.http
       if (this.http) {
-        this.dontCloseIO = true
         this.io = new SocketServer(this.options.http, this.ioOptions)
       } else {
         this.io = new SocketServer(this.port, this.ioOptions)
@@ -41,8 +41,6 @@ class SocketIOTransport {
         this.adapter = new Adapter(...this.adapterOptions)
         this.io.adapter(this.adapter)
       }
-    } else {
-      this.dontCloseIO = true
     }
     this.nsp = this.io.of(this.namespace)
     this.server.io = this.io
@@ -96,17 +94,22 @@ class SocketIOTransport {
     this.closed = true
     this.nsp.removeAllListeners('connection')
     this.clusterBus.removeAllListeners()
-    return Promise.try(() => {
-      if (!this.dontCloseIO) {
-        this.io.close()
-      } else if (this.http) {
-        this.io.engine.close()
-      } else {
-        for (let [, socket] of _.toPairs(this.nsp.connected)) {
-          socket.disconnect()
+    return Promise.fromCallback(cb => this.io.close(cb))
+      .then(() => {
+        return this.server.runningCommands === 0
+          ? Promise.resolve()
+          : eventToPromise(this.server, 'commandsFinished')
+      })
+      .then(() => {
+        if (this.adapter) {
+          if (this.adapter.pubClient) {
+            this.adapter.pubClient.quit()
+          }
+          if (this.adapter.subClient) {
+            this.adapter.subClient.quit()
+          }
         }
-      }
-    })
+      })
   }
 
   bindHandler (id, name, fn) {

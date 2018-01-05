@@ -4,8 +4,15 @@
 const _ = require('lodash')
 const config = require('./config')
 const testutils = require('./testutils')
+// const wtf = require('wtfnode')
 
 before(testutils.checkDB)
+after(() => {
+  if (testutils.redis) {
+    testutils.redis.quit()
+  }
+  // setTimeout(() => wtf.dump(), 1000)
+})
 
 describe('Chat service.', function () {
   _.forEach(

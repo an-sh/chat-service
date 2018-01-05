@@ -45,18 +45,22 @@ module.exports = function () {
 
   it('should have a message validation method', function (done) {
     chatService = startService()
-    chatService.checkArguments(
-      'roomGetAccessList', roomName1, 'userlist', function (error) {
-        expect(error).not.ok
-        done()
-      })
+    chatService.once('ready', () => {
+      chatService.checkArguments(
+        'roomGetAccessList', roomName1, 'userlist', function (error) {
+          expect(error).not.ok
+          done()
+        })
+    })
   })
 
   it('should check for unknown commands', function (done) {
     chatService = startService()
-    chatService.validator.checkArguments('cmd', function (error) {
-      expect(error).ok
-      done()
+    chatService.once('ready', () => {
+      chatService.validator.checkArguments('cmd', function (error) {
+        expect(error).ok
+        done()
+      })
     })
   })
 

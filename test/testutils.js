@@ -74,10 +74,6 @@ function closeInstance (service) {
     .timeout(2000)
     .catch(function (e) {
       console.log('Service closing error: ', e)
-      return Promise.try(() => service.redis && service.redis.disconnect())
-        .catchReturn()
-        .then(() => Promise.fromCallback(cb => service.io.httpServer.close(cb)))
-        .catchReturn()
     })
 }
 
@@ -115,6 +111,7 @@ module.exports = {
   clientConnect,
   closeInstance,
   parallel,
+  redis,
   series,
   setCustomCleanup,
   setState,

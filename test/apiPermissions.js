@@ -51,10 +51,12 @@ module.exports = function () {
 
   it('should check room names before adding a new room', function (done) {
     chatService = startService()
-    chatService.addRoom('room:1', null, (error, data) => {
-      expect(error).ok
-      expect(data).not.ok
-      done()
+    chatService.once('ready', () => {
+      chatService.addRoom('room:1', null, (error, data) => {
+        expect(error).ok
+        expect(data).not.ok
+        done()
+      })
     })
   })
 

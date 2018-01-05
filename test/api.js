@@ -113,10 +113,12 @@ module.exports = function () {
 
   it('should check user names before adding a new user', function (done) {
     chatService = startService()
-    chatService.addUser('user:1', null, (error, data) => {
-      expect(error).ok
-      expect(data).not.ok
-      done()
+    chatService.once('ready', () => {
+      chatService.addUser('user:1', null, (error, data) => {
+        expect(error).ok
+        expect(data).not.ok
+        done()
+      })
     })
   })
 
