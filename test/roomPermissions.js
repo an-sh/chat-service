@@ -4,11 +4,15 @@
 
 const { expect } = require('chai')
 
-const { cleanup, clientConnect, parallel,
-  startService } = require('./testutils')
+const {
+  cleanup, clientConnect, parallel,
+  startService
+} = require('./testutils')
 
-const { cleanupTimeout, user1, user2, user3,
-  roomName1 } = require('./config')
+const {
+  cleanupTimeout, user1, user2, user3,
+  roomName1
+} = require('./config')
 
 module.exports = function () {
   let chatService, socket1, socket2, socket3
@@ -20,8 +24,8 @@ module.exports = function () {
   })
 
   it('should reject room messages from not joined users', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -370,7 +374,7 @@ module.exports = function () {
   it('should remove users on permissions changes', function (done) {
     this.timeout(4000)
     this.slow(2000)
-    chatService = startService({enableUserlistUpdates: true})
+    chatService = startService({ enableUserlistUpdates: true })
     chatService.addRoom(
       roomName1, { adminlist: [user1, user3] }, () => parallel([
         cb => {

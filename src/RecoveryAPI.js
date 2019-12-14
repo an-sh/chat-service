@@ -20,9 +20,9 @@ class RecoveryAPI {
   }
 
   checkUserSockets (user) {
-    let { userName } = user
+    const { userName } = user
     return run(this, function * () {
-      let sockets = yield user.userState.getSocketsToInstance()
+      const sockets = yield user.userState.getSocketsToInstance()
       yield Promise.each(_.toPairs(sockets), ([socket, instance]) => {
         if (instance === this.instanceUID) {
           if (!this.transport.getSocket(socket)) {
@@ -30,9 +30,9 @@ class RecoveryAPI {
           }
         }
       })
-      let data = yield user.userState.getSocketsToRooms()
-      let args = _.values(data)
-      let rooms = _.intersection(...args)
+      const data = yield user.userState.getSocketsToRooms()
+      const args = _.values(data)
+      const rooms = _.intersection(...args)
       return Promise.each(rooms, roomName => {
         return this.state.getRoom(roomName)
           .then(room => room.roomState.hasInList('userlist', userName))
@@ -43,7 +43,7 @@ class RecoveryAPI {
   }
 
   checkRoomJoined (room) {
-    let { roomName } = room
+    const { roomName } = room
     return room.getList(null, 'userlist', true).then(userlist => {
       return Promise.each(userlist, userName => {
         return this.state.getUser(userName).then(user => {

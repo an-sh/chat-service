@@ -11,7 +11,7 @@ const promiseRetry = require('promise-retry')
 const uid = require('uid-safe')
 const { mixin } = require('./utils')
 
-let namespace = 'chatservice'
+const namespace = 'chatservice'
 
 function initSet (redis, set, values) {
   return redis.del(set)
@@ -31,7 +31,7 @@ class StateOperations {
   initState (state) {
     return this.redis.setnx(this.makeKeyName('exists'), true).then(isnew => {
       if (!isnew) {
-        let error = new ChatServiceError(this.exitsErrorName, this.name)
+        const error = new ChatServiceError(this.exitsErrorName, this.name)
         return Promise.reject(error)
       }
     }).then(() => this.stateReset(state))
@@ -58,11 +58,11 @@ class LockOperations {
 
   lock (key, val, ttl) {
     return promiseRetry(
-      {minTimeout: 100, retries: 10, factor: 1.5, randomize: true},
+      { minTimeout: 100, retries: 10, factor: 1.5, randomize: true },
       (retry, n) => {
         return this.redis.set(key, val, 'NX', 'PX', ttl).then(res => {
           if (!res) {
-            let error = new ChatServiceError('timeout')
+            const error = new ChatServiceError('timeout')
             retry(error)
           }
         }).catch(retry)
@@ -75,7 +75,7 @@ class LockOperations {
 }
 
 // Redis scripts.
-let luaCommands = {
+const luaCommands = {
   unlock: {
     numberOfKeys: 1,
     lua: `
@@ -238,7 +238,7 @@ class ListsStateRedis {
 
   checkList (listName, num, limit) {
     if (!this.hasList(listName)) {
-      let error = new ChatServiceError('noList', listName)
+      const error = new ChatServiceError('noList', listName)
       return Promise.reject(error)
     }
     if (listName === 'userlist') {
@@ -246,14 +246,14 @@ class ListsStateRedis {
     }
     return this.redis.scard(listName).then(sz => {
       if (sz + num > limit) {
-        let error = new ChatServiceError('listLimitExceeded', listName)
+        const error = new ChatServiceError('listLimitExceeded', listName)
         return Promise.reject(error)
       }
     })
   }
 
   addToList (listName, elems, limit) {
-    let num = elems.length
+    const num = elems.length
     return this.checkList(listName, num, limit)
       .then(() => this.redis.sadd(this.makeKeyName(listName), elems))
   }
@@ -275,7 +275,7 @@ class ListsStateRedis {
   }
 
   whitelistOnlySet (mode) {
-    let whitelistOnly = mode ? true : ''
+    const whitelistOnly = mode ? true : ''
     return this.redis.set(this.makeKeyName('whitelistMode'), whitelistOnly)
   }
 
@@ -302,7 +302,8 @@ class RoomStateRedis extends ListsStateRedis {
 
   stateReset (state) {
     state = state || {}
-    let { whitelist, blacklist, adminlist,
+    let {
+      whitelist, blacklist, adminlist,
       whitelistOnly, owner, historyMaxSize,
       enableAccessListsUpdates = this.server.enableAccessListsUpdates,
       enableUserlistUpdates = this.server.enableUserlistUpdates
@@ -374,7 +375,7 @@ class RoomStateRedis extends ListsStateRedis {
         .del(this.makeKeyName('messagesIds'))
         .exec()
     } else {
-      let last = limit - 1
+      const last = limit - 1
       return this.redis.multi()
         .set(this.makeKeyName('historyMaxSize'), limit)
         .ltrim(this.makeKeyName('messagesHistory'), 0, last)
@@ -398,7 +399,8 @@ class RoomStateRedis extends ListsStateRedis {
           historySize,
           historyMaxSize,
           historyMaxGetMessages: this.historyMaxGetMessages,
-          lastMessageId }
+          lastMessageId
+        }
       })
   }
 
@@ -409,8 +411,8 @@ class RoomStateRedis extends ListsStateRedis {
   }
 
   messageAdd (msg) {
-    let timestamp = _.now()
-    let smsg = JSON.stringify(msg)
+    const timestamp = _.now()
+    const smsg = JSON.stringify(msg)
     return this.redis.messageAdd(
       this.makeKeyName('lastMessageId'), this.makeKeyName('historyMaxSize'),
       this.makeKeyName('messagesIds'), this.makeKeyName('messagesTimestamps'),
@@ -423,13 +425,13 @@ class RoomStateRedis extends ListsStateRedis {
   }
 
   convertMessages (msgs, tss, ids) {
-    let data = []
+    const data = []
     if (!msgs) {
       return Promise.resolve(data)
     }
     for (let idx = 0; idx < msgs.length; idx++) {
-      let msg = msgs[idx]
-      let obj = JSON.parse(msg, (key, val) => {
+      const msg = msgs[idx]
+      const obj = JSON.parse(msg, (key, val) => {
         if (val && val.type === 'Buffer') {
           return Buffer.from(val.data)
         } else {
@@ -445,7 +447,7 @@ class RoomStateRedis extends ListsStateRedis {
 
   messagesGetRecent () {
     if (this.historyMaxGetMessages <= 0) { return Promise.resolve([]) }
-    let limit = this.historyMaxGetMessages - 1
+    const limit = this.historyMaxGetMessages - 1
     return this.redis.multi()
       .lrange(this.makeKeyName('messagesHistory'), 0, limit)
       .lrange(this.makeKeyName('messagesTimestamps'), 0, limit)
@@ -474,14 +476,14 @@ class RoomStateRedis extends ListsStateRedis {
       .sismember(this.makeKeyName('userlist'), userName)
       .exec()
       .spread(([, ts], [, isjoined]) => {
-        let joined = Boolean(isjoined)
-        let timestamp = ts ? parseInt(ts) : null
-        return {joined, timestamp}
+        const joined = Boolean(isjoined)
+        const timestamp = ts ? parseInt(ts) : null
+        return { joined, timestamp }
       })
   }
 
   userSeenUpdate (userName) {
-    let timestamp = _.now()
+    const timestamp = _.now()
     return this.redis.hset(this.makeKeyName('usersseen'), userName, timestamp)
   }
 }
@@ -567,8 +569,8 @@ class UserStateRedis {
     return this.redis.getSocketsToRooms(
       this.makeKeyName('sockets'), this.makeSocketToRooms())
       .spread(result => {
-        let data = JSON.parse(result) || {}
-        for (let [k, v] of _.toPairs(data)) {
+        const data = JSON.parse(result) || {}
+        for (const [k, v] of _.toPairs(data)) {
           if (_.isEmpty(v)) { data[k] = [] }
         }
         return data
@@ -583,7 +585,7 @@ class UserStateRedis {
       .scard(this.makeRoomToSockets(roomName))
       .exec()
       .then(([[, wasjoined], , , [, njoined]]) => {
-        let hasChanged = njoined !== wasjoined
+        const hasChanged = njoined !== wasjoined
         return [njoined, hasChanged]
       })
   }
@@ -596,7 +598,7 @@ class UserStateRedis {
       .scard(this.makeRoomToSockets(roomName))
       .exec()
       .then(([[, wasjoined], , , [, njoined]]) => {
-        let hasChanged = njoined !== wasjoined
+        const hasChanged = njoined !== wasjoined
         return [njoined, hasChanged]
       })
   }
@@ -616,12 +618,12 @@ class UserStateRedis {
 
   lockToRoom (roomName, ttl) {
     return uid(18).then(val => {
-      let start = _.now()
+      const start = _.now()
       return this.lock(this.makeRoomLock(roomName), val, ttl).then(() => {
         return Promise.resolve().disposer(() => {
           if (start + ttl < _.now()) {
             this.server.emit(
-              'lockTimeExceeded', val, {userName: this.userName, roomName})
+              'lockTimeExceeded', val, { userName: this.userName, roomName })
           }
           return this.unlock(this.makeRoomLock(roomName), val)
         })
@@ -639,7 +641,7 @@ class RedisState {
     if (this.options.useCluster) {
       this.redis = new Redis.Cluster(...this.options.redisOptions)
     } else {
-      let redisOptions = _.castArray(this.options.redisOptions)
+      const redisOptions = _.castArray(this.options.redisOptions)
       this.redis = new Redis(...redisOptions)
     }
     this.RoomState = RoomStateRedis
@@ -648,7 +650,7 @@ class RedisState {
     this.lockTTL = this.options.lockTTL || 10000
     this.instanceUID = this.server.instanceUID
     this.server.redis = this.redis
-    for (let [cmd, def] of _.toPairs(luaCommands)) {
+    for (const [cmd, def] of _.toPairs(luaCommands)) {
       this.redis.defineCommand(cmd, {
         numberOfKeys: def.numberOfKeys,
         lua: def.lua
@@ -674,13 +676,13 @@ class RedisState {
   }
 
   getRoom (name, isPredicate = false) {
-    let room = new Room(this.server, name)
+    const room = new Room(this.server, name)
     return this.hasRoom(name).then(exists => {
       if (!exists) {
         if (isPredicate) {
           return Promise.resolve(null)
         } else {
-          let error = new ChatServiceError('noRoom', name)
+          const error = new ChatServiceError('noRoom', name)
           return Promise.reject(error)
         }
       }
@@ -689,7 +691,7 @@ class RedisState {
   }
 
   addRoom (name, state) {
-    let room = new Room(this.server, name)
+    const room = new Room(this.server, name)
     return room.initState(state).return(room)
   }
 
@@ -723,7 +725,7 @@ class RedisState {
   }
 
   getOrAddUser (name, state) {
-    let user = new User(this.server, name)
+    const user = new User(this.server, name)
     return this.hasUser(name)
       .then(exists => exists ? null : user.initState(state))
       .catch(ChatServiceError, e => user)
@@ -731,13 +733,13 @@ class RedisState {
   }
 
   getUser (name, isPredicate = false) {
-    let user = new User(this.server, name)
+    const user = new User(this.server, name)
     return this.hasUser(name).then(exists => {
       if (!exists) {
         if (isPredicate) {
           return null
         } else {
-          let error = new ChatServiceError('noUser', name)
+          const error = new ChatServiceError('noUser', name)
           return Promise.reject(error)
         }
       }
@@ -746,7 +748,7 @@ class RedisState {
   }
 
   addUser (name, state) {
-    let user = new User(this.server, name)
+    const user = new User(this.server, name)
     return user.initState(state).return(user)
   }
 

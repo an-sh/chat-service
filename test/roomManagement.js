@@ -4,11 +4,15 @@
 
 const { expect } = require('chai')
 
-const { cleanup, clientConnect,
-  parallel, startService } = require('./testutils')
+const {
+  cleanup, clientConnect,
+  parallel, startService
+} = require('./testutils')
 
-const { cleanupTimeout, user1, user2,
-  roomName1, roomName2 } = require('./config')
+const {
+  cleanupTimeout, user1, user2,
+  roomName1, roomName2
+} = require('./config')
 
 module.exports = function () {
   let chatService, socket1, socket2, socket3

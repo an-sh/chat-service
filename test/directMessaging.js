@@ -18,8 +18,8 @@ module.exports = function () {
   })
 
   it('should send direct messages', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService({ enableDirectMessages: true })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
@@ -38,8 +38,8 @@ module.exports = function () {
   })
 
   it('should not send direct messages when the option is off', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService()
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
@@ -55,8 +55,8 @@ module.exports = function () {
   })
 
   it('should not send self-direct messages', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService({ enableDirectMessages: true })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
@@ -69,8 +69,8 @@ module.exports = function () {
   })
 
   it('should not send direct messages to offline users', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService({ enableDirectMessages: true })
     socket2 = clientConnect(user2)
     socket2.on('loginConfirmed', () => {
@@ -87,8 +87,8 @@ module.exports = function () {
   })
 
   it('should echo direct messages to all user\'s sockets', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService({ enableDirectMessages: true })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
@@ -111,7 +111,7 @@ module.exports = function () {
   })
 
   it('should echo system messages to all user\'s sockets', function (done) {
-    let data = 'some data.'
+    const data = 'some data.'
     chatService = startService()
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {

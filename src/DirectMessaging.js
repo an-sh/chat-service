@@ -16,7 +16,7 @@ class DirectMessagingPermissions {
 
   checkListValues (author, listName, values) {
     return this.checkList(author, listName).then(() => {
-      for (let name of values) {
+      for (const name of values) {
         if (name !== this.userName) { continue }
         return Promise.reject(new ChatServiceError('notAllowed'))
       }
@@ -29,14 +29,14 @@ class DirectMessagingPermissions {
     }
     if (bypassPermissions) { return Promise.resolve() }
     return run(this, function * () {
-      let blacklisted =
+      const blacklisted =
             yield this.directMessagingState.hasInList('blacklist', userName)
       if (blacklisted) {
         return Promise.reject(new ChatServiceError('notAllowed'))
       }
-      let whitelistOnly = yield this.directMessagingState.whitelistOnlyGet()
+      const whitelistOnly = yield this.directMessagingState.whitelistOnlyGet()
       if (!whitelistOnly) { return }
-      let whitelisted =
+      const whitelisted =
             yield this.directMessagingState.hasInList('whitelist', userName)
       if (whitelisted) { return }
       return Promise.reject(new ChatServiceError('notAllowed'))
@@ -51,7 +51,7 @@ class DirectMessaging {
     this.server = server
     this.userName = userName
     this.listSizeLimit = this.server.directListSizeLimit
-    let State = this.server.state.DirectMessagingState
+    const State = this.server.state.DirectMessagingState
     this.directMessagingState = new State(this.server, this.userName)
     mixin(this, DirectMessagingPermissions,
       this.userName, this.directMessagingState)

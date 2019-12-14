@@ -72,15 +72,15 @@ class SocketIOTransport {
 
   setEvents () {
     if (this.middleware) {
-      let middleware = _.castArray(this.middleware)
-      for (let fn of middleware) {
+      const middleware = _.castArray(this.middleware)
+      for (const fn of middleware) {
         this.nsp.use(fn)
       }
     }
     this.nsp.on('connection', socket => {
       return run(this, function * () {
-        let id = socket.id
-        let [userName, authData = {}] = yield this.server.onConnect(id)
+        const id = socket.id
+        const [userName, authData = {}] = yield this.server.onConnect(id)
         if (!userName) {
           return Promise.reject(new ChatServiceError('noLogin'))
         }
@@ -113,11 +113,11 @@ class SocketIOTransport {
   }
 
   bindHandler (id, name, fn) {
-    let socket = this.getSocket(id)
+    const socket = this.getSocket(id)
     if (socket) {
       socket.on(name, (...oargs) => {
-        let [args, cb] = possiblyCallback(oargs)
-        let ack = this.resultsTransform(cb)
+        const [args, cb] = possiblyCallback(oargs)
+        const ack = this.resultsTransform(cb)
         fn(...args).asCallback(ack, { spread: true })
       })
     }
@@ -136,7 +136,7 @@ class SocketIOTransport {
   }
 
   sendToChannel (id, channel, eventName, ...eventData) {
-    let socket = this.getSocket(id)
+    const socket = this.getSocket(id)
     if (!socket) {
       this.emitToChannel(channel, eventName, ...eventData)
     } else {
@@ -145,8 +145,8 @@ class SocketIOTransport {
   }
 
   getHandshakeData (id) {
-    let res = { isConnected: false, query: {}, headers: {} }
-    let socket = this.getSocket(id)
+    const res = { isConnected: false, query: {}, headers: {} }
+    const socket = this.getSocket(id)
     if (!socket) { return res }
     res.isConnected = true
     res.query = socket.handshake.query
@@ -155,7 +155,7 @@ class SocketIOTransport {
   }
 
   joinChannel (id, channel) {
-    let socket = this.getSocket(id)
+    const socket = this.getSocket(id)
     if (!socket) {
       return Promise.reject(new ChatServiceError('invalidSocket', id))
     } else {
@@ -164,13 +164,13 @@ class SocketIOTransport {
   }
 
   leaveChannel (id, channel) {
-    let socket = this.getSocket(id)
+    const socket = this.getSocket(id)
     if (!socket) { return Promise.resolve() }
     return Promise.fromCallback(fn => socket.leave(channel, fn))
   }
 
   disconnectSocket (id) {
-    let socket = this.getSocket(id)
+    const socket = this.getSocket(id)
     if (socket) {
       socket.disconnect()
     }

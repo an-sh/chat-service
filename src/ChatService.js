@@ -308,9 +308,10 @@ class ChatService extends EventEmitter {
       this.options.adapter || 'memory'
     this.adapterOptions = _.castArray(
       this.transportOptions.adapterOptions || this.options.adapterOptions)
-    let opts = {
+    const opts = {
       adapterConstructor: this.adapterConstructor,
-      adapterOptions: this.adapterOptions }
+      adapterOptions: this.adapterOptions
+    }
     this.transportOptions = _.assign(opts, this.transportOptions)
   }
 
@@ -352,7 +353,7 @@ class ChatService extends EventEmitter {
         .catchReturn()
     })
     this.clusterBus.on('socketRoomLeft', (id, roomName) => {
-      let emit = EventEmitter.prototype.emit
+      const emit = EventEmitter.prototype.emit
       emit.call(this.clusterBus, `socketRoomLeft:${id}:${roomName}`)
     })
   }
@@ -410,7 +411,7 @@ class ChatService extends EventEmitter {
       }
     }).then(() => {
       this.state.updateHeartbeat()
-      let hbupdater = this.state.updateHeartbeat.bind(this.state)
+      const hbupdater = this.state.updateHeartbeat.bind(this.state)
       this.hbtimer = setInterval(hbupdater, this.heartbeatRate)
       return this.emit('ready')
     }).catch(error => {

@@ -4,11 +4,15 @@
 
 const { expect } = require('chai')
 
-const { cleanup, clientConnect,
-  parallel, series, startService } = require('./testutils')
+const {
+  cleanup, clientConnect,
+  parallel, series, startService
+} = require('./testutils')
 
-const { cleanupTimeout, user1, user2,
-  roomName1, roomName2 } = require('./config')
+const {
+  cleanupTimeout, user1, user2,
+  roomName1, roomName2
+} = require('./config')
 
 module.exports = function () {
   let chatService, socket1, socket2, socket3
@@ -26,7 +30,7 @@ module.exports = function () {
       socket1.on('loginConfirmed', (u, data) => {
         socket2 = clientConnect(user1)
         socket2.on('loginConfirmed', (u, data) => {
-          let sid2 = data.id
+          const sid2 = data.id
           socket2.emit('roomJoin', roomName1)
           socket1.on('roomJoinedEcho', (room, id, njoined) => {
             expect(room).equal(roomName1)
@@ -53,7 +57,7 @@ module.exports = function () {
         socket1.emit('roomJoin', roomName1, () => {
           socket2 = clientConnect(user1)
           socket2.on('loginConfirmed', (u, data) => {
-            let sid2 = data.id
+            const sid2 = data.id
             socket2.emit('roomJoin', roomName1)
             socket1.on('roomJoinedEcho', (room, id, njoined) => {
               expect(room).equal(roomName1)
@@ -265,8 +269,8 @@ module.exports = function () {
   })
 
   it('should store and send a room history', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -278,7 +282,7 @@ module.exports = function () {
             socket1.emit('roomRecentHistory', roomName1, (error, data) => {
               expect(error).not.ok
               expect(data).length(1)
-              let props = ['textMessage', 'author', 'timestamp', 'id']
+              const props = ['textMessage', 'author', 'timestamp', 'id']
               expect(data[0]).include.keys(props)
               expect(data[0].textMessage).equal(txt)
               expect(data[0].author).equal(user1)
@@ -293,8 +297,8 @@ module.exports = function () {
   })
 
   it('should send room messages to all joined users', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService()
     chatService.addRoom(roomName1, null, () => parallel([
       cb => {
@@ -332,8 +336,8 @@ module.exports = function () {
   })
 
   it('should drop a history if the limit is zero', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService({ historyMaxSize: 0 })
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -354,8 +358,8 @@ module.exports = function () {
   })
 
   it('should not send a history if the limit is zero', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService({ historyMaxGetMessages: 0 })
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -379,7 +383,7 @@ module.exports = function () {
   })
 
   it('should send a room history maximum size', function (done) {
-    let sz = 1000
+    const sz = 1000
     chatService = startService({ historyMaxSize: sz })
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -396,10 +400,10 @@ module.exports = function () {
   })
 
   it('should truncate a long history', function (done) {
-    let txt1 = 'Test message 1.'
-    let message1 = { textMessage: txt1 }
-    let txt2 = 'Test message 2.'
-    let message2 = { textMessage: txt2 }
+    const txt1 = 'Test message 1.'
+    const message1 = { textMessage: txt1 }
+    const txt2 = 'Test message 2.'
+    const message2 = { textMessage: txt2 }
     chatService = startService({ historyMaxSize: 1 })
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -410,7 +414,7 @@ module.exports = function () {
               socket1.emit('roomRecentHistory', roomName1, (error, data) => {
                 expect(error).not.ok
                 expect(data).length(1)
-                let props = ['textMessage', 'author', 'timestamp', 'id']
+                const props = ['textMessage', 'author', 'timestamp', 'id']
                 expect(data[0]).include.keys(props)
                 expect(data[0].textMessage).equal(txt2)
                 expect(data[0].author).equal(user1)
@@ -426,8 +430,8 @@ module.exports = function () {
   })
 
   it('should support a history synchronisation', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -443,7 +447,7 @@ module.exports = function () {
             socket1.emit('roomHistoryGet', roomName1, 0, 10, (error, data) => {
               expect(error).not.ok
               expect(data).lengthOf(2)
-              let props = ['textMessage', 'author', 'timestamp', 'id']
+              const props = ['textMessage', 'author', 'timestamp', 'id']
               expect(data[0]).include.keys(props)
               expect(data[0].textMessage).equal(txt)
               expect(data[0].author).equal(user1)
@@ -471,8 +475,8 @@ module.exports = function () {
   })
 
   it('should sync a history with respect to the limit', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService({ historyMaxGetMessages: 2 })
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -520,8 +524,8 @@ module.exports = function () {
   })
 
   it('should sync a history with respect to a history size', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService({ historyMaxSize: 2 })
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -567,8 +571,8 @@ module.exports = function () {
   })
 
   it('should trim history on size changes', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService({ historyMaxSize: 2 })
     socket1 = clientConnect(user1)
     chatService.addRoom(roomName1, null, () => {
@@ -605,8 +609,8 @@ module.exports = function () {
   })
 
   it('should send and update a room sync info', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -637,8 +641,8 @@ module.exports = function () {
   it('should get and update an user seen info', function (done) {
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
-      let ts = new Date().getTime()
-      let tsmax = ts + 2000
+      const ts = new Date().getTime()
+      const tsmax = ts + 2000
       parallel([
         cb => {
           socket1 = clientConnect(user1)
@@ -738,7 +742,7 @@ module.exports = function () {
 
   it('should send notifications configuration info', function (done) {
     chatService = startService()
-    let config = {enableAccessListsUpdates: false, enableUserlistUpdates: true}
+    const config = { enableAccessListsUpdates: false, enableUserlistUpdates: true }
     chatService.addRoom(roomName1, config, () => {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', () => {
@@ -759,7 +763,7 @@ module.exports = function () {
     this.timeout(4000)
     this.slow(2000)
     chatService = startService()
-    let config = {enableUserlistUpdates: true}
+    const config = { enableUserlistUpdates: true }
     chatService.addRoom(roomName1, config, () => parallel([
       cb => {
         socket1 = clientConnect(user1)
@@ -787,7 +791,7 @@ module.exports = function () {
     this.timeout(4000)
     this.slow(2000)
     chatService = startService()
-    let config = {enableUserlistUpdates: true}
+    const config = { enableUserlistUpdates: true }
     chatService.addRoom(roomName1, config, () => parallel([
       cb => {
         socket2 = clientConnect(user1)

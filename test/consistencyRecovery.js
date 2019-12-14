@@ -6,8 +6,10 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 const { expect } = require('chai')
 
-const { cleanup, clientConnect, closeInstance,
-  parallel, setCustomCleanup, startService } = require('./testutils')
+const {
+  cleanup, clientConnect, closeInstance,
+  parallel, setCustomCleanup, startService
+} = require('./testutils')
 
 const { cleanupTimeout, user1, roomName1 } = require('./config')
 
@@ -22,9 +24,9 @@ module.exports = function () {
 
   it('should recover from rollback room join errors', function (done) {
     instance1 = startService()
-    let {addSocketToRoom, removeSocketFromRoom} =
+    const { addSocketToRoom, removeSocketFromRoom } =
           instance1.state.UserState.prototype
-    orig = {addSocketToRoom, removeSocketFromRoom}
+    orig = { addSocketToRoom, removeSocketFromRoom }
     instance1.state.UserState.prototype.removeSocketFromRoom = function () {
       return Promise.reject(new Error())
     }
@@ -72,7 +74,7 @@ module.exports = function () {
 
   it('should recover from leave room errors', function (done) {
     instance1 = startService()
-    let orig = instance1.Room.prototype.leave
+    const orig = instance1.Room.prototype.leave
     instance1.Room.prototype.leave = function () {
       return Promise.reject(new Error())
     }

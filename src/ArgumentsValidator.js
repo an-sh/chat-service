@@ -14,26 +14,26 @@ class ArgumentsValidator {
     this.directMessagesChecker = this.server.directMessagesChecker
     this.roomMessagesChecker = this.server.roomMessagesChecker
     this.customCheckers = {
-      directMessage: [ null, this.directMessagesChecker ],
-      roomMessage: [ null, this.roomMessagesChecker ]
+      directMessage: [null, this.directMessagesChecker],
+      roomMessage: [null, this.roomMessagesChecker]
     }
-    let commands = this.server.rpcRequestsNames
-    for (let cmd of commands) {
+    const commands = this.server.rpcRequestsNames
+    for (const cmd of commands) {
       this.checkers.set(cmd, this[cmd]())
     }
   }
 
   checkArguments (name, ...args) {
-    let [nargs, cb] = possiblyCallback(args)
+    const [nargs, cb] = possiblyCallback(args)
     return Promise.try(() => {
-      let checkers = this.checkers.get(name)
+      const checkers = this.checkers.get(name)
       if (!checkers) {
-        let error = new ChatServiceError('noCommand', name)
+        const error = new ChatServiceError('noCommand', name)
         return Promise.reject(error)
       }
-      let error = this.checkTypes(checkers, nargs)
+      const error = this.checkTypes(checkers, nargs)
       if (error) { return Promise.reject(error) }
-      let customCheckers = this.customCheckers[name] || []
+      const customCheckers = this.customCheckers[name] || []
       return Promise.each(
         customCheckers, (checker, idx) => execHook(checker, nargs[idx])
       ).return()
@@ -41,15 +41,15 @@ class ArgumentsValidator {
   }
 
   getArgsCount (name) {
-    let checker = this.checkers.get(name)
+    const checker = this.checkers.get(name)
     return checker ? checker.length : 0
   }
 
   splitArguments (name, oargs) {
-    let nargs = this.getArgsCount(name)
-    let args = _.slice(oargs, 0, nargs)
-    let restArgs = _.slice(oargs, nargs)
-    return {args, restArgs}
+    const nargs = this.getArgsCount(name)
+    const args = _.slice(oargs, 0, nargs)
+    const restArgs = _.slice(oargs, nargs)
+    return { args, restArgs }
   }
 
   checkMessage (msg) {
@@ -68,7 +68,7 @@ class ArgumentsValidator {
         'wrongArgumentsCount', checkers.length, args.length)
     }
     for (let idx = 0; idx < checkers.length; idx++) {
-      let checker = checkers[idx]
+      const checker = checkers[idx]
       if (!checker(args[idx])) {
         return new ChatServiceError('badArgument', idx, args[idx])
       }

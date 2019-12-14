@@ -6,11 +6,15 @@ const Buffer = require('safe-buffer').Buffer
 const Promise = require('bluebird')
 const { expect } = require('chai')
 
-const { cleanup, clientConnect, parallel, closeInstance,
-  ChatService, startService } = require('./testutils')
+const {
+  cleanup, clientConnect, parallel, closeInstance,
+  ChatService, startService
+} = require('./testutils')
 
-const { cleanupTimeout, user1, user2,
-  roomName1, roomName2 } = require('./config')
+const {
+  cleanupTimeout, user1, user2,
+  roomName1, roomName2
+} = require('./config')
 
 module.exports = function () {
   let chatService, socket1, socket2, socket3
@@ -22,12 +26,12 @@ module.exports = function () {
   })
 
   it('should execute onStart hook', function (done) {
-    let onStart = (server, cb) => {
+    const onStart = (server, cb) => {
       expect(server).instanceof(ChatService)
       server.addRoom(
-        roomName1, { whitelist: [ user1 ], owner: user2 }, cb)
+        roomName1, { whitelist: [user1], owner: user2 }, cb)
     }
-    chatService = startService(null, {onStart})
+    chatService = startService(null, { onStart })
     chatService.on('ready', () => {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', () => {
@@ -48,23 +52,23 @@ module.exports = function () {
   })
 
   it('should exectute onClose hook', function (done) {
-    let onClose = (server, error, cb) => {
+    const onClose = (server, error, cb) => {
       expect(server).instanceof(ChatService)
       expect(error).not.ok
       cb()
     }
-    let chatService1 = startService(null, {onClose})
+    const chatService1 = startService(null, { onClose })
     chatService1.on('ready', () => {
       closeInstance(chatService1).asCallback(done)
     })
   })
 
   it('should execute before and after hooks', function (done) {
-    let someData = 'data'
+    const someData = 'data'
     let before, after, sid
-    let roomCreateBefore = (execInfo, cb) => {
-      let { server, userName, id, args } = execInfo
-      let [name, mode] = args
+    const roomCreateBefore = (execInfo, cb) => {
+      const { server, userName, id, args } = execInfo
+      const [name, mode] = args
       expect(server).instanceof(ChatService)
       expect(userName).equal(user1)
       expect(id).equal(sid)
@@ -75,9 +79,9 @@ module.exports = function () {
       before = true
       process.nextTick(cb)
     }
-    let roomCreateAfter = (execInfo, cb) => {
-      let { server, userName, id, args, results, error } = execInfo
-      let [name, mode] = args
+    const roomCreateAfter = (execInfo, cb) => {
+      const { server, userName, id, args, results, error } = execInfo
+      const [name, mode] = args
       expect(server).instanceof(ChatService)
       expect(userName).equal(user1)
       expect(id).equal(sid)
@@ -106,13 +110,13 @@ module.exports = function () {
   })
 
   it('should execute hooks using promises api', function (done) {
-    let someData = 'data'
+    const someData = 'data'
     let before, after
-    let roomCreateBefore = execInfo => {
+    const roomCreateBefore = execInfo => {
       before = true
       return Promise.resolve()
     }
-    let roomCreateAfter = execInfo => {
+    const roomCreateAfter = execInfo => {
       after = true
       return Promise.resolve(someData)
     }
@@ -131,13 +135,13 @@ module.exports = function () {
   })
 
   it('should execute hooks with sync callbacks', function (done) {
-    let someData = 'data'
+    const someData = 'data'
     let before, after
-    let roomCreateBefore = (execInfo, cb) => {
+    const roomCreateBefore = (execInfo, cb) => {
       before = true
       cb()
     }
-    let roomCreateAfter = (execInfo, cb) => {
+    const roomCreateAfter = (execInfo, cb) => {
       after = true
       cb(null, someData)
     }
@@ -156,14 +160,14 @@ module.exports = function () {
   })
 
   it('should store commands additional arguments', function (done) {
-    let listOwnSocketsAfter = (execInfo, cb) => {
-      let { restArgs } = execInfo
+    const listOwnSocketsAfter = (execInfo, cb) => {
+      const { restArgs } = execInfo
       expect(restArgs).instanceof(Array)
       expect(restArgs).lengthOf(1)
       expect(restArgs[0]).true
       process.nextTick(cb)
     }
-    chatService = startService(null, {listOwnSocketsAfter})
+    chatService = startService(null, { listOwnSocketsAfter })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
       socket1.emit('listOwnSockets', true, (error, data) => {
@@ -174,7 +178,7 @@ module.exports = function () {
   })
 
   it('should support changing arguments in before hooks', function (done) {
-    let roomGetWhitelistModeBefore = (execInfo, cb) => {
+    const roomGetWhitelistModeBefore = (execInfo, cb) => {
       execInfo.args = [roomName2]
       process.nextTick(cb)
     }
@@ -195,12 +199,12 @@ module.exports = function () {
   })
 
   it('should support additional values from after hooks', function (done) {
-    let listOwnSocketsAfter = (execInfo, cb) =>
+    const listOwnSocketsAfter = (execInfo, cb) =>
       process.nextTick(cb, null, execInfo.results[0], true)
     chatService = startService(null, { listOwnSocketsAfter })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', (u, data) => {
-      let sid = data.id
+      const sid = data.id
       socket1.emit('listOwnSockets', (error, data, moredata) => {
         expect(error).not.ok
         expect(data[sid]).empty
@@ -211,7 +215,7 @@ module.exports = function () {
   })
 
   it('should execute onDisconnect hook', function (done) {
-    let onDisconnect = (server, data, cb) => {
+    const onDisconnect = (server, data, cb) => {
       process.nextTick(() => {
         expect(server).instanceof(ChatService)
         expect(data).to.be.an('object')
@@ -223,14 +227,14 @@ module.exports = function () {
       })
       process.nextTick(cb)
     }
-    let chatService1 = startService(null, { onDisconnect })
+    const chatService1 = startService(null, { onDisconnect })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => chatService1.close())
   })
 
   it('should execute onJoin hook', function (done) {
     let isRun = false
-    let onJoin = (server, data, cb) => {
+    const onJoin = (server, data, cb) => {
       process.nextTick(() => {
         if (!isRun) {
           expect(server).instanceof(ChatService)
@@ -259,7 +263,7 @@ module.exports = function () {
     this.timeout(4000)
     this.slow(2000)
     let isRun = false
-    let onJoin = (server, data, cb) => {
+    const onJoin = (server, data, cb) => {
       if (!isRun) {
         isRun = true
         setTimeout(cb, 1000)
@@ -267,7 +271,7 @@ module.exports = function () {
         cb()
       }
     }
-    chatService = startService({stateOptions: {lockTTL: 500}}, { onJoin })
+    chatService = startService({ stateOptions: { lockTTL: 500 } }, { onJoin })
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', () => {
@@ -284,7 +288,7 @@ module.exports = function () {
 
   it('should execute onLeave hook when leaving', function (done) {
     let isRun = false
-    let onLeave = (server, data, cb) => {
+    const onLeave = (server, data, cb) => {
       process.nextTick(() => {
         if (!isRun) {
           expect(server).instanceof(ChatService)
@@ -314,7 +318,7 @@ module.exports = function () {
   it('should execute onLeave hook when disconnecting', function (done) {
     let isRun = false
     let id
-    let onLeave = (server, data, cb) => {
+    const onLeave = (server, data, cb) => {
       process.nextTick(() => {
         if (!isRun) {
           expect(server).instanceof(ChatService)
@@ -352,7 +356,7 @@ module.exports = function () {
   it('should execute onLeave hook when removing', function (done) {
     let isRun = false
     let id
-    let onLeave = (server, data, cb) => {
+    const onLeave = (server, data, cb) => {
       process.nextTick(() => {
         if (!isRun) {
           expect(server).instanceof(ChatService)
@@ -367,7 +371,7 @@ module.exports = function () {
       cb()
     }
     chatService = startService(null, { onLeave })
-    chatService.addRoom(roomName1, {owner: user2}, () => {
+    chatService.addRoom(roomName1, { owner: user2 }, () => {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', (userName, data) => {
         id = data.id
@@ -387,8 +391,8 @@ module.exports = function () {
   })
 
   it('should stop commands if before hook returns a data', function (done) {
-    let val = 'asdf'
-    let listOwnSocketsBefore = (execInfo, cb) => process.nextTick(cb, null, val)
+    const val = 'asdf'
+    const listOwnSocketsBefore = (execInfo, cb) => process.nextTick(cb, null, val)
     chatService = startService(null, { listOwnSocketsBefore })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
@@ -401,9 +405,9 @@ module.exports = function () {
   })
 
   it('should accept custom direct messages using a hook', function (done) {
-    let html = '<b>HTML message.</b>'
-    let message = { htmlMessage: html }
-    let directMessagesChecker = (msg, cb) => process.nextTick(cb)
+    const html = '<b>HTML message.</b>'
+    const message = { htmlMessage: html }
+    const directMessagesChecker = (msg, cb) => process.nextTick(cb)
     chatService =
       startService({ enableDirectMessages: true }, { directMessagesChecker })
     socket1 = clientConnect(user1)
@@ -423,9 +427,9 @@ module.exports = function () {
   })
 
   it('should accept custom room messages using a hook', function (done) {
-    let html = '<b>HTML message.</b>'
-    let message = { htmlMessage: html }
-    let roomMessagesChecker = (msg, cb) => process.nextTick(cb)
+    const html = '<b>HTML message.</b>'
+    const message = { htmlMessage: html }
+    const roomMessagesChecker = (msg, cb) => process.nextTick(cb)
     chatService = startService(null, { roomMessagesChecker })
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -447,9 +451,9 @@ module.exports = function () {
   })
 
   it('should correctly send room messages with a binary data', function (done) {
-    let data = Buffer.from([5])
-    let message = { data }
-    let roomMessagesChecker = (msg, cb) => process.nextTick(cb)
+    const data = Buffer.from([5])
+    const message = { data }
+    const roomMessagesChecker = (msg, cb) => process.nextTick(cb)
     chatService = startService(null, { roomMessagesChecker })
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)

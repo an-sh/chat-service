@@ -93,7 +93,7 @@ module.exports = function () {
   })
 
   it('should send system messages to all user\'s sockets', function (done) {
-    let data = 'some data.'
+    const data = 'some data.'
     chatService = startService()
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => {
@@ -114,15 +114,15 @@ module.exports = function () {
 
   it('should be able to bypass command hooks', function (done) {
     let before, after
-    let roomAddToListBefore = (callInfo, args, cb) => {
+    const roomAddToListBefore = (callInfo, args, cb) => {
       before = true
       cb()
     }
-    let roomAddToListAfter = (callInfo, args, results, cb) => {
+    const roomAddToListAfter = (callInfo, args, results, cb) => {
       after = true
       cb()
     }
-    chatService = startService(null, {roomAddToListBefore, roomAddToListAfter})
+    chatService = startService(null, { roomAddToListBefore, roomAddToListAfter })
     chatService.addRoom(
       roomName1, { owner: user1 },
       () => {
@@ -147,11 +147,11 @@ module.exports = function () {
   })
 
   it('should be able to bypass user messaging permissions', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService({ enableDirectMessages: true })
     chatService.addUser(user1, null, () => {
-      chatService.addUser(user2, {whitelistOnly: true}, () => {
+      chatService.addUser(user2, { whitelistOnly: true }, () => {
         socket2 = clientConnect(user2)
         socket2.on('loginConfirmed', () => {
           chatService.execUserCommand(
@@ -170,8 +170,8 @@ module.exports = function () {
   })
 
   it('should be able to bypass room messaging permissions', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService()
     chatService.addRoom(
       roomName1,
@@ -199,8 +199,8 @@ module.exports = function () {
   })
 
   it('should be able to send room messages without an user', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
@@ -224,8 +224,8 @@ module.exports = function () {
   })
 
   it('should not allow using non-existing users', function (done) {
-    let txt = 'Test message.'
-    let message = { textMessage: txt }
+    const txt = 'Test message.'
+    const message = { textMessage: txt }
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
       chatService.execUserCommand(
@@ -265,7 +265,7 @@ module.exports = function () {
 
   it('should be able to check room messaging permissions', function (done) {
     chatService = startService()
-    chatService.addRoom(roomName1, {blacklist: [user3]}, () => parallel([
+    chatService.addRoom(roomName1, { blacklist: [user3] }, () => parallel([
       cb => {
         chatService.hasRoomAccess(roomName1, user2, (error, data) => {
           expect(error).not.ok

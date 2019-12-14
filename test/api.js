@@ -176,7 +176,7 @@ module.exports = function () {
   })
 
   it('should be able to change a room history limit', function (done) {
-    let sz = 100
+    const sz = 100
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
       chatService.changeRoomHistoryMaxSize(roomName1, sz, (error, data) => {
@@ -240,15 +240,15 @@ module.exports = function () {
     chatService = startService()
     chatService.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
-      let context = { userName: user1 }
-      socket1.on('loginConfirmed', (userName, {id}) => {
+      const context = { userName: user1 }
+      socket1.on('loginConfirmed', (userName, { id }) => {
         context.id = id
         chatService.execUserCommand(context, 'roomJoin', roomName1)
         socket1.on('roomJoinedEcho', (roomName, id, njoined) => {
           expect(roomName).equal(roomName1)
           expect(id).equal(context.id)
           expect(njoined).equal(1)
-          let msg = { textMessage: 'Text message' }
+          const msg = { textMessage: 'Text message' }
           chatService.execUserCommand(context, 'roomMessage', roomName1, msg)
           socket1.on('roomMessage', (roomName, message) => {
             expect(roomName).equal(roomName1)

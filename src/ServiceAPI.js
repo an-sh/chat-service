@@ -48,13 +48,13 @@ class ServiceAPI {
       var { userName } = context
       context = _.clone(context)
     } else if (_.isBoolean(context)) {
-      context = {bypassPermissions: context}
+      context = { bypassPermissions: context }
     } else {
       userName = context
       context = {}
     }
     context.isLocalCall = true
-    let [nargs, cb] = possiblyCallback(args)
+    const [nargs, cb] = possiblyCallback(args)
     return Promise.try(() => {
       if (userName) {
         return this.state.getUser(userName)

@@ -5,11 +5,15 @@
 const _ = require('lodash')
 const { expect } = require('chai')
 
-const { cleanup, clientConnect, closeInstance,
-  parallel, startService } = require('./testutils')
+const {
+  cleanup, clientConnect, closeInstance,
+  parallel, startService
+} = require('./testutils')
 
-const { cleanupTimeout, port, user1, user2, user3,
-  roomName1, redisConfig } = require('./config')
+const {
+  cleanupTimeout, port, user1, user2, user3,
+  roomName1, redisConfig
+} = require('./config')
 
 module.exports = function () {
   let instance1, instance2, socket1, socket2, socket3, socket4, socket5
@@ -22,10 +26,10 @@ module.exports = function () {
   })
 
   it('should be able to send custom messages via a bus', function (done) {
-    let event = 'someEvent'
-    let data = { key: 'value' }
-    instance1 = startService(_.assign({port}, redisConfig))
-    instance2 = startService(_.assign({port: port + 1}, redisConfig))
+    const event = 'someEvent'
+    const data = { key: 'value' }
+    instance1 = startService(_.assign({ port }, redisConfig))
+    instance2 = startService(_.assign({ port: port + 1 }, redisConfig))
     parallel([
       cb => instance1.on('ready', cb),
       cb => instance2.on('ready', cb)
@@ -53,8 +57,8 @@ module.exports = function () {
   it('should remove other instances\' sockets from a channel', function (done) {
     this.timeout(4000)
     this.slow(2000)
-    instance1 = startService(_.assign({port}, redisConfig))
-    instance2 = startService(_.assign({port: port + 1}, redisConfig))
+    instance1 = startService(_.assign({ port }, redisConfig))
+    instance2 = startService(_.assign({ port: port + 1 }, redisConfig))
     instance1.addRoom(roomName1, { owner: user2 }, () => parallel([
       cb => {
         socket1 = clientConnect(user1, port)
@@ -78,15 +82,15 @@ module.exports = function () {
     ], error => {
       expect(error).not.ok
       socket3.emit('roomAddToList', roomName1, 'blacklist', [user1], () => {
-        socket3.emit('roomMessage', roomName1, {textMessage: 'hello'})
+        socket3.emit('roomMessage', roomName1, { textMessage: 'hello' })
         setTimeout(done, 1000)
       })
     }))
   })
 
   it('should disconnect users sockets across all instances', function (done) {
-    instance1 = startService(_.assign({port}, redisConfig))
-    instance2 = startService(_.assign({port: port + 1}, redisConfig))
+    instance1 = startService(_.assign({ port }, redisConfig))
+    instance2 = startService(_.assign({ port: port + 1 }, redisConfig))
     parallel([
       cb => {
         socket1 = clientConnect(user1, port)
@@ -110,12 +114,12 @@ module.exports = function () {
   })
 
   it('should correctly update a presence info on a shutdown', function (done) {
-    let enableUserlistUpdates = true
-    instance1 = startService(_.assign({port, enableUserlistUpdates},
+    const enableUserlistUpdates = true
+    instance1 = startService(_.assign({ port, enableUserlistUpdates },
       redisConfig))
-    instance2 = startService(_.assign({port: port + 1, enableUserlistUpdates},
+    instance2 = startService(_.assign({ port: port + 1, enableUserlistUpdates },
       redisConfig))
-    let ids = {}
+    const ids = {}
     instance1.addRoom(roomName1, null, () => parallel([
       cb => {
         socket1 = clientConnect(user1, port)
@@ -198,8 +202,8 @@ module.exports = function () {
 
   it('should be able to cleanup an instance data', function (done) {
     instance1 = startService(redisConfig)
-    instance2 = startService(_.assign({port: port + 1}, redisConfig))
-    let uid = instance1.instanceUID
+    instance2 = startService(_.assign({ port: port + 1 }, redisConfig))
+    const uid = instance1.instanceUID
     instance1.addRoom(roomName1, null, () => {
       socket1 = clientConnect(user1)
       socket1.on('loginConfirmed', () => {

@@ -76,12 +76,12 @@ module.exports = function () {
 
   it('should rollback a disconnected socket connection', function (done) {
     chatService = startService()
-    let orig = chatService.state.addSocket
+    const orig = chatService.state.addSocket
     chatService.state.addSocket = function (id) {
       return orig.apply(chatService.state, arguments)
         .finally(() => chatService.transport.disconnectSocket(id))
     }
-    let tst = chatService.transport.rejectLogin
+    const tst = chatService.transport.rejectLogin
     chatService.transport.rejectLogin = function () {
       tst.apply(chatService.transport, arguments)
       chatService.execUserCommand(user1, 'listOwnSockets', (error, data) => {
@@ -108,7 +108,7 @@ module.exports = function () {
   })
 
   it('should emit closed on onStart hook error', function (done) {
-    let onStart = (chatService, cb) => {
+    const onStart = (chatService, cb) => {
       expect(chatService).instanceof(ChatService)
       process.nextTick(cb, new Error())
     }
@@ -121,7 +121,7 @@ module.exports = function () {
 
   it('should propagate transport close errors', function (done) {
     chatService = startService()
-    let orig = chatService.transport.close
+    const orig = chatService.transport.close
     chatService.transport.close = function () {
       return orig.apply(chatService.transport, arguments)
         .then(() => { throw new Error() })
@@ -135,7 +135,7 @@ module.exports = function () {
   })
 
   it('should propagate onClose errors', function (done) {
-    let onClose = (chatService, error, cb) => {
+    const onClose = (chatService, error, cb) => {
       expect(chatService).instanceof(ChatService)
       expect(error).not.ok
       process.nextTick(cb, new Error())
@@ -150,12 +150,12 @@ module.exports = function () {
   })
 
   it('should propagate transport close errors', function (done) {
-    let onClose = (chatService, error, cb) => {
+    const onClose = (chatService, error, cb) => {
       expect(error).ok
       process.nextTick(cb, error)
     }
     chatService = startService(null, { onClose })
-    let orig = chatService.transport.close
+    const orig = chatService.transport.close
     chatService.transport.close = function () {
       return orig.apply(chatService.transport, arguments)
         .then(() => { throw new Error() })
@@ -170,12 +170,12 @@ module.exports = function () {
 
   it('should return converted internal error objects', function (done) {
     let msg
-    let onConnect = (server, id, cb) => {
-      let err = new Error('This is an error mockup for testing.')
+    const onConnect = (server, id, cb) => {
+      const err = new Error('This is an error mockup for testing.')
       msg = err.toString()
       throw err
     }
-    chatService = startService({useRawErrorObjects: true}, {onConnect})
+    chatService = startService({ useRawErrorObjects: true }, { onConnect })
     socket1 = clientConnect(user1)
     socket1.on('loginRejected', e => {
       expect(e).to.be.an('object')
@@ -188,9 +188,9 @@ module.exports = function () {
   it('should support extending ChatServiceError', function (done) {
     chatService = startService()
     chatService.once('ready', () => {
-      let ChatServiceError = chatService.ChatServiceError
+      const ChatServiceError = chatService.ChatServiceError
       class MyError extends ChatServiceError {}
-      let error = new MyError()
+      const error = new MyError()
       expect(error).instanceof(ChatServiceError)
       expect(error).instanceof(Error)
       done()

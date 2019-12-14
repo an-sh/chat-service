@@ -26,13 +26,13 @@ class CommandBinder {
   }
 
   makeCommand (name, fn) {
-    let { validator } = this.server
-    let beforeHook = this.server.hooks[`${name}Before`]
-    let afterHook = this.server.hooks[`${name}After`]
+    const { validator } = this.server
+    const beforeHook = this.server.hooks[`${name}Before`]
+    const afterHook = this.server.hooks[`${name}After`]
     return (args, info) => {
-      let execInfo = new ExecInfo()
-      let context = { server: this.server, userName: this.userName }
-      let argsInfo = validator.splitArguments(name, args)
+      const execInfo = new ExecInfo()
+      const context = { server: this.server, userName: this.userName }
+      const argsInfo = validator.splitArguments(name, args)
       _.assign(execInfo, context, info, argsInfo)
       return Promise.using(this.commandWatcher(info.id, name), co(function * () {
         yield validator.checkArguments(name, ...execInfo.args)
@@ -59,23 +59,23 @@ class CommandBinder {
   }
 
   bindDisconnect (id, fn) {
-    let server = this.server
-    let hook = this.server.hooks.onDisconnect
+    const server = this.server
+    const hook = this.server.hooks.onDisconnect
     this.transport.bindHandler(id, 'disconnect', () => {
       return Promise.using(
         this.commandWatcher(id, 'disconnect'),
         () => fn(id)
           .catch(logError)
           .catchReturn()
-          .then(data => execHook(hook, server, _.assign({id}, data)))
+          .then(data => execHook(hook, server, _.assign({ id }, data)))
           .catch(logError)
           .catchReturn())
     })
   }
 
   bindCommand (id, name, fn) {
-    let cmd = this.makeCommand(name, fn)
-    let info = {id}
+    const cmd = this.makeCommand(name, fn)
+    const info = { id }
     return this.transport.bindHandler(id, name, (...args) => cmd(args, info))
   }
 }

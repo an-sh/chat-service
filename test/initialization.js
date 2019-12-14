@@ -8,8 +8,10 @@ const { expect } = require('chai')
 const http = require('http')
 const socketIO = require('socket.io')
 
-const { cleanup, clientConnect,
-  ChatService, startService } = require('./testutils')
+const {
+  cleanup, clientConnect,
+  ChatService, startService
+} = require('./testutils')
 
 const { cleanupTimeout, port, user1, redisConnect } = require('./config')
 
@@ -32,14 +34,14 @@ module.exports = function () {
   })
 
   it('should be able to spawn a server without options', function (done) {
-    let chatService = new ChatService()
+    const chatService = new ChatService()
     chatService.on('ready', () => {
       chatService.close().asCallback(done)
     })
   })
 
   it('should be able to integrate with a http server', function (done) {
-    let app = http.createServer((req, res) => res.end())
+    const app = http.createServer((req, res) => res.end())
     chatService = startService({ transportOptions: { http: app } })
     app.listen(port)
     socket1 = clientConnect(user1)
@@ -50,8 +52,8 @@ module.exports = function () {
   })
 
   it('should be able to integrate with an io server', function (done) {
-    let io = socketIO(port)
-    chatService = startService({ transportOptions: {io} })
+    const io = socketIO(port)
+    chatService = startService({ transportOptions: { io } })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', u => {
       expect(chatService.transport.getServer()).equal(io)
@@ -62,7 +64,7 @@ module.exports = function () {
 
   it('should be able to use a custom state constructor', function (done) {
     this.timeout(5000)
-    let MemoryState = require('../lib/MemoryState')
+    const MemoryState = require('../lib/MemoryState')
     chatService = startService({ state: MemoryState })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', u => {
@@ -73,7 +75,7 @@ module.exports = function () {
 
   it('should be able to use a custom transport constructor', function (done) {
     this.timeout(5000)
-    let Transport = require('../lib/SocketIOTransport')
+    const Transport = require('../lib/SocketIOTransport')
     chatService = startService({ transport: Transport })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', u => {
@@ -84,7 +86,7 @@ module.exports = function () {
 
   it('should be able to use a custom adapter constructor', function (done) {
     this.timeout(5000)
-    let Adapter = require('socket.io-redis')
+    const Adapter = require('socket.io-redis')
     chatService = startService(
       { adapter: Adapter, adapterOptions: redisConnect })
     socket1 = clientConnect(user1)
@@ -98,7 +100,7 @@ module.exports = function () {
     this.timeout(4000)
     this.slow(2000)
     chatService = startService({ heartbeatRate: 500 })
-    let start = _.now()
+    const start = _.now()
     setTimeout(() => {
       Promise.join(
         chatService.getInstanceHeartbeat(chatService.instanceUID),

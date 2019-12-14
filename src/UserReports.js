@@ -18,7 +18,7 @@ class UserReports {
   }
 
   userRemovedReport (userName, roomName, enableUserlistUpdates) {
-    let cn = this.echoChannel
+    const cn = this.echoChannel
     this.transport.emitToChannel(cn, 'roomAccessRemoved', roomName)
     this.userLeftRoomReport(userName, roomName, enableUserlistUpdates)
   }

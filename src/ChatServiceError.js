@@ -41,7 +41,7 @@ const codeToFormat = {
 ChatServiceError.prototype.codeToFormat = codeToFormat
 
 ChatServiceError.prototype.toString = function () {
-  let str = this.codeToFormat[this.code]
+  const str = this.codeToFormat[this.code]
   if (str) {
     return util.format(`ChatServiceError: ${str}`, ...this.args)
   } else {

@@ -46,7 +46,7 @@ class SocketIOClusterBus extends EventEmitter {
   customHook (data, cb) {
     try {
       if (data.marker === this.marker) {
-        let { ev, args } = data
+        const { ev, args } = data
         super.emit(ev, ...args)
       }
       cb()

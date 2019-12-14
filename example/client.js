@@ -2,14 +2,14 @@
 const io = require('socket.io-client')
 
 // Use https or wss in production.
-let url = 'ws://localhost:8000/chat-service'
-let userName = `user${Math.floor(Math.random() * 99) + 1}`
-let token = 'token' // auth token
-let query = `userName=${userName}&token=${token}`
-let opts = { query }
+const url = 'ws://localhost:8000/chat-service'
+const userName = `user${Math.floor(Math.random() * 99) + 1}`
+const token = 'token' // auth token
+const query = `userName=${userName}&token=${token}`
+const opts = { query }
 
 // Connect to a server.
-let socket = io.connect(url, opts)
+const socket = io.connect(url, opts)
 
 // Rooms messages handler (own messages are here too).
 socket.on('roomMessage', (room, msg) => {

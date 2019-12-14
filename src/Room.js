@@ -14,7 +14,7 @@ class RoomPermissions {
 
   makeConsistencyReporter (userName) {
     return (error) => {
-      let operationInfo = { userName }
+      const operationInfo = { userName }
       operationInfo.roomName = this.roomName
       operationInfo.opType = 'roomUserlist'
       this.emitFailure('storeConsistencyFailure', error, operationInfo)
@@ -60,16 +60,16 @@ class RoomPermissions {
     }
     if (bypassPermissions) { return Promise.resolve() }
     return run(this, function * () {
-      let owner = yield this.roomState.ownerGet()
+      const owner = yield this.roomState.ownerGet()
       if (author === owner) { return }
       if (listName === 'adminlist') {
         return Promise.reject(new ChatServiceError('notAllowed'))
       }
-      let admin = yield this.roomState.hasInList('adminlist', author)
+      const admin = yield this.roomState.hasInList('adminlist', author)
       if (!admin) {
         return Promise.reject(new ChatServiceError('notAllowed'))
       }
-      for (let name of values) {
+      for (const name of values) {
         if (name !== owner) { continue }
         return Promise.reject(new ChatServiceError('notAllowed'))
       }
@@ -85,15 +85,15 @@ class RoomPermissions {
 
   checkAcess (userName) {
     return run(this, function * () {
-      let admin = yield this.isAdmin(userName)
+      const admin = yield this.isAdmin(userName)
       if (admin) { return }
-      let blacklisted = yield this.roomState.hasInList('blacklist', userName)
+      const blacklisted = yield this.roomState.hasInList('blacklist', userName)
       if (blacklisted) {
         return Promise.reject(new ChatServiceError('notAllowed'))
       }
-      let whitelistOnly = yield this.roomState.whitelistOnlyGet()
+      const whitelistOnly = yield this.roomState.whitelistOnlyGet()
       if (!whitelistOnly) { return }
-      let whitelisted = yield this.roomState.hasInList('whitelist', userName)
+      const whitelisted = yield this.roomState.hasInList('whitelist', userName)
       if (whitelisted) { return }
       return Promise.reject(new ChatServiceError('notAllowed'))
     })
@@ -102,9 +102,9 @@ class RoomPermissions {
   checkRead (author, bypassPermissions) {
     if (bypassPermissions) { return Promise.resolve() }
     return run(this, function * () {
-      let hasAuthor = yield this.roomState.hasInList('userlist', author)
+      const hasAuthor = yield this.roomState.hasInList('userlist', author)
       if (hasAuthor) { return }
-      let admin = yield this.isAdmin(author)
+      const admin = yield this.isAdmin(author)
       if (admin) { return }
       return Promise.reject(new ChatServiceError('notJoined', this.roomName))
     })
@@ -126,7 +126,7 @@ class Room {
     this.server = server
     this.roomName = roomName
     this.listSizeLimit = this.server.roomListSizeLimit
-    let State = this.server.state.RoomState
+    const State = this.server.state.RoomState
     this.roomState = new State(this.server, this.roomName)
     mixin(this, RoomPermissions, this.roomName,
       this.roomState, this.server.emit.bind(this.server))
@@ -153,7 +153,7 @@ class Room {
       if (!hasAuthor) { return }
       return Promise.all([
         this.roomState.removeFromList('userlist', [author]),
-        this.roomState.userSeenUpdate(author) ])
+        this.roomState.userSeenUpdate(author)])
     })
   }
 
@@ -164,7 +164,7 @@ class Room {
         if (hasAuthor) { return }
         return Promise.all([
           this.roomState.userSeenUpdate(author),
-          this.roomState.addToList('userlist', [author]) ])
+          this.roomState.addToList('userlist', [author])])
       })
   }
 
@@ -205,7 +205,7 @@ class Room {
   getMessages (author, id, limit, bypassPermissions) {
     return this.checkRead(author, bypassPermissions).then(() => {
       if (!bypassPermissions) {
-        limit = _.min([ limit, this.server.historyMaxGetMessages ])
+        limit = _.min([limit, this.server.historyMaxGetMessages])
       }
       return this.roomState.messagesGet(id, limit)
     })
@@ -241,11 +241,11 @@ class Room {
   }
 
   changeMode (author, mode, bypassPermissions) {
-    let whitelistOnly = mode
+    const whitelistOnly = mode
     return this.checkModeChange(author, mode, bypassPermissions)
       .then(() => this.roomState.whitelistOnlySet(whitelistOnly))
       .then(() => this.getModeChangedCurrentAccess(whitelistOnly))
-      .then(usernames => [ usernames, whitelistOnly ])
+      .then(usernames => [usernames, whitelistOnly])
   }
 
   userSeen (author, userName, bypassPermissions) {

@@ -12,7 +12,7 @@ const { mixin } = require('./utils')
 function initState (state, values = []) {
   if (state instanceof Set) {
     state.clear()
-    for (let val of values) {
+    for (const val of values) {
       state.add(val)
     }
   } else if (state instanceof Map) {
@@ -24,16 +24,16 @@ function initState (state, values = []) {
 }
 
 function mapToObject (m) {
-  let res = {}
-  for (let [k, v] of m) {
+  const res = {}
+  for (const [k, v] of m) {
     res[k] = v
   }
   return res
 }
 
 function setDifference (s1, s2) {
-  let res = new Set()
-  for (let v of s1) {
+  const res = new Set()
+  for (const v of s1) {
     if (!s2.has(v)) { res.add(v) }
   }
   return res
@@ -48,10 +48,10 @@ class LockOperations {
 
   lock (key, val, ttl) {
     return promiseRetry(
-      {minTimeout: 100, retries: 10, factor: 1.5, randomize: true},
+      { minTimeout: 100, retries: 10, factor: 1.5, randomize: true },
       (retry, n) => {
         if (this.locks.has(key)) {
-          let err = new ChatServiceError('timeout')
+          const err = new ChatServiceError('timeout')
           retry(err)
         } else {
           this.locks.set(key, val)
@@ -60,7 +60,7 @@ class LockOperations {
   }
 
   unlock (key, val) {
-    let currentVal = this.locks.get(key)
+    const currentVal = this.locks.get(key)
     if (currentVal === val) {
       this.locks.delete(key)
     }
@@ -72,14 +72,14 @@ class LockOperations {
 class ListsStateMemory {
   checkList (listName, num, limit) {
     if (!this.hasList(listName)) {
-      let error = new ChatServiceError('noList', listName)
+      const error = new ChatServiceError('noList', listName)
       return Promise.reject(error)
     }
     if (listName === 'userlist') {
       return Promise.resolve()
     }
     if (this[listName].size + num > limit) {
-      let error = new ChatServiceError('listLimitExceeded', listName)
+      const error = new ChatServiceError('listLimitExceeded', listName)
       return Promise.reject(error)
     } else {
       return Promise.resolve()
@@ -87,9 +87,9 @@ class ListsStateMemory {
   }
 
   addToList (listName, elems, limit) {
-    let num = elems.length
+    const num = elems.length
     return this.checkList(listName, num, limit).then(() => {
-      for (let elem of elems) {
+      for (const elem of elems) {
         this[listName].add(elem)
       }
     })
@@ -97,7 +97,7 @@ class ListsStateMemory {
 
   removeFromList (listName, elems) {
     return this.checkList(listName).then(() => {
-      for (let elem of elems) {
+      for (const elem of elems) {
         this[listName].delete(elem)
       }
     })
@@ -105,7 +105,7 @@ class ListsStateMemory {
 
   getList (listName) {
     return this.checkList(listName).then(() => {
-      let data = this[listName]
+      const data = this[listName]
       return [...data]
     })
   }
@@ -151,7 +151,8 @@ class RoomStateMemory extends ListsStateMemory {
 
   initState (state) {
     state = state || {}
-    let { whitelist, blacklist, adminlist,
+    const {
+      whitelist, blacklist, adminlist,
       whitelistOnly, owner, historyMaxSize,
       enableAccessListsUpdates = this.server.enableAccessListsUpdates,
       enableUserlistUpdates = this.server.enableUserlistUpdates
@@ -214,7 +215,7 @@ class RoomStateMemory extends ListsStateMemory {
     if (_.isNumber(historyMaxSize) && historyMaxSize >= 0) {
       this.historyMaxSize = historyMaxSize
     }
-    let limit = this.historyMaxSize
+    const limit = this.historyMaxSize
     this.messagesHistory = this.messagesHistory.slice(0, limit)
     this.messagesTimestamps = this.messagesTimestamps.slice(0, limit)
     this.messagesIds = this.messagesIds.slice(0, limit)
@@ -222,8 +223,8 @@ class RoomStateMemory extends ListsStateMemory {
   }
 
   historyInfo () {
-    let historySize = this.messagesHistory.length
-    let info = {
+    const historySize = this.messagesHistory.length
+    const info = {
       historySize,
       historyMaxSize: this.historyMaxSize,
       historyMaxGetMessages: this.historyMaxGetMessages,
@@ -233,15 +234,15 @@ class RoomStateMemory extends ListsStateMemory {
   }
 
   getCommonUsers () {
-    let nonWL = setDifference(this.userlist, this.whitelist)
-    let nonAdmin = setDifference(nonWL, this.adminlist)
+    const nonWL = setDifference(this.userlist, this.whitelist)
+    const nonAdmin = setDifference(nonWL, this.adminlist)
     return Promise.resolve([...nonAdmin])
   }
 
   messageAdd (msg) {
-    let timestamp = _.now()
+    const timestamp = _.now()
     this.lastMessageId++
-    let makeResult = () => {
+    const makeResult = () => {
       msg.timestamp = timestamp
       msg.id = this.lastMessageId
       return Promise.resolve(msg)
@@ -261,13 +262,13 @@ class RoomStateMemory extends ListsStateMemory {
   }
 
   messagesGetRecent () {
-    let msgs = this.messagesHistory.slice(0, this.historyMaxGetMessages)
-    let tss = this.messagesTimestamps.slice(0, this.historyMaxGetMessages)
-    let ids = this.messagesIds.slice(0, this.historyMaxGetMessages)
-    let data = []
+    const msgs = this.messagesHistory.slice(0, this.historyMaxGetMessages)
+    const tss = this.messagesTimestamps.slice(0, this.historyMaxGetMessages)
+    const ids = this.messagesIds.slice(0, this.historyMaxGetMessages)
+    const data = []
     for (let idx = 0; idx < msgs.length; idx++) {
-      let msg = msgs[idx]
-      let obj = _.cloneDeep(msg)
+      const msg = msgs[idx]
+      const obj = _.cloneDeep(msg)
       obj.timestamp = tss[idx]
       obj.id = ids[idx]
       data[idx] = obj
@@ -278,18 +279,18 @@ class RoomStateMemory extends ListsStateMemory {
   messagesGet (id, maxMessages = this.historyMaxGetMessages) {
     if (maxMessages <= 0) { return Promise.resolve([]) }
     id = _.max([0, id])
-    let lastid = this.lastMessageId
-    id = _.min([ id, lastid ])
-    let end = lastid - id
-    let len = _.min([ maxMessages, end ])
-    let start = _.max([ 0, end - len ])
-    let msgs = this.messagesHistory.slice(start, end)
-    let tss = this.messagesTimestamps.slice(start, end)
-    let ids = this.messagesIds.slice(start, end)
-    let data = []
+    const lastid = this.lastMessageId
+    id = _.min([id, lastid])
+    const end = lastid - id
+    const len = _.min([maxMessages, end])
+    const start = _.max([0, end - len])
+    const msgs = this.messagesHistory.slice(start, end)
+    const tss = this.messagesTimestamps.slice(start, end)
+    const ids = this.messagesIds.slice(start, end)
+    const data = []
     for (let idx = 0; idx < msgs.length; idx++) {
-      let msg = msgs[idx]
-      let obj = _.cloneDeep(msg)
+      const msg = msgs[idx]
+      const obj = _.cloneDeep(msg)
       msg.timestamp = tss[idx]
       msg.id = ids[idx]
       data[idx] = obj
@@ -298,13 +299,13 @@ class RoomStateMemory extends ListsStateMemory {
   }
 
   userSeenGet (userName) {
-    let joined = Boolean(this.userlist.has(userName))
-    let timestamp = this.usersseen.get(userName) || null
-    return Promise.resolve({joined, timestamp})
+    const joined = Boolean(this.userlist.has(userName))
+    const timestamp = this.usersseen.get(userName) || null
+    return Promise.resolve({ joined, timestamp })
   }
 
   userSeenUpdate (userName) {
-    let timestamp = _.now()
+    const timestamp = _.now()
     this.usersseen.set(userName, timestamp)
     return Promise.resolve()
   }
@@ -350,57 +351,57 @@ class UserStateMemory {
   }
 
   addSocket (id, uid) {
-    let roomsset = new Set()
+    const roomsset = new Set()
     this.socketsToRooms.set(id, roomsset)
     this.socketsToInstances.set(id, uid)
-    let nconnected = this.socketsToRooms.size
+    const nconnected = this.socketsToRooms.size
     return Promise.resolve(nconnected)
   }
 
   getAllSockets () {
-    let sockets = [...this.socketsToRooms.keys()]
+    const sockets = [...this.socketsToRooms.keys()]
     return Promise.resolve(sockets)
   }
 
   getSocketsToInstance () {
-    let data = mapToObject(this.socketsToInstances)
+    const data = mapToObject(this.socketsToInstances)
     return Promise.resolve(data)
   }
 
   getRoomToSockets (roomName) {
-    let socketsset = this.roomsToSockets.get(roomName)
-    let data = socketsset ? mapToObject(socketsset) : {}
+    const socketsset = this.roomsToSockets.get(roomName)
+    const data = socketsset ? mapToObject(socketsset) : {}
     return Promise.resolve(data)
   }
 
   getSocketsToRooms () {
-    let result = {}
-    for (let id of this.socketsToRooms.keys()) {
-      let socketsset = this.socketsToRooms.get(id)
+    const result = {}
+    for (const id of this.socketsToRooms.keys()) {
+      const socketsset = this.socketsToRooms.get(id)
       result[id] = socketsset ? [...socketsset] : []
     }
     return Promise.resolve(result)
   }
 
   addSocketToRoom (id, roomName) {
-    let roomsset = this.socketsToRooms.get(id)
+    const roomsset = this.socketsToRooms.get(id)
     let socketsset = this.roomsToSockets.get(roomName)
-    let wasjoined = (socketsset && socketsset.size) || 0
+    const wasjoined = (socketsset && socketsset.size) || 0
     if (!socketsset) {
       socketsset = new Set()
       this.roomsToSockets.set(roomName, socketsset)
     }
     roomsset.add(roomName)
     socketsset.add(id)
-    let njoined = socketsset.size
-    let hasChanged = njoined !== wasjoined
+    const njoined = socketsset.size
+    const hasChanged = njoined !== wasjoined
     return Promise.resolve([njoined, hasChanged])
   }
 
   removeSocketFromRoom (id, roomName) {
-    let roomsset = this.socketsToRooms.get(id)
-    let socketsset = this.roomsToSockets.get(roomName)
-    let wasjoined = (socketsset && socketsset.size) || 0
+    const roomsset = this.socketsToRooms.get(id)
+    const socketsset = this.roomsToSockets.get(roomName)
+    const wasjoined = (socketsset && socketsset.size) || 0
     if (roomsset) {
       roomsset.delete(roomName)
     }
@@ -411,16 +412,16 @@ class UserStateMemory {
     if (wasjoined > 0) {
       njoined = socketsset.size
     }
-    let hasChanged = njoined !== wasjoined
+    const hasChanged = njoined !== wasjoined
     return Promise.resolve([njoined, hasChanged])
   }
 
   removeAllSocketsFromRoom (roomName) {
-    let sockets = [...this.socketsToRooms.keys()]
+    const sockets = [...this.socketsToRooms.keys()]
     let socketsset = this.roomsToSockets.get(roomName)
-    let removedSockets = socketsset || []
-    for (let id of removedSockets) {
-      let roomsset = this.socketsToRooms.get(id)
+    const removedSockets = socketsset || []
+    for (const id of removedSockets) {
+      const roomsset = this.socketsToRooms.get(id)
       roomsset.delete(roomName)
     }
     if (socketsset) {
@@ -431,29 +432,29 @@ class UserStateMemory {
   }
 
   removeSocket (id) {
-    let roomsset = this.socketsToRooms.get(id)
-    let removedRooms = roomsset || []
-    let joinedSockets = []
-    for (let roomName of removedRooms) {
-      let socketsset = this.roomsToSockets.get(roomName)
+    const roomsset = this.socketsToRooms.get(id)
+    const removedRooms = roomsset || []
+    const joinedSockets = []
+    for (const roomName of removedRooms) {
+      const socketsset = this.roomsToSockets.get(roomName)
       socketsset.delete(id)
-      let njoined = socketsset.size
+      const njoined = socketsset.size
       joinedSockets.push(njoined)
     }
     this.socketsToRooms.delete(id)
     this.socketsToInstances.delete(id)
-    let nconnected = this.socketsToRooms.size
-    return Promise.resolve([ [...removedRooms], joinedSockets, nconnected ])
+    const nconnected = this.socketsToRooms.size
+    return Promise.resolve([[...removedRooms], joinedSockets, nconnected])
   }
 
   lockToRoom (roomName, ttl) {
     return uid(18).then(val => {
-      let start = _.now()
+      const start = _.now()
       return this.lock(roomName, val, ttl).then(() => {
         return Promise.resolve().disposer(() => {
           if (start + ttl < _.now()) {
             this.server.emit(
-              'lockTimeExceeded', val, {userName: this.userName, roomName})
+              'lockTimeExceeded', val, { userName: this.userName, roomName })
           }
           return this.unlock(roomName, val)
         })
@@ -485,22 +486,22 @@ class MemoryState {
   }
 
   getRoom (name, isPredicate = false) {
-    let room = this.rooms.get(name)
+    const room = this.rooms.get(name)
     if (room) { return Promise.resolve(room) }
     if (isPredicate) {
       return Promise.resolve(null)
     } else {
-      let error = new ChatServiceError('noRoom', name)
+      const error = new ChatServiceError('noRoom', name)
       return Promise.reject(error)
     }
   }
 
   addRoom (name, state) {
-    let room = new Room(this.server, name)
+    const room = new Room(this.server, name)
     if (!this.rooms.get(name)) {
       this.rooms.set(name, room)
     } else {
-      let error = new ChatServiceError('roomExists', name)
+      const error = new ChatServiceError('roomExists', name)
       return Promise.reject(error)
     }
     return room.initState(state).return(room)
@@ -536,18 +537,18 @@ class MemoryState {
   }
 
   getOrAddUser (name, state) {
-    let user = this.users.get(name)
+    const user = this.users.get(name)
     if (user) { return Promise.resolve(user) }
     return this.addUser(name, state)
   }
 
   getUser (name, isPredicate = false) {
-    let user = this.users.get(name)
+    const user = this.users.get(name)
     if (user) { return Promise.resolve(user) }
     if (isPredicate) {
       return Promise.resolve(null)
     } else {
-      let error = new ChatServiceError('noUser', name)
+      const error = new ChatServiceError('noUser', name)
       return Promise.reject(error)
     }
   }
@@ -555,7 +556,7 @@ class MemoryState {
   addUser (name, state) {
     let user = this.users.get(name)
     if (user) {
-      let error = new ChatServiceError('userExists', name)
+      const error = new ChatServiceError('userExists', name)
       return Promise.reject(error)
     }
     user = new User(this.server, name)

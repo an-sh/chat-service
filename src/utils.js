@@ -5,11 +5,12 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 const util = require('util')
 
-let debuglog = util.debuglog('ChatService')
+const debuglog = util.debuglog('ChatService')
 
-let asyncLimit = 32
+const asyncLimit = 32
 
-let nameChecker = /^[^\u0000-\u001F:{}\u007F]+$/
+// eslint-disable-next-line no-control-regex
+const nameChecker = /^[^\u0000-\u001F:{}\u007F]+$/
 
 function possiblyCallback (args) {
   let cb = _.last(args)
@@ -32,21 +33,21 @@ function checkNameSymbols (name) {
 function execHook (hook, ...args) {
   if (!hook) { return Promise.resolve() }
   let cb, callbackResults, hasResults
-  let wrapper = function (...data) {
+  const wrapper = function (...data) {
     hasResults = true
     callbackResults = data
     // eslint-disable-next-line
     if (cb) { cb(...data) }
   }
-  let res = hook(...args, wrapper)
+  const res = hook(...args, wrapper)
   if (hasResults) {
     return Promise.fromCallback(
       fn => { fn(...callbackResults) },
-      {multiArgs: true})
+      { multiArgs: true })
   } else if ((res != null) && typeof res.then === 'function') {
     return res
   } else {
-    return Promise.fromCallback(fn => { cb = fn }, {multiArgs: true})
+    return Promise.fromCallback(fn => { cb = fn }, { multiArgs: true })
   }
 }
 
@@ -55,7 +56,7 @@ function run (self, gen) {
 }
 
 function logError (error) {
-  let isServiceError = error instanceof ChatServiceError
+  const isServiceError = error instanceof ChatServiceError
   if (!isServiceError) {
     debuglog(error)
   }
@@ -64,10 +65,10 @@ function logError (error) {
 
 // based on https://github.com/amercier/es6-mixin
 function mixin (target, MixinConstructor, ...args) {
-  let source = new MixinConstructor(...args)
-  let names = Object.getOwnPropertyNames(MixinConstructor.prototype)
-  for (let name of names) {
-    let val = source[name]
+  const source = new MixinConstructor(...args)
+  const names = Object.getOwnPropertyNames(MixinConstructor.prototype)
+  for (const name of names) {
+    const val = source[name]
     if (_.isFunction(val) && name !== 'constructor') {
       target[name] = val.bind(source)
     }
@@ -79,7 +80,7 @@ function convertError (error, useRawErrorObjects) {
     if (!useRawErrorObjects) {
       return error.toString()
     }
-    let isServiceError = error instanceof ChatServiceError
+    const isServiceError = error instanceof ChatServiceError
     if (!isServiceError) {
       return new ChatServiceError('internalError', error.toString())
     }

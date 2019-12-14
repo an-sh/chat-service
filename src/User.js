@@ -19,11 +19,11 @@ class User {
     this.enableRoomsManagement = this.server.enableRoomsManagement
     this.enableDirectMessages = this.server.enableDirectMessages
     this.directMessaging = new DirectMessaging(server, userName)
-    let State = this.server.state.UserState
+    const State = this.server.state.UserState
     this.userState = new State(this.server, this.userName)
     this.commandBinder =
       new CommandBinder(this.server, this.transport, this.userName)
-    let opts = {
+    const opts = {
       server,
       echoChannel: this.echoChannel,
       state: this.state,
@@ -47,7 +47,7 @@ class User {
   checkOnline () {
     return this.userState.getAllSockets().then(sockets => {
       if (!sockets || !sockets.length) {
-        let error = new ChatServiceError('noUserOnline', this.userName)
+        const error = new ChatServiceError('noUserOnline', this.userName)
         return Promise.reject(error)
       }
     })
@@ -64,27 +64,27 @@ class User {
   }
 
   exec (command, options, args) {
-    let { id } = options
-    let requestsNames = this.server.rpcRequestsNames
+    const { id } = options
+    const requestsNames = this.server.rpcRequestsNames
     if (!_.includes(requestsNames, command)) {
-      let error = new ChatServiceError('noCommand', command)
+      const error = new ChatServiceError('noCommand', command)
       return Promise.reject(error)
     }
-    let requiresSocket = command === 'roomJoin' || command === 'roomLeave'
+    const requiresSocket = command === 'roomJoin' || command === 'roomLeave'
     if (!id && requiresSocket) {
-      let error = new ChatServiceError('noSocket', command)
+      const error = new ChatServiceError('noSocket', command)
       return Promise.reject(error)
     }
-    let fn = this[command].bind(this)
-    let cmd = this.commandBinder.makeCommand(command, fn)
+    const fn = this[command].bind(this)
+    const cmd = this.commandBinder.makeCommand(command, fn)
     return cmd(args, options)
   }
 
   registerSocket (id) {
     return run(this, function * () {
-      let nconnected = yield this.addUserSocket(id, this.userName)
-      let commands = this.server.rpcRequestsNames
-      for (let cmd of commands) {
+      const nconnected = yield this.addUserSocket(id, this.userName)
+      const commands = this.server.rpcRequestsNames
+      for (const cmd of commands) {
         this.commandBinder.bindCommand(id, cmd, this[cmd].bind(this))
       }
       this.commandBinder.bindDisconnect(id, this.removeSocket.bind(this))
@@ -122,14 +122,14 @@ class User {
     return this.directMessaging.getMode(this.userName)
   }
 
-  directMessage (recipientName, msg, {id, bypassPermissions}) {
+  directMessage (recipientName, msg, { id, bypassPermissions }) {
     if (!this.enableDirectMessages) {
-      let error = new ChatServiceError('notAllowed')
+      const error = new ChatServiceError('notAllowed')
       return Promise.reject(error)
     }
     this.processMessage(msg, true)
     return this.server.state.getUser(recipientName).then(recipient => {
-      let channel = recipient.echoChannel
+      const channel = recipient.echoChannel
       return recipient.directMessaging
         .message(this.userName, msg, bypassPermissions)
         .then(() => recipient.checkOnline())
@@ -155,7 +155,7 @@ class User {
     return this.userState.getSocketsToRooms()
   }
 
-  roomAddToList (roomName, listName, values, {bypassPermissions}) {
+  roomAddToList (roomName, listName, values, { bypassPermissions }) {
     return this.state.getRoom(roomName).then(room => {
       return Promise.join(
         room.addToList(this.userName, listName, values, bypassPermissions),
@@ -170,20 +170,20 @@ class User {
     }).return()
   }
 
-  roomCreate (roomName, whitelistOnly, {bypassPermissions}) {
+  roomCreate (roomName, whitelistOnly, { bypassPermissions }) {
     if (!this.enableRoomsManagement && !bypassPermissions) {
-      let error = new ChatServiceError('notAllowed')
+      const error = new ChatServiceError('notAllowed')
       return Promise.reject(error)
     }
-    let owner = this.userName
+    const owner = this.userName
     return checkNameSymbols(roomName)
-      .then(() => this.state.addRoom(roomName, {owner, whitelistOnly}))
+      .then(() => this.state.addRoom(roomName, { owner, whitelistOnly }))
       .return()
   }
 
-  roomDelete (roomName, {bypassPermissions}) {
+  roomDelete (roomName, { bypassPermissions }) {
     if (!this.enableRoomsManagement && !bypassPermissions) {
-      let error = new ChatServiceError('notAllowed')
+      const error = new ChatServiceError('notAllowed')
       return Promise.reject(error)
     }
     return this.state.getRoom(roomName).then(room => {
@@ -197,48 +197,48 @@ class User {
     })
   }
 
-  roomGetAccessList (roomName, listName, {bypassPermissions}) {
+  roomGetAccessList (roomName, listName, { bypassPermissions }) {
     return this.state.getRoom(roomName)
       .then(room => room.getList(this.userName, listName, bypassPermissions))
   }
 
-  roomGetOwner (roomName, {bypassPermissions}) {
+  roomGetOwner (roomName, { bypassPermissions }) {
     return this.state.getRoom(roomName)
       .then(room => room.getOwner(this.userName, bypassPermissions))
   }
 
-  roomGetWhitelistMode (roomName, {bypassPermissions}) {
+  roomGetWhitelistMode (roomName, { bypassPermissions }) {
     return this.state.getRoom(roomName)
       .then(room => room.getMode(this.userName, bypassPermissions))
   }
 
-  roomRecentHistory (roomName, {bypassPermissions}) {
+  roomRecentHistory (roomName, { bypassPermissions }) {
     return this.state.getRoom(roomName)
       .then(room => room.getRecentMessages(this.userName, bypassPermissions))
   }
 
-  roomHistoryGet (roomName, msgid, limit, {bypassPermissions}) {
+  roomHistoryGet (roomName, msgid, limit, { bypassPermissions }) {
     return this.state.getRoom(roomName)
       .then(room => room.getMessages(
         this.userName, msgid, limit, bypassPermissions))
   }
 
-  roomHistoryInfo (roomName, {bypassPermissions}) {
+  roomHistoryInfo (roomName, { bypassPermissions }) {
     return this.state.getRoom(roomName)
       .then(room => room.getHistoryInfo(this.userName, bypassPermissions))
   }
 
-  roomJoin (roomName, {id, isLocalCall}) {
+  roomJoin (roomName, { id, isLocalCall }) {
     return this.state.getRoom(roomName)
       .then(room => this.joinSocketToRoom(id, roomName, isLocalCall))
   }
 
-  roomLeave (roomName, {id, isLocalCall}) {
+  roomLeave (roomName, { id, isLocalCall }) {
     return this.state.getRoom(roomName)
       .then(room => this.leaveSocketFromRoom(id, room.roomName, isLocalCall))
   }
 
-  roomMessage (roomName, msg, {bypassPermissions}) {
+  roomMessage (roomName, msg, { bypassPermissions }) {
     return this.state.getRoom(roomName).then(room => {
       this.processMessage(msg)
       return room.message(this.userName, msg, bypassPermissions)
@@ -248,12 +248,12 @@ class User {
     })
   }
 
-  roomNotificationsInfo (roomName, {bypassPermissions}) {
+  roomNotificationsInfo (roomName, { bypassPermissions }) {
     return this.state.getRoom(roomName)
       .then(room => room.getNotificationsInfo(this.userName, bypassPermissions))
   }
 
-  roomRemoveFromList (roomName, listName, values, {bypassPermissions}) {
+  roomRemoveFromList (roomName, listName, values, { bypassPermissions }) {
     return this.state.getRoom(roomName).then(room => {
       return Promise.join(
         room.removeFromList(this.userName, listName, values, bypassPermissions),
@@ -268,7 +268,7 @@ class User {
     }).return()
   }
 
-  roomSetWhitelistMode (roomName, mode, {bypassPermissions}) {
+  roomSetWhitelistMode (roomName, mode, { bypassPermissions }) {
     return this.state.getRoom(roomName).then(room => {
       return Promise.join(
         room.changeMode(this.userName, mode, bypassPermissions),
@@ -283,12 +283,12 @@ class User {
     }).return()
   }
 
-  roomUserSeen (roomName, userName, {bypassPermissions}) {
+  roomUserSeen (roomName, userName, { bypassPermissions }) {
     return this.state.getRoom(roomName)
       .then(room => room.userSeen(this.userName, userName, bypassPermissions))
   }
 
-  systemMessage (data, {id}) {
+  systemMessage (data, { id }) {
     this.transport.sendToChannel(id, this.echoChannel, 'systemMessage', data)
     return Promise.resolve()
   }

@@ -29,7 +29,7 @@ module.exports = function () {
   })
 
   it('should reject logins without an onConnect hook', function (done) {
-    chatService = startService(null, {onConnect: undefined})
+    chatService = startService(null, { onConnect: undefined })
     socket1 = clientConnect(user1)
     socket1.on('loginRejected', () => done())
   })
@@ -41,9 +41,9 @@ module.exports = function () {
   })
 
   it('should execute socket.io middleware', function (done) {
-    let reason = 'some error'
-    let auth = (socket, cb) => process.nextTick(cb, new Error(reason))
-    chatService = startService({ transportOptions: {middleware: auth} })
+    const reason = 'some error'
+    const auth = (socket, cb) => process.nextTick(cb, new Error(reason))
+    chatService = startService({ transportOptions: { middleware: auth } })
     socket1 = clientConnect()
     socket1.on('error', e => {
       expect(e).deep.equal(reason)
@@ -52,17 +52,17 @@ module.exports = function () {
   })
 
   it('should store and return a handshake data', function (done) {
-    let onConnect = (server, id, cb) => {
-      let data = server.transport.getHandshakeData(id)
+    const onConnect = (server, id, cb) => {
+      const data = server.transport.getHandshakeData(id)
       expect(data).an('Object')
       expect(data.isConnected).true
       expect(data.query.user).equal(user1)
       process.nextTick(cb)
     }
-    chatService = startService(null, {onConnect})
+    chatService = startService(null, { onConnect })
     socket1 = clientConnect(user1)
     socket1.on('loginRejected', () => {
-      let data = chatService.transport.getHandshakeData('id')
+      const data = chatService.transport.getHandshakeData('id')
       expect(data).an('Object')
       expect(data.isConnected).false
       done()
@@ -70,14 +70,14 @@ module.exports = function () {
   })
 
   it('should use an username and a data passed by onConnect', function (done) {
-    let name = 'someUser'
-    let data = { token: 'token' }
-    let onConnect = (server, id, cb) => {
+    const name = 'someUser'
+    const data = { token: 'token' }
+    const onConnect = (server, id, cb) => {
       expect(server).instanceof(ChatService)
       expect(id).a('string')
       process.nextTick(cb, null, name, data)
     }
-    chatService = startService(null, {onConnect})
+    chatService = startService(null, { onConnect })
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', (u, d) => {
       expect(u).equal(name)
@@ -89,13 +89,13 @@ module.exports = function () {
 
   it('should reject a login if onConnect passes an error', function (done) {
     let err
-    let onConnect = (server, id, cb) => {
+    const onConnect = (server, id, cb) => {
       expect(server).instanceof(ChatService)
       expect(id).a('string')
       err = new ChatService.ChatServiceError('some error')
       throw err
     }
-    chatService = startService(null, {onConnect})
+    chatService = startService(null, { onConnect })
     socket1 = clientConnect(user1)
     socket1.on('loginRejected', e => {
       expect(e).deep.equal(err.toString())
@@ -132,7 +132,7 @@ module.exports = function () {
   })
 
   it('should disconnect all users on a server shutdown', function (done) {
-    let chatService1 = startService()
+    const chatService1 = startService()
     socket1 = clientConnect(user1)
     socket1.on('loginConfirmed', () => parallel([
       cb => chatService1.close(cb),
@@ -147,7 +147,7 @@ module.exports = function () {
       cb => chatService.state.getInstanceSockets().asCallback(cb),
       cb => chatService.state.getInstanceSockets(chatService.instanceUID)
         .asCallback(cb)
-    ], (error, [ s1, s2 ]) => {
+    ], (error, [s1, s2]) => {
       expect(error).not.ok
       expect(s1).an('Object')
       expect(s2).an('Object')

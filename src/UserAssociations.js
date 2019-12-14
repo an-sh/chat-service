@@ -23,7 +23,7 @@ class UserAssociations {
 
   consistencyFailure (error, operationInfo) {
     operationInfo.userName = this.userName
-    let name = operationInfo.opType === 'transportChannel'
+    const name = operationInfo.opType === 'transportChannel'
       ? 'transportConsistencyFailure'
       : 'storeConsistencyFailure'
     this.server.emit(name, error, operationInfo)
@@ -31,7 +31,7 @@ class UserAssociations {
 
   leaveChannel (id, channel) {
     return this.transport.leaveChannel(id, channel).catch(e => {
-      let info = { roomName: channel, id, opType: 'transportChannel' }
+      const info = { roomName: channel, id, opType: 'transportChannel' }
       return this.consistencyFailure(e, info)
     })
   }
@@ -44,10 +44,10 @@ class UserAssociations {
   }
 
   leaveChannelMessage (id, channel) {
-    let bus = this.clusterBus
+    const bus = this.clusterBus
     return Promise.try(() => {
       bus.emit('roomLeaveSocket', id, channel)
-      let ackEventName = `socketRoomLeft:${id}:${channel}`
+      const ackEventName = `socketRoomLeft:${id}:${channel}`
       return eventToPromise(bus, ackEventName)
     }).timeout(this.busAckTimeout).catchReturn()
   }
@@ -74,7 +74,7 @@ class UserAssociations {
     return Promise
       .try(() => this.state.getRoom(roomName))
       .then(room => room.leave(this.userName).catch(error => {
-        this.consistencyFailure(error, {roomName, opType: 'roomUserlist'})
+        this.consistencyFailure(error, { roomName, opType: 'roomUserlist' })
       }))
       .catchReturn()
   }
@@ -87,18 +87,18 @@ class UserAssociations {
   }
 
   joinSocketToRoom (id, roomName, isLocalCall) {
-    let lock = this.userState.lockToRoom(roomName, this.lockTTL)
+    const lock = this.userState.lockToRoom(roomName, this.lockTTL)
     return Promise.using(lock, co(function * () {
-      let room = yield this.state.getRoom(roomName)
+      const room = yield this.state.getRoom(roomName)
       yield room.join(this.userName)
       try {
-        let [enableUserlistUpdates, [njoined, hasChanged]] = yield Promise.all([
+        const [enableUserlistUpdates, [njoined, hasChanged]] = yield Promise.all([
           room.roomState.userlistUpdatesGet(),
           this.userState.addSocketToRoom(id, roomName),
           this.transport.joinChannel(id, roomName)])
         if (hasChanged) {
           if (this.onJoin) {
-            yield execHook(this.onJoin, this.server, {id, roomName, njoined})
+            yield execHook(this.onJoin, this.server, { id, roomName, njoined })
           }
           if (njoined === 1 && enableUserlistUpdates) {
             this.userJoinRoomReport(this.userName, roomName)
@@ -113,9 +113,9 @@ class UserAssociations {
   }
 
   leaveSocketFromRoom (id, roomName, isLocalCall) {
-    let lock = this.userState.lockToRoom(roomName, this.lockTTL)
+    const lock = this.userState.lockToRoom(roomName, this.lockTTL)
     return Promise.using(lock, co(function * () {
-      let [{enableUserlistUpdates}, [njoined, hasChanged]] = yield Promise.all([
+      const [{ enableUserlistUpdates }, [njoined, hasChanged]] = yield Promise.all([
         this.getNotifySettings(roomName),
         this.userState.removeSocketFromRoom(id, roomName),
         this.leaveChannel(id, roomName)])
@@ -126,7 +126,7 @@ class UserAssociations {
         this.socketLeftEcho(id, roomName, njoined, isLocalCall)
         this.userLeftRoomReport(this.userName, roomName, enableUserlistUpdates)
         if (this.onLeave) {
-          yield execHook(this.onLeave, this.server, {id, roomName, njoined})
+          yield execHook(this.onLeave, this.server, { id, roomName, njoined })
             .catchReturn(Promise.resolve())
         }
       }
@@ -140,7 +140,7 @@ class UserAssociations {
       .then(nconnected => {
         if (!this.transport.getSocket(id)) {
           return this.removeUserSocket(id).then(() => {
-            let error = new ChatServiceError('noSocket', 'connection')
+            const error = new ChatServiceError('noSocket', 'connection')
             return Promise.reject(error)
           })
         } else {
@@ -158,35 +158,35 @@ class UserAssociations {
       nconnected = nconnected || 0
       yield this.socketLeaveChannels(id, roomsRemoved)
       yield Promise.map(roomsRemoved, co(function * (roomName, idx) {
-        let njoined = joinedSockets[idx]
+        const njoined = joinedSockets[idx]
         if (this.onLeave) {
-          yield execHook(this.onLeave, this.server, {id, roomName, njoined})
+          yield execHook(this.onLeave, this.server, { id, roomName, njoined })
             .catchReturn(Promise.resolve())
         }
         this.socketLeftEcho(id, roomName, njoined)
         if (njoined) { return }
         yield this.leaveRoom(roomName)
-        let {enableUserlistUpdates} = yield this.getNotifySettings(roomName)
+        const { enableUserlistUpdates } = yield this.getNotifySettings(roomName)
         this.userLeftRoomReport(this.userName, roomName, enableUserlistUpdates)
       }).bind(this), { concurrency: asyncLimit })
       this.socketDisconnectEcho(id, nconnected)
       yield this.state.removeSocket(id)
       return { roomsRemoved, joinedSockets, nconnected }
     }).catch(e => {
-      let info = { id, opType: 'userSockets' }
+      const info = { id, opType: 'userSockets' }
       return this.consistencyFailure(e, info)
     })
   }
 
   removeUserSocketsFromRoom (roomName) {
     return this.userState.removeAllSocketsFromRoom(roomName).catch(e => {
-      let info = { roomName, opType: 'roomUserlist' }
+      const info = { roomName, opType: 'roomUserlist' }
       return this.consistencyFailure(e, info)
     })
   }
 
   removeFromRoom (roomName) {
-    let lock = this.userState.lockToRoom(roomName, this.lockTTL)
+    const lock = this.userState.lockToRoom(roomName, this.lockTTL)
     return Promise.using(lock, co(function * () {
       let removedSockets = yield this.removeUserSocketsFromRoom(roomName)
       removedSockets = removedSockets || []
@@ -194,11 +194,11 @@ class UserAssociations {
       if (removedSockets.length) {
         if (this.onLeave) {
           yield Promise.map(removedSockets, (id) => {
-            return execHook(this.onLeave, this.server, {id, roomName, njoined: 0})
+            return execHook(this.onLeave, this.server, { id, roomName, njoined: 0 })
               .catchReturn(Promise.resolve())
           }, { concurrency: asyncLimit })
         }
-        let { enableUserlistUpdates } = yield this.getNotifySettings(roomName)
+        const { enableUserlistUpdates } = yield this.getNotifySettings(roomName)
         this.userRemovedReport(this.userName, roomName, enableUserlistUpdates)
       }
       return this.leaveRoom(roomName)

@@ -14,11 +14,11 @@ function makeURL (port) {
 }
 
 function makeParams (userName) {
-  let params = {
+  const params = {
     query: `user=${userName}`,
     multiplex: false,
     reconnection: false,
-    transports: [ 'websocket' ]
+    transports: ['websocket']
   }
   if (!userName) {
     delete params.query
@@ -33,19 +33,19 @@ let customCleanup = null
 function setCustomCleanup (fn) { customCleanup = fn }
 
 function clientConnect (name, port) {
-  let url = makeURL(port)
-  let params = makeParams(name)
+  const url = makeURL(port)
+  const params = makeParams(name)
   return io.connect(url, params)
 }
 
 function onConnect (server, id) {
-  let {query} = server.transport.getHandshakeData(id)
+  const { query } = server.transport.getHandshakeData(id)
   return Promise.resolve(query.user)
 }
 
 function startService (opts, _hooks) {
-  let options = { port: config.port }
-  let hooks = _.assign({onConnect}, _hooks)
+  const options = { port: config.port }
+  const hooks = _.assign({ onConnect }, _hooks)
   _.merge(options, state, opts)
   return new ChatService(options, hooks)
 }
@@ -82,7 +82,7 @@ function cleanup (services, sockets, done) {
   sockets = _.castArray(sockets)
   return Promise.try(() => {
     for (let i = 0; i < sockets.length; i++) {
-      let socket = sockets[i]
+      const socket = sockets[i]
       socket && socket.disconnect()
     }
     if (customCleanup) {
@@ -98,10 +98,10 @@ function cleanup (services, sockets, done) {
   }).asCallback(done)
 }
 
-let parallel = (fns, cb) =>
+const parallel = (fns, cb) =>
   Promise.map(fns, Promise.fromCallback).asCallback(cb)
 
-let series = (fns, cb) =>
+const series = (fns, cb) =>
   Promise.mapSeries(fns, Promise.fromCallback).asCallback(cb)
 
 module.exports = {
