@@ -11,6 +11,8 @@ const promiseRetry = require('promise-retry')
 const uid = require('uid-safe')
 const { mixin } = require('./utils')
 
+Redis.Promise = require('bluebird')
+
 const namespace = 'chatservice'
 
 function initSet (redis, set, values) {
