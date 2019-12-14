@@ -5,11 +5,8 @@
   "description": "An extensible and scalable chat-like messaging server.",
   "main": "index.js",
   "scripts": {
-    "compile": "babel src --out-dir lib --ignore src/doc/",
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "generate-docs": "jsdoc --configure .jsdoc.json --verbose",
-    "prepare": "npm run compile",
-    "pretest": "npm run compile",
     "test": "nyc mocha --exit"
   },
   "author": {
@@ -32,34 +29,31 @@
     "cluster"
   ],
   "engines": {
-    "node": ">=4"
+    "node": ">=10"
   },
   "license": "MIT",
   "dependencies": {
-    "bluebird": "^3.3.5",
-    "check-types": "^7.0.0",
+    "bluebird": "^3.7.2",
+    "check-types": "^11.0.0",
     "event-to-promise": "^0.8.0",
-    "ioredis": "^3.2.2",
-    "lodash": "^4.11.1",
+    "ioredis": "^4.14.1",
+    "lodash": "^4.17.15",
     "promise-retry": "^1.1.0",
-    "safe-buffer": "^5.0.1",
-    "semver": "^5.3.0",
-    "socket.io": "^2.0.4",
+    "safe-buffer": "^5.2.0",
+    "socket.io": "^2.3.0",
     "socket.io-redis": "^5.2.0",
     "uid-safe": "^2.1.0"
   },
   "devDependencies": {
-    "babel-cli": "^6.11.4",
-    "babel-preset-es2015-node4": "^2.1.0",
-    "chai": "^4.1.2",
-    "codecov": "^3.0.0",
-    "docdash": "^0.4.0",
-    "jsdoc": "^3.4.0",
-    "mocha": "^4.1.0",
-    "nyc": "^11.4.1",
-    "socket.io-client": "^2.0.4",
-    "standard": "^10.0.3",
-    "wtfnode": "^0.5.7"
+    "chai": "^4.2.0",
+    "codecov": "^3.6.1",
+    "docdash": "^1.1.1",
+    "jsdoc": "^3.6.3",
+    "mocha": "^6.2.2",
+    "nyc": "^14.1.1",
+    "socket.io-client": "^2.3.0",
+    "standard": "^14.3.1",
+    "wtfnode": "^0.8.0"
   },
   "nyc": {
     "include": [
