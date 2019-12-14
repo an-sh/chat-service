@@ -54,10 +54,6 @@ APIs or to tunnel M2M communications for IoT devices.
 
 - Supports lightweight online user to online user messaging.
 
-- Written in ES2015 (ES6), runs natively on Node.js `>= 6` (ES5 Babel
-  transpiled code is included and is automatically used for Node.js
-  `4.x` compatibility).
-
 
 ## Table of Contents
 
@@ -231,8 +227,8 @@ custom errors.
 ## API
 
 Server side
-[API](https://an-sh.github.io/chat-service/0.16/chat-service.html) and
-[RPC](https://an-sh.github.io/chat-service/0.16/rpc.html) documentation
+[API](https://an-sh.github.io/chat-service/1.0/chat-service.html) and
+[RPC](https://an-sh.github.io/chat-service/1.0/rpc.html) documentation
 is available online.
 
 

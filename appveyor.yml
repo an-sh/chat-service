@@ -3,12 +3,10 @@ clone_depth: 5
 
 environment:
   matrix:
-  - nodejs_version: "8"
+  - nodejs_version: "10"
     TEST: "npm run test"
-  - nodejs_version: "6"
+  - nodejs_version: "12"
     TEST: "npm run test"
-  - nodejs_version: "4"
-    TEST: "npm run test -- --harmony-destructuring"
 
 platform:
   - x64
