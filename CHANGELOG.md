@@ -1,6 +1,15 @@
-# Change Log
+# Changelog
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+## [1.0.0](https://github.com/an-sh/chat-service/compare/v0.16.0...v1.0.0) (2019-12-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* Now only Node.js version 10 and later are supported
+
+* update ([040db82](https://github.com/an-sh/chat-service/commit/040db82d804a7048eb26f2e6b9105125cf16e843))
 
 <a name="0.16.0"></a>
 # [0.16.0](https://github.com/an-sh/chat-service/compare/v0.15.0...v0.16.0) (2018-01-05)
